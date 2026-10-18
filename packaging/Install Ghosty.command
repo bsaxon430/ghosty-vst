@@ -1,13 +1,13 @@
 #!/bin/bash
 cd "$(dirname "$0")"
-echo "Installing Ghosty, Ghosty Beats and Ghosty Spectrum..."
+echo "Installing Ghosty, Ghosty Beats, Ghosty Spectrum and Poltergeist..."
 xattr -dr com.apple.quarantine . 2>/dev/null
 V=~/Library/Audio/Plug-Ins/VST3; C=~/Library/Audio/Plug-Ins/Components
 mkdir -p "$V" "$C"
-rm -rf "$V"/Ghosty*.vst3 "$C"/Ghosty*.component
+rm -rf "$V"/Ghosty*.vst3 "$C"/Ghosty*.component "$V"/Poltergeist.vst3 "$C"/Poltergeist.component
 cp -R Plugins/*.vst3 "$V"/
 cp -R Plugins/*.component "$C"/
-for p in "$V"/Ghosty*.vst3 "$C"/Ghosty*.component; do
+for p in "$V"/Ghosty*.vst3 "$C"/Ghosty*.component "$V"/Poltergeist.vst3 "$C"/Poltergeist.component; do
   xattr -dr com.apple.quarantine "$p" 2>/dev/null
   codesign --force --deep --sign - "$p" 2>/dev/null
   echo "  + $(basename "$p")"

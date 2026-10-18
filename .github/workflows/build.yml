@@ -31,7 +31,7 @@ jobs:
         run: |
           $O = "out\Ghosty-Windows"
           New-Item -ItemType Directory -Force -Path "$O\VST3", "$O\Standalone" | Out-Null
-          foreach ($t in @(@("GhostySynth","Ghosty"), @("GhostyBeats","Ghosty Beats"), @("GhostySpectrum","Ghosty Spectrum"))) {
+          foreach ($t in @(@("GhostySynth","Ghosty"), @("GhostyBeats","Ghosty Beats"), @("GhostySpectrum","Ghosty Spectrum"), @("Poltergeist","Poltergeist"))) {
             Copy-Item -Recurse "build\$($t[0])_artefacts\Release\VST3\$($t[1]).vst3" "$O\VST3\"
             Copy-Item "build\$($t[0])_artefacts\Release\Standalone\$($t[1]).exe" "$O\Standalone\"
           }
@@ -77,7 +77,7 @@ jobs:
           set -e
           O="out/Ghosty for Mac"
           mkdir -p "$O/Plugins" "$O/Standalone"
-          for t in "GhostySynth:Ghosty" "GhostyBeats:Ghosty Beats" "GhostySpectrum:Ghosty Spectrum"; do
+          for t in "GhostySynth:Ghosty" "GhostyBeats:Ghosty Beats" "GhostySpectrum:Ghosty Spectrum" "Poltergeist:Poltergeist"; do
             T="${t%%:*}"; N="${t#*:}"; R="build/${T}_artefacts/Release"
             ditto "$R/VST3/$N.vst3" "$O/Plugins/$N.vst3"
             ditto "$R/AU/$N.component" "$O/Plugins/$N.component"

@@ -102,3 +102,30 @@ target_compile_definitions(GhostySpectrum PUBLIC
 target_link_libraries(GhostySpectrum PRIVATE
   juce::juce_audio_utils juce::juce_dsp
   PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+
+# ---------------------------------------------------------------- Poltergeist (FM spirit synth)
+juce_add_plugin(Poltergeist
+  COMPANY_NAME "GhostBlock"
+  BUNDLE_ID "io.ghostblock.poltergeist"
+  PLUGIN_MANUFACTURER_CODE Ghbk
+  PLUGIN_CODE Pltg
+  FORMATS ${GHOSTY_FORMATS}
+  PRODUCT_NAME "Poltergeist"
+  IS_SYNTH TRUE
+  NEEDS_MIDI_INPUT TRUE
+  NEEDS_MIDI_OUTPUT FALSE
+  IS_MIDI_EFFECT FALSE
+  EDITOR_WANTS_KEYBOARD_FOCUS TRUE
+  COPY_PLUGIN_AFTER_BUILD FALSE
+  AU_MAIN_TYPE kAudioUnitType_MusicDevice
+  VST3_CATEGORIES Instrument Synth)
+
+target_sources(Poltergeist PRIVATE
+  Poltergeist/PluginProcessor.cpp
+  Poltergeist/PluginEditor.cpp)
+target_include_directories(Poltergeist PRIVATE Poltergeist)
+target_compile_definitions(Poltergeist PUBLIC
+  JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0 JUCE_DISPLAY_SPLASH_SCREEN=0)
+target_link_libraries(Poltergeist PRIVATE
+  juce::juce_audio_utils juce::juce_dsp
+  PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
