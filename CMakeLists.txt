@@ -1,5 +1,16 @@
 cmake_minimum_required(VERSION 3.22)
+
+# Mac: one build that runs natively on Apple Silicon and Intel, macOS 11+
+set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "")
+set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "")
+
 project(GhostyVST VERSION 1.0.0)
+
+if(APPLE)
+  set(GHOSTY_FORMATS VST3 AU Standalone)   # FL Studio on Mac loads VST3 and AU
+else()
+  set(GHOSTY_FORMATS VST3 Standalone)
+endif()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -20,7 +31,7 @@ juce_add_plugin(GhostySynth
   BUNDLE_ID "io.ghostblock.ghosty"
   PLUGIN_MANUFACTURER_CODE Ghbk
   PLUGIN_CODE Ghsy
-  FORMATS VST3 Standalone
+  FORMATS ${GHOSTY_FORMATS}
   PRODUCT_NAME "Ghosty"
   IS_SYNTH TRUE
   NEEDS_MIDI_INPUT TRUE
@@ -46,7 +57,7 @@ juce_add_plugin(GhostyBeats
   BUNDLE_ID "io.ghostblock.ghostybeats"
   PLUGIN_MANUFACTURER_CODE Ghbk
   PLUGIN_CODE Ghbt
-  FORMATS VST3 Standalone
+  FORMATS ${GHOSTY_FORMATS}
   PRODUCT_NAME "Ghosty Beats"
   IS_SYNTH TRUE
   NEEDS_MIDI_INPUT TRUE
