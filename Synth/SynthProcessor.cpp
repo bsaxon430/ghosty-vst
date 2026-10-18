@@ -157,6 +157,15 @@ juce::AudioProcessorValueTreeState::ParameterLayout SynthProcessor::layout()
     l.add (pct ("verb", "Reverb", 0.35f));
     l.add (pct ("haunt", "Haunt", 0.0f));
     l.add (pct ("gain", "Volume", 0.75f));
+    // play helpers: scale lock, chords, arpeggiator
+    l.add (std::make_unique<AudioParameterChoice> (ParameterID { "key", 1 }, "Key", keyNames(), 9));
+    l.add (std::make_unique<AudioParameterChoice> (ParameterID { "scale", 1 }, "Scale", scaleNames(), 0));
+    l.add (std::make_unique<AudioParameterChoice> (ParameterID { "chord", 1 }, "Chords", chordNames(), 0));
+    l.add (std::make_unique<AudioParameterBool> (ParameterID { "arp", 1 }, "Arp", false));
+    l.add (std::make_unique<AudioParameterChoice> (ParameterID { "arpRate", 1 }, "Arp Rate", arpRateNames(), 2));
+    l.add (std::make_unique<AudioParameterChoice> (ParameterID { "arpMode", 1 }, "Arp Mode", arpModeNames(), 0));
+    l.add (std::make_unique<AudioParameterInt> (ParameterID { "arpOct", 1 }, "Arp Octaves", 1, 3, 2));
+    l.add (pct ("arpGate", "Arp Gate", 0.7f));
     return l;
 }
 
@@ -169,6 +178,7 @@ SynthProcessor::SynthProcessor()
     attack = P ("attack"); decay = P ("decay"); sustain = P ("sustain"); release = P ("release");
     cutoff = P ("cutoff"); res = P ("res"); fenvAmt = P ("fenv"); gain = P ("gain");
     drive = P ("drive"); crush = P ("crush"); chorus = P ("chorus"); phaser = P ("phaser"); echo = P ("echo"); verb = P ("verb"); haunt = P ("haunt");
+    keyP = P ("key"); scaleP = P ("scale"); chordP = P ("chord"); arpP = P ("arp"); arpRateP = P ("arpRate"); arpModeP = P ("arpMode"); arpOctP = P ("arpOct"); arpGateP = P ("arpGate");
 
     frameA = makeShape (2); frameB = makeShape (3);
     for (int i = 0; i < 16; ++i) synth.addVoice (new GhostVoice (*this));
@@ -206,6 +216,8 @@ void SynthProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
     for (int i = 0; i < synth.getNumVoices(); ++i)
         if (auto* v = dynamic_cast<GhostVoice*> (synth.getVoice (i))) v->prepare (sampleRate, samplesPerBlock);
     fx.prepare (sampleRate, samplesPerBlock);
+    performer.prepare (sampleRate);
+    performed.ensureSize (8192);
     if (srChanged) rebuildWaves();
 }
 
@@ -218,13 +230,27 @@ void SynthProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiB
 {
     juce::ScopedNoDenormals noDenormals;
     buffer.clear();
-    synth.renderNextBlock (buffer, midi, 0, buffer.getNumSamples());
+    keyboardState.processNextMidiBuffer (midi, 0, buffer.getNumSamples(), true);
+
+    Performer::Settings ps;
+    ps.key = (int) keyP->load(); ps.scale = (int) scaleP->load(); ps.chord = (int) chordP->load();
+    ps.arp = arpP->load() > 0.5f; ps.arpRate = (int) arpRateP->load(); ps.arpMode = (int) arpModeP->load();
+    ps.arpOct = (int) arpOctP->load(); ps.arpGate = arpGateP->load();
+    if (auto* ph = getPlayHead())
+        if (auto pos = ph->getPosition())
+        {
+            if (auto b = pos->getBpm()) ps.bpm = *b;
+            ps.hostPlaying = pos->getIsPlaying();
+            if (auto q = pos->getPpqPosition()) { ps.ppq = *q; ps.havePpq = true; }
+        }
+    performer.process (midi, performed, buffer.getNumSamples(), ps);
+    synth.renderNextBlock (buffer, performed, 0, buffer.getNumSamples());
     buffer.applyGain (gain->load() * 1.3f);
 
     FxParams p;
     p.drive = drive->load(); p.crush = crush->load(); p.chorus = chorus->load(); p.phaser = phaser->load();
     p.echo = echo->load(); p.verb = verb->load(); p.haunt = haunt->load();
-    if (auto* ph = getPlayHead()) if (auto pos = ph->getPosition()) if (auto bpm = pos->getBpm()) p.bpm = *bpm;
+    p.bpm = ps.bpm;
     fx.process (buffer, p);
 
     for (int ch = 0; ch < buffer.getNumChannels(); ++ch)

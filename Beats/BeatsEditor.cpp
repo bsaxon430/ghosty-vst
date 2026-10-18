@@ -184,7 +184,7 @@ void BeatsEditor::selectTrack (int t)
     volAtt = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (proc.apvts, BeatsProcessor::trackId ("vol", t), vol);
     trackRevAtt = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (proc.apvts, BeatsProcessor::trackId ("rev", t), trackRev);
     trackMuteAtt = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (proc.apvts, BeatsProcessor::trackId ("mute", t), trackMute);
-    trackLabel.setText (juce::String ("TRACK  ·  ") + names[t], juce::dontSendNotification);
+    trackLabel.setText (juce::String ("TRACK / ") + names[t], juce::dontSendNotification);
     trackLabel.setColour (juce::Label::textColourId, trackCol[t]);
 }
 

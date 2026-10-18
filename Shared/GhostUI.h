@@ -195,7 +195,7 @@ private:
         auto now = pos (gh);
         gh.speed = juce::jmin (1.0f, gh.speed * 0.6f + now.getDistanceFrom (old) / 20.0f);
         if (std::abs (now.x - old.x) > 0.5f) gh.flip = now.x < old.x;
-        readout = gh.px->getName (12) + " " + gh.px->getCurrentValueAsText() + "  ·  " + gh.py->getName (12) + " " + gh.py->getCurrentValueAsText();
+        readout = gh.px->getName (12) + " " + gh.px->getCurrentValueAsText() + " / " + gh.py->getName (12) + " " + gh.py->getCurrentValueAsText();
         readoutColour = gh.colour; readoutTimer = 60;
     }
     void timerCallback() override

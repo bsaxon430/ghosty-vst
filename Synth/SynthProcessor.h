@@ -2,6 +2,7 @@
 #include <juce_audio_utils/juce_audio_utils.h>
 #include "Waves.h"
 #include "Fx.h"
+#include "Performer.h"
 
 class SynthProcessor;
 
@@ -75,6 +76,10 @@ public:
     // fast parameter access for the voices
     std::atomic<float>* morph, *unison, *width, *sub, *attack, *decay, *sustain, *release, *cutoff, *res, *fenvAmt, *gain;
     std::atomic<float>* drive, *crush, *chorus, *phaser, *echo, *verb, *haunt;
+    std::atomic<float>* keyP, *scaleP, *chordP, *arpP, *arpRateP, *arpModeP, *arpOctP, *arpGateP;
+
+    juce::MidiKeyboardState keyboardState;     // the on-screen flow strip plays through this
+    ghosty::Performer performer;
 
     static float cutoffHz (float v) { return 50.0f * std::pow (2.0f, v * 8.5f); }
 
@@ -85,6 +90,7 @@ private:
 
     juce::Synthesiser synth;
     ghosty::FxChain fx;
+    juce::MidiBuffer performed;
     double sampleRateNow = 44100.0;
     int currentProgram = 0;
     std::atomic<bool> needA { false }, needB { false };
