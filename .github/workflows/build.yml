@@ -1,0 +1,57 @@
+name: Build Ghosty VST3 (Windows)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B build -G "Visual Studio 17 2022" -A x64
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path out\Ghosty-VST3 | Out-Null
+          Copy-Item -Recurse "build\GhostySynth_artefacts\Release\VST3\Ghosty.vst3" out\Ghosty-VST3\
+          Copy-Item -Recurse "build\GhostyBeats_artefacts\Release\VST3\Ghosty Beats.vst3" out\Ghosty-VST3\
+          New-Item -ItemType Directory -Force -Path out\Ghosty-VST3\Standalone | Out-Null
+          Copy-Item "build\GhostySynth_artefacts\Release\Standalone\Ghosty.exe" out\Ghosty-VST3\Standalone\
+          Copy-Item "build\GhostyBeats_artefacts\Release\Standalone\Ghosty Beats.exe" out\Ghosty-VST3\Standalone\
+          @"
+          GHOSTY for Ableton (Windows)
+
+          1. Copy "Ghosty.vst3" and "Ghosty Beats.vst3" into:
+             C:\Program Files\Common Files\VST3
+          2. Ableton > Options > Preferences > Plug-Ins > turn on "Use VST3 Plug-in System Folders" > Rescan
+          3. Find them under Plug-Ins > VST3 > GhostBlock
+
+          The Standalone folder has versions that run without Ableton.
+          "@ | Out-File -Encoding utf8 out\Ghosty-VST3\HOW-TO-INSTALL.txt
+          Compress-Archive -Path out\Ghosty-VST3\* -DestinationPath Ghosty-VST3-Windows.zip -Force
+
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ghosty-VST3-Windows
+          path: out/Ghosty-VST3
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Ghosty VST3 (Windows)
+          prerelease: false
+          make_latest: true
+          files: Ghosty-VST3-Windows.zip
