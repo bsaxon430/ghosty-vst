@@ -71,10 +71,12 @@ juce_add_plugin(GhostyBeats
   COPY_PLUGIN_AFTER_BUILD FALSE
   VST3_CATEGORIES Instrument Drum)
 
+# Ghosty Beats 2 (BeatsX/): left-to-right sequencer, 60+ sounds + your samples, patterns, song, pads.
+# The old Beats/ headers stay because Ghosty Spectrum uses its drum recipes.
 target_sources(GhostyBeats PRIVATE
-  Beats/BeatsProcessor.cpp
-  Beats/BeatsEditor.cpp)
-target_include_directories(GhostyBeats PRIVATE Shared Beats)
+  BeatsX/BeatsXProcessor.cpp
+  BeatsX/BeatsXEditor.cpp)
+target_include_directories(GhostyBeats PRIVATE Shared BeatsX)
 target_compile_definitions(GhostyBeats PUBLIC
   JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0 JUCE_DISPLAY_SPLASH_SCREEN=0)
 target_link_libraries(GhostyBeats PRIVATE
