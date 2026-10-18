@@ -223,7 +223,13 @@ SynthEditor::~SynthEditor() { setLookAndFeel (nullptr); }
 void SynthEditor::refreshPresetBox()
 {
     presetBox.clear (juce::dontSendNotification);
-    for (int i = 0; i < proc.getNumPrograms(); ++i) presetBox.addItem (proc.getProgramName (i), i + 1);
+    juce::String lastCat;
+    for (int i = 0; i < proc.getNumPrograms(); ++i)
+    {
+        const auto cat = SynthProcessor::getPresetCategory (i);
+        if (cat != lastCat) { presetBox.addSectionHeading (cat.toUpperCase()); lastCat = cat; }
+        presetBox.addItem (proc.getProgramName (i), i + 1);
+    }
     presetBox.setSelectedItemIndex (proc.getCurrentProgram(), juce::dontSendNotification);
 }
 

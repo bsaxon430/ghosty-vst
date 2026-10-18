@@ -8,27 +8,52 @@ namespace
 {
 struct Preset
 {
-    const char* name; int A, B; float morph; int uni; float width, sub, a, d, s, r, cut, res, fenv, echo, verb, drive, chorus, phaser, crush, haunt;
+    const char* cat; const char* name; int A, B; float morph; int uni; float width, sub, a, d, s, r, cut, res, fenv, echo, verb, drive, chorus, phaser, crush, haunt;
 };
 // Shapes: 0 Sine 1 Triangle 2 Saw 3 Square 4 Pulse 5 Organ 6 Glass 7 Growl 8 Digital 9 Vox
 const Preset presets[] = {
-    //  name               A  B  morph uni width sub   a      d    s    r    cut   res  fenv echo verb drive chor phas crush haunt
-    { "Neon Supersaw",     2, 3, .15f, 7, .55f, .25f, .01f,  .4f, .8f, .6f, .82f, .1f, .2f, .25f, .35f, .1f, 0, 0, 0, 0 },
-    { "Glass Keys",        6, 0, .30f, 3, .20f, 0.f,  .002f, 1.2f,.2f, 1.f, .66f, .2f, .5f, .3f,  .45f, 0,   0, 0, 0, 0 },
-    { "Vapor Pad",         9, 5, .50f, 7, .45f, .15f, 1.2f,  1.f, .9f, 2.5f,.52f, .2f, .1f, .3f,  .8f,  0,   0, 0, 0, 0 },
-    { "Growl Bass",        7, 2, .40f, 3, .20f, .6f,  .005f, .3f, .7f, .2f, .36f, .45f,.6f, .05f, .1f,  .55f,0, 0, 0, 0 },
-    { "Vox Lead",          9, 2, .25f, 3, .25f, .1f,  .01f,  .3f, .7f, .3f, .6f,  .3f, .3f, .4f,  .3f,  .25f,0, 0, 0, 0 },
-    { "Pluck Fever",       3, 4, .40f, 3, .30f, 0.f,  .001f, .3f, 0.f, .35f,.3f,  .35f,.8f, .45f, .35f, .1f, 0, 0, 0, 0 },
-    { "Digital Bell",      8, 6, .60f, 1, 0.f,  0.f,  .001f, 1.5f,0.f, 1.4f,.86f, .1f, .2f, .35f, .55f, 0,   0, 0, 0, 0 },
-    { "Hollow Organ",      5, 1, .20f, 2, .15f, .2f,  .02f,  .2f, .9f, .3f, .7f,  .05f,0.f, .15f, .4f,  .15f,0, 0, 0, 0 },
-    { "Reese Bass",        2, 2, 0.f,  5, .35f, .5f,  .01f,  .5f, .9f, .3f, .35f, .2f, 0.f, 0.f,  .1f,  .3f, .5f,0, 0, 0 },
-    { "Acid 303",          2, 3, .20f, 1, 0.f,  0.f,  .003f, .25f,.3f, .15f,.15f, .8f, .9f, .3f,  .15f, .45f,0, 0, 0, 0 },
-    { "Sub Bass",          0, 1, .10f, 1, 0.f,  .5f,  .005f, .5f, 1.f, .25f,.5f,  .05f,0.f, 0.f,  .05f, 0,   0, 0, 0, 0 },
-    { "Chip Lead",         3, 8, .30f, 1, 0.f,  0.f,  .002f, .2f, .7f, .1f, .9f,  .05f,0.f, .3f,  .2f,  0,   0, 0, .55f, 0 },
-    { "Haunted Halls",     9, 6, .60f, 5, .50f, 0.f,  1.f,   1.f, .9f, 3.f, .5f,  .3f, 0.f, 0.f,  .85f, 0,   .3f,0, 0, .8f },
-    { "Trance Gate Pad",   2, 3, .10f, 7, .50f, .2f,  .05f,  .5f, 1.f, .8f, .7f,  .05f,0.f, .2f,  .5f,  0,   0, 0, 0, 0 },
-    { "Future Bass",       2, 9, .25f, 7, .60f, .3f,  .01f,  .6f, .85f,.5f, .75f, .1f, .2f, 0.f,  .4f,  0,   .3f,0, 0, 0 },
-    { "Phaser Sky",        5, 9, .40f, 5, .40f, 0.f,  .8f,   .5f, .9f, 2.f, .6f,  .1f, 0.f, 0.f,  .7f,  0,   0, .8f,0, 0 },
+    { "Keys", "Ghost Piano", 6, 1, 0.35f, 1, 0.0f, 0.0f, 0.002f, 1.6f, 0.0f, 0.8f, 0.62f, 0.1f, 0.55f, 0.1f, 0.35f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Keys", "Dream EP", 0, 1, 0.3f, 2, 0.15f, 0.0f, 0.003f, 1.4f, 0.25f, 0.7f, 0.6f, 0.1f, 0.3f, 0.15f, 0.35f, 0.0f, 0.6f, 0.2f, 0.0f, 0.0f },
+    { "Keys", "Glass Keys", 6, 0, 0.3f, 3, 0.2f, 0.0f, 0.002f, 1.2f, 0.2f, 1.0f, 0.66f, 0.2f, 0.5f, 0.3f, 0.45f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Keys", "Digital Bell", 8, 6, 0.6f, 1, 0.0f, 0.0f, 0.001f, 1.5f, 0.0f, 1.4f, 0.86f, 0.1f, 0.2f, 0.35f, 0.55f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Keys", "Music Box", 0, 8, 0.5f, 1, 0.0f, 0.0f, 0.001f, 1.2f, 0.0f, 1.5f, 0.9f, 0.1f, 0.1f, 0.45f, 0.6f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Keys", "Hollow Organ", 5, 1, 0.2f, 2, 0.15f, 0.2f, 0.02f, 0.2f, 0.9f, 0.3f, 0.7f, 0.05f, 0.0f, 0.15f, 0.4f, 0.15f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Keys", "Church Organ", 5, 5, 0.0f, 3, 0.2f, 0.2f, 0.05f, 0.5f, 1.0f, 0.8f, 0.8f, 0.0f, 0.0f, 0.0f, 0.75f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Keys", "Lofi Keys", 1, 6, 0.4f, 2, 0.1f, 0.0f, 0.005f, 1.0f, 0.3f, 0.6f, 0.45f, 0.1f, 0.2f, 0.2f, 0.4f, 0.0f, 0.4f, 0.0f, 0.35f, 0.0f },
+    { "Pads", "Vapor Pad", 9, 5, 0.5f, 7, 0.45f, 0.15f, 1.2f, 1.0f, 0.9f, 2.5f, 0.52f, 0.2f, 0.1f, 0.3f, 0.8f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Pads", "Haunted Halls", 9, 6, 0.6f, 5, 0.5f, 0.0f, 1.0f, 1.0f, 0.9f, 3.0f, 0.5f, 0.3f, 0.0f, 0.0f, 0.85f, 0.0f, 0.3f, 0.0f, 0.0f, 0.8f },
+    { "Pads", "Trance Pad", 2, 3, 0.1f, 7, 0.5f, 0.2f, 0.05f, 0.5f, 1.0f, 0.8f, 0.7f, 0.05f, 0.0f, 0.2f, 0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Pads", "Future Bass Chords", 2, 9, 0.25f, 7, 0.6f, 0.3f, 0.01f, 0.6f, 0.85f, 0.5f, 0.75f, 0.1f, 0.2f, 0.0f, 0.4f, 0.0f, 0.3f, 0.0f, 0.0f, 0.0f },
+    { "Pads", "Phaser Sky", 5, 9, 0.4f, 5, 0.4f, 0.0f, 0.8f, 0.5f, 0.9f, 2.0f, 0.6f, 0.1f, 0.0f, 0.0f, 0.7f, 0.0f, 0.0f, 0.8f, 0.0f, 0.0f },
+    { "Pads", "Choir Aahs", 9, 9, 0.0f, 7, 0.3f, 0.0f, 0.4f, 1.0f, 0.9f, 1.8f, 0.55f, 0.15f, 0.0f, 0.2f, 0.8f, 0.0f, 0.3f, 0.0f, 0.0f, 0.0f },
+    { "Pads", "Slow Strings", 2, 2, 0.0f, 7, 0.35f, 0.0f, 0.6f, 1.0f, 0.9f, 1.6f, 0.5f, 0.1f, 0.05f, 0.1f, 0.7f, 0.0f, 0.2f, 0.0f, 0.0f, 0.0f },
+    { "Pads", "Glass Cathedral", 6, 0, 0.5f, 5, 0.4f, 0.0f, 1.5f, 1.0f, 0.9f, 3.0f, 0.6f, 0.2f, 0.0f, 0.35f, 0.9f, 0.0f, 0.0f, 0.0f, 0.0f, 0.3f },
+    { "Pads", "Dark Matter", 7, 9, 0.6f, 7, 0.5f, 0.3f, 1.2f, 1.0f, 0.9f, 2.5f, 0.35f, 0.4f, 0.1f, 0.0f, 0.8f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f },
+    { "Bass", "Growl Bass", 7, 2, 0.4f, 3, 0.2f, 0.6f, 0.005f, 0.3f, 0.7f, 0.2f, 0.36f, 0.45f, 0.6f, 0.05f, 0.1f, 0.55f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Bass", "Reese Bass", 2, 2, 0.0f, 5, 0.35f, 0.5f, 0.01f, 0.5f, 0.9f, 0.3f, 0.35f, 0.2f, 0.0f, 0.0f, 0.1f, 0.3f, 0.5f, 0.0f, 0.0f, 0.0f },
+    { "Bass", "Acid 303", 2, 3, 0.2f, 1, 0.0f, 0.0f, 0.003f, 0.25f, 0.3f, 0.15f, 0.15f, 0.8f, 0.9f, 0.3f, 0.15f, 0.45f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Bass", "Sub Bass", 0, 1, 0.1f, 1, 0.0f, 0.5f, 0.005f, 0.5f, 1.0f, 0.25f, 0.5f, 0.05f, 0.0f, 0.0f, 0.05f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Bass", "808 Glide", 0, 1, 0.0f, 1, 0.0f, 0.3f, 0.002f, 1.6f, 0.0f, 0.4f, 0.6f, 0.0f, 0.0f, 0.0f, 0.05f, 0.35f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Bass", "Grime Bass", 3, 7, 0.5f, 1, 0.0f, 0.5f, 0.005f, 0.2f, 0.8f, 0.15f, 0.4f, 0.5f, 0.5f, 0.0f, 0.05f, 0.6f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Bass", "Finger Bass", 1, 0, 0.3f, 1, 0.0f, 0.3f, 0.003f, 0.9f, 0.2f, 0.2f, 0.35f, 0.1f, 0.3f, 0.0f, 0.1f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Bass", "Hoover Bass", 2, 4, 0.3f, 7, 0.6f, 0.4f, 0.01f, 0.4f, 0.8f, 0.3f, 0.55f, 0.2f, 0.3f, 0.0f, 0.1f, 0.4f, 0.3f, 0.0f, 0.0f, 0.0f },
+    { "Leads", "Neon Supersaw", 2, 3, 0.15f, 7, 0.55f, 0.25f, 0.01f, 0.4f, 0.8f, 0.6f, 0.82f, 0.1f, 0.2f, 0.25f, 0.35f, 0.1f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Leads", "Vox Lead", 9, 2, 0.25f, 3, 0.25f, 0.1f, 0.01f, 0.3f, 0.7f, 0.3f, 0.6f, 0.3f, 0.3f, 0.4f, 0.3f, 0.25f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Leads", "Chip Lead", 3, 8, 0.3f, 1, 0.0f, 0.0f, 0.002f, 0.2f, 0.7f, 0.1f, 0.9f, 0.05f, 0.0f, 0.3f, 0.2f, 0.0f, 0.0f, 0.0f, 0.55f, 0.0f },
+    { "Leads", "Screamer", 2, 7, 0.3f, 3, 0.3f, 0.0f, 0.005f, 0.3f, 0.9f, 0.3f, 0.7f, 0.35f, 0.2f, 0.3f, 0.25f, 0.8f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Leads", "Glitch Ghost", 8, 9, 0.5f, 3, 0.3f, 0.0f, 0.005f, 0.3f, 0.8f, 0.4f, 0.7f, 0.3f, 0.0f, 0.3f, 0.3f, 0.0f, 0.0f, 0.0f, 0.25f, 0.3f },
+    { "Leads", "Whistle", 0, 0, 0.0f, 1, 0.0f, 0.0f, 0.03f, 0.3f, 1.0f, 0.4f, 0.8f, 0.0f, 0.0f, 0.4f, 0.4f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Leads", "Ghost Flute", 1, 0, 0.3f, 1, 0.0f, 0.0f, 0.06f, 0.3f, 0.9f, 0.4f, 0.55f, 0.1f, 0.0f, 0.2f, 0.45f, 0.0f, 0.2f, 0.0f, 0.0f, 0.0f },
+    { "Leads", "Hoover Lead", 2, 4, 0.3f, 7, 0.6f, 0.4f, 0.01f, 0.4f, 0.8f, 0.4f, 0.65f, 0.2f, 0.2f, 0.15f, 0.3f, 0.5f, 0.3f, 0.0f, 0.0f, 0.0f },
+    { "Leads", "Brass Stab", 2, 3, 0.2f, 3, 0.2f, 0.0f, 0.01f, 0.35f, 0.6f, 0.25f, 0.35f, 0.15f, 0.7f, 0.1f, 0.3f, 0.2f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Plucks", "Pluck Fever", 3, 4, 0.4f, 3, 0.3f, 0.0f, 0.001f, 0.3f, 0.0f, 0.35f, 0.3f, 0.35f, 0.8f, 0.45f, 0.35f, 0.1f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Plucks", "Hyper Pluck", 3, 2, 0.5f, 5, 0.4f, 0.0f, 0.001f, 0.2f, 0.0f, 0.3f, 0.2f, 0.4f, 0.9f, 0.5f, 0.3f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Plucks", "Kalimba", 0, 6, 0.3f, 1, 0.0f, 0.0f, 0.001f, 0.7f, 0.0f, 0.5f, 0.7f, 0.1f, 0.3f, 0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Plucks", "Marimba", 0, 1, 0.2f, 1, 0.0f, 0.0f, 0.001f, 0.5f, 0.0f, 0.3f, 0.75f, 0.0f, 0.2f, 0.0f, 0.3f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Plucks", "Harp", 1, 6, 0.2f, 1, 0.0f, 0.0f, 0.002f, 1.8f, 0.0f, 1.2f, 0.6f, 0.1f, 0.4f, 0.2f, 0.6f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Plucks", "Steel Drum", 6, 0, 0.4f, 1, 0.0f, 0.0f, 0.001f, 0.9f, 0.0f, 0.6f, 0.8f, 0.1f, 0.2f, 0.2f, 0.3f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Plucks", "Sitar", 7, 2, 0.5f, 1, 0.0f, 0.0f, 0.002f, 1.6f, 0.1f, 0.8f, 0.55f, 0.5f, 0.5f, 0.1f, 0.4f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
+    { "Plucks", "Nylon Pluck", 1, 2, 0.25f, 1, 0.0f, 0.0f, 0.002f, 1.5f, 0.0f, 0.7f, 0.45f, 0.15f, 0.6f, 0.0f, 0.3f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },
 };
 constexpr int numPresets = (int) (sizeof (presets) / sizeof (presets[0]));
 }
@@ -264,6 +289,7 @@ void SynthProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiB
 
 int SynthProcessor::getNumPrograms() { return numPresets; }
 const juce::String SynthProcessor::getProgramName (int i) { return juce::isPositiveAndBelow (i, numPresets) ? presets[i].name : ""; }
+juce::String SynthProcessor::getPresetCategory (int i) { return juce::isPositiveAndBelow (i, numPresets) ? presets[i].cat : ""; }
 
 void SynthProcessor::setCurrentProgram (int index)
 {
