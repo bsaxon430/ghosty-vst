@@ -1,0 +1,17 @@
+GHOSTY for Windows  (Ghosty + Ghosty Beats + Ghosty Spectrum)
+
+EASY WAY
+  1. Right-click this zip > Extract All (don't run it from inside the zip).
+  2. Double-click "Install Ghosty.bat" and click Yes.
+     If a blue "Windows protected your PC" box shows: More info > Run anyway.
+  3. Rescan in your DAW:
+       Ableton:   Options > Preferences > Plug-Ins > "Use VST3 Plug-in System Folders" ON > Rescan
+       FL Studio: Options > Manage plugins > Find more plugins
+       Others:    rescan VST3 plug-ins
+  4. Find them under Plug-Ins > VST3 > GhostBlock.
+
+MANUAL WAY
+  Copy everything inside the VST3 folder to:  C:\Program Files\Common Files\VST3
+
+NO DAW?
+  The Standalone folder has apps that run on their own.

@@ -15,7 +15,7 @@ using Frame = std::array<float, FRAME>;
 
 inline const juce::StringArray& shapeNames()
 {
-    static juce::StringArray s { "Sine", "Triangle", "Saw", "Square", "Pulse", "Organ", "Glass", "Growl", "Digital", "Vox" };
+    static juce::StringArray s { "Sine", "Triangle", "Saw", "Square", "Pulse", "Organ", "Glass", "Growl", "Digital", "Vox", "Ahh", "Ooh", "Sync", "Fold", "Hollow", "Bright" };
     return s;
 }
 
@@ -54,6 +54,22 @@ inline Frame makeShape (int shape)
                     v += a * std::sin (tau * k * p);
                 }
                 break;
+            case 10: case 11:
+            {
+                const double f1 = shape == 10 ? 800 : 300, f2 = shape == 10 ? 1150 : 870, f3 = shape == 10 ? 2900 : 2240;
+                for (int k = 1; k <= 48; ++k)
+                {
+                    const double fr = k * 130.0;
+                    const double a = std::exp (-std::pow ((fr - f1) / 180, 2)) + 0.6 * std::exp (-std::pow ((fr - f2) / 220, 2))
+                                   + 0.25 * std::exp (-std::pow ((fr - f3) / 380, 2)) + 0.08 / k;
+                    v += a * std::sin (tau * k * p);
+                }
+                break;
+            }
+            case 12: { const double q = std::fmod (p * 2.6, 1.0); v = 2.0 * q - 1.0; break; }
+            case 13: v = std::sin (3.2 * std::sin (tau * p)); break;
+            case 14: for (int k = 1; k <= 15; k += 2) v += std::sin (tau * k * p) / (double) (k * k); v += 0.35 * std::sin (2 * tau * p); break;
+            case 15: for (int k = 1; k <= 40; ++k) v += std::sin (tau * k * p) / std::sqrt ((double) k); break;
             default: break;
         }
         f[(size_t) i] = (float) v;

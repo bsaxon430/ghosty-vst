@@ -29,29 +29,22 @@ jobs:
       - name: Package
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path out\Ghosty-VST3 | Out-Null
-          Copy-Item -Recurse "build\GhostySynth_artefacts\Release\VST3\Ghosty.vst3" out\Ghosty-VST3\
-          Copy-Item -Recurse "build\GhostyBeats_artefacts\Release\VST3\Ghosty Beats.vst3" out\Ghosty-VST3\
-          New-Item -ItemType Directory -Force -Path out\Ghosty-VST3\Standalone | Out-Null
-          Copy-Item "build\GhostySynth_artefacts\Release\Standalone\Ghosty.exe" out\Ghosty-VST3\Standalone\
-          Copy-Item "build\GhostyBeats_artefacts\Release\Standalone\Ghosty Beats.exe" out\Ghosty-VST3\Standalone\
-          @"
-          GHOSTY for Ableton (Windows)
-
-          1. Copy "Ghosty.vst3" and "Ghosty Beats.vst3" into:
-             C:\Program Files\Common Files\VST3
-          2. Ableton > Options > Preferences > Plug-Ins > turn on "Use VST3 Plug-in System Folders" > Rescan
-          3. Find them under Plug-Ins > VST3 > GhostBlock
-
-          The Standalone folder has versions that run without Ableton.
-          "@ | Out-File -Encoding utf8 out\Ghosty-VST3\HOW-TO-INSTALL.txt
-          Compress-Archive -Path out\Ghosty-VST3\* -DestinationPath Ghosty-VST3-Windows.zip -Force
+          $O = "out\Ghosty-Windows"
+          New-Item -ItemType Directory -Force -Path "$O\VST3", "$O\Standalone" | Out-Null
+          foreach ($t in @(@("GhostySynth","Ghosty"), @("GhostyBeats","Ghosty Beats"), @("GhostySpectrum","Ghosty Spectrum"))) {
+            Copy-Item -Recurse "build\$($t[0])_artefacts\Release\VST3\$($t[1]).vst3" "$O\VST3\"
+            Copy-Item "build\$($t[0])_artefacts\Release\Standalone\$($t[1]).exe" "$O\Standalone\"
+          }
+          Copy-Item "packaging\Install Ghosty.bat" "$O\"
+          Copy-Item "packaging\HOW-TO-INSTALL-WINDOWS.txt" "$O\HOW-TO-INSTALL.txt"
+          Compress-Archive -Path "$O\*" -DestinationPath Ghosty-Windows.zip -Force
+          Copy-Item Ghosty-Windows.zip Ghosty-VST3-Windows.zip
 
       - name: Upload build
         uses: actions/upload-artifact@v4
         with:
-          name: Ghosty-VST3-Windows
-          path: out/Ghosty-VST3
+          name: Ghosty-Windows
+          path: Ghosty-Windows.zip
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
@@ -60,7 +53,10 @@ jobs:
           name: Ghosty plugins (Windows + Mac)
           prerelease: false
           make_latest: true
-          files: Ghosty-VST3-Windows.zip
+          body_path: packaging/RELEASE-NOTES.md
+          files: |
+            Ghosty-Windows.zip
+            Ghosty-VST3-Windows.zip
 
   mac:
     runs-on: macos-latest
@@ -79,48 +75,18 @@ jobs:
       - name: Package
         run: |
           set -e
-          A=build/GhostySynth_artefacts/Release
-          B=build/GhostyBeats_artefacts/Release
           O="out/Ghosty for Mac"
-          mkdir -p "$O/Standalone"
-          ditto "$A/VST3/Ghosty.vst3" "$O/Ghosty.vst3"
-          ditto "$B/VST3/Ghosty Beats.vst3" "$O/Ghosty Beats.vst3"
-          ditto "$A/AU/Ghosty.component" "$O/Ghosty.component"
-          ditto "$B/AU/Ghosty Beats.component" "$O/Ghosty Beats.component"
-          ditto "$A/Standalone/Ghosty.app" "$O/Standalone/Ghosty.app"
-          ditto "$B/Standalone/Ghosty Beats.app" "$O/Standalone/Ghosty Beats.app"
-          for p in "$O"/*.vst3 "$O"/*.component "$O"/Standalone/*.app; do codesign --force --deep --sign - "$p"; done
-          cat > "$O/Install Ghosty.command" <<'SH'
-          #!/bin/bash
-          cd "$(dirname "$0")"
-          echo "Installing Ghosty + Ghosty Beats..."
-          xattr -dr com.apple.quarantine . 2>/dev/null
-          mkdir -p ~/Library/Audio/Plug-Ins/VST3 ~/Library/Audio/Plug-Ins/Components
-          rm -rf ~/Library/Audio/Plug-Ins/VST3/Ghosty*.vst3 ~/Library/Audio/Plug-Ins/Components/Ghosty*.component
-          cp -R Ghosty.vst3 "Ghosty Beats.vst3" ~/Library/Audio/Plug-Ins/VST3/
-          cp -R Ghosty.component "Ghosty Beats.component" ~/Library/Audio/Plug-Ins/Components/
-          for p in ~/Library/Audio/Plug-Ins/VST3/Ghosty*.vst3 ~/Library/Audio/Plug-Ins/Components/Ghosty*.component; do
-            xattr -dr com.apple.quarantine "$p" 2>/dev/null
-            codesign --force --deep --sign - "$p" 2>/dev/null
+          mkdir -p "$O/Plugins" "$O/Standalone"
+          for t in "GhostySynth:Ghosty" "GhostyBeats:Ghosty Beats" "GhostySpectrum:Ghosty Spectrum"; do
+            T="${t%%:*}"; N="${t#*:}"; R="build/${T}_artefacts/Release"
+            ditto "$R/VST3/$N.vst3" "$O/Plugins/$N.vst3"
+            ditto "$R/AU/$N.component" "$O/Plugins/$N.component"
+            ditto "$R/Standalone/$N.app" "$O/Standalone/$N.app"
           done
-          killall -9 AudioComponentRegistrar 2>/dev/null
-          echo ""
-          echo "Done! Open FL Studio > Options > Manage plugins > Find more plugins (or Rescan)."
-          echo "Ghosty and Ghosty Beats will show up as instruments."
-          SH
-          sed -i '' 's/^          //' "$O/Install Ghosty.command"
+          for p in "$O"/Plugins/* "$O"/Standalone/*.app; do codesign --force --deep --sign - "$p"; done
+          cp "packaging/Install Ghosty.command" "$O/"
           chmod +x "$O/Install Ghosty.command"
-          cat > "$O/HOW-TO-INSTALL.txt" <<'TXT'
-          GHOSTY for Mac (FL Studio, Logic, Ableton - Apple Silicon + Intel)
-
-          1. Double-click "Install Ghosty.command".
-             If macOS blocks it: System Settings > Privacy & Security > scroll down > "Open Anyway".
-          2. FL Studio > Options > Manage plugins > Find more plugins.
-          3. Add "Ghosty" or "Ghosty Beats" from the plugin list.
-
-          The Standalone folder has apps that run without a DAW.
-          TXT
-          sed -i '' 's/^          //' "$O/HOW-TO-INSTALL.txt"
+          cp packaging/HOW-TO-INSTALL-MAC.txt "$O/HOW-TO-INSTALL.txt"
           cd out && ditto -c -k --keepParent "Ghosty for Mac" ../Ghosty-Mac.zip
 
       - name: Upload build

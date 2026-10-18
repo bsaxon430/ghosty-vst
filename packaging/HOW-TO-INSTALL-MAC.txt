@@ -1,0 +1,14 @@
+GHOSTY for Mac  (Ghosty + Ghosty Beats + Ghosty Spectrum - Apple Silicon + Intel)
+
+  1. Double-click "Install Ghosty.command".
+     If macOS says it can't be opened: System Settings > Privacy & Security >
+     scroll down > "Open Anyway" > Open. (Only needed the first time.)
+  2. Rescan in your DAW:
+       FL Studio: Options > Manage plugins > Find more plugins
+       Ableton:   Settings > Plug-Ins > Rescan
+       Logic / GarageBand: just reopen (uses the AU version)
+  3. Load Ghosty, Ghosty Beats or Ghosty Spectrum as an instrument.
+
+NO DAW?
+  The Standalone folder has apps that run on their own
+  (first time: right-click the app > Open).
