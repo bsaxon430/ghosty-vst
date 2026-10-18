@@ -89,6 +89,8 @@ inline juce::AudioProcessorValueTreeState::ParameterLayout createLayout() {
     L.add(std::make_unique<AudioParameterBool>(ParameterID { "smp_track", 1 }, "Sample Key Track", true));
     L.add(std::make_unique<AudioParameterBool>(ParameterID { "smp_loop", 1 }, "Sample Loop", false));
     L.add(std::make_unique<AudioParameterBool>(ParameterID { "smp_rev", 1 }, "Sample Reverse", false));
+    L.add(std::make_unique<AudioParameterBool>(ParameterID { "smp_keep", 1 }, "Keep Tempo", false));
+    L.add(std::make_unique<AudioParameterBool>(ParameterID { "lab_oneshot", 1 }, "Keys One-Shot", true));
     F("smp_start", "Sample Start", { 0.0f, 1.0f }, 0.0f);
     F("smp_len", "Sample Length", { 0.01f, 1.0f }, 1.0f);
     F("smp_pos", "Sample Position", { 0.0f, 1.0f }, 0.0f);
@@ -165,6 +167,7 @@ struct Snap {
     bool seqOn; int seqDiv, seqDest; float seqAmt, seqGlide; int seqSteps; float seq[16];
     float cmbAmt, cmbFb, cmbTune; bool cmbKey; float syncAmt, ottAmt;
     bool scaleOn; int scaleRoot, scaleType, chord; bool arpOn; int arpDiv, arpPat, arpOct; float arpGate;
+    bool smpKeep, labOneShot;
 };
 
 // Reads every parameter as a raw float pointer once, then snapshots quickly on the audio thread.
@@ -188,6 +191,7 @@ struct ParamReader {
                           "bub_tone", "seq_on", "seq_div", "seq_dest", "seq_amt", "seq_glide", "seq_steps", "cmb_amt", "cmb_fb", "cmb_tune", "cmb_key", "sync_amt", "ott_amt",
                           "scale_on", "scale_root", "scale_type", "chord", "arp_on", "arp_div", "arp_pat", "arp_oct", "arp_gate" }) gNames.add(id);
         for (int i = 0; i < 16; ++i) gNames.add("seq_" + juce::String(i + 1));
+        gNames.add("smp_keep"); gNames.add("lab_oneshot");
         for (int i = 0; i < gNames.size(); ++i) g[i] = s.getRawParameterValue(gNames[i]);
     }
     float v(int i) const { return g[i]->load(); }
@@ -211,6 +215,7 @@ struct ParamReader {
         n.seqOn = B(); n.seqDiv = I(); n.seqDest = I(); n.seqAmt = Fv(); n.seqGlide = Fv(); n.seqSteps = I(); n.cmbAmt = Fv(); n.cmbFb = Fv(); n.cmbTune = Fv(); n.cmbKey = B();
         n.syncAmt = Fv(); n.ottAmt = Fv(); n.scaleOn = B(); n.scaleRoot = I(); n.scaleType = I(); n.chord = I(); n.arpOn = B(); n.arpDiv = I(); n.arpPat = I(); n.arpOct = I(); n.arpGate = Fv();
         for (int i = 0; i < 16; ++i) n.seq[i] = Fv();
+        n.smpKeep = B(); n.labOneShot = B();
     }
 };
 

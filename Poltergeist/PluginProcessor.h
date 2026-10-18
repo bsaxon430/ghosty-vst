@@ -6,6 +6,7 @@
 class PoltergeistProcessor : public juce::AudioProcessor {
 public:
     PoltergeistProcessor();
+    ~PoltergeistProcessor() override;
     const juce::String getName() const override { return "Poltergeist"; }
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;
     void releaseResources() override {}
@@ -32,6 +33,21 @@ public:
     bool loadSampleFile(const juce::File& f, juce::String& err);
     bool resampleRecent(double seconds = 4.0);   // the last few seconds of Poltergeist's own output
     void clearSample() { engine.setSample(nullptr); }
+    void setSampleGhost(std::shared_ptr<gs::SampleData> s);   // also starts the keep-tempo copies in the background
+
+    // ---- Sample Lab (message thread)
+    gs::Lab lab;
+    juce::String keyNames[128];
+    int labAddFile(const juce::File& f, juce::String& err);
+    void labMapKey(int note, std::shared_ptr<gs::SampleData> s);
+    void labClearKey(int note);
+    void labClearKeys();
+    void labRenderPreview();                 // bounce the timeline (background) -> preview + drag-out
+    std::shared_ptr<gs::SampleData> labRendered;
+    std::atomic<bool> previewOn { false };
+    juce::File writeTempWav(const gs::SampleData& s, const juce::String& name);
+    std::function<void()> onLabRendered;     // UI refresh hook (called on the message thread)
+    double previewPosUi() const { return previewPos; }
 
     juce::AudioProcessorValueTreeState apvts;
     gs::Engine engine;
@@ -44,6 +60,14 @@ private:
     gs::ParamReader reader;
     gs::Snap snap {};
     gs::MidiFx midiFx;
+    std::vector<std::shared_ptr<gs::SampleData>> keepAlive;      // everything ever given to the audio thread
+    std::vector<std::unique_ptr<gs::KeyMap>> keymaps;             // old maps stay alive for the session
+    std::shared_ptr<gs::SampleData> keySamples[128];
+    void publishKeys();
+    std::atomic<const gs::SampleData*> previewPtr { nullptr }; double previewPos = 0;
+    std::atomic<int> pitchGen { 0 }, renderGen { 0 };
+    std::shared_ptr<std::atomic<bool>> pitchCancel;
+    std::shared_ptr<std::atomic<bool>> aliveFlag = std::make_shared<std::atomic<bool>>(true);
     double bpm = 120, ppq = 0; bool playing = false;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PoltergeistProcessor)
 };

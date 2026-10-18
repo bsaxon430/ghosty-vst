@@ -4,6 +4,7 @@
 // Voices run at 2x the host rate (JUCE oversampling) so hard FM and drive alias less.
 #include "Params.h"
 #include "Sample.h"
+#include "Lab.h"
 #include <juce_dsp/juce_dsp.h>
 #include <array>
 #include <random>
@@ -104,7 +105,9 @@ struct Voice {
     SVF vf[3];
     float bubPhase = 0, bubNote = 0, bubSweep = 0, bubAmp = 0, bubClock = 0, bubPan = 0; double bubStepAt = -1;
     float fph[kMaxUnison] {};
+    const SampleData* key = nullptr; double kpos = 0;   // a Sample Lab key: this voice plays that section only
     bool active() const {
+        if (key) return smpEnv.active();
         for (auto& e : opEnv) if (e.active()) return true;
         return smpEnv.active();
     }
@@ -154,6 +157,7 @@ public:
     }
     double sampleRate() const { return sr; }
     std::atomic<int> seqStepNow { -1 };
+    void setKeyMap(const KeyMap* k) { keymap.store(k); }
     std::atomic<float> smpPlayhead { -1.0f };
 
     // Plays one block. midi events are host-rate sample positions.
@@ -193,6 +197,7 @@ private:
     float crushHold[2]; int crushCount = 0;
     float gateLevel = 1; long gateStep = -1; bool gateOn = true;
     std::shared_ptr<const SampleData> sample;
+    std::atomic<const KeyMap*> keymap { nullptr };
     std::vector<float> ring; std::atomic<int> ringPos { 0 };
     std::vector<float> combBuf[2]; int combPos = 0; float combHz = 220, lastHz = 220;
     float seqVal = 0; double freeClock = 0;
@@ -244,8 +249,20 @@ private:
         for (int i = 0; i < heldCount; ++i) if (heldStack[i] == note) { std::memmove(heldStack + i, heldStack + i + 1, sizeof(int) * (size_t) (heldCount - i - 1)); --heldCount; break; }
         if (heldCount < 128) heldStack[heldCount++] = note;
         const float playNote = (float) (note + 12 * P.octave);
+        const KeyMap* km = keymap.load();
+        if (km && km->keys[note & 127]) {   // a Sample Lab key: play its section at its own pitch and length
+            Voice* pick = nullptr;
+            for (auto& v : voices) if (!v.active()) { pick = &v; break; }
+            if (!pick) { uint64_t best = UINT64_MAX; for (auto& v : voices) if (v.age < best) { best = v.age; pick = &v; } }
+            Voice& v = *pick;
+            for (auto& e : v.opEnv) { e.stage = Env::Idle; e.level = 0; }
+            v.note = note; v.vel = vel; v.held = true; v.age = ++ageCounter; v.key = km->keys[note & 127]; v.kpos = 0;
+            v.smpEnv.set(0.002f, 30.0f, 1.0f, 0.04f, (float) osr); v.smpEnv.trigger(false);
+            return;
+        }
         if (P.mono) {
             Voice& v = voices[0];
+            if (v.key) { v.key = nullptr; v.smpEnv.stage = Env::Idle; }
             const bool legato = v.active() && v.held;
             v.note = note; v.vel = vel; v.held = true; v.age = ++ageCounter;
             v.targetNote = playNote;
@@ -266,6 +283,7 @@ private:
             for (int i = 0; i < limit; ++i) { auto& v = voices[(size_t) i]; uint64_t score = v.age + (v.held ? (1ull << 40) : 0); if (score < best) { best = score; pick = &v; } }
         }
         Voice& v = *pick;
+        v.key = nullptr;
         v.note = note; v.vel = vel; v.held = true; v.age = ++ageCounter;
         v.curNote = v.targetNote = playNote; v.penv = 1;
         setEnvs(v);
@@ -295,7 +313,11 @@ private:
             v.held = false; for (auto& e : v.opEnv) e.release(); v.fEnv.release(); v.smpEnv.release();
             return;
         }
-        for (auto& v : voices) if (v.note == note && v.held) { v.held = false; for (auto& e : v.opEnv) e.release(); v.fEnv.release(); v.smpEnv.release(); }
+        for (auto& v : voices) if (v.note == note && v.held) {
+            v.held = false;
+            if (v.key) { if (!P.labOneShot) v.smpEnv.release(); continue; }   // one-shot keys play to the end
+            for (auto& e : v.opEnv) e.release(); v.fEnv.release(); v.smpEnv.release();
+        }
     }
 
     float vowG[3] { 1, 0.5f, 0.1f };
@@ -348,6 +370,17 @@ private:
                 return out * (float) juce::jmin(1.0, edge / 64.0);
             }
             default: {  // CLASSIC: played back at the key's pitch, optional loop / reverse
+                if (P.smpKeep && S.pitched.size() == 49) {   // KEEP TEMPO: higher keys = higher pitch, same length
+                    const int off = juce::jlimit(-24, 24, (int) std::round((P.smpTrack ? noteNow - 60.0 : 0.0) + P.smpPitch));
+                    const auto& B = S.pitched[(size_t) (off + 24)];
+                    const double end = juce::jmin(a + len, (double) B.size() - 1);
+                    const double inc2 = rb * (P.smpRev ? -1 : 1);
+                    if (v.spos < a || v.spos >= end) { if (!P.smpLoop) return 0.0f; v.spos = P.smpRev ? end - 1 : a; }
+                    const int i0 = (int) v.spos; const float t = (float) (v.spos - i0);
+                    const float out = B[(size_t) i0] + (B[(size_t) juce::jmin(i0 + 1, (int) B.size() - 1)] - B[(size_t) i0]) * t;
+                    v.spos += inc2;
+                    return out;
+                }
                 const double inc = rb * track * pitch * (P.smpRev ? -1 : 1);
                 if (v.spos < a || v.spos >= a + len) {
                     if (!P.smpLoop) return 0.0f;
@@ -459,6 +492,15 @@ private:
 
         for (auto& v : voices) {
             if (!v.active()) continue;
+            if (v.key) {   // Sample Lab key voice
+                const SampleData& K = *v.key; const double inc = K.rate / osr; const float g = 0.45f * (0.4f + 0.6f * v.vel);
+                for (int i = 0; i < on; ++i) {
+                    if (v.kpos >= K.size() - 1) { v.smpEnv.stage = Env::Idle; v.smpEnv.level = 0; break; }
+                    const float x = K.at(v.kpos) * v.smpEnv.next() * g; v.kpos += inc;
+                    L[i] += x; R[i] += x;
+                }
+                continue;
+            }
             const float velAmt[kOps] = {
                 1 - P.op[0].vel * (1 - v.vel), 1 - P.op[1].vel * (1 - v.vel), 1 - P.op[2].vel * (1 - v.vel), 1 - P.op[3].vel * (1 - v.vel) };
             const float keyOct = (v.targetNote - 60.0f) / 12.0f * P.fkey;

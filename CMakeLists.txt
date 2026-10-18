@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.24)
 
 # Mac: one build that runs natively on Apple Silicon and Intel, macOS 11+
 set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "")
@@ -24,6 +24,10 @@ FetchContent_Declare(
   DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 FetchContent_MakeAvailable(JUCE)
+
+# Signalsmith Stretch 1.4.0 (MIT): time-stretch / pitch-shift for Poltergeist's Sample Lab (pulls signalsmith-linear 0.6.4)
+FetchContent_Declare(signalsmith-stretch URL https://github.com/Signalsmith-Audio/signalsmith-stretch/archive/refs/tags/1.4.0.zip DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+FetchContent_MakeAvailable(signalsmith-stretch)
 
 # ---------------- Ghosty (synth) ----------------
 juce_add_plugin(GhostySynth
@@ -127,5 +131,5 @@ target_include_directories(Poltergeist PRIVATE Poltergeist)
 target_compile_definitions(Poltergeist PUBLIC
   JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0 JUCE_DISPLAY_SPLASH_SCREEN=0)
 target_link_libraries(Poltergeist PRIVATE
-  juce::juce_audio_utils juce::juce_dsp
+  juce::juce_audio_utils juce::juce_dsp signalsmith-stretch
   PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)

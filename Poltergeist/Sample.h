@@ -15,6 +15,7 @@ struct SampleData {
     // wavetable: kFrames single-cycle frames of kFrameLen samples cut evenly from the sample
     static constexpr int kFrames = 64, kFrameLen = 2048;
     std::vector<float> frames;
+    std::vector<std::vector<float>> pitched;   // keep-tempo copies, -24..+24 semitones (filled in the background)
 
     int size() const { return (int) data.size(); }
     inline float at(double pos) const {   // linear interpolation, clamped

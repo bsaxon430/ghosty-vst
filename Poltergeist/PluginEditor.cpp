@@ -389,7 +389,201 @@ struct SeqEditor : juce::Component {
     void mouseUp(const juce::MouseEvent&) override { for (int i = 0; i < 16; ++i) if (touched[i]) { touched[i] = false; proc.apvts.getParameter("seq_" + juce::String(i + 1))->endChangeGesture(); } }
 };
 
-struct PoltergeistEditor::Content : juce::Component {
+
+// =========================================================================================================
+// SAMPLE LAB widgets
+static juce::Colour srcColour(int id) { static const juce::Colour C[] = { GREEN, PURPLE, BLUE, juce::Colour(0xfff472b6), juce::Colour(0xfffbbf24), juce::Colour(0xff22d3ee) }; return C[(size_t) (id % 6)]; }
+
+// The source strip: highlight a section (drag), then drag the highlight onto a key, or add it to the timeline.
+struct SourceStrip : juce::Component {
+    explicit SourceStrip(PoltergeistProcessor& p) : proc(p) {}
+    PoltergeistProcessor& proc; double selA = 0, selB = 0; bool dragSel = false; double downSec = 0;
+    std::function<void()> onChange;
+    const gs::SampleData* src() const { auto it = proc.lab.sources.find(proc.lab.current); return it == proc.lab.sources.end() ? nullptr : it->second.get(); }
+    double secAt(float x) const { auto* s = src(); return s ? juce::jlimit(0.0, s->size() / s->rate, (double) x / getWidth() * s->size() / s->rate) : 0.0; }
+    float xAt(double sec) const { auto* s = src(); return s ? (float) (sec / (s->size() / s->rate) * getWidth()) : 0.0f; }
+    void paint(juce::Graphics& g) override {
+        auto r = getLocalBounds().toFloat();
+        g.setColour(CARD2); g.fillRoundedRectangle(r, 12); g.setColour(PURPLE.withAlpha(0.35f)); g.drawRoundedRectangle(r.reduced(0.5f), 12, 1);
+        auto* s = src();
+        if (!s) { g.setColour(GREY); g.setFont(juce::FontOptions(14.0f, juce::Font::bold)); g.drawFittedText("Drop audio files here. Highlight a part, then drag it onto a key below, or ADD it to the timeline.", getLocalBounds().reduced(16), juce::Justification::centred, 2); return; }
+        const int n = s->size(); const float mid = r.getCentreY(), hh = r.getHeight() * 0.42f;
+        if (selB > selA) { g.setColour(GREEN.withAlpha(0.18f)); g.fillRect(juce::Rectangle<float>(xAt(selA), r.getY(), xAt(selB) - xAt(selA), r.getHeight())); }
+        for (int x = 0; x < getWidth(); ++x) {
+            const int a = (int) ((double) x / getWidth() * n), b = juce::jmax(a + 1, (int) ((double) (x + 1) / getWidth() * n));
+            float m = 0; for (int i = a; i < b && i < n; i += juce::jmax(1, (b - a) / 64)) m = juce::jmax(m, std::abs(s->data[(size_t) i]));
+            const double sec = (double) a / s->rate; const bool in = selB > selA && sec >= selA && sec <= selB;
+            g.setColour(in ? GREEN : srcColour(proc.lab.current).withAlpha(0.7f)); g.drawVerticalLine(x, mid - m * hh, mid + m * hh);
+        }
+        g.setColour(INK); g.setFont(juce::FontOptions(11.5f, juce::Font::bold));
+        juce::String t = s->name + "  " + juce::String(n / s->rate, 2) + " s";
+        if (selB > selA) t << "   |   highlight " << juce::String(selA, 2) << " - " << juce::String(selB, 2) << " s  (drag it onto a key)";
+        g.drawText(t, r.reduced(10, 6).removeFromTop(14), juce::Justification::centredLeft);
+    }
+    void mouseDown(const juce::MouseEvent& e) override { downSec = secAt(e.position.x); dragSel = selB > selA && downSec >= selA && downSec <= selB && !e.mods.isShiftDown(); if (!dragSel) { selA = selB = downSec; } }
+    void mouseDrag(const juce::MouseEvent& e) override {
+        if (dragSel) { if (e.getDistanceFromDragStart() > 8) if (auto* c = juce::DragAndDropContainer::findParentDragContainerFor(this)) { c->startDragging("labsel", this); dragSel = false; } return; }
+        const double t = secAt(e.position.x); selA = juce::jmin(downSec, t); selB = juce::jmax(downSec, t); repaint();
+    }
+    void mouseUp(const juce::MouseEvent&) override { if (onChange) onChange(); }
+};
+
+// The keyboard: shows which keys hold Sample Lab sections; drop a highlight onto a key to put it there.
+struct DropKeyboard : juce::MidiKeyboardComponent, juce::DragAndDropTarget {
+    DropKeyboard(PoltergeistProcessor& p, juce::MidiKeyboardState& st) : juce::MidiKeyboardComponent(st, horizontalKeyboard), proc(p) {}
+    PoltergeistProcessor& proc; int hoverNote = -1;
+    std::function<void(int)> onDropNote;
+    void drawWhiteNote(int note, juce::Graphics& g, juce::Rectangle<float> a, bool down, bool over, juce::Colour line, juce::Colour text) override {
+        juce::MidiKeyboardComponent::drawWhiteNote(note, g, a, down, over, line, text);
+        if (proc.keyNames[note].isNotEmpty()) { g.setColour(GREEN.withAlpha(0.55f)); g.fillRect(a.withTrimmedTop(a.getHeight() * 0.55f).reduced(2, 2)); }
+        if (note == hoverNote) { g.setColour(PURPLE.withAlpha(0.6f)); g.fillRect(a); }
+    }
+    void drawBlackNote(int note, juce::Graphics& g, juce::Rectangle<float> a, bool down, bool over, juce::Colour fill) override {
+        juce::MidiKeyboardComponent::drawBlackNote(note, g, a, down, over, fill);
+        if (proc.keyNames[note].isNotEmpty()) { g.setColour(GREEN.withAlpha(0.8f)); g.fillRect(a.withTrimmedTop(a.getHeight() * 0.6f).reduced(2, 1)); }
+        if (note == hoverNote) { g.setColour(PURPLE.withAlpha(0.7f)); g.fillRect(a); }
+    }
+    bool isInterestedInDragSource(const SourceDetails& d) override { return d.description == juce::var("labsel"); }
+    void itemDragMove(const SourceDetails& d) override { const int n = getNoteAndVelocityAtPosition(d.localPosition.toFloat()).note; if (n != hoverNote) { hoverNote = n; repaint(); } }
+    void itemDragExit(const SourceDetails&) override { hoverNote = -1; repaint(); }
+    void itemDropped(const SourceDetails& d) override { const int n = getNoteAndVelocityAtPosition(d.localPosition.toFloat()).note; hoverNote = -1; if (n >= 0 && onDropNote) onDropNote(n); repaint(); }
+};
+
+// The timeline: bars of the host tempo; clips you move, trim, stretch, cut and flex.
+struct Timeline : juce::Component {
+    explicit Timeline(PoltergeistProcessor& p) : proc(p) {}
+    PoltergeistProcessor& proc;
+    enum Tool { Select, Cut, Stretch, Flex } tool = Select;
+    int selected = 0, snapIdx = 4;
+    std::function<void()> onEdit;
+    enum Drag { None, Move, TrimL, TrimR, StrL, StrR, Mark } drag = None;
+    gs::LabClip orig; int markIdx = -1; float downX = 0;
+    gs::Lab& lab() { return proc.lab; }
+    double snapBeats() const { static const double S[] = { 0, 4, 1, 0.5, 0.25, 1.0 / 3.0 }; return S[juce::jlimit(0, 5, snapIdx)]; }
+    double snap(double b) const { const double q = snapBeats(); return q > 0 ? std::round(b / q) * q : b; }
+    juce::Rectangle<float> area() const { return getLocalBounds().toFloat().reduced(6, 18).withTrimmedBottom(-12); }
+    float xOf(double beat) const { auto r = area(); return r.getX() + (float) (beat / proc.lab.beatsTotal()) * r.getWidth(); }
+    double beatOf(float x) const { auto r = area(); return (x - r.getX()) / r.getWidth() * proc.lab.beatsTotal(); }
+    gs::LabClip* hit(float x) { for (auto it = lab().clips.rbegin(); it != lab().clips.rend(); ++it) if (x >= xOf(it->start) && x <= xOf(it->start + it->len)) return &*it; return nullptr; }
+
+    void paint(juce::Graphics& g) override {
+        auto R = getLocalBounds().toFloat();
+        g.setColour(CARD2); g.fillRoundedRectangle(R, 12); g.setColour(PURPLE.withAlpha(0.35f)); g.drawRoundedRectangle(R.reduced(0.5f), 12, 1);
+        auto r = area(); const double B = lab().beatsTotal();
+        for (int b = 0; b <= (int) B; ++b) {
+            const float x = xOf(b); const bool bar = b % 4 == 0;
+            g.setColour(juce::Colours::white.withAlpha(bar ? 0.22f : 0.07f)); g.drawVerticalLine((int) x, R.getY() + 14, R.getBottom() - 4);
+            if (bar && b < (int) B) { g.setColour(GREY); g.setFont(juce::FontOptions(10.5f, juce::Font::bold)); g.drawText(juce::String(b / 4 + 1), (int) x + 4, (int) R.getY() + 2, 30, 12, juce::Justification::centredLeft); }
+        }
+        const double bs = lab().beatSec();
+        for (auto& c : lab().clips) {
+            auto it = lab().sources.find(c.source); if (it == lab().sources.end()) continue;
+            const auto& S = *it->second;
+            auto cr = juce::Rectangle<float>(xOf(c.start), r.getY(), xOf(c.start + c.len) - xOf(c.start), r.getHeight());
+            const auto col = srcColour(c.source);
+            g.setColour(col.withAlpha(0.16f)); g.fillRoundedRectangle(cr, 6);
+            g.setColour(col.withAlpha(0.85f));
+            const float mid = cr.getCentreY(), hh = cr.getHeight() * 0.4f;
+            for (int x = (int) cr.getX(); x < (int) cr.getRight(); ++x) {   // waveform through the flex map
+                const double outSec = (beatOf((float) x) - c.start) * bs, src = lab().outToSrc(c, outSec);
+                const double sec = c.reverse ? c.srcEnd - src : c.srcStart + src;
+                const int i = (int) (sec * S.rate); float m = 0;
+                for (int k = i; k < i + 220 && k < S.size(); k += 4) if (k >= 0) m = juce::jmax(m, std::abs(S.data[(size_t) k]));
+                g.drawVerticalLine(x, mid - m * hh, mid + m * hh);
+            }
+            for (auto& m : c.marks) { const float mx = xOf(c.start + m.out / bs); g.setColour(juce::Colour(0xfffbbf24)); g.fillRect(mx - 1.0f, cr.getY(), 2.0f, cr.getHeight()); g.fillEllipse(mx - 4, cr.getY() - 4, 8, 8); }
+            g.setColour(c.id == selected ? GREEN : col.withAlpha(0.6f)); g.drawRoundedRectangle(cr, 6, c.id == selected ? 2.2f : 1.0f);
+            const double ratio = c.len * bs / c.srcLen();
+            juce::String tag = S.name; if (std::abs(ratio - 1) > 0.01) tag << "  x" << juce::String(ratio, 2); if (c.pitch != 0) tag << "  " << (c.pitch > 0 ? "+" : "") << juce::String(c.pitch, 0) << " st"; if (c.reverse) tag << "  REV";
+            g.setColour(INK); g.setFont(juce::FontOptions(10.5f, juce::Font::bold)); g.drawText(tag, cr.reduced(6, 3).removeFromTop(13), juce::Justification::centredLeft);
+        }
+        if (lab().clips.empty()) { g.setColour(GREY); g.setFont(juce::FontOptions(13.5f)); g.drawFittedText("Highlight part of a sample above and tap ADD. Then move, trim, STRETCH to fit the bars, CUT, FLEX (drop a line, drag it), DUPLICATE. Overlaps crossfade.", getLocalBounds().reduced(30), juce::Justification::centred, 3); }
+        if (proc.previewOn.load() && proc.labRendered) { const float ph = (float) (proc.previewPosUi() / juce::jmax(1, proc.labRendered->size())); g.setColour(INK); g.drawVerticalLine((int) (r.getX() + ph * r.getWidth()), R.getY() + 2, R.getBottom() - 2); }
+    }
+    void mouseDown(const juce::MouseEvent& e) override {
+        downX = e.position.x; drag = None;
+        auto* c = hit(e.position.x);
+        if (!c) { selected = 0; repaint(); return; }
+        selected = c->id; orig = *c;
+        const float l = xOf(c->start), rr = xOf(c->start + c->len); const bool nearL = e.position.x - l < 8, nearR = rr - e.position.x < 8;
+        const double bs = lab().beatSec();
+        if (tool == Cut) {
+            const double split = snap(beatOf(e.position.x));
+            if (split > c->start + 0.05 && split < c->start + c->len - 0.05) {
+                gs::LabClip b = *c; b.id = lab().nextId++;
+                const double outCut = (split - c->start) * bs, srcCut = lab().outToSrc(*c, outCut);
+                std::vector<gs::LabMarker> ma, mb;
+                for (auto& m : c->marks) { if (m.out < outCut) ma.push_back(m); else mb.push_back({ m.src - srcCut, m.out - outCut }); }
+                if (!c->reverse) { b.srcStart = c->srcStart + srcCut; c->srcEnd = c->srcStart + srcCut; }
+                else { b.srcEnd = c->srcEnd - srcCut; c->srcStart = c->srcEnd - srcCut; }
+                b.start = split; b.len = c->start + c->len - split; c->len = split - c->start; c->marks = ma; b.marks = mb;
+                lab().clips.push_back(b); selected = b.id; edited();
+            }
+            return;
+        }
+        if (tool == Flex) {
+            for (size_t i = 0; i < c->marks.size(); ++i) if (std::abs(xOf(c->start + c->marks[i].out / bs) - e.position.x) < 7) { markIdx = (int) i; drag = Mark; return; }
+            const double out = (beatOf(e.position.x) - c->start) * bs; c->marks.push_back({ lab().outToSrc(*c, out), out });
+            markIdx = (int) c->marks.size() - 1; drag = Mark; orig = *c; repaint(); return;
+        }
+        drag = (tool == Stretch) ? (nearL ? StrL : nearR ? StrR : Move) : (nearL ? TrimL : nearR ? TrimR : Move);
+    }
+    void mouseDrag(const juce::MouseEvent& e) override {
+        auto* c = lab().clip(selected); if (!c || drag == None) return;
+        const double d = beatOf(e.position.x) - beatOf(downX), bs = lab().beatSec(), minLen = 0.0625;
+        auto srcDur = [&] { auto it = lab().sources.find(c->source); return it == lab().sources.end() ? 0.0 : it->second->size() / it->second->rate; };
+        const double ratio = orig.srcLen() / (orig.len * bs);   // source seconds per timeline second
+        switch (drag) {
+            case Move: c->start = juce::jmax(0.0, snap(orig.start + d)); break;
+            case TrimR: { double ne = juce::jmax(orig.start + minLen, snap(orig.start + orig.len + d)); double nl = ne - orig.start;
+                          c->srcEnd = juce::jmin(srcDur(), orig.srcStart + nl * bs * ratio); c->len = (c->srcEnd - c->srcStart) / (bs * ratio);
+                          c->marks.clear(); for (auto& m : orig.marks) if (m.out < c->len * bs) c->marks.push_back(m); break; }
+            case TrimL: { double ns = juce::jmin(orig.start + orig.len - minLen, snap(orig.start + d)); double delta = ns - orig.start;
+                          double nsrc = orig.srcStart + delta * bs * ratio; if (nsrc < 0) { delta -= nsrc / (bs * ratio); nsrc = 0; ns = orig.start + delta; }
+                          c->srcStart = nsrc; c->start = ns; c->len = orig.len - delta; c->marks.clear();
+                          for (auto& m : orig.marks) if (m.out > delta * bs) c->marks.push_back({ m.src - delta * bs * ratio, m.out - delta * bs }); break; }
+            case StrR: { double nl = juce::jmax(minLen, snap(orig.start + orig.len + d) - orig.start); const double k = nl / orig.len; c->len = nl;
+                         c->marks = orig.marks; for (auto& m : c->marks) m.out *= k; break; }
+            case StrL: { double ns = juce::jmin(orig.start + orig.len - minLen, snap(orig.start + d)); double nl = orig.start + orig.len - ns; const double k = nl / orig.len;
+                         c->start = ns; c->len = nl; c->marks = orig.marks; for (auto& m : c->marks) m.out *= k; break; }
+            case Mark: { if (markIdx < 0 || markIdx >= (int) c->marks.size()) break;
+                         auto pts = c->marks; std::sort(pts.begin(), pts.end(), [](auto& a, auto& b) { return a.src < b.src; });
+                         const double src = c->marks[(size_t) markIdx].src; double lo = 0.01, hi = c->len * bs - 0.01;
+                         for (auto& m : pts) { if (m.src < src) lo = juce::jmax(lo, m.out + 0.01); if (m.src > src) hi = juce::jmin(hi, m.out - 0.01); }
+                         const double grid = snapBeats() > 0 ? snap(c->start + (beatOf(e.position.x) - c->start)) : beatOf(e.position.x);
+                         c->marks[(size_t) markIdx].out = juce::jlimit(lo, hi, (grid - c->start) * bs); break; }
+            default: break;
+        }
+        repaint();
+    }
+    void mouseUp(const juce::MouseEvent&) override { if (drag != None) edited(); drag = None; }
+    void mouseDoubleClick(const juce::MouseEvent& e) override {   // double-click a flex line to remove it
+        if (tool != Flex) return; auto* c = hit(e.position.x); if (!c) return; const double bs = lab().beatSec();
+        for (size_t i = 0; i < c->marks.size(); ++i) if (std::abs(xOf(c->start + c->marks[i].out / bs) - e.position.x) < 7) { c->marks.erase(c->marks.begin() + (long) i); edited(); return; }
+    }
+    void edited() { repaint(); if (onEdit) onEdit(); }
+};
+
+// Drag the bounced timeline straight out into FL Studio / any DAW.
+struct DragOut : juce::Component {
+    explicit DragOut(PoltergeistProcessor& p) : proc(p) {}
+    PoltergeistProcessor& proc; bool started = false;
+    void paint(juce::Graphics& g) override {
+        auto r = getLocalBounds().toFloat().reduced(1);
+        g.setColour(GREEN.withAlpha(proc.labRendered ? 0.22f : 0.06f)); g.fillRoundedRectangle(r, 8);
+        g.setColour(GREEN.withAlpha(proc.labRendered ? 0.9f : 0.3f)); g.drawRoundedRectangle(r, 8, 1.4f);
+        g.setFont(juce::FontOptions(11.5f, juce::Font::bold)); g.drawText("DRAG OUT", r, juce::Justification::centred);
+    }
+    void mouseDown(const juce::MouseEvent&) override { started = false; }
+    void mouseDrag(const juce::MouseEvent& e) override {
+        if (started || e.getDistanceFromDragStart() < 6 || !proc.labRendered) return;
+        started = true;
+        auto f = proc.writeTempWav(*proc.labRendered, "Poltergeist Lab " + juce::Time::getCurrentTime().formatted("%H%M%S"));
+        juce::DragAndDropContainer::performExternalDragDropOfFiles({ f.getFullPathName() }, false, this);
+    }
+};
+
+struct PoltergeistEditor::Content : juce::Component, juce::DragAndDropContainer {
     PoltergeistEditor& ed; PoltergeistProcessor& proc;
     juce::TextEditor search; juce::TextButton summonBtn { "SUMMON" }, diceBtn { "?" }, prevBtn { "<" }, nextBtn { ">" }, presetBtn;
     juce::OwnedArray<juce::TextButton> chips;
@@ -401,13 +595,13 @@ struct PoltergeistEditor::Content : juce::Component {
     juce::ToggleButton monoBtn { "MONO" }, syncBtn { "SYNC" };
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> fltTypeA, lfoDivA, lfoShapeA;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> monoA, syncA;
-    juce::MidiKeyboardComponent keys;
+    DropKeyboard keys;
     juce::OwnedArray<juce::Label> macroHints;
     juce::Rectangle<int> panelArea, filterArea, pitchArea, driftArea, voiceArea, macroArea;
     // v0.2 pages
     int page = 0;
     juce::OwnedArray<juce::TextButton> pageBtns;
-    std::vector<juce::Component*> pageComps[5];
+    std::vector<juce::Component*> pageComps[6];
     juce::OwnedArray<Knob> smpKnobs, moveKnobs, fxKnobs, playKnobs;
     juce::OwnedArray<juce::ComboBox> combos;
     juce::OwnedArray<juce::ToggleButton> toggles;
@@ -417,10 +611,17 @@ struct PoltergeistEditor::Content : juce::Component {
     juce::TextButton loadBtn { "LOAD SAMPLE" }, resampleBtn { "RESAMPLE LAST 4 s" }, clearBtn { "CLEAR" };
     WaveView wave { proc }; SeqEditor seqEd { proc };
     std::map<juce::String, juce::Component*> byId;
-    std::vector<std::pair<juce::Rectangle<int>, juce::String>> cards[5];
+    std::vector<std::pair<juce::Rectangle<int>, juce::String>> cards[6];
+    SourceStrip strip { proc }; Timeline timeline { proc }; DragOut dragOut { proc };
+    juce::TextButton prevSrc { "<" }, nextSrc { ">" }, addClipBtn { "ADD TO TIMELINE" }, toKbdBtn { "SET AS KEYBOARD SAMPLE" };
+    juce::TextButton toolBtns[4] { juce::TextButton("SELECT"), juce::TextButton("CUT"), juce::TextButton("STRETCH"), juce::TextButton("FLEX") };
+    juce::TextButton dupBtn { "DUPLICATE" }, delBtn { "DELETE" }, revBtn { "REV" }, pDown { "-1" }, pUp { "+1" }, toGhostBtn { "TO GHOST" }, clearKeysBtn { "CLEAR KEYS" };
+    juce::ToggleButton previewBtn { "PREVIEW" };
+    juce::ComboBox snapBox, barsBox;
+    juce::Label srcName, keysInfo, labHint;
 
     Content(PoltergeistEditor& e, PoltergeistProcessor& p)
-        : ed(e), proc(p), scope(p.engine), keys(p.keyboard, juce::MidiKeyboardComponent::horizontalKeyboard) {
+        : ed(e), proc(p), scope(p.engine), keys(p, p.keyboard) {
         search.setTextToShowWhenEmpty("Type a sound... dark trap bell, wobble growl, 808 slide", GREY);
         search.setFont(juce::FontOptions(15.0f));
         search.setIndents(12, 9);
@@ -521,8 +722,8 @@ struct PoltergeistEditor::Content : juce::Component {
     }
 
     void buildPages() {
-        const char* names[] = { "GHOSTS", "SAMPLE", "MOVE", "FX", "PLAY" };
-        for (int i = 0; i < 5; ++i) {
+        const char* names[] = { "GHOSTS", "SAMPLE", "MOVE", "FX", "PLAY", "SAMPLE LAB" };
+        for (int i = 0; i < 6; ++i) {
             auto* b = pageBtns.add(new juce::TextButton(names[i])); b->setClickingTogglesState(false);
             b->onClick = [this, i] { setPage(i); }; addAndMakeVisible(b);
         }
@@ -566,12 +767,92 @@ struct PoltergeistEditor::Content : juce::Component {
         toggle(4, "SCALE LOCK", "scale_on"); combo(4, "scale_root"); combo(4, "scale_type"); combo(4, "chord");
         toggle(4, "ARP", "arp_on"); combo(4, "arp_div"); combo(4, "arp_pat"); knob(playKnobs, 4, "OCTAVES", "arp_oct"); knob(playKnobs, 4, "GATE", "arp_gate");
         help(4, "SCALE LOCK snaps every key you play into the key and scale, so nothing sounds wrong. CHORD makes one finger play a full chord (in key when Scale Lock is on): perfect for pop progressions. ARP plays the notes you hold one at a time in time with FL.");
+        toggle(1, "KEEP TEMPO", "smp_keep");
+        buildLab();
         setPage(0);
     }
 
+    // page 5: SAMPLE LAB
+    void buildLab() {
+        const int pg = 5;
+        for (juce::Component* c : { (juce::Component*) &strip, (juce::Component*) &timeline, (juce::Component*) &dragOut, (juce::Component*) &prevSrc, (juce::Component*) &nextSrc,
+                                    (juce::Component*) &addClipBtn, (juce::Component*) &toKbdBtn, (juce::Component*) &dupBtn, (juce::Component*) &delBtn, (juce::Component*) &revBtn,
+                                    (juce::Component*) &pDown, (juce::Component*) &pUp, (juce::Component*) &toGhostBtn, (juce::Component*) &clearKeysBtn, (juce::Component*) &previewBtn,
+                                    (juce::Component*) &snapBox, (juce::Component*) &barsBox, (juce::Component*) &srcName, (juce::Component*) &keysInfo, (juce::Component*) &labHint }) { addAndMakeVisible(c); pageComps[pg].push_back(c); }
+        for (int i = 0; i < 4; ++i) { addAndMakeVisible(toolBtns[i]); pageComps[pg].push_back(&toolBtns[i]); toolBtns[i].onClick = [this, i] { timeline.tool = (Timeline::Tool) i; refreshTools(); }; }
+        toggle(pg, "ONE-SHOT KEYS", "lab_oneshot");
+        srcName.setFont(juce::FontOptions(12.5f, juce::Font::bold)); srcName.setJustificationType(juce::Justification::centred);
+        labHint.setFont(juce::FontOptions(11.0f)); labHint.setColour(juce::Label::textColourId, GREY); labHint.setText("drag a highlight onto a key below", juce::dontSendNotification); labHint.setJustificationType(juce::Justification::centred);
+        keysInfo.setFont(juce::FontOptions(11.5f)); keysInfo.setColour(juce::Label::textColourId, GREY); keysInfo.setJustificationType(juce::Justification::topLeft); keysInfo.setMinimumHorizontalScale(0.85f);
+        snapBox.addItemList({ "Snap off", "Snap bar", "Snap beat", "Snap 1/8", "Snap 1/16", "Snap 1/8T" }, 1); snapBox.setSelectedItemIndex(4, juce::dontSendNotification);
+        snapBox.onChange = [this] { timeline.snapIdx = snapBox.getSelectedItemIndex(); };
+        barsBox.addItemList({ "1 bar", "2 bars", "4 bars", "8 bars" }, 1);
+        barsBox.onChange = [this] { static const int B[] = { 1, 2, 4, 8 }; proc.lab.bars = B[juce::jmax(0, barsBox.getSelectedItemIndex())]; labEdited(); };
+        prevSrc.onClick = [this] { stepSource(-1); }; nextSrc.onClick = [this] { stepSource(1); };
+        addClipBtn.getProperties().set("accent", true);
+        addClipBtn.onClick = [this] {
+            if (!(strip.selB > strip.selA + 0.02)) { status.setText("Highlight part of the sample first (drag across it).", juce::dontSendNotification); return; }
+            double at = 0; for (auto& c : proc.lab.clips) at = juce::jmax(at, c.start + c.len);
+            if (at >= proc.lab.beatsTotal()) at = 0;
+            timeline.selected = proc.lab.addClip(proc.lab.current, strip.selA, strip.selB, timeline.snap(at)); labEdited();
+        };
+        toKbdBtn.onClick = [this] {
+            auto s = proc.lab.section(proc.lab.current, strip.selA, strip.selB, srcName.getText() + " cut");
+            if (!s) { status.setText("Highlight part of the sample first.", juce::dontSendNotification); return; }
+            proc.setSampleGhost(s);
+            if (auto* p = proc.apvts.getParameter("smp_level"); p && p->getValue() < 0.01f) p->setValueNotifyingHost(0.9f);
+            if (auto* p = proc.apvts.getParameter("smp_mode")) p->setValueNotifyingHost(0.0f);
+            status.setText("That highlight now plays across the keyboard. Turn on KEEP TEMPO (SAMPLE page) to pitch it without speeding up.", juce::dontSendNotification);
+        };
+        dupBtn.onClick = [this] { if (auto* c = proc.lab.clip(timeline.selected)) { auto b = *c; b.id = proc.lab.nextId++; b.start = c->start + c->len; proc.lab.clips.push_back(b); timeline.selected = b.id; labEdited(); } };
+        delBtn.onClick = [this] { auto& v = proc.lab.clips; v.erase(std::remove_if(v.begin(), v.end(), [this](auto& c) { return c.id == timeline.selected; }), v.end()); timeline.selected = 0; labEdited(); };
+        revBtn.onClick = [this] { if (auto* c = proc.lab.clip(timeline.selected)) { c->reverse = !c->reverse; c->marks.clear(); labEdited(); } };
+        pDown.onClick = [this] { if (auto* c = proc.lab.clip(timeline.selected)) { c->pitch = juce::jmax(-24.0f, c->pitch - 1); labEdited(); } };
+        pUp.onClick = [this] { if (auto* c = proc.lab.clip(timeline.selected)) { c->pitch = juce::jmin(24.0f, c->pitch + 1); labEdited(); } };
+        previewBtn.onClick = [this] { proc.previewOn.store(previewBtn.getToggleState()); if (previewBtn.getToggleState()) proc.labRenderPreview(); };
+        toGhostBtn.onClick = [this] {
+            if (!proc.labRendered) { status.setText("Build something on the timeline first.", juce::dontSendNotification); return; }
+            proc.setSampleGhost(std::make_shared<gs::SampleData>(*proc.labRendered));
+            if (auto* p = proc.apvts.getParameter("smp_level"); p && p->getValue() < 0.01f) p->setValueNotifyingHost(0.9f);
+            status.setText("Your Lab loop is now the Sample Ghost (SAMPLE page): slice it, granulate it, play it.", juce::dontSendNotification);
+        };
+        clearKeysBtn.onClick = [this] { proc.labClearKeys(); refreshKeys(); };
+        strip.onChange = [this] { };
+        timeline.onEdit = [this] { labEdited(); };
+        keys.onDropNote = [this](int note) {
+            auto s = proc.lab.section(proc.lab.current, strip.selA, strip.selB, srcName.getText() + " " + juce::String(strip.selA, 2) + "s");
+            if (!s) return;
+            proc.labMapKey(note, s); refreshKeys();
+            status.setText("Put on " + juce::MidiMessage::getMidiNoteName(note, true, true, 3) + ". Load another file and keep building - this key stays.", juce::dontSendNotification);
+        };
+        proc.onLabRendered = [sp = juce::Component::SafePointer<Content>(this)] { if (sp) { sp->dragOut.repaint(); sp->timeline.repaint(); } };
+        refreshTools(); refreshLab();
+    }
+    void refreshTools() { for (int i = 0; i < 4; ++i) toolBtns[i].setToggleState((int) timeline.tool == i, juce::dontSendNotification); }
+    void stepSource(int d) {
+        auto& S = proc.lab.sources; if (S.empty()) return;
+        std::vector<int> ids; for (auto& [id, s] : S) ids.push_back(id);
+        auto it = std::find(ids.begin(), ids.end(), proc.lab.current); int i = it == ids.end() ? 0 : (int) (it - ids.begin());
+        proc.lab.current = ids[(size_t) ((i + d + (int) ids.size()) % (int) ids.size())]; strip.selA = strip.selB = 0; refreshLab();
+    }
+    void refreshLab() {
+        auto it = proc.lab.sources.find(proc.lab.current);
+        srcName.setText(it == proc.lab.sources.end() ? "no sample yet" : it->second->name + "  (" + juce::String(std::distance(proc.lab.sources.begin(), it) + 1) + "/" + juce::String(proc.lab.sources.size()) + ")", juce::dontSendNotification);
+        static const int B[] = { 1, 2, 4, 8 }; for (int i = 0; i < 4; ++i) if (B[i] == proc.lab.bars) barsBox.setSelectedItemIndex(i, juce::dontSendNotification);
+        refreshKeys(); strip.repaint(); timeline.repaint();
+    }
+    void refreshKeys() {
+        juce::String t; int n = 0;
+        for (int i = 0; i < 128; ++i) if (proc.keyNames[i].isNotEmpty()) { if (n++) t << "   "; t << juce::MidiMessage::getMidiNoteName(i, true, true, 3) << " = " << proc.keyNames[i]; }
+        keysInfo.setText(n ? "KEYS: " + t : "KEYS: none yet. Highlight part of a sample and drag it onto a key on the keyboard below.", juce::dontSendNotification);
+        keys.repaint();
+    }
+    void labEdited() { timeline.repaint(); proc.labRenderPreview(); }
+
     void setPage(int pg) {
         page = pg;
-        for (int i = 0; i < 5; ++i) { pageBtns[i]->setToggleState(i == pg, juce::dontSendNotification); for (auto* c : pageComps[i]) c->setVisible(i == pg); }
+        for (int i = 0; i < 6; ++i) { pageBtns[i]->setToggleState(i == pg, juce::dontSendNotification); for (auto* c : pageComps[i]) c->setVisible(i == pg); }
+        if (pg == 5) refreshLab();
         repaint();
     }
     std::unique_ptr<juce::FileChooser> chooser;
@@ -618,7 +899,7 @@ struct PoltergeistEditor::Content : juce::Component {
             const int w = (int) juce::GlyphArrangement::getStringWidth(juce::FontOptions(12.0f, juce::Font::bold), b->getButtonText()) + 14;
             b->setBounds(x, cy, w, 26); x += w + 3;
         }
-        for (int i = 0; i < 5; ++i) pageBtns[i]->setBounds(18 + i * 104, 98, 98, 28);
+        for (int i = 0; i < 6; ++i) pageBtns[i]->setBounds(18 + i * 104, 98, i == 5 ? 118 : 98, 28);
         field->setBounds(18, 134, 540, 310);
         panelArea = { 570, 134, 452, 310 };
         panelTitle.setBounds(panelArea.getX() + 16, panelArea.getY() + 10, 220, 26);
@@ -657,7 +938,7 @@ struct PoltergeistEditor::Content : juce::Component {
         wave.setBounds(18, 134, 700, 196);
         loadBtn.setBounds(730, 134, 292, 40); resampleBtn.setBounds(730, 180, 292, 34); clearBtn.setBounds(730, 220, 92, 30);
         put("smp_mode", 830, 220, 110, 30); put("smp_slices", 946, 220, 76, 30);
-        put("smp_track", 730, 258, 104, 30); put("smp_loop", 840, 258, 80, 30); put("smp_rev", 926, 258, 96, 30);
+        put("smp_track", 730, 258, 104, 30); put("smp_loop", 840, 258, 80, 30); put("smp_rev", 926, 258, 96, 30); put("smp_keep", 730, 296, 292, 30);
         cards[1].push_back({ { 18, 338, 1004, 240 }, "SOUND" });
         for (int i = 0; i < 10; ++i) smpKnobs[i]->setBounds(26 + i * 99, 356, 92, 96);
         for (int i = 10; i < 14; ++i) smpKnobs[i]->setBounds(26 + (i - 10) * 99, 462, 92, 96);
@@ -684,6 +965,17 @@ struct PoltergeistEditor::Content : juce::Component {
         put("arp_on", 32, 380, 100, 34); put("arp_div", 142, 380, 100, 34); put("arp_pat", 252, 380, 150, 34);
         playKnobs[0]->setBounds(420, 366, 96, 104); playKnobs[1]->setBounds(522, 366, 96, 104);
         helps[5]->setBounds(32, 480, 976, 90);
+        // SAMPLE LAB
+        strip.setBounds(18, 134, 760, 104);
+        srcName.setBounds(786, 134, 236, 20); prevSrc.setBounds(786, 158, 34, 28); addClipBtn.setBounds(824, 158, 160, 28); nextSrc.setBounds(988, 158, 34, 28);
+        toKbdBtn.setBounds(786, 190, 236, 24); labHint.setBounds(0, 0, 0, 0);
+        previewBtn.setBounds(786, 216, 78, 24); toGhostBtn.setBounds(868, 216, 74, 24); dragOut.setBounds(946, 216, 76, 24);
+        int tx = 18; auto tb = [&](juce::Component& c, int w) { c.setBounds(tx, 246, w, 30); tx += w + 4; };
+        for (int i = 0; i < 4; ++i) tb(toolBtns[i], i == 2 ? 82 : 66);
+        tx += 8; tb(dupBtn, 92); tb(delBtn, 70); tb(revBtn, 48); tb(pDown, 38); tb(pUp, 38);
+        tx += 8; tb(snapBox, 120); tb(barsBox, 96);
+        timeline.setBounds(18, 284, 1004, 240);
+        keysInfo.setBounds(18, 530, 680, 46); clearKeysBtn.setBounds(706, 536, 110, 30); put("lab_oneshot", 822, 536, 200, 30);
     }
 };
 
