@@ -1,6 +1,7 @@
 #pragma once
 #include "Engine.h"
 #include "Summon.h"
+#include "MidiFx.h"
 
 class PoltergeistProcessor : public juce::AudioProcessor {
 public:
@@ -27,6 +28,10 @@ public:
     void applyPatch(const gs::Patch& p);
     juce::String summon(const juce::String& words);   // returns what it made
     void loadPreset(int i);
+    // Sample Ghost
+    bool loadSampleFile(const juce::File& f, juce::String& err);
+    bool resampleRecent(double seconds = 4.0);   // the last few seconds of Poltergeist's own output
+    void clearSample() { engine.setSample(nullptr); }
 
     juce::AudioProcessorValueTreeState apvts;
     gs::Engine engine;
@@ -38,5 +43,7 @@ public:
 private:
     gs::ParamReader reader;
     gs::Snap snap {};
+    gs::MidiFx midiFx;
+    double bpm = 120, ppq = 0; bool playing = false;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PoltergeistProcessor)
 };

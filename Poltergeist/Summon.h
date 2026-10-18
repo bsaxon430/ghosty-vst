@@ -18,7 +18,7 @@ struct Recipe {
 class Summoner {
 public:
     static juce::StringArray categories() {
-        return { "808", "bass", "growl", "wobble", "reese", "bell", "pluck", "keys", "pad", "lead", "brass", "choir", "riser", "arp", "sub" };
+        return { "808", "bass", "growl", "wobble", "reese", "bell", "pluck", "keys", "pad", "lead", "brass", "choir", "riser", "arp", "sub", "chop", "granular", "wavetable" };
     }
 
     // Everything at its default, then the recipe on top.
@@ -105,6 +105,20 @@ public:
             op(1, "ratio", R(1.0f, 7.0f)); op(1, "fb", R(0.6f, 1.0f)); env(1, R(3.0f, 6.0f), 2.0f, 1.0f, 1.5f); mod(1, 0, R(0.5f, 0.8f));
             p["flt_cut"] = 300; p["flt_env"] = 0.8f; p["flt_a"] = R(3.0f, 6.0f); p["flt_s"] = 1.0f; p["flt_res"] = 0.4f;
             p["lfo_sync"] = 1; p["lfo_div"] = 7; macro(1, 0.7f); macro(3, R(0.2f, 0.5f)); macro(4, 0.7f);
+        } else if (cat == "chop") {   // vocal chops: the Sample Ghost sliced across the keys
+            p["smp_mode"] = 3; p["smp_level"] = 0.9f; p["smp_slices"] = 2; p["smp_a"] = 0.002f; p["smp_d"] = 0.6f; p["smp_s"] = 0.8f; p["smp_r"] = 0.08f;
+            op(0, "ratio", 1); op(0, "level", 0.2f); env(0, 0.001f, 0.3f, 0.0f, 0.1f);
+            macro(4, R(0.2f, 0.35f));
+        } else if (cat == "granular") {   // smeared, shimmering clouds made from the sample
+            p["smp_mode"] = 1; p["smp_level"] = 0.85f; p["smp_dens"] = R(25, 60); p["smp_grain"] = R(0.06f, 0.2f); p["smp_spray"] = R(0.3f, 0.7f);
+            p["smp_pos"] = R(0.2f, 0.7f); p["smp_scan"] = R(0.2f, 0.5f); p["smp_a"] = R(0.2f, 1.0f); p["smp_r"] = R(1.0f, 2.5f); p["lfo_rate"] = R(0.1f, 0.4f);
+            op(0, "ratio", 1); op(0, "level", 0.15f); env(0, 0.5f, 2.0f, 0.7f, 1.5f);
+            macro(1, R(0.3f, 0.6f)); macro(4, R(0.45f, 0.75f));
+        } else if (cat == "wavetable") {   // the sample turned into a growling wavetable
+            p["smp_mode"] = 2; p["smp_level"] = 0.85f; p["smp_pos"] = R(0.1f, 0.6f); p["smp_scan"] = R(0.4f, 0.9f);
+            p["lfo_sync"] = 1; p["lfo_div"] = (float) pick({ 4, 3, 7 }); p["mono"] = 1; p["octave"] = -1;
+            op(0, "ratio", 0.5f); op(0, "level", 0.35f); env(0, 0.003f, 1.0f, 1.0f, 0.1f);
+            macro(2, R(0.35f, 0.65f)); macro(4, 0.05f);
         } else if (cat == "arp") {
             op(0, "ratio", 1); op(0, "level", 0.8f); op(0, "wave", R(0.8f, 2.2f)); env(0, 0.001f, R(0.15f, 0.35f), 0.0f, 0.15f);
             op(1, "ratio", pick({ 2.0f, 3.0f, 1.0f })); env(1, 0.001f, 0.12f, 0.1f, 0.1f); mod(1, 0, R(0.3f, 0.55f));
@@ -137,11 +151,38 @@ public:
         if (has({ "low", "sub" }) && cat != "808" && cat != "sub") p["octave"] = juce::jmax(-2.0f, p["octave"] - 1);
         if (has({ "high" })) p["octave"] = juce::jmin(2.0f, p["octave"] + 1);
 
+        // ---- v0.2 words
+        auto seqPattern = [&](int kind) {   // 0 gate stutter, 1 bouncy, 2 tearout chop
+            static const float PAT[3][16] = { { 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0 }, { 1, .3f, .7f, .3f, 1, .2f, .8f, .5f, 1, .3f, .6f, .9f, 1, .2f, .7f, .4f },
+                                              { 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1 } };
+            for (int i = 0; i < 16; ++i) p["seq_" + juce::String(i + 1)] = (rng() % 5 == 0) ? 1.0f - PAT[kind][i] : PAT[kind][i];
+            p["seq_on"] = 1; p["seq_steps"] = 16;
+        };
+        if (has({ "yoi", "yoy", "talking", "talk", "wow", "vowel", "speak", "speaking" })) {
+            p["vow_amt"] = R(0.75f, 0.95f); p["vow_mod"] = R(0.7f, 1.0f); p["vow_res"] = R(0.55f, 0.8f);
+            p["lfo_sync"] = 1; p["lfo_div"] = (float) pick({ 4, 3, 7, 2 }); p["lfo_shape"] = (float) pick({ 0, 1, 2 }); addM(3, 0.2f);
+        }
+        if (has({ "bubbly", "bubble", "bubbles", "bubbling", "poppy", "pops", "blips" })) { p["bub_amt"] = R(0.45f, 0.7f); p["bub_div"] = (float) pick({ 7, 8, 5 }); p["bub_pitch"] = R(16, 32); p["bub_tone"] = R(0.2f, 0.7f); }
+        if (has({ "tearout", "tear", "ripping", "riddim" })) { p["cmb_amt"] = R(0.3f, 0.55f); p["ott_amt"] = R(0.5f, 0.8f); addM(2, 0.25f); seqPattern(2); p["seq_dest"] = 0; p["seq_div"] = 7; }
+        if (has({ "gated", "stutter", "stuttered", "chopped", "trance" })) { seqPattern(0); p["seq_dest"] = 0; p["seq_div"] = (float) pick({ 7, 8 }); p["seq_glide"] = 0.05f; }
+        if (has({ "bouncy", "rhythmic", "pumping", "pump" })) { seqPattern(1); p["seq_dest"] = 1; p["seq_div"] = 7; p["seq_amt"] = R(0.5f, 0.8f); }
+        if (has({ "sync", "synced", "screech", "screechy", "laser" })) p["sync_amt"] = R(0.45f, 0.8f);
+        if (has({ "ott", "loud", "squashed", "smashed", "huge" })) p["ott_amt"] = R(0.55f, 0.85f);
+        if (has({ "comb", "combed", "tearing", "metalic" })) p["cmb_amt"] = R(0.4f, 0.65f);
+        if (has({ "metallic", "metal", "chains", "iron", "clang" })) p["cmb_amt"] = juce::jmax(p["cmb_amt"], R(0.2f, 0.35f));
+        if (has({ "chord", "chords", "stab", "stabs" })) { p["chord"] = (float) pick({ 2, 3, 4 }); p["scale_on"] = 1; p["scale_type"] = (float) pick({ 1, 0, 3 }); }
+        if (has({ "arp", "arps", "arpeggio", "arpeggiated" })) { p["arp_on"] = 1; p["arp_div"] = (float) pick({ 7, 4, 8 }); p["arp_pat"] = (float) pick({ 0, 2, 3 }); p["arp_oct"] = (float) pick({ 1, 2 }); }
+        if (has({ "minor", "sad" })) { p["scale_on"] = 1; p["scale_type"] = 1; }
+        if (has({ "major", "happy" })) { p["scale_on"] = 1; p["scale_type"] = 0; }
+
         // loudness balance per sound type (measured with ghost_render, aiming at about the same peak)
         static const std::map<juce::String, float> level { { "808", -1.0f }, { "sub", -1.0f }, { "bass", -7.0f }, { "growl", -6.0f }, { "wobble", -7.0f },
             { "reese", -6.0f }, { "bell", -5.0f }, { "pluck", 0.0f }, { "keys", -10.0f }, { "pad", -7.0f }, { "choir", -1.0f }, { "lead", -7.0f },
-            { "brass", -10.0f }, { "riser", 2.0f }, { "arp", 0.0f } };
+            { "brass", -10.0f }, { "riser", 2.0f }, { "arp", 2.0f }, { "chop", -2.0f }, { "granular", 1.0f }, { "wavetable", -5.0f } };
         p["master"] = level.count(cat) ? level.at(cat) : -6.0f;
+        if (p["chord"] > 0.5f) p["master"] -= 4.0f;        // several notes at once
+        if (p["arp_on"] > 0.5f) p["master"] += 2.0f;       // one short note at a time
+        if (p["bub_amt"] > 0.01f) p["master"] -= 1.5f;
         for (auto& kv : p) if (kv.first == "flt_cut") kv.second = juce::jlimit(40.0f, 20000.0f, kv.second);
         if (describedAs) *describedAs = cat;
         return p;
@@ -198,6 +239,9 @@ public:
             { "lead", { "lead", "leads", "solo", "synthlead", "melody", "pop" } },
             { "brass", { "brass", "horn", "horns", "trumpet", "stab" } },
             { "riser", { "riser", "rise", "sweep", "fx", "uplifter", "transition", "whoosh" } },
+            { "chop", { "chop", "chops", "slice", "slices", "vocalchop" } },
+            { "granular", { "granular", "grain", "grains", "cloud", "shimmer" } },
+            { "wavetable", { "wavetable", "table", "resampled" } },
             { "arp", { "arp", "arps", "sequence", "seq", "arpeggio" } },
             { "bass", { "bass", "basses", "bassline", "low" } },
         };
@@ -224,6 +268,9 @@ inline const std::vector<FactoryPreset>& factoryPresets() {
         { "Riser from the Grave", "riser", 16 }, { "Lofi Ouija", "keys lofi dusty", 18 }, { "Glitch Poltergeist", "arp glitch", 19 },
         { "Metal Chains", "bell metallic dark", 20 }, { "Neon Arp", "arp bright", 22 }, { "R&B Velvet", "rnb keys soft", 24 },
         { "Pop Lead Halo", "pop lead bright", 25 }, { "Cursed Bass", "bass glitch dirty", 26 },
+        { "Yoi Banshee", "yoi growl", 27 }, { "Talking Wraith", "talking wobble dirty", 28 }, { "Bubble Pop", "bubbly pluck", 29 }, { "Bubbling Cauldron", "bubbles bass", 30 },
+        { "Tearout Reaper", "tearout growl", 31 }, { "Gated Ghost", "gated pad wide", 32 }, { "Sync Screech", "screech lead", 33 }, { "OTT Phantom", "ott growl", 34 },
+        { "Comb Specter", "comb bass", 35 }, { "Pop Chord Halo", "chord keys bright", 36 }, { "Ghost Arp", "arp pluck bright", 37 }, { "Minor Chord Crypt", "minor chord pad", 38 },
     };
     return v;
 }

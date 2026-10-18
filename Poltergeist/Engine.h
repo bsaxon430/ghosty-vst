@@ -3,6 +3,7 @@
 // filter, pitch envelope, glide, a tempo-syncable "drift" LFO, and the macro-driven effects chain.
 // Voices run at 2x the host rate (JUCE oversampling) so hard FM and drive alias less.
 #include "Params.h"
+#include "Sample.h"
 #include <juce_dsp/juce_dsp.h>
 #include <array>
 #include <random>
@@ -97,9 +98,15 @@ struct Voice {
     float phase[kMaxUnison][kOps] {}, prev[kMaxUnison][kOps] {}, prev2[kMaxUnison][kOps] {};
     SVF filt;
     float outMeter[kOps] {};
+    // v0.2: sample ghost, talking filter, bubbles, hard sync
+    Env smpEnv; double spos = 0; int slice = 0; float wtPhase = 0, grainClock = 0;
+    struct Grain { double pos = 0, inc = 1; int age = 0, len = 0; float pan = 0; bool on = false; } grains[16];
+    SVF vf[3];
+    float bubPhase = 0, bubNote = 0, bubSweep = 0, bubAmp = 0, bubClock = 0, bubPan = 0; double bubStepAt = -1;
+    float fph[kMaxUnison] {};
     bool active() const {
         for (auto& e : opEnv) if (e.active()) return true;
-        return false;
+        return smpEnv.active();
     }
 };
 
@@ -119,11 +126,35 @@ public:
         dcX[0] = dcX[1] = dcY[0] = dcY[1] = 0;
         crushHold[0] = crushHold[1] = 0; crushCount = 0;
         gateLevel = 1; gateStep = -1;
+        ring.assign((size_t) (hostRate * 8.0), 0.0f); ringPos = 0;
+        for (auto& c : combBuf) c.assign((size_t) (hostRate / 20.0) + 4, 0.0f);
+        combPos = 0; combHz = 220; seqVal = 0; freeClock = 0;
+        juce::dsp::ProcessSpec mono { hostRate, (juce::uint32) maxBlock, 2 };
+        for (auto& x : xLow) { x.prepare(mono); x.setCutoffFrequency(120.0f); }
+        for (auto& x : xHigh) { x.prepare(mono); x.setCutoffFrequency(2500.0f); }
+        xLow[0].setType(juce::dsp::LinkwitzRileyFilterType::lowpass); xLow[1].setType(juce::dsp::LinkwitzRileyFilterType::highpass);
+        xHigh[0].setType(juce::dsp::LinkwitzRileyFilterType::lowpass); xHigh[1].setType(juce::dsp::LinkwitzRileyFilterType::highpass);
+        for (auto& e : ottEnv) e = 0;
+        bands.setSize(6, maxBlock);
     }
     int latency() const { return os ? (int) os->getLatencyInSamples() : 0; }
     void setBpm(double b) { if (b > 20 && b < 400) bpm = b; }
     void setPpq(double p, bool playing) { ppq = p; hostPlaying = playing; }
     void setModWheel(float m) { modWheel = m; }
+    // Sample Ghost: swapped in from the message thread
+    void setSample(std::shared_ptr<const SampleData> s) { std::atomic_store(&sample, std::move(s)); }
+    std::shared_ptr<const SampleData> getSample() const { return std::atomic_load(&sample); }
+    // Resample: the last few seconds of output (mono), copied on the message thread
+    std::vector<float> recent(double seconds) const {
+        const int N = (int) ring.size(); if (!N) return {};
+        const int n = juce::jmin(N, (int) (seconds * sr)); std::vector<float> out((size_t) n);
+        const int end = ringPos.load();
+        for (int i = 0; i < n; ++i) out[(size_t) i] = ring[(size_t) ((end - n + i + N) % N)];
+        return out;
+    }
+    double sampleRate() const { return sr; }
+    std::atomic<int> seqStepNow { -1 };
+    std::atomic<float> smpPlayhead { -1.0f };
 
     // Plays one block. midi events are host-rate sample positions.
     void process(juce::AudioBuffer<float>& out, const juce::MidiBuffer& midi, const Snap& p) {
@@ -161,6 +192,12 @@ private:
     float dcX[2], dcY[2];
     float crushHold[2]; int crushCount = 0;
     float gateLevel = 1; long gateStep = -1; bool gateOn = true;
+    std::shared_ptr<const SampleData> sample;
+    std::vector<float> ring; std::atomic<int> ringPos { 0 };
+    std::vector<float> combBuf[2]; int combPos = 0; float combHz = 220, lastHz = 220;
+    float seqVal = 0; double freeClock = 0;
+    juce::dsp::LinkwitzRileyFilter<float> xLow[2], xHigh[2];
+    float ottEnv[3] {}; juce::AudioBuffer<float> bands;
 
     // ---- macro helpers ----
     float haunt() const { return juce::jlimit(0.0f, 1.0f, P.macro[0] + modWheel * 0.6f); }
@@ -175,12 +212,31 @@ private:
         else if (m.isNoteOff()) noteOff(m.getNoteNumber());
         else if (m.isPitchWheel()) bendSemis = (float) ((m.getPitchWheelValue() - 8192) / 8192.0) * P.bend;
         else if (m.isController() && m.getControllerNumber() == 1) modWheel = m.getControllerValue() / 127.0f;
-        else if (m.isAllNotesOff() || m.isAllSoundOff()) { for (auto& v : voices) { for (auto& e : v.opEnv) e.release(); v.fEnv.release(); v.held = false; } heldCount = 0; }
+        else if (m.isAllNotesOff() || m.isAllSoundOff()) { for (auto& v : voices) { for (auto& e : v.opEnv) e.release(); v.fEnv.release(); v.smpEnv.release(); v.held = false; } heldCount = 0; }
     }
 
     void setEnvs(Voice& v) {
         for (int o = 0; o < kOps; ++o) v.opEnv[o].set(P.op[o].a, P.op[o].d, P.op[o].s, P.op[o].r, (float) osr);
         v.fEnv.set(P.fa, P.fd, P.fs, P.fr, (float) osr);
+        v.smpEnv.set(P.smpA, P.smpD, P.smpS, P.smpR, (float) osr);
+    }
+    // start the sample ghost, bubbles and sync for a (re)triggered note
+    void startExtras(Voice& v, int note, bool legato) {
+        lastHz = 440.0f * std::exp2((note + 12 * P.octave - 69.0f) / 12.0f);
+        if (legato) return;
+        auto smp = std::atomic_load(&sample);
+        if (smp && smp->size() > 0) {
+            const int n = smp->size();
+            v.slice = ((note - 36) % P.smpSlices + P.smpSlices) % P.smpSlices;
+            const double a = P.smpStart * n, len = juce::jmax(64.0, P.smpLen * (n - a));
+            v.spos = P.smpMode == 3 ? (double) v.slice / P.smpSlices * n : (P.smpRev ? a + len - 1 : a);
+        }
+        for (auto& g : v.grains) g.on = false;
+        v.grainClock = 0; v.wtPhase = 0;
+        if (P.smpLevel > 0.001f || P.smpFm > 0.001f) v.smpEnv.trigger(false);
+        v.bubStepAt = -1; v.bubAmp = 0; v.bubClock = 0;
+        for (auto& f : v.fph) f = 0;
+        for (auto& f : v.vf) f.reset();
     }
 
     void noteOn(int note, float vel) {
@@ -198,6 +254,7 @@ private:
             for (auto& e : v.opEnv) e.trigger(legato);
             v.fEnv.trigger(legato);
             if (!legato) { v.penv = 1; resetPhases(v); v.filt.reset(); }
+            startExtras(v, note, legato);
             return;
         }
         const int limit = juce::jlimit(1, kMaxVoices, P.voices);
@@ -215,6 +272,7 @@ private:
         for (auto& e : v.opEnv) e.trigger(false);
         v.fEnv.trigger(false);
         resetPhases(v); v.filt.reset();
+        startExtras(v, note, false);
     }
 
     void resetPhases(Voice& v) {
@@ -234,10 +292,72 @@ private:
                 if (P.glide < 0.001f) v.curNote = v.targetNote;
                 return;
             }
-            v.held = false; for (auto& e : v.opEnv) e.release(); v.fEnv.release();
+            v.held = false; for (auto& e : v.opEnv) e.release(); v.fEnv.release(); v.smpEnv.release();
             return;
         }
-        for (auto& v : voices) if (v.note == note && v.held) { v.held = false; for (auto& e : v.opEnv) e.release(); v.fEnv.release(); }
+        for (auto& v : voices) if (v.note == note && v.held) { v.held = false; for (auto& e : v.opEnv) e.release(); v.fEnv.release(); v.smpEnv.release(); }
+    }
+
+    float vowG[3] { 1, 0.5f, 0.1f };
+
+    // one sample of the Sample Ghost for voice v (classic / granular / wavetable / slice)
+    float sampleTick(Voice& v, const SampleData& S, float noteNow, float scanOff) {
+        const int n = S.size();
+        const double rb = S.rate / osr;
+        const double track = P.smpTrack ? std::exp2((noteNow - 60.0) / 12.0) : 1.0;
+        const double pitch = std::exp2(P.smpPitch / 12.0);
+        const double a = juce::jlimit(0.0, (double) n - 64, (double) P.smpStart * n);
+        const double len = juce::jmax(64.0, (double) P.smpLen * (n - a));
+        switch (P.smpMode) {
+            case 1: {   // GRANULAR: overlapping windowed grains around the position, sprayed
+                std::uniform_real_distribution<float> u(-1.0f, 1.0f);
+                v.grainClock += P.smpDens / (float) osr;
+                if (v.grainClock >= 1) {
+                    v.grainClock -= 1;
+                    for (auto& g : v.grains) if (!g.on) {
+                        const double centre = a + juce::jlimit(0.0, 1.0, (double) P.smpPos + scanOff) * len;
+                        g.pos = juce::jlimit(a, a + len - 1, centre + u(rng) * P.smpSpray * len * 0.25);
+                        g.inc = rb * track * pitch * (P.smpRev ? -1 : 1);
+                        g.len = juce::jmax(32, (int) (P.smpGrain * osr)); g.age = 0; g.on = true; break;
+                    }
+                }
+                float out = 0;
+                for (auto& g : v.grains) if (g.on) {
+                    const float w = 0.5f - 0.5f * sineTable()((float) g.age / g.len + 0.25f);   // Hann window
+                    out += S.at(g.pos) * w;
+                    g.pos += g.inc; if (++g.age >= g.len || g.pos < 0 || g.pos >= n - 1) g.on = false;
+                }
+                return out / std::sqrt(juce::jmax(1.0f, P.smpDens * P.smpGrain));
+            }
+            case 2: {   // WAVETABLE: the sample cut into 64 single cycles, scanned by POSITION (+ drift)
+                const float fpos = juce::jlimit(0.0f, 1.0f, P.smpPos + scanOff) * (SampleData::kFrames - 1);
+                const int f0 = (int) fpos; const float t = fpos - (float) f0;
+                v.wtPhase += (float) (440.0 * std::exp2((noteNow - 69.0) / 12.0) * pitch / osr);
+                if (v.wtPhase >= 1) v.wtPhase -= std::floor(v.wtPhase);
+                v.spos = (a + fpos / (SampleData::kFrames - 1) * len);
+                const float x0 = S.frame(f0, v.wtPhase), x1 = S.frame(juce::jmin(f0 + 1, SampleData::kFrames - 1), v.wtPhase);
+                return (x0 + (x1 - x0) * t) * 0.8f;
+            }
+            case 3: {   // SLICE: chopped across the keys, each key plays its slice
+                const double sl = (double) n / P.smpSlices, s0 = v.slice * sl;
+                const double inc = rb * pitch * (P.smpRev ? -1 : 1);
+                if (v.spos < s0 || v.spos >= s0 + sl) return 0.0f;
+                const float out = S.at(v.spos);
+                v.spos += inc;
+                const double edge = juce::jmin(v.spos - s0, s0 + sl - v.spos);   // tiny fades at the slice edges
+                return out * (float) juce::jmin(1.0, edge / 64.0);
+            }
+            default: {  // CLASSIC: played back at the key's pitch, optional loop / reverse
+                const double inc = rb * track * pitch * (P.smpRev ? -1 : 1);
+                if (v.spos < a || v.spos >= a + len) {
+                    if (!P.smpLoop) return 0.0f;
+                    v.spos = P.smpRev ? a + len - 1 : a;
+                }
+                const float out = S.at(v.spos);
+                v.spos += inc;
+                return out;
+            }
+        }
     }
 
     float lfoTick(int count) {
@@ -300,6 +420,43 @@ private:
         }
         float meterAcc[kOps] {};
 
+        // RHYTHM sequencer: one value per step, synced to the host beat (or free-running when stopped)
+        const float seqPrev = seqVal;
+        float fltOff = 0, vowOff = 0, pitchOff = 0, gateA = 1, gateB = 1;
+        if (P.seqOn) {
+            const double stepBeats = lfoDivBeats(P.seqDiv);
+            const long step = hostPlaying ? (long) std::floor(ppq / stepBeats) : (long) std::floor(freeClock / (stepBeats * 60.0 / bpm * sr));
+            const int idx = (int) (((step % P.seqSteps) + P.seqSteps) % P.seqSteps);
+            seqStepNow.store(idx);
+            const float target = P.seq[idx];
+            const float k = P.seqGlide < 0.01f ? 1.0f : 1.0f - std::exp(-(float) count / (P.seqGlide * 0.12f * (float) sr));
+            seqVal += (target - seqVal) * k;
+            const float a = P.seqAmt;
+            switch (P.seqDest) {
+                case 0: gateA = 1 - a + a * seqPrev; gateB = 1 - a + a * seqVal; break;
+                case 1: fltOff = (seqVal - 0.5f) * a * 8.0f; break;
+                case 2: for (int o = 0; o < kOps; ++o) for (int t = 0; t < kOps; ++t) mIdx[o][t] *= (1 - a + a * seqVal * 1.8f); break;
+                case 3: vowOff = (seqVal - 0.5f) * a; break;
+                default: pitchOff = std::round((seqVal - 0.5f) * a * 24.0f); break;
+            }
+        } else seqStepNow.store(-1);
+        freeClock += count;
+
+        auto smp = std::atomic_load(&sample);
+        const SampleData* S = (smp && smp->size() > 64) ? smp.get() : nullptr;
+        const bool useSmp = S && (P.smpLevel > 0.001f || P.smpFm > 0.001f);
+        const float scanOff = lfo * P.smpScan * 0.5f;
+        const float syncMul = 1.0f + P.syncAmt * 7.0f;
+        const bool useSync = P.syncAmt > 0.001f;
+        const bool useVow = P.vowAmt > 0.001f;
+        const bool useBub = P.bubAmt > 0.001f;
+        const float bubStep = (float) (lfoDivBeats(P.bubDiv) * 60.0 / bpm * osr);
+        const float bubSweepK = std::exp(-1.0f / (0.012f * (1 + P.bubTone * 2) * (float) osr));
+        const float bubAmpK = std::exp(-1.0f / ((0.05f + P.bubTone * 0.08f) * (float) osr));
+        static const float FORM[5][3] = { { 800, 1150, 2900 }, { 400, 1600, 2700 }, { 300, 2300, 3000 }, { 450, 800, 2830 }, { 325, 700, 2530 } };
+        static const float FGAIN[5][3] = { { 1, 0.50f, 0.10f }, { 1, 0.40f, 0.20f }, { 1, 0.30f, 0.20f }, { 1, 0.35f, 0.08f }, { 1, 0.25f, 0.06f } };
+        float playheadUi = -1;
+
         for (auto& v : voices) {
             if (!v.active()) continue;
             const float velAmt[kOps] = {
@@ -308,24 +465,39 @@ private:
             for (int i = 0; i < on; ++i) {
                 v.curNote += (v.targetNote - v.curNote) * glideCoef;
                 v.penv *= penvCoef;
-                const float noteNow = v.curNote + bendSemis + v.penv * P.penvAmt + vib;
+                const float noteNow = v.curNote + bendSemis + v.penv * P.penvAmt + vib + pitchOff;
                 const float freq = 440.0f * std::exp2((noteNow - 69.0f) / 12.0f);
                 const float baseInc = freq / (float) osr;
                 float env[kOps];
                 for (int o = 0; o < kOps; ++o) env[o] = v.opEnv[o].next() * velAmt[o];
                 const float fe = v.fEnv.next();
                 if ((i & 15) == 0) {
-                    const float c = P.cut * std::exp2(juce::jlimit(-10.0f, 10.0f, P.fenv * 6.0f * fe + keyOct + lfo * d * 1.6f));
+                    const float c = P.cut * std::exp2(juce::jlimit(-10.0f, 10.0f, P.fenv * 6.0f * fe + keyOct + lfo * d * 1.6f + fltOff));
                     v.filt.setup(c, P.res, (float) osr);
+                    if (useVow) {   // TALK: three formant band-passes sliding a-e-i-o-u
+                        const float vp = juce::jlimit(0.0f, 1.0f, P.vowPos + lfo * P.vowMod * 0.5f + vowOff + modWheel * 0.3f) * 3.999f;
+                        const int a = (int) vp; const float t = vp - (float) a;
+                        for (int j = 0; j < 3; ++j) v.vf[j].setup(FORM[a][j] + (FORM[a + 1][j] - FORM[a][j]) * t, 0.78f + 0.19f * P.vowRes, (float) osr);
+                        for (int j = 0; j < 3; ++j) vowG[j] = FGAIN[a][j] + (FGAIN[a + 1][j] - FGAIN[a][j]) * t;
+                    }
                 }
+                // SAMPLE GHOST
+                float smpOut = 0;
+                if (useSmp) smpOut = sampleTick(v, *S, noteNow, scanOff) * v.smpEnv.next();
+                else if (v.smpEnv.active()) v.smpEnv.next();
                 float sl = 0, sr2 = 0;
                 for (int k = 0; k < uni; ++k) {
                     float outs[kOps];
+                    if (useSync) {   // ghost 1 hard-syncs to the note: it restarts every cycle of the played pitch
+                        v.fph[k] += baseInc * detune[k];
+                        if (v.fph[k] >= 1) { v.fph[k] -= 1; v.phase[k][0] = 0; }
+                    }
                     for (int o = 0; o < kOps; ++o) {
                         float pm = fb[o] * 0.5f * (v.prev[k][o] + v.prev2[k][o]);
                         for (int f = 0; f < kOps; ++f) if (f != o) pm += mIdx[f][o] * v.prev[k][f];
-                        v.phase[k][o] += baseInc * ratio[o] * detune[k];
-                        if (v.phase[k][o] >= 1) v.phase[k][o] -= 1;
+                        if (o == 0) pm += P.smpFm * smpOut * 1.5f;   // the sample haunts ghost 1
+                        v.phase[k][o] += baseInc * ratio[o] * detune[k] * (o == 0 && useSync ? syncMul : 1.0f);
+                        if (v.phase[k][o] >= 1) v.phase[k][o] -= std::floor(v.phase[k][o]);
                         outs[o] = waveAt(v.phase[k][o] + pm, P.op[o].wave) * env[o];
                     }
                     float mono = 0;
@@ -333,12 +505,37 @@ private:
                     sl += mono * panL[k]; sr2 += mono * panR[k];
                 }
                 sl *= norm; sr2 *= norm;
-                if (P.cut < 19990.0f || P.fenv != 0.0f || P.ftype != 0) { sl = v.filt.tick(0, sl, P.ftype); sr2 = v.filt.tick(1, sr2, P.ftype); }
+                sl += smpOut * P.smpLevel * 0.9f; sr2 += smpOut * P.smpLevel * 0.9f;
+                if (useBub) {   // BUBBLES: pitch-dropping blips on every step
+                    if (v.bubStepAt < 0 || (v.bubClock += 1) >= bubStep) {
+                        static const float OFF[] = { 0, 7, 12, 19, 24, 31 };
+                        std::uniform_real_distribution<float> u(0.0f, 1.0f);
+                        v.bubClock = 0; v.bubStepAt = 1;
+                        v.bubNote = v.targetNote + 12 + OFF[(int) (u(rng) * 5.99f)];
+                        v.bubSweep = P.bubPitch; v.bubAmp = 1; v.bubPan = (u(rng) * 2 - 1) * 0.7f;
+                    }
+                    v.bubSweep *= bubSweepK; v.bubAmp *= bubAmpK;
+                    v.bubPhase += 440.0f * std::exp2((v.bubNote + v.bubSweep - 69.0f) / 12.0f) / (float) osr;
+                    if (v.bubPhase >= 1) v.bubPhase -= std::floor(v.bubPhase);
+                    const auto& T = sineTable();
+                    const float b = T(v.bubPhase + P.bubTone * 0.25f * T(v.bubPhase * 2)) * v.bubAmp * P.bubAmt * 0.25f;
+                    sl += b * (1 - v.bubPan); sr2 += b * (1 + v.bubPan);
+                }
+                if (P.cut < 19990.0f || P.fenv != 0.0f || P.ftype != 0 || fltOff != 0.0f) { sl = v.filt.tick(0, sl, P.ftype); sr2 = v.filt.tick(1, sr2, P.ftype); }
+                if (useVow) {
+                    float tl = 0, tr = 0;
+                    for (int j = 0; j < 3; ++j) { tl += v.vf[j].tick(0, sl, 1) * vowG[j]; tr += v.vf[j].tick(1, sr2, 1) * vowG[j]; }
+                    sl = sl * (1 - P.vowAmt) + tl * P.vowAmt * 1.7f; sr2 = sr2 * (1 - P.vowAmt) + tr * P.vowAmt * 1.7f;
+                }
                 L[i] += sl * 0.5f; R[i] += sr2 * 0.5f;
             }
             for (int o = 0; o < kOps; ++o) meterAcc[o] = juce::jmax(meterAcc[o], v.opEnv[o].level);
+            if (useSmp && v.smpEnv.active()) playheadUi = (float) (v.spos / S->size());
         }
         for (int o = 0; o < kOps; ++o) meter[(size_t) o].store(meterAcc[o]);
+        smpPlayhead.store(playheadUi);
+        if (P.seqOn && P.seqDest == 0)   // rhythm gate, ramped across the segment so it never clicks
+            for (int i = 0; i < on; ++i) { const float g = gateA + (gateB - gateA) * (float) i / (float) on; L[i] *= g; R[i] *= g; }
 
         // POSSESS: drive at 2x (tanh, folding into wavefold past 60%)
         const float pz = possess();
@@ -365,6 +562,49 @@ private:
         for (int ch = 0; ch < 2; ++ch) {
             float* x = out.getWritePointer(ch);
             for (int i = 0; i < n; ++i) { const float y = x[i] - dcX[ch] + 0.9995f * dcY[ch]; dcX[ch] = x[i]; dcY[ch] = y; x[i] = y; }
+        }
+        // COMB: a tuned feedback delay (metal tearing), following the last played note
+        if (P.cmbAmt > 0.001f) {
+            const float target = juce::jlimit(30.0f, 4000.0f, (P.cmbKey ? lastHz : 220.0f) * std::exp2(P.cmbTune / 12.0f));
+            const int N = (int) combBuf[0].size();
+            for (int i = 0; i < n; ++i) {
+                combHz += (target - combHz) * 0.002f;
+                const float dly = juce::jlimit(2.0f, (float) N - 2, (float) sr / combHz);
+                for (int ch = 0; ch < 2; ++ch) {
+                    float* x = out.getWritePointer(ch); auto& B = combBuf[ch];
+                    float rp = (float) combPos - dly; if (rp < 0) rp += (float) N;
+                    const int r0 = (int) rp; const float t = rp - (float) r0;
+                    const float d = B[(size_t) r0] + (B[(size_t) ((r0 + 1) % N)] - B[(size_t) r0]) * t;
+                    const float y = std::tanh((x[i] + P.cmbFb * d) * 0.9f) / 0.9f;
+                    B[(size_t) combPos] = y;
+                    x[i] = x[i] * (1 - P.cmbAmt) + y * P.cmbAmt * (1 - P.cmbFb * 0.45f);
+                }
+                combPos = (combPos + 1) % N;
+            }
+        }
+        // OTT: three-band squash (down above, up below) - loud, bright, in your face
+        if (P.ottAmt > 0.001f) {
+            const float att = std::exp(-1.0f / (0.004f * (float) sr)), rel = std::exp(-1.0f / (0.09f * (float) sr));
+            for (int i = 0; i < n; ++i) {
+                float b[3][2];
+                for (int ch = 0; ch < 2; ++ch) {
+                    const float x = out.getSample(ch, i);
+                    const float lo = xLow[0].processSample(ch, x), rest = xLow[1].processSample(ch, x);
+                    b[0][ch] = lo; b[1][ch] = xHigh[0].processSample(ch, rest); b[2][ch] = xHigh[1].processSample(ch, rest);
+                }
+                float sum[2] = { 0, 0 };
+                for (int k = 0; k < 3; ++k) {
+                    const float lvl = juce::jmax(std::abs(b[k][0]), std::abs(b[k][1]));
+                    ottEnv[k] = lvl > ottEnv[k] ? att * ottEnv[k] + (1 - att) * lvl : rel * ottEnv[k] + (1 - rel) * lvl;
+                    const float e = juce::Decibels::gainToDecibels(ottEnv[k] + 1e-9f);
+                    float gdb = 0;
+                    if (e > -24.0f) gdb -= (e + 24.0f) * 0.75f;                          // 4:1 above -24 dB
+                    else if (e > -70.0f) gdb += juce::jmin(16.0f, (-30.0f - e) * 0.5f) * (e < -30.0f ? 1.0f : 0.0f);   // lift the quiet parts
+                    const float g = juce::Decibels::decibelsToGain(gdb * P.ottAmt + 3.0f * P.ottAmt);
+                    sum[0] += b[k][0] * g; sum[1] += b[k][1] * g;
+                }
+                for (int ch = 0; ch < 2; ++ch) out.setSample(ch, i, out.getSample(ch, i) * (1 - P.ottAmt) + sum[ch] * P.ottAmt);
+            }
         }
         // CURSE: bit crush + decimation, then a 1/16 ghost-stutter past 65%
         const float c = curse();
@@ -416,6 +656,7 @@ private:
             l = l / (1.0f + std::abs(l) * 0.25f) * 1.0f; r = r / (1.0f + std::abs(r) * 0.25f);
             L[i] = juce::jlimit(-1.2f, 1.2f, l); R[i] = juce::jlimit(-1.2f, 1.2f, r);
             if ((i & 1) == 0) { int sp = scopePos.load(); scope[sp] = (l + r) * 0.5f; scopePos.store((sp + 1) % kScope); }
+            if (!ring.empty()) { const int rp = ringPos.load(); ring[(size_t) rp] = (L[i] + R[i]) * 0.5f; ringPos.store((rp + 1) % (int) ring.size()); }
         }
     }
 };

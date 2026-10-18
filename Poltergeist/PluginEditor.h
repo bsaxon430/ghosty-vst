@@ -32,7 +32,7 @@ struct Knob : juce::Component {
 class GhostField;
 } // namespace gsui
 
-class PoltergeistEditor : public juce::AudioProcessorEditor, private juce::Timer {
+class PoltergeistEditor : public juce::AudioProcessorEditor, public juce::FileDragAndDropTarget, private juce::Timer {
 public:
     explicit PoltergeistEditor(PoltergeistProcessor&);
     ~PoltergeistEditor() override;
@@ -41,6 +41,10 @@ public:
     void selectGhost(int op);
     void doSummon(const juce::String& words);
     void refreshPresetName();
+    void loadSample(const juce::File& f);
+    void resample();
+    bool isInterestedInFileDrag(const juce::StringArray& files) override;
+    void filesDropped(const juce::StringArray& files, int, int) override;
 
 private:
     void timerCallback() override;

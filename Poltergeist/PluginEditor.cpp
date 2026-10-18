@@ -1,7 +1,7 @@
 #include "PluginEditor.h"
 
 using namespace gsui;
-static constexpr int W = 1040, H = 712;
+static constexpr int W = 1040, H = 744;
 
 // ---------------------------------------------------------------------------------------------------------
 // look and feel
@@ -303,6 +303,92 @@ struct Scope : juce::Component {
 };
 
 // ---------------------------------------------------------------------------------------------------------
+// Sample Ghost waveform: shows the sample, the start/length window, the position, slices and the playhead.
+// Drag across it to move POSITION (granular / wavetable) or START (classic / slice).
+struct WaveView : juce::Component {
+    explicit WaveView(PoltergeistProcessor& p) : proc(p) {}
+    PoltergeistProcessor& proc;
+    const gs::SampleData* cached = nullptr; std::vector<float> peaks;
+    float val(const char* id) const { return proc.apvts.getRawParameterValue(id)->load(); }
+    void paint(juce::Graphics& g) override {
+        auto r = getLocalBounds().toFloat();
+        g.setColour(CARD2); g.fillRoundedRectangle(r, 14);
+        g.setColour(PURPLE.withAlpha(0.35f)); g.drawRoundedRectangle(r.reduced(0.5f), 14, 1);
+        auto smp = proc.engine.getSample();
+        if (!smp) {
+            g.setColour(GREY); g.setFont(juce::FontOptions(15.0f, juce::Font::bold));
+            g.drawFittedText("Drop any audio file here (vocal, drum, noise, a clip...)\nor tap LOAD SAMPLE. It becomes a playable sound.", getLocalBounds().reduced(20), juce::Justification::centred, 3);
+            return;
+        }
+        if (cached != smp.get()) {   // recompute the drawing peaks once per sample
+            cached = smp.get(); const int W2 = juce::jmax(1, getWidth()); peaks.assign((size_t) W2, 0.0f);
+            const int n = smp->size();
+            for (int x = 0; x < W2; ++x) { const int a = (int) ((double) x / W2 * n), b = juce::jmax(a + 1, (int) ((double) (x + 1) / W2 * n)); float m = 0; for (int i = a; i < b && i < n; ++i) m = juce::jmax(m, std::abs(smp->data[(size_t) i])); peaks[(size_t) x] = m; }
+        }
+        const int mode = (int) val("smp_mode");
+        const float st = val("smp_start"), ln = val("smp_len"), pos = val("smp_pos");
+        const float x0 = r.getX() + st * r.getWidth(), x1 = x0 + ln * (r.getRight() - x0);
+        g.setColour(PURPLE.withAlpha(0.12f)); g.fillRect(juce::Rectangle<float>(x0, r.getY(), juce::jmax(1.0f, x1 - x0), r.getHeight()));
+        const float mid = r.getCentreY(), hh = r.getHeight() * 0.42f;
+        for (int x = 0; x < (int) peaks.size(); ++x) {
+            const float px = r.getX() + (float) x; const bool in = px >= x0 && px <= x1;
+            g.setColour((in ? GREEN : GREY).withAlpha(in ? 0.85f : 0.35f));
+            g.drawVerticalLine((int) px, mid - peaks[(size_t) x] * hh, mid + peaks[(size_t) x] * hh);
+        }
+        if (mode == 3) {   // slice lines
+            const int sl = 4 << (int) val("smp_slices");
+            g.setColour(VIOLET.withAlpha(0.7f));
+            for (int i = 1; i < sl; ++i) g.drawVerticalLine((int) (r.getX() + r.getWidth() * i / sl), r.getY() + 6, r.getBottom() - 6);
+        }
+        if (mode == 1 || mode == 2) { const float px = x0 + pos * (x1 - x0); g.setColour(PURPLE); g.fillRect(px - 1.5f, r.getY() + 4, 3.0f, r.getHeight() - 8); }
+        const float ph = proc.engine.smpPlayhead.load();
+        if (ph >= 0) { g.setColour(INK); g.drawVerticalLine((int) (r.getX() + ph * r.getWidth()), r.getY() + 2, r.getBottom() - 2); }
+        g.setColour(INK); g.setFont(juce::FontOptions(12.0f, juce::Font::bold));
+        g.drawText(smp->name + "  -  " + juce::String(smp->size() / smp->rate, 2) + " s", r.reduced(12, 8).removeFromTop(16), juce::Justification::centredLeft);
+    }
+    void mouseDown(const juce::MouseEvent& e) override { const int mode = (int) val("smp_mode"); dragId = (mode == 1 || mode == 2) ? "smp_pos" : "smp_start"; if (auto* p = proc.apvts.getParameter(dragId)) p->beginChangeGesture(); mouseDrag(e); }
+    void mouseDrag(const juce::MouseEvent& e) override {
+        auto* p = proc.apvts.getParameter(dragId); if (!p) return;
+        float v = juce::jlimit(0.0f, 1.0f, (float) e.x / (float) getWidth());
+        if (dragId == juce::String("smp_pos")) { const float st = val("smp_start"), ln = val("smp_len"); const float x0 = st, x1 = st + ln * (1 - st); v = juce::jlimit(0.0f, 1.0f, (v - x0) / juce::jmax(0.001f, x1 - x0)); }
+        p->setValueNotifyingHost(p->convertTo0to1(v)); repaint();
+    }
+    void mouseUp(const juce::MouseEvent&) override { if (auto* p = proc.apvts.getParameter(dragId)) p->endChangeGesture(); }
+    juce::String dragId { "smp_start" };
+};
+
+// RHYTHM: 16 bars you draw with a finger; the playing step lights up.
+struct SeqEditor : juce::Component {
+    explicit SeqEditor(PoltergeistProcessor& p) : proc(p) {}
+    PoltergeistProcessor& proc; bool touched[16] {};
+    void paint(juce::Graphics& g) override {
+        auto r = getLocalBounds().toFloat();
+        g.setColour(CARD2); g.fillRoundedRectangle(r, 12);
+        const int steps = (int) proc.apvts.getRawParameterValue("seq_steps")->load(), now = proc.engine.seqStepNow.load();
+        const float w = r.getWidth() / 16.0f;
+        for (int i = 0; i < 16; ++i) {
+            const float v = proc.apvts.getRawParameterValue("seq_" + juce::String(i + 1))->load();
+            auto bar = juce::Rectangle<float>(r.getX() + i * w + 3, r.getY() + 6, w - 6, r.getHeight() - 12);
+            g.setColour(juce::Colours::white.withAlpha(0.05f)); g.fillRoundedRectangle(bar, 4);
+            auto fill = bar.withTrimmedTop(bar.getHeight() * (1 - v));
+            const bool on = i < steps;
+            juce::Colour c = i == now ? GREEN : (on ? PURPLE : DIM);
+            g.setColour(c.withAlpha(on ? 0.9f : 0.35f)); g.fillRoundedRectangle(fill, 4);
+            if (i % 4 == 0) { g.setColour(GREY.withAlpha(0.6f)); g.fillRect(bar.getX(), r.getBottom() - 4, bar.getWidth(), 2.0f); }
+        }
+    }
+    void set(const juce::MouseEvent& e) {
+        const int i = juce::jlimit(0, 15, (int) (e.position.x / (getWidth() / 16.0f)));
+        const float v = juce::jlimit(0.0f, 1.0f, 1.0f - (e.position.y - 6) / (getHeight() - 12.0f));
+        auto* p = proc.apvts.getParameter("seq_" + juce::String(i + 1));
+        if (!touched[i]) { touched[i] = true; p->beginChangeGesture(); }
+        p->setValueNotifyingHost(v); repaint();
+    }
+    void mouseDown(const juce::MouseEvent& e) override { set(e); }
+    void mouseDrag(const juce::MouseEvent& e) override { set(e); }
+    void mouseUp(const juce::MouseEvent&) override { for (int i = 0; i < 16; ++i) if (touched[i]) { touched[i] = false; proc.apvts.getParameter("seq_" + juce::String(i + 1))->endChangeGesture(); } }
+};
+
 struct PoltergeistEditor::Content : juce::Component {
     PoltergeistEditor& ed; PoltergeistProcessor& proc;
     juce::TextEditor search; juce::TextButton summonBtn { "SUMMON" }, diceBtn { "?" }, prevBtn { "<" }, nextBtn { ">" }, presetBtn;
@@ -318,6 +404,20 @@ struct PoltergeistEditor::Content : juce::Component {
     juce::MidiKeyboardComponent keys;
     juce::OwnedArray<juce::Label> macroHints;
     juce::Rectangle<int> panelArea, filterArea, pitchArea, driftArea, voiceArea, macroArea;
+    // v0.2 pages
+    int page = 0;
+    juce::OwnedArray<juce::TextButton> pageBtns;
+    std::vector<juce::Component*> pageComps[5];
+    juce::OwnedArray<Knob> smpKnobs, moveKnobs, fxKnobs, playKnobs;
+    juce::OwnedArray<juce::ComboBox> combos;
+    juce::OwnedArray<juce::ToggleButton> toggles;
+    juce::OwnedArray<juce::Label> helps;
+    std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment>> comboAtts;
+    std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment>> toggleAtts;
+    juce::TextButton loadBtn { "LOAD SAMPLE" }, resampleBtn { "RESAMPLE LAST 4 s" }, clearBtn { "CLEAR" };
+    WaveView wave { proc }; SeqEditor seqEd { proc };
+    std::map<juce::String, juce::Component*> byId;
+    std::vector<std::pair<juce::Rectangle<int>, juce::String>> cards[5];
 
     Content(PoltergeistEditor& e, PoltergeistProcessor& p)
         : ed(e), proc(p), scope(p.engine), keys(p.keyboard, juce::MidiKeyboardComponent::horizontalKeyboard) {
@@ -398,7 +498,83 @@ struct PoltergeistEditor::Content : juce::Component {
         keys.setColour(juce::MidiKeyboardComponent::mouseOverKeyOverlayColourId, GREEN.withAlpha(0.3f));
         keys.setAvailableRange(36, 96); keys.setLowestVisibleKey(36);
         addAndMakeVisible(keys);
+        buildPages();
     }
+
+    Knob* knob(juce::OwnedArray<Knob>& arr, int pg, const char* name, const char* id) {
+        auto* k = arr.add(new Knob(name)); k->attach(proc.apvts, id); addAndMakeVisible(k); pageComps[pg].push_back(k); byId[id] = k; return k;
+    }
+    juce::ComboBox* combo(int pg, const char* id) {
+        auto* c = combos.add(new juce::ComboBox());
+        if (auto* ch = dynamic_cast<juce::AudioParameterChoice*>(proc.apvts.getParameter(id))) c->addItemList(ch->choices, 1);
+        comboAtts.push_back(std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(proc.apvts, id, *c));
+        addAndMakeVisible(c); pageComps[pg].push_back(c); byId[id] = c; return c;
+    }
+    juce::ToggleButton* toggle(int pg, const char* text, const char* id) {
+        auto* t = toggles.add(new juce::ToggleButton(text));
+        toggleAtts.push_back(std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(proc.apvts, id, *t));
+        addAndMakeVisible(t); pageComps[pg].push_back(t); byId[id] = t; return t;
+    }
+    juce::Label* help(int pg, const juce::String& text) {
+        auto* l = helps.add(new juce::Label({}, text)); l->setFont(juce::FontOptions(12.0f)); l->setColour(juce::Label::textColourId, GREY);
+        l->setJustificationType(juce::Justification::topLeft); l->setMinimumHorizontalScale(0.9f); addAndMakeVisible(l); pageComps[pg].push_back(l); return l;
+    }
+
+    void buildPages() {
+        const char* names[] = { "GHOSTS", "SAMPLE", "MOVE", "FX", "PLAY" };
+        for (int i = 0; i < 5; ++i) {
+            auto* b = pageBtns.add(new juce::TextButton(names[i])); b->setClickingTogglesState(false);
+            b->onClick = [this, i] { setPage(i); }; addAndMakeVisible(b);
+        }
+        // page 0: the ghosts (existing controls)
+        for (juce::Component* c : { (juce::Component*) field.get(), (juce::Component*) &scope, (juce::Component*) &panelTitle, (juce::Component*) &panelRole,
+                                    (juce::Component*) &fltType, (juce::Component*) &lfoDiv, (juce::Component*) &lfoShape, (juce::Component*) &monoBtn, (juce::Component*) &syncBtn }) pageComps[0].push_back(c);
+        for (auto* k : opKnobs) pageComps[0].push_back(k);
+        for (auto* k : filterKnobs) pageComps[0].push_back(k);
+        for (auto* k : miscKnobs) pageComps[0].push_back(k);
+        // page 1: SAMPLE GHOST
+        addAndMakeVisible(wave); pageComps[1].push_back(&wave);
+        for (auto* b : { &loadBtn, &resampleBtn, &clearBtn }) { addAndMakeVisible(*b); pageComps[1].push_back(b); }
+        loadBtn.getProperties().set("accent", true);
+        loadBtn.onClick = [this] {
+            chooser = std::make_unique<juce::FileChooser>("Pick a sound for the Sample Ghost", juce::File(), "*.wav;*.aif;*.aiff;*.mp3;*.flac;*.ogg;*.m4a;*.caf");
+            chooser->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles, [this](const juce::FileChooser& fc) {
+                if (fc.getResult().existsAsFile()) ed.loadSample(fc.getResult()); });
+        };
+        resampleBtn.onClick = [this] { ed.resample(); };
+        clearBtn.onClick = [this] { proc.clearSample(); wave.cached = nullptr; wave.repaint(); };
+        combo(1, "smp_mode"); combo(1, "smp_slices");
+        toggle(1, "KEY TRACK", "smp_track"); toggle(1, "LOOP", "smp_loop"); toggle(1, "REVERSE", "smp_rev");
+        for (auto [n, id] : std::vector<std::pair<const char*, const char*>> { { "OUT", "smp_level" }, { "PITCH", "smp_pitch" }, { "START", "smp_start" }, { "LENGTH", "smp_len" },
+                 { "POSITION", "smp_pos" }, { "SCAN", "smp_scan" }, { "GRAIN", "smp_grain" }, { "SPRAY", "smp_spray" }, { "DENSITY", "smp_dens" }, { "HAUNT G1", "smp_fm" },
+                 { "ATTACK", "smp_a" }, { "DECAY", "smp_d" }, { "SUSTAIN", "smp_s" }, { "RELEASE", "smp_r" } }) knob(smpKnobs, 1, n, id);
+        help(1, "CLASSIC plays it on the keys. GRANULAR smears it into clouds (POSITION, GRAIN, SPRAY). WAVETABLE turns it into a growl you sweep with POSITION / SCAN (SCAN moves with the DRIFT LFO). SLICE chops it across the keys for vocal chops. HAUNT G1 lets the sample FM ghost 1. RESAMPLE grabs the last 4 seconds Poltergeist played and loads it back in.");
+        // page 2: MOVE (rhythm, talk, bubbles)
+        addAndMakeVisible(seqEd); pageComps[2].push_back(&seqEd);
+        toggle(2, "RHYTHM ON", "seq_on"); combo(2, "seq_div"); combo(2, "seq_dest");
+        knob(moveKnobs, 2, "AMOUNT", "seq_amt"); knob(moveKnobs, 2, "SMOOTH", "seq_glide"); knob(moveKnobs, 2, "STEPS", "seq_steps");
+        knob(moveKnobs, 2, "TALK", "vow_amt"); knob(moveKnobs, 2, "VOWEL", "vow_pos"); knob(moveKnobs, 2, "MOVE", "vow_mod"); knob(moveKnobs, 2, "RESO", "vow_res");
+        knob(moveKnobs, 2, "BUBBLES", "bub_amt"); knob(moveKnobs, 2, "POP", "bub_pitch"); knob(moveKnobs, 2, "TONE", "bub_tone"); combo(2, "bub_div");
+        help(2, "Draw the 16 steps with your finger. TARGET picks what the rhythm moves: GATE (stutter), FILTER, HAUNT (FM growl), TALK (vowels) or PITCH (jumps).");
+        help(2, "TALK makes the bass speak (a-e-i-o-u, the 'yoi'). MOVE lets the DRIFT LFO or the rhythm (target TALK) work the mouth. The mod wheel opens it too.");
+        help(2, "BUBBLES pops a pitch-dropping blip on every step: bubbly, poppy dubstep sparkle. POP = how far each blip falls.");
+        // page 3: FX (comb, sync, OTT)
+        knob(fxKnobs, 3, "COMB", "cmb_amt"); knob(fxKnobs, 3, "FEEDBACK", "cmb_fb"); knob(fxKnobs, 3, "TUNE", "cmb_tune"); toggle(3, "FOLLOW KEY", "cmb_key");
+        knob(fxKnobs, 3, "SYNC", "sync_amt"); knob(fxKnobs, 3, "OTT", "ott_amt");
+        help(3, "COMB = a tuned metal resonance that tears through growls (follows the note you play). SYNC = ghost 1 hard-sync screech: turn it with HAUNT for laser leads. OTT = three-band squash, the loud, bright, in-your-face dubstep finish. Drive, crush and space stay on the big macros below.");
+        // page 4: PLAY (scale, chords, arp)
+        toggle(4, "SCALE LOCK", "scale_on"); combo(4, "scale_root"); combo(4, "scale_type"); combo(4, "chord");
+        toggle(4, "ARP", "arp_on"); combo(4, "arp_div"); combo(4, "arp_pat"); knob(playKnobs, 4, "OCTAVES", "arp_oct"); knob(playKnobs, 4, "GATE", "arp_gate");
+        help(4, "SCALE LOCK snaps every key you play into the key and scale, so nothing sounds wrong. CHORD makes one finger play a full chord (in key when Scale Lock is on): perfect for pop progressions. ARP plays the notes you hold one at a time in time with FL.");
+        setPage(0);
+    }
+
+    void setPage(int pg) {
+        page = pg;
+        for (int i = 0; i < 5; ++i) { pageBtns[i]->setToggleState(i == pg, juce::dontSendNotification); for (auto* c : pageComps[i]) c->setVisible(i == pg); }
+        repaint();
+    }
+    std::unique_ptr<juce::FileChooser> chooser;
 
     juce::String withMods(const juce::String& cat) {
         juce::String s = cat;
@@ -423,11 +599,14 @@ struct PoltergeistEditor::Content : juce::Component {
             g.setColour(PURPLE.withAlpha(0.22f)); g.drawRoundedRectangle(r.toFloat().reduced(0.5f), 16, 1);
             if (title != nullptr) { g.setColour(GREY); g.setFont(juce::FontOptions(10.5f, juce::Font::bold)); g.drawText(title, r.reduced(14, 6).removeFromTop(14), juce::Justification::centredLeft); }
         };
-        card(panelArea, nullptr);
-        card(filterArea, "FILTER");
-        card(pitchArea, "PITCH DROP");
-        card(driftArea, "DRIFT (LFO)");
-        card(voiceArea, "VOICE");
+        if (page == 0) {
+            card(panelArea, nullptr);
+            card(filterArea, "FILTER");
+            card(pitchArea, "PITCH DROP");
+            card(driftArea, "DRIFT (LFO)");
+            card(voiceArea, "VOICE");
+        }
+        for (auto& [r, t] : cards[page]) card(r, t.toRawUTF8());
         card(macroArea, nullptr);
     }
 
@@ -439,18 +618,19 @@ struct PoltergeistEditor::Content : juce::Component {
             const int w = (int) juce::GlyphArrangement::getStringWidth(juce::FontOptions(12.0f, juce::Font::bold), b->getButtonText()) + 14;
             b->setBounds(x, cy, w, 26); x += w + 3;
         }
-        field->setBounds(18, 100, 540, 332);
-        panelArea = { 570, 100, 452, 332 };
+        for (int i = 0; i < 5; ++i) pageBtns[i]->setBounds(18 + i * 104, 98, 98, 28);
+        field->setBounds(18, 134, 540, 310);
+        panelArea = { 570, 134, 452, 310 };
         panelTitle.setBounds(panelArea.getX() + 16, panelArea.getY() + 10, 220, 26);
         panelRole.setBounds(panelArea.getX() + 16, panelArea.getY() + 36, 260, 30);
         panelRole.setMinimumHorizontalScale(0.9f);
         scope.setBounds(panelArea.getRight() - 160, panelArea.getY() + 12, 144, 42);
         for (int i = 0; i < 10; ++i) {
             const int row = i / 5, col = i % 5;
-            opKnobs[i]->setBounds(panelArea.getX() + 14 + col * 86, panelArea.getY() + 72 + row * 122, 80, 108);
+            opKnobs[i]->setBounds(panelArea.getX() + 14 + col * 86, panelArea.getY() + 66 + row * 116, 80, 104);
         }
-        status.setBounds(panelArea.getX() + 16, panelArea.getBottom() - 22, 420, 16);
-        const int sy = 442, sh = 104;
+        status.setBounds(560, 102, 462, 20);
+        const int sy = 452, sh = 104;
         filterArea = { 18, sy, 330, sh }; pitchArea = { 356, sy, 150, sh }; driftArea = { 514, sy, 238, sh }; voiceArea = { 760, sy, 262, sh };
         fltType.setBounds(filterArea.getRight() - 84, sy + 4, 72, 22);
         for (int i = 0; i < 4; ++i) filterKnobs[i]->setBounds(filterArea.getX() + 10 + i * 78, sy + 26, 72, 74);
@@ -460,13 +640,50 @@ struct PoltergeistEditor::Content : juce::Component {
         lfoShape.setBounds(driftArea.getX() + 84, sy + 64, 144, 26);
         monoBtn.setBounds(voiceArea.getRight() - 72, sy + 4, 62, 22);
         for (int i = 0; i < 4; ++i) miscKnobs[i]->setBounds(voiceArea.getX() + 6 + i * 64, sy + 26, 62, 74);
-        macroArea = { 18, 554, 1004, 92 };
+        layoutPages();
+        macroArea = { 18, 586, 1004, 92 };
         for (int m = 0; m < 6; ++m) {
             const int mx = macroArea.getX() + 8 + m * 166;
             macroKnobs[m]->setBounds(mx + 4, macroArea.getY() + 4, 70, 84);
             macroHints[m]->setBounds(mx + 76, macroArea.getY() + 20, 86, 52);
         }
-        keys.setBounds(18, 652, 1004, 52); keys.setKeyWidth(1004.0f / 36.0f);
+        keys.setBounds(18, 684, 1004, 54); keys.setKeyWidth(1004.0f / 36.0f);
+    }
+
+    void layoutPages() {
+        for (auto& c : cards) c.clear();
+        auto put = [&](const char* id, int x, int y, int w, int h) { if (byId.count(id)) byId[id]->setBounds(x, y, w, h); };
+        // SAMPLE
+        wave.setBounds(18, 134, 700, 196);
+        loadBtn.setBounds(730, 134, 292, 40); resampleBtn.setBounds(730, 180, 292, 34); clearBtn.setBounds(730, 220, 92, 30);
+        put("smp_mode", 830, 220, 110, 30); put("smp_slices", 946, 220, 76, 30);
+        put("smp_track", 730, 258, 104, 30); put("smp_loop", 840, 258, 80, 30); put("smp_rev", 926, 258, 96, 30);
+        cards[1].push_back({ { 18, 338, 1004, 240 }, "SOUND" });
+        for (int i = 0; i < 10; ++i) smpKnobs[i]->setBounds(26 + i * 99, 356, 92, 96);
+        for (int i = 10; i < 14; ++i) smpKnobs[i]->setBounds(26 + (i - 10) * 99, 462, 92, 96);
+        helps[0]->setBounds(430, 464, 584, 106);
+        // MOVE
+        cards[2].push_back({ { 18, 134, 640, 300 }, "RHYTHM" }); cards[2].push_back({ { 668, 134, 354, 300 }, "TALK (VOWEL FILTER)" }); cards[2].push_back({ { 18, 442, 1004, 136 }, "BUBBLES" });
+        seqEd.setBounds(30, 156, 616, 150);
+        put("seq_on", 30, 314, 120, 28); put("seq_div", 158, 314, 84, 28); put("seq_dest", 250, 314, 104, 28);
+        moveKnobs[0]->setBounds(366, 310, 86, 96); moveKnobs[1]->setBounds(456, 310, 86, 96); moveKnobs[2]->setBounds(546, 310, 86, 96);
+        helps[1]->setBounds(30, 350, 330, 80);
+        for (int i = 3; i < 7; ++i) moveKnobs[i]->setBounds(680 + (i - 3) * 84, 160, 80, 100);
+        helps[2]->setBounds(680, 280, 330, 140);
+        for (int i = 7; i < 10; ++i) moveKnobs[i]->setBounds(30 + (i - 7) * 96, 466, 90, 100);
+        put("bub_div", 330, 498, 90, 30); helps[3]->setBounds(440, 470, 570, 90);
+        // FX
+        cards[3].push_back({ { 18, 134, 500, 220 }, "COMB" }); cards[3].push_back({ { 528, 134, 240, 220 }, "SYNC" }); cards[3].push_back({ { 778, 134, 244, 220 }, "OTT" }); cards[3].push_back({ { 18, 364, 1004, 214 }, "WHAT THEY DO" });
+        fxKnobs[0]->setBounds(30, 166, 104, 120); fxKnobs[1]->setBounds(140, 166, 104, 120); fxKnobs[2]->setBounds(250, 166, 104, 120); put("cmb_key", 370, 206, 130, 32);
+        fxKnobs[3]->setBounds(590, 160, 120, 140); fxKnobs[4]->setBounds(840, 160, 120, 140);
+        helps[4]->setBounds(32, 392, 976, 170);
+        // PLAY
+        cards[4].push_back({ { 18, 134, 500, 200 }, "SCALE LOCK" }); cards[4].push_back({ { 528, 134, 494, 200 }, "CHORD (ONE FINGER)" }); cards[4].push_back({ { 18, 344, 1004, 234 }, "ARPEGGIATOR" });
+        put("scale_on", 32, 170, 150, 34); put("scale_root", 192, 170, 90, 34); put("scale_type", 290, 170, 210, 34);
+        put("chord", 544, 170, 200, 34);
+        put("arp_on", 32, 380, 100, 34); put("arp_div", 142, 380, 100, 34); put("arp_pat", 252, 380, 150, 34);
+        playKnobs[0]->setBounds(420, 366, 96, 104); playKnobs[1]->setBounds(522, 366, 96, 104);
+        helps[5]->setBounds(32, 480, 976, 90);
     }
 };
 
@@ -508,4 +725,29 @@ void PoltergeistEditor::doSummon(const juce::String& words) {
 
 void PoltergeistEditor::refreshPresetName() { content->presetBtn.setButtonText(proc.patchName); content->field->repaint(); }
 
-void PoltergeistEditor::timerCallback() { content->field->tick(); content->scope.repaint(); }
+void PoltergeistEditor::timerCallback() {
+    content->field->tick(); content->scope.repaint();
+    if (content->page == 1) content->wave.repaint();
+    if (content->page == 2) content->seqEd.repaint();
+}
+
+// (owner 2026-10-18) drop any audio file on the plugin -> Sample Ghost
+static bool isAudio(const juce::String& f) { return juce::File(f).hasFileExtension("wav;aif;aiff;mp3;flac;ogg;m4a;caf;aac"); }
+bool PoltergeistEditor::isInterestedInFileDrag(const juce::StringArray& files) { for (auto& f : files) if (isAudio(f)) return true; return false; }
+void PoltergeistEditor::filesDropped(const juce::StringArray& files, int, int) { for (auto& f : files) if (isAudio(f)) { loadSample(juce::File(f)); return; } }
+
+void PoltergeistEditor::loadSample(const juce::File& f) {
+    juce::String err;
+    if (!proc.loadSampleFile(f, err)) { content->status.setText(err, juce::dontSendNotification); return; }
+    if (auto* p = proc.apvts.getParameter("smp_level"); p && p->getValue() < 0.01f) { p->beginChangeGesture(); p->setValueNotifyingHost(0.9f); p->endChangeGesture(); }
+    content->wave.cached = nullptr;
+    content->setPage(1);
+    content->status.setText("Loaded \"" + f.getFileNameWithoutExtension() + "\". Play it! Try GRANULAR, WAVETABLE or SLICE, or type \"chop\" / \"granular\" in Summon.", juce::dontSendNotification);
+}
+
+void PoltergeistEditor::resample() {
+    if (!proc.resampleRecent(4.0)) { content->status.setText("Play something first: RESAMPLE grabs the last 4 seconds Poltergeist played.", juce::dontSendNotification); return; }
+    if (auto* p = proc.apvts.getParameter("smp_level"); p && p->getValue() < 0.01f) { p->beginChangeGesture(); p->setValueNotifyingHost(0.9f); p->endChangeGesture(); }
+    content->wave.cached = nullptr; content->setPage(1);
+    content->status.setText("Resampled! Your last 4 seconds are now the Sample Ghost. Mangle it again.", juce::dontSendNotification);
+}

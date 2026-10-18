@@ -7,7 +7,7 @@ Four glitchy ghost instruments by **GhostBlock**, free for Windows and Mac.
 | 👻 **Ghosty** | Wavetable synth: 81 presets, 16 wave shapes, scales, chords, arpeggiator, slide keyboard, ghost XY pad |
 | 🥁 **Ghosty Beats** | 8-track drum machine, synced to your DAW, stutter, tape stop, reverse |
 | 🌈 **Ghosty Spectrum** | Place tones and drums right on the 20 Hz to 20 kHz spectrum and watch them glow |
-| 🔮 **Poltergeist** | FM spirit synth: 4 ghosts you drag onto each other to haunt (FM), 6 big macros (HAUNT, SPECTRE, POSSESS, DRIFT, VEIL, CURSE), type-what-you-want **SUMMON** ("dark trap bell", "wobble growl", "808 slide"), 26 presets |
+| 🔮 **Poltergeist** | FM spirit synth: 4 ghosts you drag onto each other to haunt (FM), **drop any audio file in** (granular, wavetable, vocal chops), talking "yoi" filter, bubbles, 16-step rhythm sequencer, comb / sync / OTT, scale lock + one-finger chords + arp, type-what-you-want **SUMMON** ("yoi growl", "bubbly pluck", "tearout", "chop"), 38 presets |
 
 ---
 
