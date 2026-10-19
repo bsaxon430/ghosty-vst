@@ -46,6 +46,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout layout() {
     for (auto& f : kFx) L.add(std::make_unique<AudioParameterFloat>(ParameterID { f.id, 1 }, f.name, f.lo, f.hi, f.def));
     L.add(std::make_unique<AudioParameterBool>(ParameterID { "stutter", 1 }, "Stutter", false));
     L.add(std::make_unique<AudioParameterChoice>(ParameterID { "st_div", 1 }, "Stutter size", StringArray { "1/8", "1/16", "1/32", "1/64", "1/16T" }, 1));
+    for (auto [id, nm] : { std::pair { "kick_mute", "Kick mute" }, { "snr_mute", "Snare mute" }, { "hat_mute", "Hat mute" }, { "oh_mute", "Open hat mute" }, { "drums_mute", "Mute all drums" } })
+        L.add(std::make_unique<AudioParameterBool>(ParameterID { id, 1 }, nm, false));
     L.add(std::make_unique<AudioParameterFloat>(ParameterID { "bpm", 1 }, "Tempo (when the host is stopped)", NormalisableRange<float>(70, 200, 0.1f), 172));
     return L;
 }
@@ -61,6 +63,7 @@ MickensProcessor::MickensProcessor()
     }
     for (int i = 0; i < kNumFx; ++i) fx[i] = apvts.getRawParameterValue(kFx[i].id);
     fx[kNumFx] = apvts.getRawParameterValue("stutter"); fx[kNumFx + 1] = apvts.getRawParameterValue("st_div"); fx[kNumFx + 2] = apvts.getRawParameterValue("bpm");
+    const char* mids[] = { "kick_mute", "snr_mute", "hat_mute", "oh_mute", "drums_mute" }; for (int i = 0; i < 5; ++i) fx[kNumFx + 3 + i] = apvts.getRawParameterValue(mids[i]);
     drums.build(48000.0);
     rescanFolder();
     startTimer(60);
@@ -179,6 +182,7 @@ void MickensProcessor::readParams(std::array<mk::BayParams, mk::kBays>& B, mk::F
     F.volume = v(i++);
     jassert(i == kNumFx);
     F.stutter = v(kNumFx) > 0.5f; F.stutDiv = (int) v(kNumFx + 1); F.bpm = v(kNumFx + 2);
+    for (int d = 0; d < mk::kDrums; ++d) F.drumMute[d] = v(kNumFx + 3 + d) > 0.5f; F.drumsMute = v(kNumFx + 7) > 0.5f;
 }
 
 void MickensProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi) {

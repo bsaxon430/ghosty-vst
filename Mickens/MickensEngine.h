@@ -19,7 +19,7 @@ struct FxParams {
     float dry = 1, lpCut = 0.4f, lpMix = 0, hpCut = 0.5f, hpMix = 0, bpCut = 0.5f, bpMix = 0, notchCut = 0.5f, notchMix = 0, combCut = 0.4f, combMix = 0, formant = 0.3f, formMix = 0, res = 0.5f;
     float chorus = 0, reverb = 0, size = 0.6f;
     bool stutter = false; int stutDiv = 2; float stutCut = 0.6f, stutEnv = 0.6f, stutDecay = 0.4f;
-    float drumLvl[kDrums] { 1, 1, 0.8f, 0.7f }; float duckRelease = 0.18f, breaksLevel = 0.85f, drumsLevel = 0.9f, volume = 0.8f; float bpm = 172;
+    float drumLvl[kDrums] { 1, 1, 0.8f, 0.7f }; bool drumMute[kDrums] {}; bool drumsMute = false; float duckRelease = 0.18f, breaksLevel = 0.85f, drumsLevel = 0.9f, volume = 0.8f; float bpm = 172;
 };
 struct Snapshot {
     std::array<const Break*, kBays> brk {};
@@ -54,7 +54,7 @@ public:
     void process(juce::AudioBuffer<float>& out, const std::array<BayParams, kBays>& B, const FxParams& F, double hostBpm, double hostPpq, bool hostPlaying, const juce::MidiBuffer& midi) {
         const int n = out.getNumSamples(); out.clear();
         const Snapshot* S = snap.load(); if (!S) return;
-        const double bpm = hostPlaying ? hostBpm : F.bpm; curBpm = bpm; for (int d = 0; d < kDrums; ++d) lvl[d] = F.drumLvl[d]; const double spb = sr * 60.0 / juce::jmax(40.0, bpm);
+        const double bpm = hostPlaying ? hostBpm : F.bpm; curBpm = bpm; for (int d = 0; d < kDrums; ++d) { lvl[d] = F.drumLvl[d]; muted[d] = F.drumsMute || F.drumMute[d]; } const double spb = sr * 60.0 / juce::jmax(40.0, bpm);
         if (restartFlag.exchange(false)) { clock = 0; for (auto& b : bays) b.lastBar = -1; }
         const bool run = hostPlaying || playing;
         const double b0 = hostPlaying ? hostPpq : clock, b1 = b0 + n / spb;
@@ -97,7 +97,7 @@ private:
         float tick(int c, float x, int type) { const float v3 = x - s2[c], v1 = a1 * s1[c] + a2 * v3, v2 = s2[c] + a2 * s1[c] + a3 * v3; s1[c] = 2 * v1 - s1[c]; s2[c] = 2 * v2 - s2[c];
             switch (type) { case 0: return v2; case 1: return v1 * k; case 2: return x - k * v1 - v2; default: return x - k * v1; } } };
 
-    float lvl[kDrums] { 1, 1, 1, 1 }; double sr = 48000, clock = 0, curBpm = 172; int maxBlock = 512; long lastStep = -1;
+    float lvl[kDrums] { 1, 1, 1, 1 }; bool muted[kDrums] {}; double sr = 48000, clock = 0, curBpm = 172; int maxBlock = 512; long lastStep = -1;
     std::atomic<const Snapshot*> snap { nullptr };
     Bay bays[kBays]; DV dv[48];
     float duckEnv[3] {};   // kick, snare, hats
@@ -173,6 +173,7 @@ private:
     }
 
     void trigDrum(const Snapshot* S, int d, float vel, int at) {
+        if (muted[d]) return;   // a muted drum neither plays nor ducks
         const gb::Sound* s = S->drumSound[(size_t) d]; if (!s || s->data.empty()) return;
         drumHits[d].fetch_add(1);
         const int e = d == 0 ? 0 : (d == 1 ? 1 : 2);

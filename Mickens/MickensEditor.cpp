@@ -406,6 +406,9 @@ struct DrumGrid : juce::Component, juce::FileDragAndDropTarget {
             if (v > 0) { g.setColour(rainbow(s / 16.0f).withAlpha(0.35f + 0.65f * v / 127.0f)); g.fillRoundedRectangle(c, 4); }
             if (run && s == st) { g.setColour(juce::Colours::white.withAlpha(0.35f)); g.drawRoundedRectangle(c, 4, 1.6f); }
         }
+        static const char* mi[] = { "kick_mute", "snr_mute", "hat_mute", "oh_mute" };
+        const bool all = p.apvts.getRawParameterValue("drums_mute")->load() > 0.5f;
+        for (int d = 0; d < mk::kDrums; ++d) if (all || p.apvts.getRawParameterValue(mi[d])->load() > 0.5f) { g.setColour(BG.withAlpha(0.6f)); g.fillRect(cell(d, 0).withWidth((float) getWidth())); }
         if (hoverLane >= 0) { g.setColour(LIME); g.drawRect(cell(hoverLane, 0).withWidth((float) getWidth()), 2.0f); }
     }
     int at(juce::Point<int> pt, int& d) const { d = juce::jlimit(0, 3, pt.y * 4 / juce::jmax(1, getHeight())); return juce::jlimit(0, 15, pt.x * 16 / juce::jmax(1, getWidth())); }
@@ -432,7 +435,7 @@ struct MickensEditor::Content : juce::Component {
     MickensProcessor& p; float phase = 0;
     std::unique_ptr<BayPanel> bays[mk::kBays];
     DrumGrid drums; juce::ComboBox drumSel[mk::kDrums]; std::unique_ptr<Knob> drumLvl[mk::kDrums];
-    juce::TextButton patBtn[4]; juce::TextButton play { "PLAY" }, dice { "DICE STARTS" }, saveB { "SAVE" }, loadB { "LOAD" }, folderB { "BREAKS FOLDER" }, rescanB { "RESCAN" }, themeB { "DARK" };
+    juce::TextButton patBtn[4]; std::unique_ptr<Toggle> laneMute[mk::kDrums], muteAll; juce::TextButton play { "PLAY" }, dice { "DICE STARTS" }, saveB { "SAVE" }, loadB { "LOAD" }, folderB { "BREAKS FOLDER" }, rescanB { "RESCAN" }, themeB { "DARK" };
     std::function<void()> onTheme;
     juce::ComboBox bars; DragOut dragWav, dragStems; std::unique_ptr<Knob> tempo;
     std::vector<std::unique_ptr<Knob>> fxKnobs; std::unique_ptr<Toggle> stutLatch; HoldButton stutHold { "STUTTER" }; juce::ComboBox stutDiv; std::unique_ptr<APVTS::ComboBoxAttachment> stutDivAtt;
@@ -448,9 +451,12 @@ struct MickensEditor::Content : juce::Component {
         const char* lv[] = { "kick_lvl", "snr_lvl", "hat_lvl", "oh_lvl" };
         for (int d = 0; d < mk::kDrums; ++d) {
             addAndMakeVisible(drumSel[d]); drumLvl[d] = std::make_unique<Knob>(st, lv[d], ""); addAndMakeVisible(*drumLvl[d]);
+            static const char* mi[] = { "kick_mute", "snr_mute", "hat_mute", "oh_mute" };
+            laneMute[d] = std::make_unique<Toggle>(st, mi[d], "M", BLOOD); laneMute[d]->setTooltip("Mute this drum (it also stops ducking the breaks)"); addAndMakeVisible(*laneMute[d]);
             drumSel[d].onChange = [this, d] { const auto t = drumSel[d].getText(); if (drumSel[d].getSelectedId() == 999 || t.isEmpty()) return; p.drumName[(size_t) d] = t; p.userDrum[(size_t) d] = nullptr; p.publish(); syncDrums(); };
         }
         syncDrums();
+        muteAll = std::make_unique<Toggle>(st, "drums_mute", "MUTE ALL", BLOOD); muteAll->setTooltip("Mute every drum (patterns stay)"); addAndMakeVisible(*muteAll);
         const char* pn[] = { "TWO STEP", "HALFTIME", "ROLLER", "CLEAR" };
         for (int i = 0; i < 4; ++i) { patBtn[i].setButtonText(pn[i]); addAndMakeVisible(patBtn[i]); patBtn[i].onClick = [this, i] { p.defaultPattern(i == 3 ? 3 : i); p.publish(); drums.repaint(); }; }
         // header
@@ -570,10 +576,10 @@ struct MickensEditor::Content : juce::Component {
         // bottom: drums left, fx right
         secDrums = { 12, 500, 560, 348 };
         { auto r = secDrums.reduced(10); r.removeFromTop(24);
-          auto btns = r.removeFromBottom(28); const int pw = (btns.getWidth() - 18) / 4; for (int i = 0; i < 4; ++i) { patBtn[i].setBounds(btns.removeFromLeft(pw)); btns.removeFromLeft(6); }
+          auto btns = r.removeFromBottom(28); muteAll->setBounds(btns.removeFromRight(90)); btns.removeFromRight(6); const int pw = (btns.getWidth() - 18) / 4; for (int i = 0; i < 4; ++i) { patBtn[i].setBounds(btns.removeFromLeft(pw)); btns.removeFromLeft(6); }
           r.removeFromBottom(8);
-          auto names = r.removeFromLeft(150); const int lh = names.getHeight() / 4;
-          for (int d = 0; d < mk::kDrums; ++d) { auto l = names.removeFromTop(lh).reduced(0, 4); drumLvl[d]->setBounds(l.removeFromRight(40).withTrimmedBottom(-12)); l.removeFromRight(4); drumSel[d].setBounds(l.withSizeKeepingCentre(l.getWidth(), 26)); }
+          auto names = r.removeFromLeft(178); const int lh = names.getHeight() / 4;
+          for (int d = 0; d < mk::kDrums; ++d) { auto l = names.removeFromTop(lh).reduced(0, 4); drumLvl[d]->setBounds(l.removeFromRight(40).withTrimmedBottom(-12)); l.removeFromRight(4); laneMute[d]->setBounds(l.removeFromLeft(26).withSizeKeepingCentre(26, 26)); l.removeFromLeft(4); drumSel[d].setBounds(l.withSizeKeepingCentre(l.getWidth(), 26)); }
           r.removeFromLeft(6); drums.setBounds(r); }
         const int fx0 = 580, fxW = W - 12 - fx0;
         secCrunch = { fx0, 500, 150, 108 }; secSpace = { fx0 + 158, 500, 200, 108 }; secMix = { fx0 + 366, 500, fxW - 366, 108 };

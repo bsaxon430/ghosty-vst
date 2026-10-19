@@ -83,7 +83,7 @@ private:
     std::vector<std::unique_ptr<mk::Snapshot>> snaps;
     std::vector<mk::BreakPtr> keepBreaks; std::vector<gb::SoundPtr> keepSounds;
     struct BayP { std::atomic<float> *nudge, *grid, *pitch, *level, *decay, *pan, *rs, *rc, *ra, *dk, *ds, *dh, *mute, *fit; } bp[mk::kBays] {};
-    std::atomic<float>* fx[40] {};
+    std::atomic<float>* fx[48] {};
     juce::AudioBuffer<float> chunk; juce::MidiBuffer subMidi;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MickensProcessor)
 };
