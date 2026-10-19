@@ -37,6 +37,10 @@ public:
     void setTrackSound(int track, const juce::String& name);
     void drainRecorded();                             // pads recorded while playing -> model
     juce::File userDir() const;
+    // whole beats (kit, your samples, all 16 patterns, the song, the mixer) in Documents/Ghosty/Beats
+    juce::File beatsDir() const { auto d = juce::File::getSpecialLocation(juce::File::userDocumentsDirectory).getChildFile("Ghosty").getChildFile("Beats"); d.createDirectory(); return d; }
+    bool saveBeat(const juce::String& name) { juce::MemoryBlock mb; getStateInformation(mb); return beatsDir().getChildFile(juce::File::createLegalFileName(name) + ".ghostbeat").replaceWithData(mb.getData(), mb.getSize()); }
+    bool loadBeat(const juce::File& f) { juce::MemoryBlock mb; if (!f.loadFileAsData(mb) || mb.getSize() == 0) return false; setStateInformation(mb.getData(), (int) mb.getSize()); return true; }
     bool savePattern(int pattern, const juce::String& name);
     bool loadPattern(const juce::File& f, int pattern);
     juce::File bounce(bool song, int bars);           // render to WAV (for drag-out)

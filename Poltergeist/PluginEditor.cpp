@@ -585,7 +585,7 @@ struct DragOut : juce::Component {
 
 struct PoltergeistEditor::Content : juce::Component, juce::DragAndDropContainer {
     PoltergeistEditor& ed; PoltergeistProcessor& proc;
-    juce::TextEditor search; juce::TextButton summonBtn { "SUMMON" }, diceBtn { "?" }, prevBtn { "<" }, nextBtn { ">" }, presetBtn;
+    juce::TextEditor search; juce::TextButton summonBtn { "SUMMON" }, diceBtn { "?" }, prevBtn { "<" }, nextBtn { ">" }, presetBtn, saveSnd { "SAVE" }, loadSnd { "LOAD" };
     juce::OwnedArray<juce::TextButton> chips;
     std::unique_ptr<GhostField> field;
     Scope scope;
@@ -633,7 +633,20 @@ struct PoltergeistEditor::Content : juce::Component, juce::DragAndDropContainer 
         diceBtn.setTooltip("Surprise me");
         diceBtn.onClick = [this] { search.clear(); ed.doSummon(""); };
         addAndMakeVisible(diceBtn);
-        for (auto* b : { &prevBtn, &nextBtn, &presetBtn }) addAndMakeVisible(*b);
+        for (auto* b : { &prevBtn, &nextBtn, &presetBtn, &saveSnd, &loadSnd }) addAndMakeVisible(*b);
+        saveSnd.onClick = [this] {
+            auto* w = new juce::AlertWindow("Save this sound", "Name it (saved in Documents/Ghosty/Poltergeist):", juce::MessageBoxIconType::NoIcon);
+            w->addTextEditor("name", proc.patchName); w->addButton("SAVE", 1, juce::KeyPress(juce::KeyPress::returnKey)); w->addButton("Cancel", 0);
+            w->enterModalState(true, juce::ModalCallbackFunction::create([this, w](int r) {
+                if (r == 1) { const auto n = w->getTextEditorContents("name").trim(); if (n.isNotEmpty()) status.setText(proc.saveUserSound(n) ? "Saved \"" + n + "\". LOAD brings it back in any project." : "Couldn't save.", juce::dontSendNotification); ed.refreshPresetName(); }
+            }), true);
+        };
+        loadSnd.onClick = [this] {
+            juce::PopupMenu m; auto files = proc.userDir().findChildFiles(juce::File::findFiles, false, "*.ghostpatch"); files.sort();
+            for (int i = 0; i < files.size(); ++i) m.addItem(i + 1, files[i].getFileNameWithoutExtension());
+            if (files.isEmpty()) m.addItem(-1, "No saved sounds yet (use SAVE)", false);
+            m.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(&loadSnd), [this, files](int r) { if (r > 0 && proc.loadUserSound(files[r - 1])) { ed.refreshPresetName(); wave.cached = nullptr; refreshLab(); ed.selectGhost(field->selected); status.setText("Loaded \"" + files[r - 1].getFileNameWithoutExtension() + "\".", juce::dontSendNotification); } });
+        };
         prevBtn.onClick = [this] { proc.loadPreset((proc.currentPreset + proc.getNumPrograms() - 1) % proc.getNumPrograms()); ed.refreshPresetName(); };
         nextBtn.onClick = [this] { proc.loadPreset((proc.currentPreset + 1) % proc.getNumPrograms()); ed.refreshPresetName(); };
         presetBtn.onClick = [this] {
@@ -872,9 +885,9 @@ struct PoltergeistEditor::Content : juce::Component, juce::DragAndDropContainer 
         g.setColour(INK); g.fillRoundedRectangle(logo.reduced(12, 10).withTrimmedBottom(4), 6);
         g.setColour(BG); g.fillRect(logo.getCentreX() - 6, logo.getCentreY() - 3, 4.0f, 6.0f); g.fillRect(logo.getCentreX() + 2, logo.getCentreY() - 3, 4.0f, 6.0f);
         g.setColour(INK); g.setFont(juce::FontOptions(28.0f, juce::Font::bold));
-        g.drawText("POLTERGEIST", 74, 8, 270, 32, juce::Justification::centredLeft);
+        g.drawText("POLTERGEIST", 74, 8, 220, 32, juce::Justification::centredLeft);
         g.setColour(PURPLE); g.setFont(juce::FontOptions(10.5f, juce::Font::bold));
-        g.drawText("FM SPIRIT SYNTH  -  BY GHOSTBLOCK", 76, 38, 270, 14, juce::Justification::centredLeft);
+        g.drawText("FM SPIRIT SYNTH - GHOSTBLOCK", 76, 38, 220, 14, juce::Justification::centredLeft);
         auto card = [&](juce::Rectangle<int> r, const char* title) {
             g.setColour(CARD.withAlpha(0.85f)); g.fillRoundedRectangle(r.toFloat(), 16);
             g.setColour(PURPLE.withAlpha(0.22f)); g.drawRoundedRectangle(r.toFloat().reduced(0.5f), 16, 1);
@@ -892,7 +905,8 @@ struct PoltergeistEditor::Content : juce::Component, juce::DragAndDropContainer 
     }
 
     void resized() override {
-        prevBtn.setBounds(352, 16, 30, 34); presetBtn.setBounds(386, 16, 200, 34); nextBtn.setBounds(590, 16, 30, 34);
+        prevBtn.setBounds(300, 16, 30, 34); presetBtn.setBounds(334, 16, 170, 34); nextBtn.setBounds(508, 16, 30, 34);
+        saveSnd.setBounds(544, 16, 44, 34); loadSnd.setBounds(590, 16, 44, 34);
         search.setBounds(636, 14, 268, 38); summonBtn.setBounds(910, 14, 82, 38); diceBtn.setBounds(996, 14, 30, 38);
         int x = 18; const int cy = 64;
         for (auto* b : chips) {

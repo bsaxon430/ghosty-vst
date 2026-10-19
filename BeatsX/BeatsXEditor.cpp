@@ -257,6 +257,7 @@ struct BeatsXEditor::Content : juce::Component {
     juce::ComboBox kitBox, lenBox, catBox, soundBox, chokeBox, repeatDiv;
     juce::TextButton playBtn { "PLAY" }, copyBtn { "COPY" }, pasteBtn { "PASTE" }, clearBtn { "CLEAR" }, saveBtn { "SAVE" }, loadBtn { "LOAD" };
     juce::TextButton prevSnd { "<" }, nextSnd { ">" }, loadSmp { "LOAD SAMPLE" }, revBtn { "REVERSE" }, clrRow { "CLEAR ROW" }, f4 { "1/4" }, f8 { "1/8" }, f16 { "1/16" }, shL { "<<" }, shR { ">>" }, rnd { "RANDOM" };
+    juce::TextButton saveBeatBtn { "SAVE BEAT" }, loadBeatBtn { "LOAD BEAT" };
     juce::TextButton recBtn { "REC" }, repeatBtn { "NOTE REPEAT" }, songModeBtn { "SONG MODE" }, delBlock { "DELETE BLOCK" }, dupBlock { "DUPLICATE" }, clrSong { "CLEAR SONG" };
     juce::OwnedArray<HoldButton> perf;
     juce::OwnedArray<Knob> masterKnobs, trackKnobs;
@@ -371,6 +372,18 @@ struct BeatsXEditor::Content : juce::Component {
         for (int i = 0; i < 5; ++i) { auto* b = perf.add(new HoldButton(pf[i])); b->getProperties().set("tint", (juce::int64) PINK.getARGB());
             b->onHold = [this, i](bool on) { if (i < 4) proc.stutter.store(on ? i + 1 : 0); else proc.tape.store(on); }; addAndMakeVisible(b); }
         addAndMakeVisible(wavOut); addAndMakeVisible(midiOut); addAndMakeVisible(stemsOut);
+        addAndMakeVisible(saveBeatBtn); addAndMakeVisible(loadBeatBtn); saveBeatBtn.getProperties().set("accent", true);
+        saveBeatBtn.onClick = [this] {
+            auto* w = new juce::AlertWindow("Save this beat", "Name it (kit, samples, all patterns and the song are saved):", juce::MessageBoxIconType::NoIcon);
+            w->addTextEditor("name", kitBox.getText().upToFirstOccurrenceOf(" ", false, false) + " beat"); w->addButton("SAVE", 1, juce::KeyPress(juce::KeyPress::returnKey)); w->addButton("Cancel", 0);
+            w->enterModalState(true, juce::ModalCallbackFunction::create([this, w](int r) { if (r == 1) { const auto n = w->getTextEditorContents("name").trim(); if (n.isNotEmpty()) say(proc.saveBeat(n) ? "Saved \"" + n + "\" in Documents/Ghosty/Beats." : "Couldn't save."); } }), true);
+        };
+        loadBeatBtn.onClick = [this] {
+            juce::PopupMenu m; auto files = proc.beatsDir().findChildFiles(juce::File::findFiles, false, "*.ghostbeat"); files.sort();
+            for (int i = 0; i < files.size(); ++i) m.addItem(i + 1, files[i].getFileNameWithoutExtension());
+            if (files.isEmpty()) m.addItem(-1, "No saved beats yet (use SAVE BEAT)", false);
+            m.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(&loadBeatBtn), [this, files](int r) { if (r > 0 && proc.loadBeat(files[r - 1])) { refreshAll(); say("Loaded \"" + files[r - 1].getFileNameWithoutExtension() + "\"."); } });
+        };
         status.setFont(juce::FontOptions(12.0f)); status.setColour(juce::Label::textColourId, GREEN); addAndMakeVisible(status);
         setPage(0); selectTrack(0); refreshPattern(); refreshModes();
     }
@@ -460,7 +473,8 @@ struct BeatsXEditor::Content : juce::Component {
         for (int i = 0; i < 5; ++i) perf[i]->setBounds(22 + i * (i == 0 ? 0 : 1) * 0 + (i == 0 ? 0 : 0), 0, 0, 0);
         int px = 22; for (int i = 0; i < 5; ++i) { const int w = i == 0 ? 104 : (i == 4 ? 104 : 56); perf[i]->setBounds(px, 738, w, 32); px += w + 4; }
         wavOut.setBounds(820, 652, 160, 36); midiOut.setBounds(990, 652, 166, 36); stemsOut.setBounds(820, 694, 336, 36);
-        status.setBounds(440, 744, 716, 20);
+        saveBeatBtn.setBounds(440, 738, 110, 32); loadBeatBtn.setBounds(556, 738, 110, 32);
+        status.setBounds(668, 60, 500, 22);
     }
 };
 

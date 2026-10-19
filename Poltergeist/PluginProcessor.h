@@ -29,6 +29,10 @@ public:
     void applyPatch(const gs::Patch& p);
     juce::String summon(const juce::String& words);   // returns what it made
     void loadPreset(int i);
+    // user sounds: the whole plugin state (patch + Sample Ghost + Lab + keys) in Documents/Ghosty/Poltergeist
+    juce::File userDir() const { auto d = juce::File::getSpecialLocation(juce::File::userDocumentsDirectory).getChildFile("Ghosty").getChildFile("Poltergeist"); d.createDirectory(); return d; }
+    bool saveUserSound(const juce::String& name) { juce::MemoryBlock mb; getStateInformation(mb); patchName = name; return userDir().getChildFile(juce::File::createLegalFileName(name) + ".ghostpatch").replaceWithData(mb.getData(), mb.getSize()); }
+    bool loadUserSound(const juce::File& f) { juce::MemoryBlock mb; if (!f.loadFileAsData(mb) || mb.getSize() == 0) return false; setStateInformation(mb.getData(), (int) mb.getSize()); patchName = f.getFileNameWithoutExtension(); return true; }
     // Sample Ghost
     bool loadSampleFile(const juce::File& f, juce::String& err);
     bool resampleRecent(double seconds = 4.0);   // the last few seconds of Poltergeist's own output
