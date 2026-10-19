@@ -74,6 +74,7 @@ public:
     std::atomic<double> lastBpm { 172 };
     std::atomic<bool> hostRunning { false };
     bool darkTheme = false;   // UI look, saved with the session
+    bool stutterLatch = false; // the LATCH switch (UI only; the stutter parameter itself is what's automated)
 
 private:
     void timerCallback() override;

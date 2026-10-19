@@ -447,7 +447,7 @@ struct MickensEditor::Content : juce::Component {
     juce::TextButton patBtn[4]; std::unique_ptr<Toggle> laneMute[mk::kDrums], muteAll; HoldButton hit[mk::kDrums]; juce::TextButton play { "PLAY" }, dice { "DICE STARTS" }, saveB { "SAVE" }, loadB { "LOAD" }, folderB { "BREAKS FOLDER" }, rescanB { "RESCAN" }, themeB { "DARK" };
     std::function<void()> onTheme;
     juce::ComboBox bars; DragOut dragWav, dragStems; std::unique_ptr<Knob> tempo;
-    std::vector<std::unique_ptr<Knob>> fxKnobs; std::unique_ptr<Toggle> stutLatch; HoldButton stutHold { "STUTTER" }; juce::ComboBox stutDiv; std::unique_ptr<APVTS::ComboBoxAttachment> stutDivAtt;
+    std::vector<std::unique_ptr<Knob>> fxKnobs; juce::TextButton stutLatchBtn { "LATCH" }; HoldButton stutHold { "STUTTER" }; juce::ComboBox stutDiv; std::unique_ptr<APVTS::ComboBoxAttachment> stutDivAtt;
     std::unique_ptr<juce::FileChooser> chooser; juce::TooltipWindow tips { this, 600 };
     juce::Rectangle<int> secCrunch, secSpace, secMix, secFilt, secStut, secDrums, header, uniArea;
 
@@ -494,13 +494,20 @@ struct MickensEditor::Content : juce::Component {
                                "DRY", "RESO", "CUTOFF", "MIX", "CUTOFF", "MIX", "CUTOFF", "MIX", "CUTOFF", "MIX", "PITCH", "MIX", "VOWEL", "MIX",
                                "FILTER", "ENV AMT", "ENV DECAY" };
         for (int i = 0; i < 26; ++i) { fxKnobs.push_back(std::make_unique<Knob>(st, ids[i], caps[i])); addAndMakeVisible(*fxKnobs.back()); }
-        stutLatch = std::make_unique<Toggle>(st, "stutter", "LATCH", PINK); addAndMakeVisible(*stutLatch);
+        // LATCH is its own switch (not the stutter itself): off = hold to stutter, release to stop; on = tap on, tap off
+        stutLatchBtn.setClickingTogglesState(true); stutLatchBtn.getProperties().set("tint", (juce::int64) PINK.getARGB()); addAndMakeVisible(stutLatchBtn);
+        stutLatchBtn.setToggleState(p.stutterLatch, juce::dontSendNotification);
+        stutLatchBtn.onClick = [this] { p.stutterLatch = stutLatchBtn.getToggleState(); if (!p.stutterLatch) setStutter(false); };
         addAndMakeVisible(stutHold); stutHold.getProperties().set("tint", (juce::int64) BLOOD.getARGB());
-        stutHold.onHold = [this](bool on) { if (auto* pr = p.apvts.getParameter("stutter")) pr->setValueNotifyingHost(on ? 1.0f : 0.0f); };
+        stutHold.onHold = [this](bool down) {
+            if (p.stutterLatch) { if (down) setStutter(!stutterOn()); }   // latched: each press flips it
+            else setStutter(down); };                                      // momentary: on while held
         stutHold.setTooltip("Hold to stutter the breaks (LATCH keeps it on)");
         addAndMakeVisible(stutDiv); stutDiv.addItemList({ "1/8", "1/16", "1/32", "1/64", "1/16T" }, 1); stutDivAtt = std::make_unique<APVTS::ComboBoxAttachment>(st, "st_div", stutDiv);
         setSize(W, H);
     }
+    bool stutterOn() const { return p.apvts.getRawParameterValue("stutter")->load() > 0.5f; }
+    void setStutter(bool on) { if (auto* pr = p.apvts.getParameter("stutter")) if (stutterOn() != on) pr->setValueNotifyingHost(on ? 1.0f : 0.0f); }
     int barsNow() const { static const int B[] = { 1, 2, 4, 8 }; return B[juce::jlimit(0, 3, bars.getSelectedId() - 1)]; }
     void syncDrums() {
         static const char* lane[] = { "KICK", "SNARE", "HAT", "OPEN HAT" };
@@ -530,7 +537,7 @@ struct MickensEditor::Content : juce::Component {
         const bool host = p.hostRunning.load(), on = p.engine.playing.load();
         themeB.setButtonText(p.darkTheme ? "LIGHT" : "DARK");
         play.setButtonText(host ? "DAW PLAYING" : (on ? "STOP" : "PLAY")); play.setToggleState(host || on, juce::dontSendNotification);
-        stutHold.latched = stutLatch->getToggleState(); stutHold.setToggleState(p.apvts.getRawParameterValue("stutter")->load() > 0.5f, juce::dontSendNotification);
+        stutHold.setToggleState(p.apvts.getRawParameterValue("stutter")->load() > 0.5f, juce::dontSendNotification);
         repaint(header);
     }
     void section(juce::Graphics& g, juce::Rectangle<int> r, const juce::String& t, juce::Colour c) {
@@ -601,7 +608,7 @@ struct MickensEditor::Content : juce::Component {
         { auto r = secFilt.reduced(10); r.removeFromTop(26); const int fw = r.getWidth() / 7;
           for (int c = 0; c < 7; ++c) { auto col = r.removeFromLeft(fw); const int kh = col.getHeight() / 2;
               fxKnobs[(size_t) (9 + c * 2)]->setBounds(col.removeFromTop(kh).withSizeKeepingCentre(juce::jmin(fw, 54), kh)); fxKnobs[(size_t) (10 + c * 2)]->setBounds(col.withSizeKeepingCentre(juce::jmin(fw, 54), kh)); } }
-        { auto r = secStut.reduced(10); r.removeFromTop(18); stutHold.setBounds(r.removeFromLeft(130).reduced(0, 6)); r.removeFromLeft(8); stutLatch->setBounds(r.removeFromLeft(70).reduced(0, 12)); r.removeFromLeft(8);
+        { auto r = secStut.reduced(10); r.removeFromTop(18); stutHold.setBounds(r.removeFromLeft(130).reduced(0, 6)); r.removeFromLeft(8); stutLatchBtn.setBounds(r.removeFromLeft(70).reduced(0, 12)); r.removeFromLeft(8);
           stutDiv.setBounds(r.removeFromLeft(80).withSizeKeepingCentre(80, 26)); r.removeFromLeft(10); const int w = r.getWidth() / 3; for (int i = 0; i < 3; ++i) fxKnobs[(size_t) (23 + i)]->setBounds(r.removeFromLeft(w).withSizeKeepingCentre(juce::jmin(w, 70), r.getHeight() + 6)); }
     }
 };
