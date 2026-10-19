@@ -1,8 +1,10 @@
 #include "BeatsXEditor.h"
+#include "GhostArt.h"
 
 namespace {
-const juce::Colour BG { 0xff05040a }, CARD { 0xff0b0a13 }, CARD2 { 0xff110f1c }, INK { 0xfff5f3ff }, GREY { 0xff9ca3af }, DIM { 0xff4b5563 },
-                   PURPLE { 0xffa855f7 }, VIOLET { 0xff8b5cf6 }, GREEN { 0xff00ff88 }, PINK { 0xfff472b6 }, AMBER { 0xfffbbf24 }, BLUE { 0xff60a5fa };
+// Ghosty's palette (shared with the Ghosty synth)
+const juce::Colour BG { 0xff0B0C10 }, CARD { 0xff141621 }, CARD2 { 0xff1b1e2a }, INK { 0xfff2f4f5 }, GREY { 0xff9ca3af }, DIM { 0xff4b5563 },
+                   PURPLE { 0xffA06BFF }, VIOLET { 0xff8b5cf6 }, GREEN { 0xff3CFF8F }, PINK { 0xfff472b6 }, AMBER { 0xfffbbf24 }, BLUE { 0xff60a5fa };
 constexpr int W = 1180, H = 790;
 juce::Colour trackColour(int t) { static const juce::Colour C[] = { GREEN, PURPLE, PINK, AMBER, BLUE, juce::Colour(0xff22d3ee), juce::Colour(0xfff87171), juce::Colour(0xffa3e635) }; return C[(size_t) (t % 8)]; }
 juce::Colour patColour(int p) { return trackColour(p * 3 + 1); }
@@ -387,6 +389,23 @@ struct BeatsXEditor::Content : juce::Component {
         };
         status.setFont(juce::FontOptions(12.0f)); status.setColour(juce::Label::textColourId, GREEN); addAndMakeVisible(status);
         setPage(0); selectTrack(0); refreshPattern(); refreshModes();
+        // ghosts drifting through the header, like the Ghosty synth
+        juce::Random r(7);
+        for (int i = 0; i < 10; ++i) bgGhosts.push_back({ ghosty::lookFor((i * 4 + 1) % 35), r.nextFloat() * 6.28f, 0.3f + r.nextFloat() * 0.55f,
+                                                        (0.004f + r.nextFloat() * 0.008f) * (r.nextBool() ? 1.0f : -1.0f), 24 + r.nextFloat() * 28, 0.14f + r.nextFloat() * 0.12f, r.nextFloat() * 6.28f });
+        mascot = ghosty::lookFor(0); mascot.acc = 3; mascot.eyes = 3; mascot.mouth = 1;   // the beats ghost wears headphones
+    }
+
+    // ---- ghost layer: drifting background ghosts, a headphone ghost that bounces on every hit, glitchy wordmark
+    struct BgGhost { ghosty::GhostLook look; float a, r, sp, sz, al, ph; };   // orbiting, like the Ghosty synth
+    std::vector<BgGhost> bgGhosts; ghosty::GhostLook mascot; float phase = 0, bounce = 0; uint32_t lastTrig = 0;
+    void tickGhosts() {
+        phase += 1.0f / 30.0f;
+        uint32_t sum = 0; for (int t = 0; t < gb::kTracks; ++t) sum += proc.engine.trig[t].load();
+        if (sum != lastTrig) { lastTrig = sum; bounce = 1.0f; }
+        bounce *= 0.82f;
+        for (auto& q : bgGhosts) q.a += q.sp * (1.0f + bounce * 3.0f);
+        repaint();
     }
 
     void say(const juce::String& s) { status.setText(s, juce::dontSendNotification); }
@@ -431,9 +450,14 @@ struct BeatsXEditor::Content : juce::Component {
     void paint(juce::Graphics& g) override {
         g.fillAll(BG);
         g.setGradientFill(juce::ColourGradient(VIOLET.withAlpha(0.2f), W * 0.85f, -40.0f, VIOLET.withAlpha(0.0f), W * 0.85f, 360.0f, true)); g.fillRect(getLocalBounds());
-        g.setColour(INK); g.setFont(juce::FontOptions(26.0f, juce::Font::bold)); g.drawText("GHOSTY BEATS", 18, 10, 240, 30, juce::Justification::centredLeft);
-        g.setColour(PURPLE); g.setFont(juce::FontOptions(10.0f, juce::Font::bold)); g.drawText("BY GHOSTBLOCK", 20, 38, 200, 12, juce::Justification::centredLeft);
-        auto card = [&](juce::Rectangle<int> r) { g.setColour(CARD.withAlpha(0.9f)); g.fillRoundedRectangle(r.toFloat(), 14); g.setColour(PURPLE.withAlpha(0.22f)); g.drawRoundedRectangle(r.toFloat().reduced(0.5f), 14, 1); };
+        g.setGradientFill(juce::ColourGradient(PURPLE.withAlpha(0.18f), 0, 0, BG.withAlpha(0.0f), W * 0.5f, H * 0.4f, true)); g.fillRect(getLocalBounds());
+        for (auto& q : bgGhosts) {
+            const float x = W * 0.5f + std::cos(q.a) * q.r * W * 0.55f, y = H * 0.5f + std::sin(q.a) * q.r * H * 0.55f + std::sin(phase * 1.6f + q.ph) * 4.0f;
+            ghosty::drawGhost(g, q.look, x, y, q.sz, 0.0f, false, q.al + bounce * 0.2f, std::cos(q.a + 1.57f) < 0);
+        }
+        ghosty::drawWordmark(g, { 18.0f, 8.0f, 210.0f, 40.0f }, "BEATS", bounce > 0.6f ? (bounce - 0.6f) * 1.2f : 0.0f);
+        ghosty::drawGhost(g, mascot, 1124.0f, 30.0f - bounce * 7.0f, 34.0f, 0.0f, false, 1.0f, false);
+        auto card = [&](juce::Rectangle<int> r) { g.setColour(CARD.withAlpha(0.86f)); g.fillRoundedRectangle(r.toFloat(), 14); g.setColour(PURPLE.withAlpha(0.22f)); g.drawRoundedRectangle(r.toFloat().reduced(0.5f), 14, 1); };
         card({ 12, 132, W - 24, 500 });
         card({ 12, 640, W - 24, 140 });
         if (page == 0) { g.setColour(CARD2); g.fillRoundedRectangle(918.0f, 140.0f, 250.0f, 484.0f, 12.0f); }
@@ -493,6 +517,7 @@ void BeatsXEditor::resized() { if (content) content->setTransform(juce::AffineTr
 void BeatsXEditor::timerCallback() {
     proc.drainRecorded();
     auto& c = *content;
+    c.tickGhosts();
     if (c.page == 0) { c.grid.repaint(); c.tracks.repaint(); } else if (c.page == 1) c.pads.repaint(); else c.lane.repaint();
     if (c.playBtn.getToggleState() != proc.engine.internalPlay) c.playBtn.setToggleState(proc.engine.internalPlay, juce::dontSendNotification);
     const int pi = c.grid.patIdx(); if (!c.patBtns[pi]->getToggleState()) c.refreshPattern();   // pattern changed by automation
