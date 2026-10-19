@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GhostBlock Case Study</title>
+<meta name="description" content="GhostBlock: a live Solana copy-trading engine in Rust. What it did, how it was built, what we measured, and the honest results.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👻</text></svg>">
+<style>
+:root { --bg: #0b0814; --card: #151022; --line: #2a2140; --ink: #f2eefb; --dim: #a79cc0; --green: #19e68c; --purple: #a46bff; --red: #ff5d73; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --bg: #f6f4fb; --card: #ffffff; --line: #e2dcef; --ink: #1a1328; --dim: #625a75; --green: #0a9e5c; --purple: #7a3fe0; --red: #d8344c; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: clamp(28px, 6vw, 42px); line-height: 1.15; margin: 0 0 8px; }
+h1 span { background: linear-gradient(90deg, var(--green), var(--purple)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+h2 { font-size: 22px; margin: 40px 0 12px; }
+.lead { color: var(--dim); font-size: 18px; margin: 0 0 20px; }
+.tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 8px; }
+.tags span { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 3px 12px; font-size: 13px; color: var(--dim); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; margin: 14px 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.grid .card { margin: 0; }
+.card h3 { margin: 0 0 6px; font-size: 16px; color: var(--green); }
+.card p { margin: 0; color: var(--dim); font-size: 15px; }
+.flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0; }
+.flow b { background: var(--card); border: 1px solid var(--purple); border-radius: 10px; padding: 8px 12px; font-size: 14px; }
+.flow i { color: var(--dim); font-style: normal; }
+figure { margin: 18px 0; }
+figure.hero img { max-width: 420px; margin: 0 auto; }
+figure.hero figcaption { max-width: 520px; margin: 6px auto 0; text-align: center; }
+figure img { width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--line); display: block; }
+figcaption { color: var(--dim); font-size: 13px; margin-top: 6px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+.stat b { display: block; font-size: 24px; }
+.stat span { color: var(--dim); font-size: 13px; }
+.neg { color: var(--red); }
+ul { padding-left: 20px; } li { margin: 6px 0; }
+.foot { margin-top: 48px; color: var(--dim); font-size: 14px; border-top: 1px solid var(--line); padding-top: 16px; }
+a { color: var(--purple); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1><span>GhostBlock</span>: a live Solana copy-trading engine</h1>
+  <p class="lead">A Rust trading engine that copied chosen wallets' buys within the same few blocks, traded directly on Solana DEXs, and managed every exit on its own. It ran live with real money from Sep 26 to Oct 13, 2026.</p>
+  <div class="tags"><span>Rust</span><span>Solana</span><span>PumpSwap</span><span>Raydium CLMM</span><span>Meteora</span><span>Jito bundles</span><span>Durable nonces</span><span>Python</span><span>Telegram</span><span>Live dashboard</span></div>
+
+  <figure class="hero"><img src="green-day.png" alt="GhostBlock live dashboard on a winning day: +$15.12 today, +$12.37 all-time after 33 trades"><figcaption>The live dashboard on a good day early on: +$15.12 for the day and +$12.37 all-time after 33 real trades (tips and fees included). Not every day looked like this; see the full results below.</figcaption></figure>
+
+  <h2>What it did</h2>
+  <div class="grid">
+    <div class="card"><h3>Same-block copying</h3><p>Watched selected wallets in real time and copied their buys, aiming for the same block or the next one.</p></div>
+    <div class="card"><h3>Direct DEX swaps</h3><p>Built its own swap instructions for PumpSwap, Raydium CLMM and Meteora pools (DLMM, DAMM, DBC), using each venue's own pricing math.</p></div>
+    <div class="card"><h3>Route decoding</h3><p>Read buys that came through aggregators (Jupiter, DFlow, OKX) and worked out the real pool underneath, so it could trade that pool directly.</p></div>
+    <div class="card"><h3>Fast landing</h3><p>Sent through several send lanes at once with tips, plus Jito bundles and durable nonces, with warm connections so the first send isn't slow.</p></div>
+    <div class="card"><h3>Automatic exits</h3><p>Take-profit, stop-loss and "follow the exit" (sell when the copied wallet sells), priced from a live pool-state stream instead of slow RPC calls.</p></div>
+    <div class="card"><h3>Tools around it</h3><p>Python automation for wallet research, paper and shadow testing, credit budgeting and Telegram alerts, plus a live web dashboard.</p></div>
+  </div>
+
+  <h2>How it was built</h2>
+  <div class="flow"><b>Wallet stream</b><i>→</i><b>Decode the trade</b><i>→</i><b>Rules: copy or skip</b><i>→</i><b>Build + send swap</b><i>→</i><b>Watch the position</b><i>→</i><b>Exit</b></div>
+  <ul>
+    <li><b>Venue layer:</b> each DEX lives behind one interface (load the pool, quote, build buy and sell), so adding a venue meant wiring it into decoding, trading, caching, lookup and live exit pricing. Every venue was proven with buy and sell simulations against real pools before going live.</li>
+    <li><b>Known-pool cache:</b> pools are pre-loaded and kept fresh, so the hot path never waits on a lookup.</li>
+    <li><b>Send path:</b> one signed transaction goes out through several keyed lanes in parallel. The dashboard tracked which lane won each landing.</li>
+    <li><b>Safety:</b> pool-size floors, drain and rug checks, skip windows, a halt button and a sell-all button.</li>
+  </ul>
+
+  <figure><img src="landing.png" alt="Landing panel: blocks after the copied wallet, lane results" loading="lazy"><figcaption>Landing tracker from the final lineup: 3 of 5 copies landed in the same block as the copied wallet and 2 one block later; it also logged which send lane won. (Wallet addresses blurred.)</figcaption></figure>
+  <figure><img src="system.png" alt="System status: bot, streams, sender latency, RPC, lanes" loading="lazy"><figcaption>System status: streams, sender and RPC latency, server load and the keyed send lanes.</figcaption></figure>
+
+  <h2>Honest results</h2>
+  <div class="stats">
+    <div class="stat"><b>185</b><span>live closed copy trades</span></div>
+    <div class="stat"><b>44%</b><span>closed in profit</span></div>
+    <div class="stat"><b class="neg">−$71</b><span>total, at $10–30 per trade</span></div>
+    <div class="stat"><b>68 / 73</b><span>take-profit / stop-loss exits</span></div>
+  </div>
+  <p>The engineering did its job: it found, built and landed trades fast and reliably, and every exit ran on its own. The strategy (which wallets to copy) did not make money at this size, and the owner shut it down on Oct 13, 2026. That's why I sell the engineering, never promised returns.</p>
+
+  <h2>What it taught me</h2>
+  <ul>
+    <li><b>Paper is always better than live.</b> Landing a block late, price premiums, failed sends and tips meant setups that hit 55–70% on paper landed nearer 40–60% live.</li>
+    <li><b>Only your own copy test counts.</b> A wallet's own profit says little about copying it, because you can't buy at its price.</li>
+    <li><b>Speed is the edge and the cost.</b> Tips and landing costs eat a big share of small trades, so lane choice and tip sizing matter.</li>
+    <li><b>Filters beat volume.</b> Narrow setups (one venue, pool floors, skip windows) did better than copying many wallets.</li>
+    <li><b>Small samples lie.</b> Rules that looked great on 10–20 trades failed on the next 20, so later work used split-half and shuffle tests before switching anything on.</li>
+    <li><b>RPC credits are real money.</b> Research usage had to be capped and tracked.</li>
+  </ul>
+
+  <h2>What I can build for you</h2>
+  <ul>
+    <li>A copy-trading or strategy bot for Solana, with the venues, exits and Telegram control panel you need.</li>
+    <li>Make an existing bot faster and more reliable: landing, send lanes, Jito, nonces, pool decoding, exit pricing.</li>
+    <li>Monitoring and dashboards for a bot you already run.</li>
+  </ul>
+  <p>You run the software with your own keys and funds. I build it, I don't hold client money, and I don't promise profits. The bot's source code is private; this page describes it.</p>
+
+  <div class="foot">Also by me: <a href="../mickens/">Mr. Mickens</a>, a drum &amp; bass break machine you can play in your browser, and <a href="https://github.com/bsaxon430/ghosty-vst">Ghosty audio plugins</a> (VST3/AU, Mac + Windows).</div>
+</div>
+</body>
+</html>
