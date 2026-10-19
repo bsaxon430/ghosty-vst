@@ -251,6 +251,7 @@ class Engine {
     f.cancelScheduledValues(T); f.setValueAtTime(top, T); f.setTargetAtTime(base, T + 0.001, Math.max(0.005, F.st_dec * 0.3) / 3);
   }
   hit(d, vel, T) {
+    if (this.S.drums.all || (this.S.drums.mute && this.S.drums.mute[d])) return;   // muted drums don't play or duck
     const C = this.ctx, S = this.S, buf = drumBuffer(LANES[d], S.drums.sel[d]);
     if (d === 2 && this.lastOpen) { try { this.lastOpen.gain.cancelScheduledValues(T); this.lastOpen.gain.setTargetAtTime(0, T, 0.01); } catch (e) {} }
     const src = C.createBufferSource(); src.buffer = buf; const g = C.createGain(); g.gain.value = 0.3 + 0.7 * vel;

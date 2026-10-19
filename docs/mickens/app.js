@@ -16,10 +16,10 @@ const bay = (brk, level, mute, dk) => ({ brk, nudge: 0, grid: 0, pitch: 0, level
 function defaults() {
   return { v: 1, bpm: 172, theme: 'light', stutDiv: 1, stutter: false,
     bays: [bay('Amen|0', 0.85, false, 0.35), bay('Think|0', 0.6, true, 0), bay('Two Step|1', 0.6, true, 0), bay('Apache|0', 0.6, true, 0)],
-    drums: { pat: patRows('TWO STEP'), sel: ['Hard Kick', 'Big Snare', 'Tight Hat', 'Short Open Hat'], lvl: [1, 0.9, 0.6, 0.55] }, fx: { ...DEF_FX } };
+    drums: { pat: patRows('TWO STEP'), sel: ['Hard Kick', 'Big Snare', 'Tight Hat', 'Short Open Hat'], lvl: [1, 0.9, 0.6, 0.55], mute: [false, false, false, false], all: false }, fx: { ...DEF_FX } };
 }
 let S = defaults();
-try { const saved = JSON.parse(localStorage.getItem('mickens')); if (saved && saved.v === 1) { S = Object.assign(defaults(), saved); S.fx = { ...DEF_FX, ...saved.fx }; S.stutter = false; } } catch (e) {}
+try { const saved = JSON.parse(localStorage.getItem('mickens')); if (saved && saved.v === 1) { S = Object.assign(defaults(), saved); S.fx = { ...DEF_FX, ...saved.fx }; S.stutter = false; S.drums = { ...defaults().drums, ...saved.drums }; } } catch (e) {}
 let saveTimer = 0; const save = () => { clearTimeout(saveTimer); saveTimer = setTimeout(() => { try { localStorage.setItem('mickens', JSON.stringify(S)); } catch (e) {} }, 300); };
 
 const userBreaks = [];
@@ -108,13 +108,14 @@ function showBay() {
 }
 
 // drum lanes
-const laneNames = ['KICK', 'SNARE', 'HAT', 'OPEN HAT'], cells = [];
+const laneNames = ['KICK', 'SNARE', 'HAT', 'OPEN HAT'], cells = [], muteBtns = [];
 LANES.forEach((lane, d) => {
   const L = document.createElement('div'); L.className = 'lane';
   const head = document.createElement('div'); head.className = 'head'; const sel = document.createElement('select');
   for (const n of Object.keys(DRUMS[lane])) { const o = document.createElement('option'); o.textContent = n; sel.appendChild(o); }
   sel.value = S.drums.sel[d]; sel.onchange = () => { S.drums.sel[d] = sel.value; save(); if (ctx) eng.hit(d, 0.9, ctx.currentTime + 0.01); };
-  const nm = document.createElement('b'); nm.textContent = laneNames[d]; nm.style.cssText = 'width:62px;color:var(--cyan);font-size:11px';
+  const nm = document.createElement('button'); nm.textContent = laneNames[d]; nm.className = 'lanemute'; nm.title = 'Tap to mute this drum';
+  nm.onclick = () => { S.drums.mute[d] = !S.drums.mute[d]; drawMutes(); save(); }; muteBtns[d] = nm;
   head.append(nm, sel); const kh = document.createElement('div'); head.appendChild(kh);
   knob(kh, '', () => S.drums.lvl[d], v => S.drums.lvl[d] = v, 0, 1, [1, 0.9, 0.6, 0.55][d], true);
   const grid = document.createElement('div'); grid.className = 'steps'; cells[d] = [];
@@ -132,12 +133,19 @@ LANES.forEach((lane, d) => {
 let nowStep = -1;
 function drawCells() { cells.forEach((row, d) => row.forEach((c, s) => { const v = S.drums.pat[d][s];
   c.style.background = v ? rainbow(s / 16, 0.9, 1, 0.35 + 0.65 * v / 127) : ''; c.classList.toggle('now', s === nowStep && playing); })); }
+function drawMutes() {
+  muteBtns.forEach((b, d) => { const m = S.drums.mute[d] || S.drums.all; b.classList.toggle('on', m); b.textContent = m ? 'MUTED' : laneNames[d]; });
+  cells.forEach((row, d) => row[0].parentNode.style.opacity = (S.drums.mute[d] || S.drums.all) ? 0.35 : 1);
+  $('muteAll').classList.toggle('on', S.drums.all); $('muteAll').textContent = S.drums.all ? 'DRUMS MUTED' : 'MUTE ALL DRUMS';
+}
+$('muteAll').onclick = () => { S.drums.all = !S.drums.all; drawMutes(); save(); };
 Object.keys(PATTERNS).forEach(n => { const b = document.createElement('button'); b.textContent = n; b.onclick = () => { S.drums.pat = patRows(n); drawCells(); save(); }; $('pats').appendChild(b); });
 
 // ---------------------------------------------------------------- audio + transport
 async function ensureAudio() {
   if (ctx) { if (ctx.state !== 'running') await ctx.resume(); return; }
   try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}   // iPhone: play even with the silent switch on
+  try { const a = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAAAA'); a.loop = true; a.setAttribute('playsinline', ''); a.play().catch(() => {}); } catch (e) {}   // older iPhones
   ctx = new (window.AudioContext || window.webkitAudioContext)({ latencyHint: 'interactive' });
   eng = new Engine(ctx, ctx.destination, S, getBreak);
   eng.onSlice = (b, slice, t) => uiQueue.push({ t, b, slice });
@@ -145,6 +153,8 @@ async function ensureAudio() {
 }
 function tick() {
   const spb = 60 / S.bpm / 4;
+  if (ctx.state !== 'running') return;
+  if (nextT < ctx.currentTime - 0.05) nextT = ctx.currentTime + 0.05;   // the phone paused the audio: carry on from now
   while (nextT < ctx.currentTime + 0.12) { eng.step(stepN, nextT, spb); uiQueue.push({ t: nextT, step: stepN % 16 }); nextT += 60 / S.bpm / 4; stepN++; }
 }
 async function setPlay(on) {
@@ -154,6 +164,7 @@ async function setPlay(on) {
   else { clearInterval(timer); nowStep = -1; drawCells(); }
 }
 $('play').onclick = () => setPlay(!playing);
+document.addEventListener('pointerdown', () => { if (ctx && ctx.state !== 'running') ctx.resume(); }, true);
 $('go').onclick = async () => { await ensureAudio(); $('start').remove(); setPlay(true); };
 $('dice').onclick = () => { S.bays.forEach(b => b.nudge = Math.floor(Math.random() * 33) - 16); showBay(); save(); toast('New starts for every bay'); };
 $('theme').onclick = () => { S.theme = S.theme === 'dark' ? 'light' : 'dark'; applyTheme(); save(); };
@@ -165,7 +176,7 @@ $('stutter').addEventListener('pointerup', () => { if (!latch) stut(false); });
 $('stutter').addEventListener('pointercancel', () => { if (!latch) stut(false); });
 $('latch').onclick = () => { latch = !latch; $('latch').classList.toggle('on', latch); if (!latch) stut(false); };
 $('stutDiv').selectedIndex = S.stutDiv; $('stutDiv').onchange = e => { S.stutDiv = e.target.selectedIndex; save(); };
-$('reset').onclick = () => { if (!confirm('Reset everything to the start?')) return; S = defaults(); if (eng) { eng.S = S; eng.apply(); } $('stutDiv').selectedIndex = 1; drawCells(); showBay(); applyTheme(); save(); };
+$('reset').onclick = () => { if (!confirm('Reset everything to the start?')) return; S = defaults(); if (eng) { eng.S = S; eng.apply(); } $('stutDiv').selectedIndex = 1; drawCells(); drawMutes(); showBay(); applyTheme(); save(); };
 
 // 4 bars to WAV (rendered offline with the same engine), then share (phone) or download
 $('wav').onclick = async () => {
@@ -205,7 +216,7 @@ function frame(ms) {
 }
 
 // start
-fillBreaks(); applyTheme(); showBay(); drawCells();
+fillBreaks(); applyTheme(); showBay(); drawCells(); drawMutes();
 // warm up the 4 bays' breaks in the background so the first PLAY doesn't stutter
 S.bays.forEach((b, i) => setTimeout(() => { const br = getBreak(b.brk); if (br) renderBreak(br); }, 200 + i * 150));
 requestAnimationFrame(frame);

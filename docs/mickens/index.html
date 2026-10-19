@@ -55,6 +55,8 @@ canvas { display: block; }
 .lane { margin-bottom: 8px; }
 .lane .head { display: flex; gap: 8px; align-items: center; margin-bottom: 4px; }
 .lane .head select { flex: 1; }
+.lanemute { --tint: var(--blood); width: 78px; padding: 7px 0; font-size: 11px; color: var(--cyan); }
+.lanemute.on { color: #120a1c; }
 .steps { display: grid; grid-template-columns: repeat(16, 1fr); gap: 3px; touch-action: none; }
 .steps div { height: 30px; border-radius: 4px; background: var(--card2); }
 .steps div:nth-child(8n+5), .steps div:nth-child(8n+6), .steps div:nth-child(8n+7), .steps div:nth-child(8n+8) { filter: brightness(1.18); }
@@ -106,6 +108,7 @@ canvas { display: block; }
     <h2>DRUM MACHINE <span style="color:var(--dim);font-weight:600">tap = hit, long-press = ghost</span></h2>
     <div id="lanes"></div>
     <div class="pat" id="pats"></div>
+    <button id="muteAll" style="--tint:var(--blood);width:100%;margin-top:6px">MUTE ALL DRUMS</button>
   </div>
 
   <div class="split">
