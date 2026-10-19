@@ -138,7 +138,7 @@ void FlowStrip::paint (juce::Graphics& g)
     for (int i = 0; i < count; ++i)
     {
         const int n = notes[i];
-        const bool on = proc.keyboardState.isNoteOnForChannels (0xffff, n);
+        const bool on = proc.keyboardState.isNoteOnForChannels (0xffff, n) || proc.isNoteSounding (n);
         if (on) flash[n] = juce::jmax (flash[n], 0.8f);
         const auto c = colourFor (n);
         juce::ColourGradient gr (c.withAlpha (0.05f + flash[n] * 0.55f), 0, 0, c.withAlpha (0.14f + flash[n] * 0.35f + proc.level.load() * 0.15f), 0, b.getHeight(), false);
@@ -167,124 +167,333 @@ void FlowStrip::timerCallback()
     repaint();
 }
 
+// ------------------------------------------------------------------ editor content (fixed size, scaled by the editor)
+class SynthContent : public juce::Component, private juce::Timer
+{
+public:
+    static constexpr int W = SynthEditor::W, H = SynthEditor::H;
+
+    SynthContent (SynthProcessor& p, juce::LookAndFeel& lf) : proc (p), wave (p), flow (p)
+    {
+        setLookAndFeel (&lf);       // before any child is made, so knob text boxes pick up the Ghosty colours
+        using CA = juce::AudioProcessorValueTreeState::ComboBoxAttachment;
+        using BA = juce::AudioProcessorValueTreeState::ButtonAttachment;
+        addAndMakeVisible (wave); addAndMakeVisible (pad); addAndMakeVisible (flow);
+
+        auto combo = [this] (juce::ComboBox& c, const juce::StringArray& items, const char* id)
+        {
+            addAndMakeVisible (c); c.addItemList (items, 1);
+            comboAtts.push_back (std::make_unique<CA> (proc.apvts, id, c));
+        };
+        auto toggle = [this] (juce::TextButton& b, const char* id)
+        {
+            addAndMakeVisible (b); b.setClickingTogglesState (true);
+            buttonAtts.push_back (std::make_unique<BA> (proc.apvts, id, b));
+        };
+        combo (waveABox, shapeNames(), "waveA");  combo (waveBBox, shapeNames(), "waveB");
+        combo (keyBox, keyNames(), "key");        combo (scaleBox, scaleNames(), "scale");   combo (chordBox, chordNames(), "chord");
+        combo (rateBox, arpRateNames(), "arpRate"); combo (modeBox, arpModeNames(), "arpMode");
+        combo (octBox, { "1 octave", "2 octaves", "3 octaves" }, "arpOct");
+        combo (fTypeBox, SynthProcessor::filterTypeNames(), "fType");
+        combo (lfoDivBox, SynthProcessor::lfoDivNames(), "lfoDiv");
+        combo (lfoShapeBox, SynthProcessor::lfoShapeNames(), "lfoShape");
+        combo (lfoDestBox, SynthProcessor::lfoDestNames(), "lfoDest");
+        toggle (arpBtn, "arp"); toggle (monoBtn, "mono"); toggle (legatoBtn, "legato"); toggle (linkBtn, "fLink"); toggle (syncBtn, "lfoSync");
+
+        for (auto* b : { &prevBtn, &nextBtn, &saveBtn, &loadBtn, &initBtn, &editA, &editB, &diceBtn }) addAndMakeVisible (b);
+        addAndMakeVisible (presetBox);
+        refreshPresetBox();
+        presetBox.onChange = [this]
+        {
+            const int id = presetBox.getSelectedId();
+            if (id >= userBase && id - userBase < userFiles.size()) proc.loadUserPreset (userFiles[id - userBase]);
+            else if (id >= 1 && id <= proc.getNumPrograms()) proc.setCurrentProgram (id - 1);
+            wordGlitch = 1;
+        };
+        prevBtn.onClick = [this] { const int n = proc.getNumPrograms(); proc.setCurrentProgram ((proc.getCurrentProgram() + n - 1) % n); wordGlitch = 1; };
+        nextBtn.onClick = [this] { proc.setCurrentProgram ((proc.getCurrentProgram() + 1) % proc.getNumPrograms()); wordGlitch = 1; };
+        saveBtn.onClick = [this] { askSave(); };
+        loadBtn.onClick = [this] { showLoadMenu(); };
+        initBtn.onClick = [this] { proc.initPatch(); wordGlitch = 1; };
+        editA.setToggleState (true, juce::dontSendNotification);
+        editA.onClick = [this] { wave.editB = false; editA.setToggleState (true, juce::dontSendNotification); editB.setToggleState (false, juce::dontSendNotification); };
+        editB.onClick = [this] { wave.editB = true; editB.setToggleState (true, juce::dontSendNotification); editA.setToggleState (false, juce::dontSendNotification); };
+        diceBtn.onClick = [this] { wave.randomise(); wordGlitch = 1; };
+
+        pad.addGhost ("TONE",  col::ice,  proc.apvts.getParameter ("cutoff"), proc.apvts.getParameter ("res"), 4);
+        pad.addGhost ("MORPH", col::pink, proc.apvts.getParameter ("morph"),  proc.apvts.getParameter ("width"), 9);
+        pad.addGhost ("SPACE", col::ecto, proc.apvts.getParameter ("echo"),   proc.apvts.getParameter ("verb"), 17);
+        pad.addGhost ("HEAT",  col::gold, proc.apvts.getParameter ("drive"),  proc.apvts.getParameter ("sub"), 22);
+        pad.levelSource = [this] { return proc.level.load(); };
+
+        auto knobRow = [this] (std::vector<GhostKnob*>& row, std::initializer_list<std::pair<const char*, const char*>> ks)
+        {
+            for (auto& k : ks) { auto* g = knobs.add (new GhostKnob (proc.apvts, k.first, k.second)); addAndMakeVisible (g); row.push_back (g); }
+        };
+        knobRow (oscKnobs,  { { "morph", "MORPH" }, { "width", "WIDTH" }, { "unison", "UNISON" }, { "sub", "SUB" }, { "glide", "GLIDE" } });
+        knobRow (ampKnobs,  { { "attack", "ATTACK" }, { "decay", "DECAY" }, { "sustain", "SUSTAIN" }, { "release", "RELEASE" } });
+        knobRow (filtKnobs, { { "cutoff", "CUTOFF" }, { "res", "RES" }, { "fDrive", "F.DRIVE" }, { "fenv", "ENV AMT" } });
+        knobRow (fenvKnobs, { { "fAttack", "F.ATTACK" }, { "fDecay", "F.DECAY" }, { "fSustain", "F.SUSTAIN" }, { "fRelease", "F.RELEASE" } });
+        knobRow (lfoKnobs,  { { "lfoRate", "RATE" }, { "lfoDepth", "DEPTH" } });
+        knobRow (fxKnobs,   { { "drive", "DRIVE" }, { "crush", "CRUSH" }, { "chorus", "CHORUS" }, { "phaser", "PHASER" }, { "echo", "ECHO" }, { "verb", "REVERB" }, { "haunt", "HAUNT" } });
+        knobRow (modKnobs,  { { "wheelAmt", "MOD WHEEL" }, { "velFilt", "VEL > FILT" } });
+        knobRow (outKnobs,  { { "gain", "VOLUME" } });
+        knobRow (arpKnobs,  { { "arpGate", "ARP GATE" } });
+
+        for (int i = 0; i < 9; ++i)
+        {
+            auto& r = juce::Random::getSystemRandom();
+            bg.push_back ({ lookFor ((i * 4 + 1) % 35), r.nextFloat() * 6.28f, 0.25f + r.nextFloat() * 0.4f, (0.04f + r.nextFloat() * 0.08f) * (r.nextBool() ? 1.0f : -1.0f), 22 + r.nextFloat() * 26, 0.12f + r.nextFloat() * 0.12f });
+        }
+        setSize (W, H);
+        startTimerHz (24);
+    }
+
+    ~SynthContent() override { stopTimer(); setLookAndFeel (nullptr); }
+
+    void paint (juce::Graphics& g) override
+    {
+        g.fillAll (col::bg);
+        auto b = getLocalBounds().toFloat();
+        juce::ColourGradient haze (col::ecto.withAlpha (0.18f), 0, 0, col::bg.withAlpha (0.0f), b.getWidth() * 0.5f, b.getHeight() * 0.4f, true);
+        g.setGradientFill (haze); g.fillRect (b);
+        const float lvl = proc.level.load();
+        for (auto& q : bg)
+        {
+            const float rr = q.r * juce::jmin (b.getWidth(), b.getHeight());
+            const float x = b.getCentreX() + std::cos (q.a) * rr * 1.3f, y = b.getHeight() * 0.5f + std::sin (q.a) * rr * 0.8f;
+            drawGhost (g, q.look, x, y, q.sz, wordGlitch * 0.4f, false, q.al + lvl * 0.25f, std::cos (q.a + 1.57f) < 0);
+        }
+        drawWordmark (g, { 20, 10, 260, 40 }, "SYNTH", wordGlitch);
+        g.setColour (col::dim); g.setFont (font (10.0f));
+        g.drawText ("WAVE / draw on it", juce::Rectangle<float> (20, 60, 260, 16), juce::Justification::centredLeft);
+        g.drawText ("GHOSTS / drag & hold / double-click to swap", juce::Rectangle<float> (600, 60, 484, 16), juce::Justification::centredLeft);
+
+        for (auto& pn : panels)
+        {
+            auto r = pn.r.toFloat();
+            g.setColour (col::card.withAlpha (0.92f)); g.fillRoundedRectangle (r, 12);
+            g.setColour (pn.c.withAlpha (0.22f)); g.drawRoundedRectangle (r, 12, 1.0f);
+            g.setColour (pn.c.withAlpha (0.85f)); g.setFont (font (10.5f));
+            g.drawText (pn.title, r.reduced (12, 0).removeFromTop (24), juce::Justification::centredLeft);
+        }
+        // LFO captions
+        g.setColour (col::dim); g.setFont (font (9.5f));
+        for (auto* c : { &lfoShapeBox, &lfoDestBox, &lfoDivBox })
+            g.drawText (c == &lfoShapeBox ? "SHAPE" : c == &lfoDestBox ? "TARGET" : "SYNC DIVISION", c->getBounds().translated (0, -14).withHeight (12).toFloat(), juce::Justification::centredLeft);
+
+        // play card
+        auto pc = playCard.toFloat();
+        g.setColour (col::card.withAlpha (0.92f)); g.fillRoundedRectangle (pc, 14);
+        g.setColour (col::slime.withAlpha (0.25f)); g.drawRoundedRectangle (pc, 14, 1.0f);
+        g.setColour (col::dim); g.setFont (font (10.0f));
+        g.drawText ("PLAY", juce::Rectangle<float> (pc.getX() + 12, (float) keyBox.getY(), 44, (float) keyBox.getHeight()), juce::Justification::centredLeft);
+        // arp step light
+        auto led = juce::Rectangle<float> ((float) arpBtn.getRight() - 12, (float) arpBtn.getY() + 4, 6, 6);
+        g.setColour (col::slime.withAlpha (0.15f + arpFlash * 0.85f)); g.fillEllipse (led);
+    }
+
+    void resized() override
+    {
+        // header
+        prevBtn.setBounds (300, 14, 34, 32); presetBox.setBounds (338, 14, 300, 32); nextBtn.setBounds (642, 14, 34, 32);
+        saveBtn.setBounds (692, 14, 72, 32); loadBtn.setBounds (770, 14, 72, 32); initBtn.setBounds (848, 14, 72, 32);
+        // wave + ghosts
+        waveABox.setBounds (20, 78, 130, 28); waveBBox.setBounds (156, 78, 130, 28);
+        editA.setBounds (296, 78, 88, 28); editB.setBounds (390, 78, 88, 28); diceBtn.setBounds (484, 78, 96, 28);
+        wave.setBounds (20, 112, 560, 240);
+        pad.setBounds (600, 78, 484, 274);
+
+        panels.clear();
+        auto panel = [this] (int x, int y, int w, int h, const char* title, juce::Colour c) { panels.push_back ({ { x, y, w, h }, title, c }); return juce::Rectangle<int> (x, y, w, h); };
+        auto placeKnobs = [] (std::vector<GhostKnob*>& ks, juce::Rectangle<int> area)
+        {
+            const int n = (int) ks.size(); if (n == 0) return;
+            const int w = area.getWidth() / n;
+            for (int i = 0; i < n; ++i) ks[(size_t) i]->setBounds (area.getX() + i * w, area.getY(), w, area.getHeight());
+        };
+        auto knobArea = [] (juce::Rectangle<int> r) { return r.withTrimmedTop (26).withTrimmedBottom (4).reduced (6, 0); };
+        constexpr int rowH = 108, gap = 12;
+
+        // row 2: oscillator / amp envelope / filter
+        int y = 362;
+        auto osc = panel (16, y, 346, rowH, "OSCILLATOR", col::pink);
+        placeKnobs (oscKnobs, knobArea (osc));
+        legatoBtn.setBounds (osc.getRight() - 12 - 66, y + 5, 66, 18); monoBtn.setBounds (legatoBtn.getX() - 6 - 54, y + 5, 54, 18);
+        auto amp = panel (osc.getRight() + gap, y, 346, rowH, "AMP ENVELOPE", col::slime);
+        placeKnobs (ampKnobs, knobArea (amp));
+        auto flt = panel (amp.getRight() + gap, y, W - 16 - (amp.getRight() + gap), rowH, "FILTER", col::ice);
+        placeKnobs (filtKnobs, knobArea (flt));
+        fTypeBox.setBounds (flt.getRight() - 12 - 120, y + 4, 120, 20);
+
+        // row 3: filter envelope / LFO
+        y += rowH + gap - 4;
+        auto fe = panel (16, y, 346, rowH, "FILTER ENVELOPE", col::ice);
+        placeKnobs (fenvKnobs, knobArea (fe));
+        linkBtn.setBounds (fe.getRight() - 12 - 110, y + 5, 110, 18);
+        auto lfo = panel (fe.getRight() + gap, y, W - 16 - (fe.getRight() + gap), rowH, "LFO", col::ecto);
+        placeKnobs (lfoKnobs, knobArea (lfo).withWidth (180));
+        {
+            const int cx = lfo.getX() + 6 + 180 + 20, cw = 140, cg = 14, cy = y + 52;
+            lfoShapeBox.setBounds (cx, cy, cw, 28);
+            lfoDestBox.setBounds (cx + cw + cg, cy, cw + 20, 28);
+            syncBtn.setBounds (cx + 2 * cw + 20 + 2 * cg, cy, 64, 28);
+            lfoDivBox.setBounds (syncBtn.getRight() + 8, cy, 92, 28);
+        }
+
+        // row 4: effects / mod / output
+        y += rowH + gap - 4;
+        auto fxp = panel (16, y, 640, rowH, "EFFECTS", col::gold);
+        placeKnobs (fxKnobs, knobArea (fxp));
+        auto mod = panel (fxp.getRight() + gap, y, 240, rowH, "MOD WHEEL / VELOCITY", col::pink);
+        placeKnobs (modKnobs, knobArea (mod));
+        auto out = panel (mod.getRight() + gap, y, W - 16 - (mod.getRight() + gap), rowH, "OUTPUT", col::slime);
+        placeKnobs (outKnobs, knobArea (out));
+
+        // play card
+        y += rowH + gap - 4;
+        playCard = { 16, y, W - 32, H - 10 - y };
+        const int ry = y + 10;
+        keyBox.setBounds (66, ry, 62, 28); scaleBox.setBounds (134, ry, 160, 28); chordBox.setBounds (300, ry, 140, 28);
+        arpBtn.setBounds (460, ry, 72, 28); rateBox.setBounds (538, ry, 86, 28); modeBox.setBounds (630, ry, 116, 28); octBox.setBounds (752, ry, 110, 28);
+        arpKnobs[0]->setBounds (playCard.getRight() - 96, y + 6, 88, playCard.getHeight() - 12);
+        flow.setBounds (26, ry + 36, arpKnobs[0]->getX() - 10 - 26, playCard.getBottom() - 10 - (ry + 36));
+    }
+
+private:
+    SynthProcessor& proc;
+    WaveScreen wave;
+    ghosty::XYGhostPad pad;
+    FlowStrip flow;
+    juce::ComboBox presetBox, waveABox, waveBBox, keyBox, scaleBox, chordBox, rateBox, modeBox, octBox, fTypeBox, lfoDivBox, lfoShapeBox, lfoDestBox;
+    juce::TextButton arpBtn { "ARP" }, monoBtn { "MONO" }, legatoBtn { "LEGATO" }, linkBtn { "LINK TO AMP" }, syncBtn { "SYNC" };
+    juce::TextButton prevBtn { "<" }, nextBtn { ">" }, saveBtn { "SAVE" }, loadBtn { "LOAD" }, initBtn { "INIT" };
+    juce::TextButton editA { "DRAW A" }, editB { "DRAW B" }, diceBtn { "DICE" };
+    std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment>> comboAtts;
+    std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment>> buttonAtts;
+    juce::OwnedArray<GhostKnob> knobs;
+    std::vector<GhostKnob*> oscKnobs, ampKnobs, filtKnobs, fenvKnobs, lfoKnobs, fxKnobs, modKnobs, outKnobs, arpKnobs;
+    struct Panel { juce::Rectangle<int> r; juce::String title; juce::Colour c; };
+    std::vector<Panel> panels;
+    juce::Rectangle<int> playCard;
+    struct BgGhost { GhostLook look; float a, r, sp, sz, al; };
+    std::vector<BgGhost> bg;
+    float phase = 0, wordGlitch = 0, arpFlash = 0;
+    int lastArpCount = 0;
+    static constexpr int userBase = 1001;
+    juce::Array<juce::File> userFiles;
+
+    void refreshPresetBox()
+    {
+        presetBox.clear (juce::dontSendNotification);
+        juce::String lastCat;
+        for (int i = 0; i < proc.getNumPrograms(); ++i)
+        {
+            const auto cat = SynthProcessor::getPresetCategory (i);
+            if (cat != lastCat) { presetBox.addSectionHeading (cat.toUpperCase()); lastCat = cat; }
+            presetBox.addItem (proc.getProgramName (i), i + 1);
+        }
+        userFiles = proc.listUserPresets();
+        if (! userFiles.isEmpty())
+        {
+            presetBox.addSectionHeading ("YOUR SOUNDS");
+            for (int i = 0; i < userFiles.size(); ++i) presetBox.addItem (userFiles[i].getFileNameWithoutExtension(), userBase + i);
+        }
+        syncPresetBox();
+    }
+
+    void syncPresetBox()
+    {
+        const auto name = proc.patchName();
+        int want = 0;
+        if (proc.isUserPatch()) { for (int i = 0; i < userFiles.size(); ++i) if (userFiles[i].getFileNameWithoutExtension() == name) want = userBase + i; }
+        else if (name.isEmpty()) want = proc.getCurrentProgram() + 1;
+        if (want != 0) { if (presetBox.getSelectedId() != want) presetBox.setSelectedId (want, juce::dontSendNotification); }
+        else if (presetBox.getText() != name || presetBox.getSelectedId() != 0) presetBox.setText (name, juce::dontSendNotification);
+    }
+
+    void askSave()
+    {
+        auto* w = new juce::AlertWindow ("Save sound", "Saves every knob and both drawn waves to\n" + SynthProcessor::userPresetDir().getFullPathName(), juce::MessageBoxIconType::NoIcon, this);
+        const auto current = proc.isUserPatch() ? proc.patchName() : juce::String ("My Ghost");
+        w->addTextEditor ("name", current, "Name");
+        w->addButton ("Save", 1, juce::KeyPress (juce::KeyPress::returnKey));
+        w->addButton ("Cancel", 0, juce::KeyPress (juce::KeyPress::escapeKey));
+        juce::Component::SafePointer<SynthContent> safe (this);
+        w->enterModalState (true, juce::ModalCallbackFunction::create ([safe, w] (int result)
+        {
+            if (result != 1 || safe == nullptr) return;
+            const auto name = w->getTextEditorContents ("name").trim();
+            if (name.isEmpty()) return;
+            auto target = SynthProcessor::userPresetDir().getChildFile (juce::File::createLegalFileName (name) + ".ghostysound");
+            auto doSave = [safe, name]
+            {
+                if (safe == nullptr) return;
+                if (! safe->proc.saveUserPreset (name))
+                    juce::AlertWindow::showMessageBoxAsync (juce::MessageBoxIconType::WarningIcon, "Ghosty", "Could not save the sound.");
+                safe->refreshPresetBox(); safe->wordGlitch = 1;
+            };
+            if (target.existsAsFile())
+                juce::AlertWindow::showOkCancelBox (juce::MessageBoxIconType::QuestionIcon, "Replace?", "\"" + target.getFileNameWithoutExtension() + "\" already exists. Replace it?",
+                                                    "Replace", "Cancel", nullptr, juce::ModalCallbackFunction::create ([doSave] (int r) { if (r == 1) doSave(); }));
+            else doSave();
+        }), true);
+    }
+
+    void showLoadMenu()
+    {
+        userFiles = proc.listUserPresets();
+        juce::PopupMenu m;
+        m.addSectionHeader ("YOUR SOUNDS");
+        if (userFiles.isEmpty()) m.addItem (-1, "(nothing saved yet - press SAVE)", false);
+        for (int i = 0; i < userFiles.size(); ++i) m.addItem (i + 1, userFiles[i].getFileNameWithoutExtension(), true, proc.isUserPatch() && userFiles[i].getFileNameWithoutExtension() == proc.patchName());
+        m.addSeparator();
+        m.addItem (100000, "Open sounds folder");
+        juce::Component::SafePointer<SynthContent> safe (this);
+        m.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (&loadBtn), [safe] (int r)
+        {
+            if (safe == nullptr || r == 0) return;
+            if (r == 100000) { SynthProcessor::userPresetDir().startAsProcess(); return; }
+            if (r >= 1 && r <= safe->userFiles.size()) { safe->proc.loadUserPreset (safe->userFiles[r - 1]); safe->refreshPresetBox(); safe->wordGlitch = 1; }
+        });
+    }
+
+    void timerCallback() override
+    {
+        phase += 1.0f / 24.0f;
+        for (auto& q : bg) q.a += q.sp * (1.0f + proc.level.load() * 4.0f) * 0.04f;
+        wordGlitch *= 0.85f;
+        const int ac = proc.performer.arpCounter.load();
+        if (ac != lastArpCount) { lastArpCount = ac; arpFlash = 1.0f; } else arpFlash *= 0.75f;
+        syncPresetBox();
+        // dim what is not in use
+        const bool link = proc.fLinkP->load() > 0.5f, sync = proc.lfoSyncP->load() > 0.5f, mono = proc.monoP->load() > 0.5f;
+        for (auto* k : fenvKnobs) { k->setEnabled (! link); k->setAlpha (link ? 0.35f : 1.0f); }
+        lfoKnobs[0]->setEnabled (! sync); lfoKnobs[0]->setAlpha (sync ? 0.35f : 1.0f);
+        lfoDivBox.setEnabled (sync); lfoDivBox.setAlpha (sync ? 1.0f : 0.4f);
+        legatoBtn.setEnabled (mono); legatoBtn.setAlpha (mono ? 1.0f : 0.4f);
+        repaint();
+    }
+};
+
 // ------------------------------------------------------------------ editor
-SynthEditor::SynthEditor (SynthProcessor& p) : AudioProcessorEditor (&p), proc (p), wave (p), flow (p)
+SynthEditor::SynthEditor (SynthProcessor& p) : AudioProcessorEditor (&p), proc (p)
 {
     setLookAndFeel (&lnf);
-    addAndMakeVisible (wave); addAndMakeVisible (pad); addAndMakeVisible (flow);
-    for (auto* c : { &keyBox, &scaleBox, &chordBox, &rateBox, &modeBox, &octBox }) addAndMakeVisible (c);
-    addAndMakeVisible (arpBtn);
-    keyBox.addItemList (keyNames(), 1); scaleBox.addItemList (scaleNames(), 1); chordBox.addItemList (chordNames(), 1);
-    rateBox.addItemList (arpRateNames(), 1); modeBox.addItemList (arpModeNames(), 1); octBox.addItemList ({ "1 octave", "2 octaves", "3 octaves" }, 1);
-    using CA = juce::AudioProcessorValueTreeState::ComboBoxAttachment;
-    keyAtt = std::make_unique<CA> (proc.apvts, "key", keyBox);       scaleAtt = std::make_unique<CA> (proc.apvts, "scale", scaleBox);
-    chordAtt = std::make_unique<CA> (proc.apvts, "chord", chordBox); rateAtt = std::make_unique<CA> (proc.apvts, "arpRate", rateBox);
-    modeAtt = std::make_unique<CA> (proc.apvts, "arpMode", modeBox); octAtt = std::make_unique<CA> (proc.apvts, "arpOct", octBox);
-    arpBtn.setClickingTogglesState (true);
-    arpAtt = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (proc.apvts, "arp", arpBtn);
-    for (auto* b : { &prevBtn, &nextBtn, &editA, &editB, &diceBtn }) addAndMakeVisible (b);
-    addAndMakeVisible (presetBox); addAndMakeVisible (waveABox); addAndMakeVisible (waveBBox);
-
-    waveABox.addItemList (shapeNames(), 1); waveBBox.addItemList (shapeNames(), 1);
-    attA = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (proc.apvts, "waveA", waveABox);
-    attB = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (proc.apvts, "waveB", waveBBox);
-
-    refreshPresetBox();
-    presetBox.onChange = [this] { const int i = presetBox.getSelectedItemIndex(); if (i >= 0 && i != proc.getCurrentProgram()) { proc.setCurrentProgram (i); wordGlitch = 1; } };
-    prevBtn.onClick = [this] { const int n = proc.getNumPrograms(); proc.setCurrentProgram ((proc.getCurrentProgram() + n - 1) % n); refreshPresetBox(); wordGlitch = 1; };
-    nextBtn.onClick = [this] { proc.setCurrentProgram ((proc.getCurrentProgram() + 1) % proc.getNumPrograms()); refreshPresetBox(); wordGlitch = 1; };
-    editA.setClickingTogglesState (false); editB.setClickingTogglesState (false); editA.setToggleState (true, juce::dontSendNotification);
-    editA.onClick = [this] { wave.editB = false; editA.setToggleState (true, juce::dontSendNotification); editB.setToggleState (false, juce::dontSendNotification); };
-    editB.onClick = [this] { wave.editB = true; editB.setToggleState (true, juce::dontSendNotification); editA.setToggleState (false, juce::dontSendNotification); };
-    diceBtn.onClick = [this] { wave.randomise(); wordGlitch = 1; };
-
-    pad.addGhost ("TONE",  col::ice,  proc.apvts.getParameter ("cutoff"), proc.apvts.getParameter ("res"), 4);
-    pad.addGhost ("MORPH", col::pink, proc.apvts.getParameter ("morph"),  proc.apvts.getParameter ("width"), 9);
-    pad.addGhost ("SPACE", col::ecto, proc.apvts.getParameter ("echo"),   proc.apvts.getParameter ("verb"), 17);
-    pad.addGhost ("HEAT",  col::gold, proc.apvts.getParameter ("drive"),  proc.apvts.getParameter ("sub"), 22);
-    pad.levelSource = [this] { return proc.level.load(); };
-
-    const std::pair<const char*, const char*> ks[] { { "attack", "ATTACK" }, { "decay", "DECAY" }, { "sustain", "SUSTAIN" }, { "release", "RELEASE" },
-        { "unison", "UNISON" }, { "fenv", "FILTER ENV" }, { "chorus", "CHORUS" }, { "phaser", "PHASER" }, { "crush", "CRUSH" }, { "haunt", "HAUNT" }, { "gain", "VOLUME" },
-        { "arpGate", "ARP GATE" } };
-    for (auto& k : ks) addAndMakeVisible (knobs.add (new GhostKnob (proc.apvts, k.first, k.second)));
-
-    for (int i = 0; i < 9; ++i)
-    {
-        auto& r = juce::Random::getSystemRandom();
-        bg.push_back ({ lookFor ((i * 4 + 1) % 35), r.nextFloat() * 6.28f, 0.25f + r.nextFloat() * 0.4f, (0.04f + r.nextFloat() * 0.08f) * (r.nextBool() ? 1.0f : -1.0f), 22 + r.nextFloat() * 26, 0.12f + r.nextFloat() * 0.12f });
-    }
-    setSize (1000, 830);
-    startTimerHz (24);
+    content = std::make_unique<SynthContent> (p, lnf);
+    addAndMakeVisible (*content);
+    content->setBounds (0, 0, W, H);
+    setResizable (true, true);
+    setResizeLimits (W * 6 / 10, H * 6 / 10, W * 8 / 5, H * 8 / 5);
+    if (auto* c = getConstrainer()) c->setFixedAspectRatio ((double) W / H);
+    setSize (W, H);
 }
 
-SynthEditor::~SynthEditor() { setLookAndFeel (nullptr); }
+SynthEditor::~SynthEditor() { content.reset(); setLookAndFeel (nullptr); }
 
-void SynthEditor::refreshPresetBox()
-{
-    presetBox.clear (juce::dontSendNotification);
-    juce::String lastCat;
-    for (int i = 0; i < proc.getNumPrograms(); ++i)
-    {
-        const auto cat = SynthProcessor::getPresetCategory (i);
-        if (cat != lastCat) { presetBox.addSectionHeading (cat.toUpperCase()); lastCat = cat; }
-        presetBox.addItem (proc.getProgramName (i), i + 1);
-    }
-    presetBox.setSelectedItemIndex (proc.getCurrentProgram(), juce::dontSendNotification);
-}
-
-void SynthEditor::paint (juce::Graphics& g)
-{
-    g.fillAll (col::bg);
-    auto b = getLocalBounds().toFloat();
-    juce::ColourGradient haze (col::ecto.withAlpha (0.18f), 0, 0, col::bg.withAlpha (0.0f), b.getWidth() * 0.5f, b.getHeight() * 0.4f, true);
-    g.setGradientFill (haze); g.fillRect (b);
-    const float lvl = proc.level.load();
-    for (auto& q : bg)
-    {
-        const float rr = q.r * juce::jmin (b.getWidth(), b.getHeight());
-        const float x = b.getCentreX() + std::cos (q.a) * rr * 1.3f, y = b.getHeight() * 0.5f + std::sin (q.a) * rr * 0.8f;
-        drawGhost (g, q.look, x, y, q.sz, wordGlitch * 0.4f, false, q.al + lvl * 0.25f, std::cos (q.a + 1.57f) < 0);
-    }
-    drawWordmark (g, { 20, 10, 260, 40 }, "SYNTH", wordGlitch);
-    g.setColour (col::dim); g.setFont (font (10.0f));
-    g.drawText ("WAVE / draw on it", juce::Rectangle<float> (20, 66, 200, 16), juce::Justification::centredLeft);
-    g.drawText ("GHOSTS / drag & hold / double-click to swap", juce::Rectangle<float> (600, 66, 380, 16), juce::Justification::centredLeft);
-    // card behind knobs
-    g.setColour (col::card.withAlpha (0.9f)); g.fillRoundedRectangle (juce::Rectangle<float> (14, 446, 572, 200), 14);
-    g.setColour (col::ecto.withAlpha (0.2f)); g.drawRoundedRectangle (juce::Rectangle<float> (14, 446, 572, 200), 14, 1.0f);
-    g.setColour (col::dim); g.drawText ("Play your MIDI keyboard, the piano roll, or slide across the FLOW strip.", juce::Rectangle<float> (600, 600, 380, 40), juce::Justification::centredLeft);
-    g.setColour (col::card.withAlpha (0.9f)); g.fillRoundedRectangle (juce::Rectangle<float> (14, 652, 972, 168), 14);
-    g.setColour (col::slime.withAlpha (0.25f)); g.drawRoundedRectangle (juce::Rectangle<float> (14, 652, 972, 168), 14, 1.0f);
-    g.setColour (col::dim); g.setFont (font (10.0f));
-    g.drawText ("PLAY", juce::Rectangle<float> (24, 664, 40, 30), juce::Justification::centredLeft);
-}
+void SynthEditor::paint (juce::Graphics& g) { g.fillAll (col::bg); }
 
 void SynthEditor::resized()
 {
-    presetBox.setBounds (330, 14, 300, 34);
-    prevBtn.setBounds (640, 14, 40, 34); nextBtn.setBounds (686, 14, 40, 34);
-    waveABox.setBounds (20, 88, 130, 28); waveBBox.setBounds (156, 88, 130, 28);
-    editA.setBounds (300, 88, 80, 28); editB.setBounds (386, 88, 80, 28); diceBtn.setBounds (472, 88, 108, 28);
-    wave.setBounds (20, 124, 560, 312);
-    pad.setBounds (600, 88, 380, 500);
-    keyBox.setBounds (64, 664, 64, 30); scaleBox.setBounds (134, 664, 160, 30); chordBox.setBounds (300, 664, 140, 30);
-    arpBtn.setBounds (460, 664, 64, 30); rateBox.setBounds (530, 664, 80, 30); modeBox.setBounds (616, 664, 110, 30); octBox.setBounds (732, 664, 104, 30);
-    flow.setBounds (24, 702, 952, 108);
-    for (int i = 0; i < knobs.size(); ++i)
-    {
-        if (i == 11) { knobs[i]->setBounds (880, 654, 90, 48); continue; }
-        const int row = i < 6 ? 0 : 1, c = row == 0 ? i : i - 6, n = row == 0 ? 6 : 5;
-        const int w = 560 / n;
-        knobs[i]->setBounds (20 + c * w, 454 + row * 96, w, 90);
-    }
-}
-
-void SynthEditor::timerCallback()
-{
-    phase += 1.0f / 24.0f;
-    for (auto& q : bg) q.a += q.sp * (1.0f + proc.level.load() * 4.0f) * 0.04f;
-    wordGlitch *= 0.85f;
-    if (presetBox.getSelectedItemIndex() != proc.getCurrentProgram()) presetBox.setSelectedItemIndex (proc.getCurrentProgram(), juce::dontSendNotification);
-    repaint();
+    if (content) content->setTransform (juce::AffineTransform::scale ((float) getWidth() / (float) W));
 }

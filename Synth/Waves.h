@@ -4,6 +4,7 @@
 #include <atomic>
 #include <cmath>
 #include <vector>
+#include <memory>
 
 // Wavetable frames (the waves you draw) and band-limited mip tables built from them.
 namespace ghosty
@@ -134,7 +135,9 @@ struct MipSet
     }
 };
 
-// Double-buffered so the UI thread can rebuild while audio keeps playing.
+// Legacy double buffer, kept only so older code that includes this header still compiles.
+// Ghosty Synth no longer uses it: two rebuilds close together could overwrite the table the audio
+// thread is still reading. Use WaveSet + WaveMailbox below instead.
 struct WaveBank
 {
     MipSet a[2], b[2];
@@ -145,5 +148,49 @@ struct WaveBank
         a[next].build (fa, sr); b[next].build (fb, sr);
         live.store (next);
     }
+};
+
+// An immutable pair of band-limited tables (frame A and frame B). Built off the audio thread, never changed after.
+struct WaveSet
+{
+    MipSet a, b;
+    double sampleRate = 0;
+    static std::unique_ptr<WaveSet> make (const Frame& fa, const Frame& fb, double sr)
+    {
+        auto s = std::make_unique<WaveSet>();
+        s->a.build (fa, sr); s->b.build (fb, sr); s->sampleRate = sr;
+        return s;
+    }
+};
+
+// Hands finished WaveSets from ONE builder thread (the message thread) to the audio thread.
+// Audio side: no locks, no allocation, no frees. The set the audio thread drops goes into a
+// one-slot "trash" that the builder thread empties (deletes) on its next post() / collect().
+class WaveMailbox
+{
+public:
+    WaveMailbox() = default;
+    ~WaveMailbox() { delete pending.exchange (nullptr); delete trash.exchange (nullptr); delete active; }
+
+    // builder thread
+    void post (std::unique_ptr<WaveSet> s) { delete pending.exchange (s.release()); collect(); }
+    void collect()                         { delete trash.exchange (nullptr); }
+
+    // audio thread, once at the start of each block; the pointer stays valid until the next acquire()
+    const WaveSet* acquire() noexcept
+    {
+        if (pending.load (std::memory_order_acquire) != nullptr && trash.load (std::memory_order_acquire) == nullptr)
+            if (auto* p = pending.exchange (nullptr, std::memory_order_acq_rel))
+            {
+                trash.store (active, std::memory_order_release);
+                active = p;
+            }
+        return active;
+    }
+
+private:
+    std::atomic<WaveSet*> pending { nullptr }, trash { nullptr };
+    WaveSet* active = nullptr;      // audio thread only
+    JUCE_DECLARE_NON_COPYABLE (WaveMailbox)
 };
 } // namespace ghosty

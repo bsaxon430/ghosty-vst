@@ -44,9 +44,12 @@ private:
     void timerCallback() override;
 };
 
-class SynthEditor : public juce::AudioProcessorEditor, private juce::Timer
+class SynthContent;    // everything you see, laid out at a fixed W x H and scaled as one piece
+
+class SynthEditor : public juce::AudioProcessorEditor
 {
 public:
+    static constexpr int W = 1100, H = 860;
     explicit SynthEditor (SynthProcessor&);
     ~SynthEditor() override;
     void paint (juce::Graphics&) override;
@@ -55,19 +58,5 @@ public:
 private:
     SynthProcessor& proc;
     ghosty::GhostLnF lnf;
-    WaveScreen wave;
-    ghosty::XYGhostPad pad;
-    FlowStrip flow;
-    juce::ComboBox presetBox, waveABox, waveBBox, keyBox, scaleBox, chordBox, rateBox, modeBox, octBox;
-    juce::TextButton arpBtn { "ARP" };
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> keyAtt, scaleAtt, chordAtt, rateAtt, modeAtt, octAtt;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> arpAtt;
-    juce::TextButton prevBtn { "<" }, nextBtn { ">" }, editA { "DRAW A" }, editB { "DRAW B" }, diceBtn { "DICE" };
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> attA, attB;
-    juce::OwnedArray<ghosty::GhostKnob> knobs;
-    struct BgGhost { ghosty::GhostLook look; float a, r, sp, sz, al; };
-    std::vector<BgGhost> bg;
-    float phase = 0, wordGlitch = 0;
-    void timerCallback() override;
-    void refreshPresetBox();
+    std::unique_ptr<SynthContent> content;
 };
