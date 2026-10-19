@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#3a2a5a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Mr. Mickens</title>
+<meta name="description" content="Mr. Mickens: a dark hardcore drum & bass break machine you can play in your browser.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦄</text></svg>">
+<style>
+:root {
+  --bg-top: #4b3775; --bg-bot: #2e2148; --card: #4a3870; --card2: #5b4783; --ink: #faf6ff; --dim: #d2c4ea; --wave: rgba(36,24,56,.75);
+  --pink: #ff2bd6; --cyan: #22e6ff; --lime: #a6ff2b; --gold: #ffd23f; --blood: #ff2650;
+}
+body.dark { --bg-top: #0d0717; --bg-bot: #050309; --card: #110a1b; --card2: #1b1129; --ink: #f4eefc; --dim: #9a8bb0; --wave: rgba(0,0,0,.8); }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; }
+body { background: linear-gradient(var(--bg-top), var(--bg-bot)) fixed; color: var(--ink); font: 700 13px/1.25 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  padding: max(10px, env(safe-area-inset-top)) 12px max(24px, env(safe-area-inset-bottom)); -webkit-user-select: none; user-select: none; overscroll-behavior: none; }
+.wrap { max-width: 560px; margin: 0 auto; }
+header { display: flex; gap: 12px; align-items: center; }
+#logo { width: 92px; height: 92px; flex: none; }
+h1 { margin: 0; font-size: clamp(22px, 7.4vw, 34px); white-space: nowrap; line-height: 1; letter-spacing: .5px; background: linear-gradient(90deg, #ff4fd8, #ffb02e, #fff13a, #5dff6a, #2ee7ff, #8a5bff, #ff4fd8); background-size: 200% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(2px 3px 0 #000); animation: hue 6s linear infinite; }
+@keyframes hue { to { background-position: 200% 0; } }
+.sub { color: var(--dim); font-size: 11px; margin-top: 6px; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.top { margin: 10px 0 8px; }
+button, select, .filebtn { font: inherit; color: var(--ink); background: var(--card2); border: 1.2px solid color-mix(in srgb, var(--tint, var(--pink)) 60%, transparent); border-radius: 8px; padding: 9px 12px; cursor: pointer; }
+button.on { background: var(--tint, var(--pink)); color: #120a1c; }
+button:active { transform: scale(.97); }
+select { padding: 8px 6px; border-color: color-mix(in srgb, var(--cyan) 50%, transparent); max-width: 100%; }
+#play { --tint: var(--lime); font-size: 16px; padding: 12px 22px; flex: 1; }
+#dice { --tint: var(--gold); }
+#theme { --tint: var(--gold); }
+canvas { display: block; }
+#strip { width: 100%; height: 112px; margin: 4px 0 10px; }
+.card { background: var(--card); border: 1.4px solid color-mix(in srgb, var(--tint, var(--pink)) 60%, transparent); border-radius: 12px; padding: 10px; margin-bottom: 10px; }
+.card h2 { margin: 0 0 8px; font-size: 13px; color: var(--tint, var(--pink)); letter-spacing: .3px; }
+.tabs { display: flex; gap: 6px; margin-bottom: 8px; }
+.tabs button { flex: 1; padding: 8px 0; }
+.knobs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin: 8px 0; }
+.knobs.k4 { grid-template-columns: repeat(4, 1fr); }
+.knobs.k3 { grid-template-columns: repeat(3, 1fr); }
+.knobs.k2 { grid-template-columns: repeat(2, 1fr); }
+.knob { display: flex; flex-direction: column; align-items: center; touch-action: none; }
+.knob canvas { width: 50px; height: 50px; }
+.knob span { font-size: 9.5px; color: var(--dim); margin-top: 2px; text-align: center; white-space: nowrap; }
+.knob.small canvas { width: 40px; height: 40px; }
+.wave { width: 100%; height: 76px; border-radius: 6px; }
+.brk { display: flex; gap: 6px; }
+.brk select { flex: 1; min-width: 0; }
+.lbl { color: var(--dim); font-size: 10px; margin: 6px 0 0; }
+.lane { margin-bottom: 8px; }
+.lane .head { display: flex; gap: 8px; align-items: center; margin-bottom: 4px; }
+.lane .head select { flex: 1; }
+.steps { display: grid; grid-template-columns: repeat(16, 1fr); gap: 3px; touch-action: none; }
+.steps div { height: 30px; border-radius: 4px; background: var(--card2); }
+.steps div:nth-child(8n+5), .steps div:nth-child(8n+6), .steps div:nth-child(8n+7), .steps div:nth-child(8n+8) { filter: brightness(1.18); }
+.steps div.now { outline: 2px solid rgba(255,255,255,.55); }
+.pat { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.filters { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.filters .col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.filters .col b { font-size: 8.5px; color: var(--dim); height: 11px; white-space: nowrap; }
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+#stutter { --tint: var(--blood); font-size: 15px; padding: 16px 0; flex: 1.4; touch-action: none; }
+.foot { text-align: center; color: var(--dim); font-size: 11px; margin-top: 14px; }
+.foot a { color: var(--cyan); }
+.filebtn { display: inline-block; --tint: var(--lime); }
+.filebtn input { display: none; }
+#start { position: fixed; inset: 0; background: rgba(10,5,20,.82); display: flex; align-items: center; justify-content: center; z-index: 9; flex-direction: column; gap: 14px; }
+#start button { --tint: var(--lime); font-size: 20px; padding: 18px 34px; }
+#start p { color: var(--dim); margin: 0; }
+#toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--card2); border: 1px solid var(--lime); padding: 10px 16px; border-radius: 10px; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 10; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <canvas id="logo" width="184" height="184"></canvas>
+    <div><h1>MR. MICKENS</h1><div class="sub">DARK HARDCORE BREAK MACHINE<br>100 BREAKS | 4 BAYS | DRUMS | SIDECHAIN</div></div>
+  </header>
+  <div class="row top">
+    <button id="play">PLAY</button>
+    <div id="tempoKnob"></div>
+    <button id="dice">DICE</button>
+    <button id="theme">DARK</button>
+  </div>
+  <canvas id="strip"></canvas>
+
+  <div class="card" id="bayCard">
+    <div class="tabs" id="bayTabs"></div>
+    <div class="brk"><button id="prev">&lt;</button><select id="brkSel"></select><button id="next">&gt;</button></div>
+    <canvas class="wave" id="wave" style="margin-top:8px"></canvas>
+    <div class="knobs" id="bayKnobs1"></div>
+    <div class="row"><select id="grid"><option>1/16</option><option>1/8</option><option>1/4</option><option>1/2</option><option>1 bar</option></select>
+      <button id="rs" style="--tint:var(--pink)">RANDOM START</button><button id="rc" style="--tint:var(--cyan)">RANDOM CHOPS</button></div>
+    <div class="row" style="margin-top:8px"><button id="mute" style="--tint:var(--blood)">MUTE</button><button id="fit" style="--tint:var(--lime)">FIT TEMPO</button>
+      <label class="filebtn">LOAD YOUR BREAK<input type="file" id="file" accept="audio/*"></label></div>
+    <div class="lbl">SIDECHAIN (ONLY THIS BAY DUCKS)</div>
+    <div class="knobs k4" id="bayKnobs2"></div>
+  </div>
+
+  <div class="card" style="--tint:var(--cyan)">
+    <h2>DRUM MACHINE <span style="color:var(--dim);font-weight:600">tap = hit, long-press = ghost</span></h2>
+    <div id="lanes"></div>
+    <div class="pat" id="pats"></div>
+  </div>
+
+  <div class="split">
+    <div class="card" style="--tint:var(--blood)"><h2>CRUNCH</h2><div class="knobs k2" id="kCrunch"></div></div>
+    <div class="card" style="--tint:var(--cyan)"><h2>SPACE</h2><div class="knobs k3" id="kSpace"></div></div>
+  </div>
+  <div class="card" style="--tint:var(--lime)"><h2>MIX</h2><div class="knobs k4" id="kMix"></div></div>
+  <div class="card" style="--tint:var(--pink)"><h2>FILTERS IN PARALLEL <span style="color:var(--dim);font-weight:600">each MIX blends it in next to DRY</span></h2><div class="filters" id="kFilt"></div></div>
+  <div class="card" style="--tint:var(--gold)">
+    <h2>STUTTER <span style="color:var(--dim);font-weight:600">hold it; its own filter + envelope</span></h2>
+    <div class="row"><button id="stutter">STUTTER</button><button id="latch" style="--tint:var(--pink)">LATCH</button>
+      <select id="stutDiv"><option>1/8</option><option>1/16</option><option>1/32</option><option>1/64</option><option>1/16T</option></select></div>
+    <div class="knobs k3" id="kStut"></div>
+  </div>
+  <div class="row"><button id="wav" style="--tint:var(--lime);flex:1">SAVE / SHARE 4 BARS (WAV)</button><button id="reset" style="--tint:var(--blood)">RESET</button></div>
+  <div class="foot">Like it? Get Mr. Mickens for your DAW (FL Studio, Ableton, Logic): <a href="https://github.com/bsaxon430/ghosty-vst/releases/latest">download for Mac / Windows</a><br>
+    The breaks are re-played rhythms on an original kit. In the plugin you can load your own real breaks.</div>
+</div>
+<div id="start"><button id="go">🦄 TAP TO START</button><p>turn your sound on (and the silent switch off)</p></div>
+<div id="toast"></div>
+<script src="gfx.js"></script>
+<script src="audio.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
