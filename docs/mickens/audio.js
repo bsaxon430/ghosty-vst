@@ -1,6 +1,6 @@
 'use strict';
 // Mr. Mickens web engine (Web Audio). Same ideas as the plugin:
-//  - 100 breaks: 20 classic break RHYTHMS x 5 variations, synthesised on an original vintage kit with "old record"
+//  - 100 breaks: 20 classic-style break rhythms (original names) x 5 variations, synthesised on an original vintage kit with "old record"
 //    processing (no sampled recordings). Rendered on demand, so the page stays light on phones.
 //  - 4 bays: every 16th triggers a slice; NUDGE (on a grid), RANDOM START, RANDOM CHOPS, FIT TEMPO, per-bay
 //    ducking from the kick / snare / hats only.
@@ -10,27 +10,28 @@
 
 const SR = 44100;
 const RHYTHMS = [
-  ['Amen', 136, 'x.x.......xx....x.x.......x.....', '....x..x.x..x..x....x..x.x....x.', '...............................x', '', '', 'x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.', ''],
-  ['Amen End', 136, 'x.x.......xx......xx......x.....', '....x..x.x..x..x.x..x..x.x....x.', '', '', '', 'x.x.x.x.x.x.x.x.x.x.x.x.x.x.x...', '..........................x.....'],
-  ['Think', 110, 'x......x.x.x....x......x.x......', '....x.......x.......x.......x.x.', '..x.......x.......x....x........', 'x.x.x.x.x.x.x.x.x.x.x.x.x.x.x...', '..............................x.', '', ''],
-  ['Apache', 118, 'x.....x...x.....x.....x.x.......', '....x.......x.......x.......x...', '......x.......x.......x...x.....', 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', '', '', ''],
-  ['Funky Drummer', 102, 'x.x...x...x..x..x.x...x...x..x..', '....x..x.x.x...x....x..x.x.x...x', '.x....x......x...x....x......x..', 'xxxxxxxxxxxxx.xxxxxxxxxxxxxxx.xx', '.............x...............x..', '', ''],
-  ['Hot Pants', 115, 'x..x..x...x..x..x..x..x...x..x..', '....x.......x..x....x.......x..x', '', 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', '', '', ''],
-  ['Cold Sweat', 120, 'x.....x.x.......x.....x.x.......', '....x..x....x.......x..x....x...', '', 'x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.', '', '', ''],
-  ['Impeach', 96, 'x......xx.x.....x......x..x.....', '....x.......x.......x.......x...', '', 'x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.', '......x...............x.........', '', ''],
-  ['Skull Snaps', 92, 'x...x..x..x.....x...x..x..x.....', '....x.......x.x.....x.......x.x.', '', 'x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.', '', '', ''],
-  ['Roachclip', 100, 'x.x...x....x....x.x...x....x....', '....x..x.x..x.......x..x.x..x...', '', 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', '', '', ''],
-  ['Substitution', 104, 'x..x..x...x.....x..x..x...x.....', '....x.......x..x....x.......x..x', '', 'x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.', '', '', ''],
-  ['Soul Pride', 112, 'x.....x.x..x....x.....x.x..x....', '....x.......x.......x.......x...', '..x...........x...x...........x.', 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', '', '', ''],
-  ['Tighten Up', 108, 'x.......x.x.....x.......x.x.....', '....x.......x.......x.......x...', '', 'x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.', '', '', ''],
-  ['Mule', 98, 'x.x.....x.x..x..x.x.....x.x.....', '....x.......x.......x.......x..x', '.......x........x......x........', 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', '', '', ''],
-  ['Ride Break', 124, 'x.....x...x.....x.....x...x.....', '....x.......x.......x.......x...', '', '', '', 'x.xxx.xxx.xxx.xxx.xxx.xxx.xxx.xx', ''],
+  ['Haunt', 136, 'x.x.......xx....x.x.......x.....', '....x..x.x..x..x....x..x.x....x.', '...............................x', '', '', 'x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.', ''],
+  ['Haunt Tail', 136, 'x.x.......xx......xx......x.....', '....x..x.x..x..x.x..x..x.x....x.', '', '', '', 'x.x.x.x.x.x.x.x.x.x.x.x.x.x.x...', '..........................x.....'],
+  ['Static', 110, 'x......x.x.x....x......x.x......', '....x.......x.......x.......x.x.', '..x.......x.......x....x........', 'x.x.x.x.x.x.x.x.x.x.x.x.x.x.x...', '..............................x.', '', ''],
+  ['Canyon', 118, 'x.....x...x.....x.....x.x.......', '....x.......x.......x.......x...', '......x.......x.......x...x.....', 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', '', '', ''],
+  ['Stepper', 102, 'x.x...x...x..x..x.x...x...x..x..', '....x..x.x.x...x....x..x.x.x...x', '.x....x......x...x....x......x..', 'xxxxxxxxxxxxx.xxxxxxxxxxxxxxx.xx', '.............x...............x..', '', ''],
+  ['Heatwave', 115, 'x..x..x...x..x..x..x..x...x..x..', '....x.......x..x....x.......x..x', '', 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', '', '', ''],
+  ['Chill', 120, 'x.....x.x.......x.....x.x.......', '....x..x....x.......x..x....x...', '', 'x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.', '', '', ''],
+  ['Verdict', 96, 'x......xx.x.....x......x..x.....', '....x.......x.......x.......x...', '', 'x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.', '......x...............x.........', '', ''],
+  ['Bonecrack', 92, 'x...x..x..x.....x...x..x..x.....', '....x.......x.x.....x.......x.x.', '', 'x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.', '', '', ''],
+  ['Crawler', 100, 'x.x...x....x....x.x...x....x....', '....x..x.x..x.......x..x.x..x...', '', 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', '', '', ''],
+  ['Swapout', 104, 'x..x..x...x.....x..x..x...x.....', '....x.......x..x....x.......x..x', '', 'x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.', '', '', ''],
+  ['Proud', 112, 'x.....x.x..x....x.....x.x..x....', '....x.......x.......x.......x...', '..x...........x...x...........x.', 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', '', '', ''],
+  ['Tightrope', 108, 'x.......x.x.....x.......x.x.....', '....x.......x.......x.......x...', '', 'x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.', '', '', ''],
+  ['Stubborn', 98, 'x.x.....x.x..x..x.x.....x.x.....', '....x.......x.......x.......x..x', '.......x........x......x........', 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', '', '', ''],
+  ['Cymbal Run', 124, 'x.....x...x.....x.....x...x.....', '....x.......x.......x.......x...', '', '', '', 'x.xxx.xxx.xxx.xxx.xxx.xxx.xxx.xx', ''],
   ['Jungle Roller', 170, 'x.........x.....x.........x.....', '....x.......x.......x.......x...', '..x....x...x..x...x....x...x..x.', 'x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.', '', '', ''],
   ['Two Step', 172, 'x.........x.......x.......x.....', '....x.......x.......x.......x...', '.......x.x.......x.....x.x......', 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', '', '', ''],
   ['Halftime', 86, 'x.........x.....x.....x...x.....', '........x...............x.......', '......x.......x.x.....x.......x.', 'x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.', '', '', ''],
   ['Rolling', 174, 'x.....x.x.......x.....x.x.......', '....x.......x.......x.......x...', '.x..x.....x..x...x..x.....x..x..', 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', '', '', ''],
   ['Dub Break', 90, 'x.....x....x....x.....x....x....', '....x.......x.......x.......x...', '', 'x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.', '...........x...............x....', '', ''],
 ];
+const RENAMED = { 'Amen': 'Haunt', 'Amen End': 'Haunt Tail', 'Think': 'Static', 'Apache': 'Canyon', 'Funky Drummer': 'Stepper', 'Hot Pants': 'Heatwave', 'Cold Sweat': 'Chill', 'Impeach': 'Verdict', 'Skull Snaps': 'Bonecrack', 'Roachclip': 'Crawler', 'Substitution': 'Swapout', 'Soul Pride': 'Proud', 'Tighten Up': 'Tightrope', 'Mule': 'Stubborn', 'Ride Break': 'Cymbal Run' };   // older saved beats used record titles
 const VARIATIONS = ['Original', 'Ghosts', 'Fill', 'Dirty', 'Room'];
 const TWO_PI = Math.PI * 2;
 function rng32(seed) { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }

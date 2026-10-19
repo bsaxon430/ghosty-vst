@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GhostBlock Plugins</title>
+<meta name="description" content="Mr. Mickens, Poltergeist and Ghosty Beats + Spectrum: playful, powerful VST3/AU plugins for Mac and Windows. Ghosty is free.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👻</text></svg>">
+<style>
+:root { --bg: #0b0c10; --card: #141621; --line: #262a3a; --ink: #f2f4f5; --dim: #9aa0b4; --slime: #3cff8f; --ecto: #a06bff; --pink: #ff4fd8; --gold: #ffc35a; }
+* { box-sizing: border-box; }
+body { margin: 0; background: radial-gradient(1200px 600px at 10% -10%, rgba(160,107,255,.22), transparent 60%), radial-gradient(900px 500px at 100% 10%, rgba(255,79,216,.12), transparent 60%), var(--bg); color: var(--ink); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 36px 16px 70px; }
+.brand { font-weight: 900; font-size: 15px; letter-spacing: .5px; color: var(--dim); }
+h1 { font-size: clamp(32px, 7vw, 56px); line-height: 1.05; margin: 8px 0 12px; }
+h1 b { background: linear-gradient(90deg, var(--slime), var(--ecto), var(--pink)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lead { color: var(--dim); font-size: 19px; max-width: 680px; margin: 0 0 22px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 30px; }
+.chips span { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 4px 12px; font-size: 13px; color: var(--dim); }
+.bundle { background: linear-gradient(135deg, rgba(60,255,143,.12), rgba(160,107,255,.18)); border: 1px solid rgba(160,107,255,.5); border-radius: 18px; padding: 22px; display: flex; flex-wrap: wrap; gap: 18px; align-items: center; justify-content: space-between; margin-bottom: 34px; }
+.bundle h2 { margin: 0 0 4px; font-size: 24px; }
+.bundle p { margin: 0; color: var(--dim); }
+.price { font-size: 30px; font-weight: 900; }
+.price s { font-size: 18px; color: var(--dim); font-weight: 600; margin-left: 6px; }
+.btn { display: inline-block; background: var(--slime); color: #07120c; font-weight: 800; text-decoration: none; padding: 12px 20px; border-radius: 12px; border: 0; cursor: pointer; font-size: 16px; }
+.btn.alt { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.btn.soon { background: var(--card); color: var(--dim); border: 1px dashed var(--line); cursor: default; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; }
+.card img { width: 100%; display: block; aspect-ratio: 16/10; object-fit: cover; object-position: top; border-bottom: 1px solid var(--line); }
+.card .body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.card h3 { margin: 0; font-size: 21px; }
+.card ul { margin: 0; padding-left: 18px; color: var(--dim); font-size: 15px; }
+.card li { margin: 3px 0; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: auto; }
+.tag { font-size: 12px; font-weight: 800; color: var(--gold); letter-spacing: .4px; }
+h2.sec { margin: 44px 0 14px; font-size: 26px; }
+.free { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 18px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px; }
+.free img { width: 100%; border-radius: 10px; border: 1px solid var(--line); }
+@media (max-width: 720px) { .free { grid-template-columns: 1fr; } }
+details { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; margin: 8px 0; }
+summary { cursor: pointer; font-weight: 700; }
+details p { color: var(--dim); margin: 8px 0 0; }
+.foot { margin-top: 44px; color: var(--dim); font-size: 14px; border-top: 1px solid var(--line); padding-top: 16px; }
+a { color: var(--ecto); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">👻 GHOSTBLOCK</div>
+  <h1>Plugins with <b>personality</b>.</h1>
+  <p class="lead">Playful-looking, serious-sounding instruments for producers. VST3 and AU for Mac (Apple Silicon + Intel) and VST3 for Windows. Works in FL Studio, Ableton, Logic and more.</p>
+  <div class="chips"><span>VST3 · AU · Standalone</span><span>Mac + Windows</span><span>One-time price, no subscription</span><span>Use on up to 5 computers</span><span>Try before you buy</span></div>
+
+  <div class="bundle">
+    <div><h2>Everything bundle</h2><p>Mr. Mickens + Poltergeist + Ghosty Beats + Ghosty Spectrum, plus every update.</p></div>
+    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap"><div class="price">$49<s>$69</s></div><a class="btn" data-product="bundle" href="#">Get the bundle</a></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <img src="mickens.jpg" alt="Mr. Mickens drum and bass break machine">
+      <div class="body">
+        <div class="tag">DRUM &amp; BASS BREAK MACHINE</div>
+        <h3>🦄 Mr. Mickens</h3>
+        <ul>
+          <li>100 classic-style breaks + load your own (Breaks folder)</li>
+          <li>4 bays chopped to the grid: nudge, random start, random chops, dice</li>
+          <li>Hard kick / snare / hats with per-drum sidechain for each bay</li>
+          <li>Crunch, every filter in parallel, chorus, reverb, stutter with its own filter</li>
+          <li>Play bays and chops from MIDI keys or pads; drag out WAV + stems</li>
+        </ul>
+        <div class="row"><div class="price">$25</div><div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn alt" href="../mickens/">Play it free in your browser</a><a class="btn" data-product="mickens" href="#">Buy</a></div></div>
+      </div>
+    </div>
+    <div class="card">
+      <img src="poltergeist.jpg" alt="Poltergeist FM synth">
+      <div class="body">
+        <div class="tag">FM SPIRIT SYNTH + SAMPLE LAB</div>
+        <h3>🔮 Poltergeist</h3>
+        <ul>
+          <li>Drag 4 ghosts onto each other to "haunt" them (FM): wild sounds in seconds</li>
+          <li>Drop any sample in: granular, wavetable, vocal chops</li>
+          <li>Sample Lab: cut, stretch to bars, flex, crossfade, keys from many files</li>
+          <li>Type what you want with SUMMON ("bubbly pluck", "tearout", "yoi growl")</li>
+          <li>Talking filter, bubbles, rhythm sequencer, scale lock, chords, arp</li>
+        </ul>
+        <div class="row"><div class="price">$25</div><a class="btn" data-product="poltergeist" href="#">Buy</a></div>
+      </div>
+    </div>
+    <div class="card">
+      <img src="beats.jpg" alt="Ghosty Beats drum machine">
+      <div class="body">
+        <div class="tag">TWO PLUGINS, ONE PRICE</div>
+        <h3>🥁🌈 Ghosty Beats + Spectrum</h3>
+        <ul>
+          <li><b>Beats:</b> 16-track drum machine, 61 drums + your samples, 10 kits, rolls &amp; triplets, song mode, MPC pads, drag out WAV / MIDI / every stem</li>
+          <li><b>Spectrum:</b> paint sound on the frequency spectrum: dreamy pads, bells and loops you build like a painting</li>
+        </ul>
+        <div class="row"><div class="price">$19</div><a class="btn" data-product="beatsSpectrum" href="#">Buy</a></div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="sec">Free: Ghosty</h2>
+  <div class="free">
+    <img src="ghosty.jpg" alt="Ghosty wavetable synth">
+    <div>
+      <p style="margin-top:0">A wavetable synth with 81 presets, draw-your-own waves, LFO, glide, filters, scales, chords and an arpeggiator. Free forever, no account needed.</p>
+      <a class="btn alt" href="https://github.com/bsaxon430/ghosty-vst#%EF%B8%8F-step-1-download">Download Ghosty free</a>
+    </div>
+  </div>
+
+  <h2 class="sec">Questions</h2>
+  <details><summary>Can I try before I buy?</summary><p>Yes. Every plugin runs in demo mode: everything works, but the sound drops out for a moment every 45 seconds and exporting is off. You can also play Mr. Mickens right now in your browser.</p></details>
+  <details><summary>How does the license work?</summary><p>After you buy, Gumroad emails you a license key. Click UNLOCK in the plugin and paste it. It needs internet once, then works offline. One key works on up to 5 of your computers.</p></details>
+  <details><summary>Which DAWs and computers?</summary><p>VST3 and AU on Mac (Apple Silicon and Intel, macOS 11 or newer) and VST3 on Windows 10/11, plus a standalone app. Tested in FL Studio; any VST3 or AU host should work.</p></details>
+  <details><summary>Are the breaks in Mr. Mickens samples of old records?</summary><p>No. They're classic-style rhythms re-played on an original synthesized vintage kit, so they're yours to use in your tracks. You can also load your own breaks.</p></details>
+  <details><summary>Refunds?</summary><p>If a plugin doesn't work on your computer, contact us within 14 days through your Gumroad receipt and we'll make it right or refund you.</p></details>
+
+  <div class="foot">Made by GhostBlock. Payments, tax and receipts are handled by Gumroad. Also by us: <a href="../ghostblock/">GhostBlock trading-engine case study</a>.</div>
+</div>
+<script>
+// Gumroad product links: fill these in once the products exist on Gumroad (leave empty = "Coming soon")
+const GUMROAD = { bundle: '', mickens: '', poltergeist: '', beatsSpectrum: '' };
+document.querySelectorAll('[data-product]').forEach(a => {
+  const url = GUMROAD[a.dataset.product];
+  if (url) { a.href = url; a.target = '_blank'; a.rel = 'noopener'; }
+  else { a.classList.add('soon'); a.textContent = 'Coming soon'; a.removeAttribute('href'); }
+});
+</script>
+</body>
+</html>

@@ -5,7 +5,7 @@
 | 🪟 **Windows** (Ableton, FL Studio, Bitwig, Reaper, Studio One...) | **[Ghosty-Windows.zip](https://github.com/bsaxon430/ghosty-vst/releases/download/latest/Ghosty-Windows.zip)** |
 | 🍎 **Mac** (FL Studio, Logic, Ableton, GarageBand...) | **[Ghosty-Mac.zip](https://github.com/bsaxon430/ghosty-vst/releases/download/latest/Ghosty-Mac.zip)** |
 
-Includes **Ghosty** (wavetable synth, 81 presets, scales, chords, arpeggiator), **Ghosty Beats** (drum machine), **Ghosty Spectrum** (paint sounds on the frequency spectrum) and **Poltergeist** (FM spirit synth: drag ghosts to haunt each other, drop in any sample to mangle it, talking filter, bubbles, rhythm sequencer, chords + arp, type-a-sound SUMMON) and **Mr. Mickens** (drum & bass break machine: 100 breaks, 4 bays, random starts and chops, drums with per-drum sidechain, parallel filters, stutter).
+Includes **Ghosty**, a free wavetable synth (81 presets, scales, chords, arpeggiator). The rest of the GhostBlock collection (Mr. Mickens, Poltergeist, Ghosty Beats + Spectrum) is at https://bsaxon430.github.io/ghosty-vst/store/
 
 **Windows:** unzip, double-click `Install Ghosty.bat`, click Yes, rescan plug-ins.
 **Mac:** unzip, double-click `Install Ghosty.command` (if blocked: System Settings > Privacy & Security > Open Anyway), rescan plug-ins.

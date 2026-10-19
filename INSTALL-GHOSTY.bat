@@ -12,7 +12,7 @@ if errorlevel 1 (
 cd /d "%~dp0"
 
 echo.
-echo    ghosty  -  installing Ghosty + Ghosty Beats for Ableton
+echo    ghosty  -  installing Ghosty for Ableton
 echo    -------------------------------------------------------
 echo    This can take 20-40 minutes the first time. Leave this window open.
 echo.
@@ -56,10 +56,6 @@ echo [4/4] Putting the plugins where Ableton looks...
 set "DEST=%CommonProgramFiles%\VST3"
 if not exist "%DEST%" mkdir "%DEST%"
 xcopy /E /I /Y /Q "build\GhostySynth_artefacts\Release\VST3\Ghosty.vst3" "%DEST%\Ghosty.vst3" >nul || goto copyfail
-xcopy /E /I /Y /Q "build\GhostyBeats_artefacts\Release\VST3\Ghosty Beats.vst3" "%DEST%\Ghosty Beats.vst3" >nul || goto copyfail
-xcopy /E /I /Y /Q "build\GhostySpectrum_artefacts\Release\VST3\Ghosty Spectrum.vst3" "%DEST%\Ghosty Spectrum.vst3" >nul || goto copyfail
-xcopy /E /I /Y /Q "build\Poltergeist_artefacts\Release\VST3\Poltergeist.vst3" "%DEST%\Poltergeist.vst3" >nul || goto copyfail
-xcopy /E /I /Y /Q "build\MrMickens_artefacts\Release\VST3\Mr Mickens.vst3" "%DEST%\Mr Mickens.vst3" >nul || goto copyfail
 
 echo.
 echo    =====================================================

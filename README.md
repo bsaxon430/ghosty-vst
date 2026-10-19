@@ -1,14 +1,20 @@
 # 👻 Ghosty
 
-Five ghost instruments by **GhostBlock**, free for Windows and Mac.
+A free ghost synth by **GhostBlock** for Windows and Mac (VST3 / AU / standalone).
 
 | | |
 |---|---|
 | 👻 **Ghosty** | Wavetable synth: 81 presets, 16 wave shapes + draw your own, LFO (synced, 5 targets), glide / mono / legato, 4 filter types + drive + its own envelope, mod wheel + velocity, scales, chords, arpeggiator, slide keyboard, ghost XY pad, **save your own sounds** |
-| 🥁 **Ghosty Beats** | Drum machine, rebuilt: 16 tracks left-to-right, **61 built-in drums + drag in your own samples**, 10 kits (Trap, Drill, Boom Bap, Lofi, House, Dubstep, Afrobeats, Phonk, Reggaeton, Jersey Club), per-step velocity / **rolls & triplets** / chance / nudge, 16 patterns (16-64 steps), save & load patterns, **SONG** arranger, **MPC pads** with record + note repeat, glue / DJ filter / echo / reverb / crush / drive, stutter + tape stop, **drag out WAV, MIDI or every stem** |
-| 🌈 **Ghosty Spectrum** | Rebuilt: **paint a loop on the sound spectrum**. Pick from 52 synth sounds (Poltergeist engine), 61 drums or your own samples, **DRAW** melodies (snapped to your key), **DROP** drums (low = kick, high = hats), **CONNECT** notes into slides, watch a live spectrogram paint itself, then **drag the loop or stems out**. Save / load canvases |
-| 🔮 **Poltergeist** | FM spirit synth: 4 ghosts you drag onto each other to haunt (FM), **drop any audio file in** (granular, wavetable, vocal chops), talking "yoi" filter, bubbles, 16-step rhythm sequencer, comb / sync / OTT, scale lock + one-finger chords + arp, **SAMPLE LAB** (cut, stretch-to-bars, flex lines, crossfades, keys built from many files, keep-tempo pitch, drag the result out), type-what-you-want **SUMMON** ("yoi growl", "bubbly pluck", "tearout", "chop"), 38 presets |
-| 🦄 **Mr. Mickens** | Dark hardcore **drum & bass break machine**: 100 classic break rhythms (Amen, Think, Apache, Funky Drummer, Hot Pants and more, re-played on an original vintage kit, 5 variations each) plus **your own breaks** (drop on a bay, or keep them in the *Breaks folder*, listed first). 4 bays chopped to the grid with **NUDGE** (snaps to the grid you pick), **RANDOM START** / **RANDOM CHOPS** / **DICE STARTS** for a new combo every time, pitch / chop length / pan, **fit to tempo**. Hard kick / snare / hats machine with **per-drum sidechain** (each bay ducks only from the drums you choose). Crunch + bits, **every filter in parallel** (low / high / band / notch / comb / formant), chorus, reverb, **stutter with its own filter + envelope**. Drag out WAV or stems, save / load |
+
+## 🛒 The full GhostBlock collection
+
+Like Ghosty? The rest of the family lives in the **[GhostBlock store](https://bsaxon430.github.io/ghosty-vst/store/)**:
+
+| | |
+|---|---|
+| 🦄 **Mr. Mickens** | Dark hardcore drum & bass break machine: 100 breaks, 4 bays, random starts and chops, drums with per-drum sidechain, every filter in parallel, stutter. **[Play it free in your browser](https://bsaxon430.github.io/ghosty-vst/mickens/)** |
+| 🔮 **Poltergeist** | FM spirit synth: drag ghosts onto each other to haunt them, drop any sample in, SAMPLE LAB, type-what-you-want SUMMON |
+| 🥁🌈 **Ghosty Beats + Spectrum** | A 16-track drum machine with MPC pads and drag-out stems, plus a paint-a-loop spectrum instrument |
 
 ---
 
@@ -34,7 +40,7 @@ All versions: [Releases page](https://github.com/bsaxon430/ghosty-vst/releases/l
 
 <details><summary>Rather do it by hand?</summary>
 
-Copy the four `.vst3` folders from the `VST3` folder into `C:\Program Files\Common Files\VST3`.
+Copy `Ghosty.vst3` from the `VST3` folder into `C:\Program Files\Common Files\VST3`.
 </details>
 
 ## 🍎 Step 2 (Mac): Install
@@ -65,7 +71,7 @@ Open the **Terminal** app, type `bash ` (with a space), drag `Install Ghosty.com
 | **Studio One** | **Options > Locations > VST Plug-ins > Reset Blocklist**, restart | Browser > Instruments > GhostBlock |
 | **Cubase** | **Studio > VST Plug-in Manager > Rescan** | Instrument track > GhostBlock |
 
-Load any of them (**Ghosty**, **Ghosty Beats**, **Ghosty Spectrum**, **Poltergeist**, **Mr. Mickens**) as an **instrument** on a MIDI track.
+Load **Ghosty** as an **instrument** on a MIDI track.
 
 ### No DAW? Use the apps
 The **Standalone** folder has apps that work on their own: double-click and play.
@@ -77,11 +83,6 @@ The **Standalone** folder has apps that work on their own: double-click and play
 
 - **It doesn't show up:** do the rescan step again, then restart your DAW.
 - **Mac: "damaged" or "can't be opened":** run `Install Ghosty.command` again (it fixes this).
-- **Ghosty Beats is silent:** press play in your DAW (it follows the DAW's tempo), or play MIDI notes C1 to G1.
-- **Ghosty Spectrum:** pick a scene at the top, hit **PLAY**, and click on the colorful field. Use **+ TONE** / **+ DRUM** to place sounds.
-- **Mr. Mickens is silent:** press play in your DAW, or hit **PLAY** in the plugin. Bays 2-4 start muted; un-mute them.
-- **Mr. Mickens keys / pads:** C1 kick, D1 snare, F#1 hat, A#1 open hat. **C2 / C#2 / D2 / D#2** = hold Bay 1-4 (plays its break from its start point until you let go). **C3 and up** = one slice per key from the bay set to **KEYS**. On screen: **HOLD TO PLAY** in each bay, **HIT** on each drum lane.
-- **Mr. Mickens real breaks:** click **BREAKS FOLDER**, put your own break WAVs there (sub-folders become sections), then **RESCAN**. They stay on your computer.
 - **Update:** download again and run the installer; it replaces the old version.
 
 ---

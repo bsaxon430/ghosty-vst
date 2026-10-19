@@ -9,7 +9,7 @@ if %errorlevel% neq 0 (
 cd /d "%~dp0"
 set "DEST=%CommonProgramFiles%\VST3"
 echo.
-echo   Installing Ghosty, Ghosty Beats, Ghosty Spectrum, Poltergeist and Mr. Mickens...
+echo   Installing Ghosty...
 echo   into %DEST%
 echo.
 if not exist "%DEST%" mkdir "%DEST%"

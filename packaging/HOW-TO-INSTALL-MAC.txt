@@ -1,4 +1,4 @@
-GHOSTY for Mac  (Ghosty, Ghosty Beats, Ghosty Spectrum, Poltergeist, Mr. Mickens - Apple Silicon + Intel)
+GHOSTY for Mac  (Apple Silicon + Intel)
 
   1. Double-click "Install Ghosty.command".
      If macOS says it can't be opened: System Settings > Privacy & Security >

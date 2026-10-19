@@ -15,11 +15,12 @@ const patRows = name => PATTERNS[name].map(r => [...r].map(ch => ch === 'X' ? 12
 const bay = (brk, level, mute, dk) => ({ brk, nudge: 0, grid: 0, pitch: 0, level, decay: 1, pan: 0, rs: false, rc: false, amt: 0.3, dk, ds: 0, dh: 0, mute, fit: true });
 function defaults() {
   return { v: 1, bpm: 172, theme: 'light', stutDiv: 1, stutter: false,
-    bays: [bay('Amen|0', 0.85, false, 0.35), bay('Think|0', 0.6, true, 0), bay('Two Step|1', 0.6, true, 0), bay('Apache|0', 0.6, true, 0)],
+    bays: [bay('Haunt|0', 0.85, false, 0.35), bay('Static|0', 0.6, true, 0), bay('Two Step|1', 0.6, true, 0), bay('Canyon|0', 0.6, true, 0)],
     drums: { pat: patRows('TWO STEP'), sel: ['Hard Kick', 'Big Snare', 'Tight Hat', 'Short Open Hat'], lvl: [1, 0.9, 0.6, 0.55], mute: [false, false, false, false], all: false }, fx: { ...DEF_FX } };
 }
 let S = defaults();
-try { const saved = JSON.parse(localStorage.getItem('mickens')); if (saved && saved.v === 1) { S = Object.assign(defaults(), saved); S.fx = { ...DEF_FX, ...saved.fx }; S.stutter = false; S.drums = { ...defaults().drums, ...saved.drums }; } } catch (e) {}
+try { const saved = JSON.parse(localStorage.getItem('mickens')); if (saved && saved.v === 1) { S = Object.assign(defaults(), saved); S.fx = { ...DEF_FX, ...saved.fx }; S.stutter = false; S.drums = { ...defaults().drums, ...saved.drums };
+  S.bays.forEach(b => { const [f, v] = String(b.brk).split('|'); if (RENAMED[f]) b.brk = RENAMED[f] + '|' + v; }); } } catch (e) {}
 let saveTimer = 0; const save = () => { clearTimeout(saveTimer); saveTimer = setTimeout(() => { try { localStorage.setItem('mickens', JSON.stringify(S)); } catch (e) {} }, 300); };
 
 const userBreaks = [];
