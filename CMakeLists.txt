@@ -137,3 +137,31 @@ target_compile_definitions(Poltergeist PUBLIC
 target_link_libraries(Poltergeist PRIVATE
   juce::juce_audio_utils juce::juce_dsp signalsmith-stretch
   PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
+
+# ---------------------------------------------------------------- Mr. Mickens (drum & bass break machine)
+# 100 re-created classic breaks on an original vintage kit (no sampled recordings), 4 bays, drums, sidechain, FX.
+juce_add_plugin(MrMickens
+  COMPANY_NAME "GhostBlock"
+  BUNDLE_ID "io.ghostblock.mrmickens"
+  PLUGIN_MANUFACTURER_CODE Ghbk
+  PLUGIN_CODE Mick
+  FORMATS ${GHOSTY_FORMATS}
+  PRODUCT_NAME "Mr Mickens"
+  IS_SYNTH TRUE
+  NEEDS_MIDI_INPUT TRUE
+  NEEDS_MIDI_OUTPUT FALSE
+  IS_MIDI_EFFECT FALSE
+  EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+  COPY_PLUGIN_AFTER_BUILD FALSE
+  AU_MAIN_TYPE kAudioUnitType_MusicDevice
+  VST3_CATEGORIES Instrument Drum)
+
+target_sources(MrMickens PRIVATE
+  Mickens/MickensProcessor.cpp
+  Mickens/MickensEditor.cpp)
+target_include_directories(MrMickens PRIVATE Shared Mickens BeatsX)
+target_compile_definitions(MrMickens PUBLIC
+  JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0 JUCE_DISPLAY_SPLASH_SCREEN=0)
+target_link_libraries(MrMickens PRIVATE
+  juce::juce_audio_utils juce::juce_dsp
+  PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)

@@ -49,7 +49,7 @@ void BeatsXProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiB
 void BeatsXProcessor::publish() {
     auto s = std::make_unique<gb::Snapshot>();
     s->tracks = model.tracks; s->patterns = model.patterns;
-    s->songCount = (int) juce::jmin<size_t>(model.song.size(), s->song.size());
+    s->songCount = (int) std::min<size_t>(model.song.size(), s->song.size());
     for (int i = 0; i < s->songCount; ++i) s->song[(size_t) i] = model.song[(size_t) i];
     for (int t = 0; t < gb::kTracks; ++t) {
         const auto& tr = model.tracks[(size_t) t];

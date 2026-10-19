@@ -1,4 +1,4 @@
-GHOSTY for Windows  (Ghosty + Ghosty Beats + Ghosty Spectrum)
+GHOSTY for Windows  (Ghosty, Ghosty Beats, Ghosty Spectrum, Poltergeist, Mr. Mickens)
 
 EASY WAY
   1. Right-click this zip > Extract All (don't run it from inside the zip).

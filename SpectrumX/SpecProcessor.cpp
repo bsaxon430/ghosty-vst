@@ -45,7 +45,7 @@ void SpecProcessor::removeLayer(int i) {
 
 void SpecProcessor::publish() {
     auto s = std::make_unique<sp::SpecSnapshot>();
-    s->bars = model.bars; s->layerCount = (int) juce::jmin<size_t>(model.layers.size(), sp::kLayers);
+    s->bars = model.bars; s->layerCount = (int) std::min<size_t>(model.layers.size(), sp::kLayers);
     for (int i = 0; i < s->layerCount; ++i) {
         const auto& L = model.layers[(size_t) i]; auto& o = s->layers[(size_t) i];
         o.kind = L.kind; o.vol = L.vol; o.pan = L.pan; o.tone = L.tone; o.space = L.space; o.mute = L.mute; o.centroid = L.centroidMidi;
@@ -57,7 +57,7 @@ void SpecProcessor::publish() {
         if (L.kind == 2 && L.sample) { keep.push_back(L.sample); engine.engine(i).setSample(L.sample); }
         else if (L.kind == 0) engine.engine(i).setSample(nullptr);
     }
-    s->noteCount = (int) juce::jmin<size_t>(model.notes.size(), sp::kMaxNotes);
+    s->noteCount = (int) std::min<size_t>(model.notes.size(), sp::kMaxNotes);
     for (int i = 0; i < s->noteCount; ++i) s->notes[(size_t) i] = model.notes[(size_t) i];
     engine.setSnapshot(s.get()); snaps.push_back(std::move(s));
     if (snaps.size() > 40) snaps.erase(snaps.begin(), snaps.begin() + 10);
