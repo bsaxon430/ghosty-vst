@@ -1,4 +1,5 @@
 #pragma once
+#include "TypeIn.h"
 #include "SynthProcessor.h"
 #include "GhostUI.h"
 
@@ -59,4 +60,5 @@ private:
     SynthProcessor& proc;
     ghosty::GhostLnF lnf;
     std::unique_ptr<SynthContent> content;
+    ghosty::TypeIn typeIn { *this };   // right-click any knob to type a value
 };
