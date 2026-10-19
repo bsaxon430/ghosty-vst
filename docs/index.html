@@ -1,5 +1,85 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ghosty plugins</title><meta http-equiv="refresh" content="0; url=mickens/">
-<style>body{background:#2e2148;color:#faf6ff;font:600 16px system-ui;text-align:center;padding:40px}a{color:#22e6ff}</style></head>
-<body><p>Opening <a href="mickens/">Mr. Mickens</a>... Plugins for your DAW: <a href="https://github.com/bsaxon430/ghosty-vst/releases/latest">download</a></p></body></html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GhostBlock Studio</title>
+<meta name="description" content="GhostBlock builds audio plugins (VST3/AU) with one-of-a-kind interfaces, trading bots and web apps. See the work, try the plugins, or hire us to build yours.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👻</text></svg>">
+<style>
+:root { --bg: #0b0c10; --card: #141621; --line: #262a3a; --ink: #f2f4f5; --dim: #9aa0b4; --slime: #3cff8f; --ecto: #a06bff; --pink: #ff4fd8; --gold: #ffc35a; }
+* { box-sizing: border-box; }
+body { margin: 0; background: radial-gradient(1100px 600px at 0% -10%, rgba(160,107,255,.25), transparent 60%), radial-gradient(900px 600px at 100% 0%, rgba(60,255,143,.12), transparent 60%), var(--bg); color: var(--ink); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 36px 16px 70px; }
+.brand { font-weight: 900; letter-spacing: 2px; font-size: 14px; color: var(--dim); }
+h1 { font-size: clamp(34px, 7.5vw, 62px); line-height: 1.04; margin: 10px 0 14px; }
+h1 b { background: linear-gradient(90deg, var(--slime), var(--ecto), var(--pink)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lead { color: var(--dim); font-size: 19px; max-width: 720px; margin: 0 0 24px; }
+.cta { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 40px; }
+.btn { display: inline-block; background: var(--slime); color: #07120c; font-weight: 800; text-decoration: none; padding: 12px 20px; border-radius: 12px; }
+.btn.alt { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+h2 { font-size: 28px; margin: 48px 0 6px; }
+.sub { color: var(--dim); margin: 0 0 18px; }
+.gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; }
+.tile { background: var(--card); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+.tile img { width: 100%; display: block; aspect-ratio: 16/10.5; object-fit: cover; object-position: top; border-bottom: 1px solid var(--line); }
+.tile .t { padding: 12px 16px 16px; }
+.tile h3 { margin: 0 0 4px; font-size: 18px; }
+.tile p { margin: 0; color: var(--dim); font-size: 14.5px; }
+.tile a { color: var(--ecto); font-weight: 700; font-size: 14px; }
+.wide { grid-column: 1 / -1; }
+.wide img { aspect-ratio: auto; }
+.skills { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+.skill { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
+.skill h3 { margin: 0 0 6px; font-size: 17px; color: var(--slime); }
+.skill p { margin: 0; color: var(--dim); font-size: 15px; }
+.hire { margin-top: 48px; background: linear-gradient(135deg, rgba(60,255,143,.12), rgba(160,107,255,.2)); border: 1px solid rgba(160,107,255,.5); border-radius: 18px; padding: 26px; }
+.hire h2 { margin: 0 0 8px; }
+.hire ul { color: var(--dim); padding-left: 20px; }
+.foot { margin-top: 40px; color: var(--dim); font-size: 14px; border-top: 1px solid var(--line); padding-top: 16px; }
+a { color: var(--ecto); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">👻 GHOSTBLOCK STUDIO</div>
+  <h1>Plugins and software <b>nobody else makes</b>.</h1>
+  <p class="lead">We design and build audio plugins with one-of-a-kind interfaces, plus fast trading systems and web apps. Everything below was designed, coded and shipped by us, for Mac and Windows.</p>
+  <div class="cta"><a class="btn" href="store/">Shop the plugins</a><a class="btn alt" href="mickens/">Play Mr. Mickens in your browser</a><a class="btn alt" href="#hire">Hire us to build yours</a></div>
+
+  <h2>Audio plugins</h2>
+  <p class="sub">VST3 / AU / standalone, built with JUCE in C++. Real-time-safe audio, custom-drawn interfaces, drag-out audio and stems, save/load.</p>
+  <div class="gallery">
+    <div class="tile wide"><img src="store/mickens.jpg" alt="Mr. Mickens break machine"><div class="t"><h3>🦄 Mr. Mickens: drum &amp; bass break machine</h3><p>100 breaks across 4 chop bays, per-drum sidechain, every filter in parallel, stutter with its own filter envelope, animated unicorn UI with light and dark themes. <a href="mickens/">Try it in your browser</a> · <a href="store/">Get it</a></p></div></div>
+    <div class="tile"><img src="store/spectrum.jpg" alt="Ghosty Spectrum pad painter"><div class="t"><h3>🌈 Ghosty Spectrum: paint ambient pads</h3><p>Paint bells, piano strings and feedback tones in a glowing ghost world. Dissonance and harmony are drawn live; detects the key of your song.</p></div></div>
+    <div class="tile"><img src="store/poltergeist.jpg" alt="Poltergeist FM synth"><div class="t"><h3>🔮 Poltergeist: FM spirit synth</h3><p>Drag ghosts onto each other to FM them, drop in any sample, a full sample-editing lab, and type-what-you-want sound search.</p></div></div>
+    <div class="tile"><img src="store/beats.jpg" alt="Ghosty Beats drum machine"><div class="t"><h3>🥁 Ghosty Beats: drum machine</h3><p>16 tracks, 61 drums + your samples, rolls, triplets, song mode, MPC pads, drag out every stem.</p></div></div>
+    <div class="tile"><img src="showcase/spectrum-loop.jpg" alt="Ghosty Spectrum loop mode"><div class="t"><h3>Loop painting on the spectrum</h3><p>Draw melodies and drop drums on a live spectrogram, snap to key and quantize, then drag the loop out.</p></div></div>
+    <div class="tile"><img src="store/ghosty.jpg" alt="Ghosty wavetable synth"><div class="t"><h3>👻 Ghosty: wavetable synth (free)</h3><p>81 presets, draw your own waves, LFO, glide, filters, chords and arp. <a href="https://github.com/bsaxon430/ghosty-vst">Download free</a></p></div></div>
+    <div class="tile"><img src="showcase/mickens-dark.jpg" alt="Mr. Mickens dark theme"><div class="t"><h3>Theming</h3><p>Every UI here is drawn in code, so any look is possible: light/dark modes, animation, your brand.</p></div></div>
+  </div>
+
+  <h2>Trading systems &amp; apps</h2>
+  <p class="sub">Low-latency engineering and clean dashboards.</p>
+  <div class="gallery">
+    <div class="tile"><img src="ghostblock/green-day.png" alt="GhostBlock trading dashboard" style="object-fit:contain;background:#07080c"><div class="t"><h3>GhostBlock: live Solana copy-trading engine (Rust)</h3><p>Same-block copying, direct DEX swaps, Jito bundles, automatic exits and a live dashboard. Honest results included. <a href="ghostblock/">Read the case study</a></p></div></div>
+  </div>
+
+  <h2>What we build</h2>
+  <div class="skills">
+    <div class="skill"><h3>Custom VST3 / AU plugins</h3><p>Instruments, effects, samplers and MIDI tools in JUCE/C++, any UI you can imagine, Mac + Windows installers.</p></div>
+    <div class="skill"><h3>Plugin UI design</h3><p>Distinctive, animated, hand-drawn interfaces, or a clean redesign of a plugin you already have.</p></div>
+    <div class="skill"><h3>Trading bots</h3><p>Solana bots and speed-ups (landing, Jito, pool math), TradingView Pine Script indicators and alerts.</p></div>
+    <div class="skill"><h3>Web &amp; browser audio</h3><p>Browser versions of plugins (Web Audio), dashboards and API integrations.</p></div>
+  </div>
+
+  <div class="hire" id="hire">
+    <h2>Hire us</h2>
+    <p style="color:var(--dim);margin:0 0 8px">Have an idea for a plugin, a custom UI, or a trading tool? We work in clear fixed-price milestones with a working first version early, and you get the source code.</p>
+    <ul><li>Find us on <b>Upwork</b> or <b>Fiverr</b> as <b>Brandon S. · GhostBlock</b></li><li>Plugin companies: we also license finished plugins for your brand</li></ul>
+  </div>
+
+  <div class="foot">© GhostBlock · <a href="store/">Store</a> · <a href="mickens/">Mr. Mickens web</a> · <a href="ghostblock/">Case study</a> · <a href="https://github.com/bsaxon430/ghosty-vst">GitHub</a></div>
+</div>
+</body>
+</html>
