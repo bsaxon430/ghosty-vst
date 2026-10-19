@@ -292,7 +292,8 @@ struct BeatsXEditor::Content : juce::Component {
         playBtn.setClickingTogglesState(true); playBtn.onClick = [this] { proc.engine.internalPlay = playBtn.getToggleState(); };
         addAndMakeVisible(playBtn);
         bpm.setRange(60, 200, 1); bpmAtt = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(proc.apvts, "bpm", bpm);
-        bpm.setNumDecimalPlacesToDisplay(0); bpm.setColour(juce::Slider::trackColourId, PURPLE.withAlpha(0.5f)); bpm.setColour(juce::Slider::textBoxTextColourId, INK); bpm.setTextValueSuffix(" bpm"); addAndMakeVisible(bpm);
+        bpm.setNumDecimalPlacesToDisplay(0); bpm.setColour(juce::Slider::trackColourId, PURPLE.withAlpha(0.5f)); bpm.setColour(juce::Slider::textBoxTextColourId, INK); bpm.textFromValueFunction = [](double v) { return juce::String(juce::roundToInt(v)) + " bpm"; };   // whole BPM (the attachment would show 7 decimals)
+        bpm.valueFromTextFunction = [](const juce::String& t) { return t.retainCharacters("0123456789.").getDoubleValue(); }; bpm.updateText(); addAndMakeVisible(bpm);
         lenBox.addItemList({ "16 steps", "32 steps", "64 steps" }, 1);
         lenBox.onChange = [this] { static const int L[] = { 16, 32, 64 }; grid.pat().length = L[juce::jmax(0, lenBox.getSelectedItemIndex())]; grid.page = 0; proc.publish(); refreshPattern(); };
         copyBtn.onClick = [this] { copiedFrom = grid.patIdx(); say("Copied pattern " + patName(copiedFrom) + ". Pick another letter and PASTE."); };
