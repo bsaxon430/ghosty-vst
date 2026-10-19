@@ -101,11 +101,19 @@ $('file').onchange = async e => { const f = e.target.files[0]; if (!f) return; a
   try { const br = await breakFromFile(f, ctx); userBreaks.push(br); fillBreaks(); pick(br.key); toast('Loaded ' + br.name + ' (' + Math.round(br.bpm) + ' BPM)'); } catch (err) { toast("Can't read that file"); } e.target.value = ''; };
 function showBay() {
   const P = B(); [...$('bayTabs').children].forEach((b, i) => b.classList.toggle('on', i === curBay));
-  $('bayCard').style.setProperty('--tint', tabCols[curBay]);
+  $('bayCard').style.setProperty('--tint', tabCols[curBay]); hold.textContent = 'HOLD TO PLAY BAY ' + (curBay + 1);
   $('brkSel').value = P.brk; $('grid').selectedIndex = P.grid;
   for (const [id, f] of [['rs', 'rs'], ['rc', 'rc'], ['mute', 'mute'], ['fit', 'fit']]) $(id).classList.toggle('on', !!P[f]);
   knobs.forEach(k => k.draw()); const br = getBreak(P.brk); if (br) renderBreak(br);
 }
+
+// bay pads: HOLD + 8 slice pads (one per beat of the 2-bar break)
+const hold = $('hold');
+hold.addEventListener('pointerdown', async e => { hold.setPointerCapture(e.pointerId); await ensureAudio(); eng.holdBay(curBay, true); hold.classList.add('on'); });
+['pointerup', 'pointercancel'].forEach(ev => hold.addEventListener(ev, () => { if (eng) eng.holdBay(curBay, false); hold.classList.remove('on'); }));
+for (let i = 0; i < 8; i++) { const b = document.createElement('button'); b.textContent = i + 1; b.style.setProperty('--tint', rainbow(i / 8));
+  b.addEventListener('pointerdown', async e => { e.preventDefault(); await ensureAudio(); const br = getBreak(B().brk); if (br) eng.sliceBay(curBay, Math.round(i * br.slices / 8)); b.classList.add('on'); });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => b.addEventListener(ev, () => b.classList.remove('on'))); $('spads').appendChild(b); }
 
 // drum lanes
 const laneNames = ['KICK', 'SNARE', 'HAT', 'OPEN HAT'], cells = [], muteBtns = [];
@@ -116,7 +124,10 @@ LANES.forEach((lane, d) => {
   sel.value = S.drums.sel[d]; sel.onchange = () => { S.drums.sel[d] = sel.value; save(); if (ctx) eng.hit(d, 0.9, ctx.currentTime + 0.01); };
   const nm = document.createElement('button'); nm.textContent = laneNames[d]; nm.className = 'lanemute'; nm.title = 'Tap to mute this drum';
   nm.onclick = () => { S.drums.mute[d] = !S.drums.mute[d]; drawMutes(); save(); }; muteBtns[d] = nm;
-  head.append(nm, sel); const kh = document.createElement('div'); head.appendChild(kh);
+  const hit = document.createElement('button'); hit.textContent = 'HIT'; hit.className = 'hitbtn';
+  hit.addEventListener('pointerdown', async e => { e.preventDefault(); await ensureAudio(); eng.hit(d, 0.95, ctx.currentTime + 0.005); hit.classList.add('on'); });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => hit.addEventListener(ev, () => hit.classList.remove('on')));
+  head.append(nm, hit, sel); const kh = document.createElement('div'); head.appendChild(kh);
   knob(kh, '', () => S.drums.lvl[d], v => S.drums.lvl[d] = v, 0, 1, [1, 0.9, 0.6, 0.55][d], true);
   const grid = document.createElement('div'); grid.className = 'steps'; cells[d] = [];
   for (let s = 0; s < 16; s++) { const c = document.createElement('div'); grid.appendChild(c); cells[d].push(c); }

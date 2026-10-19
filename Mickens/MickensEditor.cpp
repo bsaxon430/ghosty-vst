@@ -344,6 +344,7 @@ struct BayPanel : juce::Component {
     MickensProcessor& p; int b; juce::ComboBox brk, grid; WaveView wave; juce::TextButton prev { "<" }, next { ">" };
     std::unique_ptr<Knob> nudge, pitch, level, decay, pan, amt, dk, ds, dh; std::unique_ptr<Toggle> rs, rc, mute, fit;
     std::unique_ptr<APVTS::ComboBoxAttachment> gridAtt; int builtFor = -1;
+    HoldButton hold; juce::TextButton keys { "KEYS" };
     BayPanel(MickensProcessor& pp, int bay) : p(pp), b(bay), wave(pp, bay) {
         auto& st = p.apvts; const juce::String id = "b" + juce::String(b + 1) + "_";
         addAndMakeVisible(brk); addAndMakeVisible(wave); addAndMakeVisible(prev); addAndMakeVisible(next); addAndMakeVisible(grid);
@@ -357,6 +358,13 @@ struct BayPanel : juce::Component {
         rs->setTooltip("Every bar the break starts from a new random spot (on the grid)"); rc->setTooltip("Swaps 16ths for random slices; CHOP AMT says how often");
         fit->setTooltip("On: the break re-pitches to the song tempo (the classic jungle sound). Off: it keeps its own speed.");
         for (auto* t : { rs.get(), rc.get(), mute.get(), fit.get() }) addAndMakeVisible(*t);
+        static const char* notes[] = { "C2", "C#2", "D2", "D#2" };
+        hold.setButtonText(juce::String("HOLD TO PLAY  (") + notes[b] + ")"); hold.getProperties().set("tint", (juce::int64) rainbow(b / 4.0f).getARGB()); addAndMakeVisible(hold);
+        hold.setTooltip("Hold: this bay plays its break from its start point, in time, until you let go. MIDI note " + juce::String(notes[b]) + " does the same.");
+        hold.onHold = [this](bool on) { p.engine.pushPad(on ? 1 : 2, b, 0.9f); hold.setToggleState(on, juce::dontSendNotification); };
+        keys.getProperties().set("tint", (juce::int64) GOLD.getARGB()); addAndMakeVisible(keys);
+        keys.setTooltip("Your MIDI keys from C3 up play this bay's slices, one slice per key");
+        keys.onClick = [this] { if (auto* pr = p.apvts.getParameter("keys_bay")) pr->setValueNotifyingHost(pr->convertTo0to1((float) b)); };
         brk.onChange = [this] { const int id = brk.getSelectedId(); if (id > 0 && id - 1 != p.bayBreak[(size_t) b]) { p.pickBreak(b, id - 1); wave.repaint(); } };
         prev.onClick = [this] { step(-1); }; next.onClick = [this] { step(1); };
         wave.onLoaded = [this] { rebuild(); };
@@ -369,7 +377,7 @@ struct BayPanel : juce::Component {
         if (p.folderBreaks.empty() && p.libReady()) brk.addSectionHeading("Real breaks: put yours in the BREAKS FOLDER (button up top)");
         brk.setSelectedId(p.bayBreak[(size_t) b] + 1, juce::dontSendNotification); builtFor = p.listVersion.load();
     }
-    void sync() { if (builtFor != p.listVersion.load()) rebuild(); if (brk.getSelectedId() != p.bayBreak[(size_t) b] + 1) brk.setSelectedId(p.bayBreak[(size_t) b] + 1, juce::dontSendNotification); wave.repaint(); }
+    void sync() { keys.setToggleState((int) p.apvts.getRawParameterValue("keys_bay")->load() == b, juce::dontSendNotification); if (builtFor != p.listVersion.load()) rebuild(); if (brk.getSelectedId() != p.bayBreak[(size_t) b] + 1) brk.setSelectedId(p.bayBreak[(size_t) b] + 1, juce::dontSendNotification); wave.repaint(); }
     void paint(juce::Graphics& g) override {
         auto r = getLocalBounds().toFloat().reduced(1);
         g.setColour(CARD); g.fillRoundedRectangle(r, 10);
@@ -386,8 +394,9 @@ struct BayPanel : juce::Component {
         r.removeFromTop(6);
         auto row2 = r.removeFromTop(26); grid.setBounds(row2.removeFromLeft(64)); row2.removeFromLeft(4); const int bw = (row2.getWidth() - 4) / 2; rs->setBounds(row2.removeFromLeft(bw)); row2.removeFromLeft(4); rc->setBounds(row2);
         r.removeFromTop(4);
-        auto row3 = r.removeFromTop(26); mute->setBounds(row3.removeFromLeft(64)); row3.removeFromLeft(4); fit->setBounds(row3.removeFromLeft(90));
+        auto row3 = r.removeFromTop(26); mute->setBounds(row3.removeFromLeft(64)); row3.removeFromLeft(4); fit->setBounds(row3.removeFromLeft(90)); row3.removeFromLeft(4); keys.setBounds(row3);
         r.removeFromBottom(2); auto row4 = r.removeFromBottom(62); r.removeFromBottom(14);
+        hold.setBounds(r.reduced(0, 6));
         const int dw = row4.getWidth() / 4; amt->setBounds(row4.removeFromRight(dw)); for (auto* k : { dk.get(), ds.get(), dh.get() }) k->setBounds(row4.removeFromLeft(dw));
     }
 };
@@ -435,7 +444,7 @@ struct MickensEditor::Content : juce::Component {
     MickensProcessor& p; float phase = 0;
     std::unique_ptr<BayPanel> bays[mk::kBays];
     DrumGrid drums; juce::ComboBox drumSel[mk::kDrums]; std::unique_ptr<Knob> drumLvl[mk::kDrums];
-    juce::TextButton patBtn[4]; std::unique_ptr<Toggle> laneMute[mk::kDrums], muteAll; juce::TextButton play { "PLAY" }, dice { "DICE STARTS" }, saveB { "SAVE" }, loadB { "LOAD" }, folderB { "BREAKS FOLDER" }, rescanB { "RESCAN" }, themeB { "DARK" };
+    juce::TextButton patBtn[4]; std::unique_ptr<Toggle> laneMute[mk::kDrums], muteAll; HoldButton hit[mk::kDrums]; juce::TextButton play { "PLAY" }, dice { "DICE STARTS" }, saveB { "SAVE" }, loadB { "LOAD" }, folderB { "BREAKS FOLDER" }, rescanB { "RESCAN" }, themeB { "DARK" };
     std::function<void()> onTheme;
     juce::ComboBox bars; DragOut dragWav, dragStems; std::unique_ptr<Knob> tempo;
     std::vector<std::unique_ptr<Knob>> fxKnobs; std::unique_ptr<Toggle> stutLatch; HoldButton stutHold { "STUTTER" }; juce::ComboBox stutDiv; std::unique_ptr<APVTS::ComboBoxAttachment> stutDivAtt;
@@ -453,6 +462,9 @@ struct MickensEditor::Content : juce::Component {
             addAndMakeVisible(drumSel[d]); drumLvl[d] = std::make_unique<Knob>(st, lv[d], ""); addAndMakeVisible(*drumLvl[d]);
             static const char* mi[] = { "kick_mute", "snr_mute", "hat_mute", "oh_mute" };
             laneMute[d] = std::make_unique<Toggle>(st, mi[d], "M", BLOOD); laneMute[d]->setTooltip("Mute this drum (it also stops ducking the breaks)"); addAndMakeVisible(*laneMute[d]);
+            static const char* dn[] = { "C1", "D1", "F#1", "A#1" };
+            hit[d].setButtonText("HIT"); hit[d].getProperties().set("tint", (juce::int64) CYAN.getARGB()); hit[d].setTooltip("Play this drum now (MIDI note " + juce::String(dn[d]) + ")"); addAndMakeVisible(hit[d]);
+            hit[d].onHold = [this, d](bool on) { if (on) p.engine.pushPad(0, d, 0.95f); hit[d].setToggleState(on, juce::dontSendNotification); };
             drumSel[d].onChange = [this, d] { const auto t = drumSel[d].getText(); if (drumSel[d].getSelectedId() == 999 || t.isEmpty()) return; p.drumName[(size_t) d] = t; p.userDrum[(size_t) d] = nullptr; p.publish(); syncDrums(); };
         }
         syncDrums();
@@ -578,8 +590,8 @@ struct MickensEditor::Content : juce::Component {
         { auto r = secDrums.reduced(10); r.removeFromTop(24);
           auto btns = r.removeFromBottom(28); muteAll->setBounds(btns.removeFromRight(90)); btns.removeFromRight(6); const int pw = (btns.getWidth() - 18) / 4; for (int i = 0; i < 4; ++i) { patBtn[i].setBounds(btns.removeFromLeft(pw)); btns.removeFromLeft(6); }
           r.removeFromBottom(8);
-          auto names = r.removeFromLeft(178); const int lh = names.getHeight() / 4;
-          for (int d = 0; d < mk::kDrums; ++d) { auto l = names.removeFromTop(lh).reduced(0, 4); drumLvl[d]->setBounds(l.removeFromRight(40).withTrimmedBottom(-12)); l.removeFromRight(4); laneMute[d]->setBounds(l.removeFromLeft(26).withSizeKeepingCentre(26, 26)); l.removeFromLeft(4); drumSel[d].setBounds(l.withSizeKeepingCentre(l.getWidth(), 26)); }
+          auto names = r.removeFromLeft(212); const int lh = names.getHeight() / 4;
+          for (int d = 0; d < mk::kDrums; ++d) { auto l = names.removeFromTop(lh).reduced(0, 4); drumLvl[d]->setBounds(l.removeFromRight(40).withTrimmedBottom(-12)); l.removeFromRight(4); laneMute[d]->setBounds(l.removeFromLeft(26).withSizeKeepingCentre(26, 26)); l.removeFromLeft(4); hit[d].setBounds(l.removeFromLeft(34).withSizeKeepingCentre(34, 26)); l.removeFromLeft(4); drumSel[d].setBounds(l.withSizeKeepingCentre(l.getWidth(), 26)); }
           r.removeFromLeft(6); drums.setBounds(r); }
         const int fx0 = 580, fxW = W - 12 - fx0;
         secCrunch = { fx0, 500, 150, 108 }; secSpace = { fx0 + 158, 500, 200, 108 }; secMix = { fx0 + 366, 500, fxW - 366, 108 };

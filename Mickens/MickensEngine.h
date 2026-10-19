@@ -19,7 +19,7 @@ struct FxParams {
     float dry = 1, lpCut = 0.4f, lpMix = 0, hpCut = 0.5f, hpMix = 0, bpCut = 0.5f, bpMix = 0, notchCut = 0.5f, notchMix = 0, combCut = 0.4f, combMix = 0, formant = 0.3f, formMix = 0, res = 0.5f;
     float chorus = 0, reverb = 0, size = 0.6f;
     bool stutter = false; int stutDiv = 2; float stutCut = 0.6f, stutEnv = 0.6f, stutDecay = 0.4f;
-    float drumLvl[kDrums] { 1, 1, 0.8f, 0.7f }; bool drumMute[kDrums] {}; bool drumsMute = false; float duckRelease = 0.18f, breaksLevel = 0.85f, drumsLevel = 0.9f, volume = 0.8f; float bpm = 172;
+    float drumLvl[kDrums] { 1, 1, 0.8f, 0.7f }; bool drumMute[kDrums] {}; bool drumsMute = false; int keysBay = 0; float duckRelease = 0.18f, breaksLevel = 0.85f, drumsLevel = 0.9f, volume = 0.8f; float bpm = 172;
 };
 struct Snapshot {
     std::array<const Break*, kBays> brk {};
@@ -48,6 +48,8 @@ public:
     std::atomic<bool> playing { false };
     std::atomic<int> uiStep { -1 }; std::atomic<int> uiSlice[kBays] { { -1 }, { -1 }, { -1 }, { -1 } };
     std::atomic<uint32_t> drumHits[kDrums] {};
+    // pads from the UI (message thread -> audio thread): 0 drum hit, 1 bay hold on, 2 bay hold off, 3 slice of the KEYS bay
+    void pushPad(int kind, int idx, float vel) { int s1, n1, s2, n2; padFifo.prepareToWrite(1, s1, n1, s2, n2); if (n1 > 0) { padEv[s1] = { kind, idx, vel }; padFifo.finishedWrite(1); } }
     // for stems: which parts to output (bit 0 = breaks, bits 1..4 = drums)
     uint32_t outMask = 0xffffffffu;
 
@@ -59,9 +61,18 @@ public:
         const bool run = hostPlaying || playing;
         const double b0 = hostPlaying ? hostPpq : clock, b1 = b0 + n / spb;
         busBuf.clear(0, n); drumBufs.clear(0, n);
-        // live MIDI: C1 D1 F#1 A#1 = kick snare hat open hat (GM-ish), anything else ignored
-        for (const auto md : midi) { const auto m = md.getMessage(); if (!m.isNoteOn()) continue; const int nn = m.getNoteNumber();
-            const int d = nn == 36 ? 0 : nn == 38 ? 1 : nn == 42 ? 2 : nn == 46 ? 3 : -1; if (d >= 0) trigDrum(S, d, m.getFloatVelocity(), md.samplePosition); }
+        // pads pressed on screen
+        { int s1, n1, s2, n2; padFifo.prepareToRead(padFifo.getNumReady(), s1, n1, s2, n2);
+          auto run1 = [&](int st, int cnt) { for (int i = 0; i < cnt; ++i) pad(S, B, F, padEv[st + i].kind, padEv[st + i].idx, padEv[st + i].vel, 0); };
+          run1(s1, n1); run1(s2, n2); padFifo.finishedRead(n1 + n2); }
+        // live MIDI: C1 D1 F#1 A#1 = kick snare hat open hat; C2..D#2 = hold bay 1..4; C3 and up = slices of the KEYS bay
+        for (const auto md : midi) { const auto m = md.getMessage(); const int nn = m.getNoteNumber(), at = md.samplePosition;
+            if (m.isNoteOn()) { const int d = nn == 36 ? 0 : nn == 38 ? 1 : nn == 42 ? 2 : nn == 46 ? 3 : -1;
+                if (d >= 0) pad(S, B, F, 0, d, m.getFloatVelocity(), at);
+                else if (nn >= 48 && nn <= 51) pad(S, B, F, 1, nn - 48, m.getFloatVelocity(), at);
+                else if (nn >= 60 && nn < 60 + 64) pad(S, B, F, 3, nn - 60, m.getFloatVelocity(), at); }
+            else if (m.isNoteOff() && nn >= 48 && nn <= 51) pad(S, B, F, 2, nn - 48, 0, at);
+            else if (m.isAllNotesOff() || m.isAllSoundOff()) for (int b = 0; b < kBays; ++b) pad(S, B, F, 2, b, 0, at); }
         if (run) {
             // every 16th that starts in this block
             for (long s = (long) std::ceil(b0 * 4.0 - 1e-9); s < b1 * 4.0; ++s) {
@@ -88,8 +99,10 @@ public:
     }
 
 private:
-    struct SV { const Break* brk = nullptr; double pos = 0, end = 0, rate = 1; float gain = 0, fadeIn = 0, fade = -1; };
-    struct Bay { SV v[2]; int cur = 0; int barOffset = 0; long lastBar = -1; float duck = 1; std::mt19937 rng { 99 }; };
+    struct SV { const Break* brk = nullptr; double pos = 0, end = 0, rate = 1; float gain = 0, fadeIn = 0, fade = -1; bool loop = false; };
+    struct PadEv { int kind = 0, idx = 0; float vel = 0; };
+    juce::AbstractFifo padFifo { 128 }; PadEv padEv[128];
+    struct Bay { SV v[2]; SV pad; int padDelay = 0; int cur = 0; int barOffset = 0; long lastBar = -1; float duck = 1; std::mt19937 rng { 99 }; };
     struct DV { const gb::Sound* s = nullptr; double pos = 0, rate = 1; float gain = 1; int drum = 0, delay = 0; float fade = -1; };
     struct TPT { float s1[2] {}, s2[2] {}, a1 = 0, a2 = 0, a3 = 0, k = 1;
         void setup(float f, float q, float rate) { const float g = std::tan(juce::MathConstants<float>::pi * juce::jlimit(20.0f, rate * 0.45f, f) / rate); k = 2.0f - 1.9f * q; a1 = 1 / (1 + g * (g + k)); a2 = g * a1; a3 = g * a2; }
@@ -133,22 +146,42 @@ private:
     }
     int delayStart[kBays] {};
 
+    double rateFor(const BayParams& P, const Break* br) const { return std::exp2(P.pitch / 12.0) * br->rate / sr * (P.fit ? curBpm / juce::jmax(40.0, br->bpm) : 1.0); }
+    // a pad / key: drums hit; a bay's HOLD plays its break from its start point, in time, until released;
+    // a slice key plays one slice of the KEYS bay
+    void pad(const Snapshot* S, const std::array<BayParams, kBays>& B, const FxParams& F, int kind, int idx, float vel, int at) {
+        if (kind == 0) { if (juce::isPositiveAndBelow(idx, kDrums)) trigDrum(S, idx, vel, at); return; }
+        const int b = kind == 3 ? juce::jlimit(0, kBays - 1, F.keysBay) : idx; if (!juce::isPositiveAndBelow(b, kBays)) return;
+        auto& bay = bays[b]; const Break* br = S->brk[(size_t) b]; const auto& P = B[(size_t) b];
+        if (kind == 2) { if (bay.pad.brk && bay.pad.loop && bay.pad.fade < 0) bay.pad.fade = 1.0f; return; }
+        if (!br || br->data.empty()) return;
+        static const int G[] = { 1, 2, 4, 8, 16 };
+        const int L = br->sliceLen(), grid = G[juce::jlimit(0, 4, P.grid)];
+        auto& v = bay.pad; v.brk = br; v.rate = rateFor(P, br); v.gain = 0.45f + 0.55f * vel; v.fadeIn = 0; v.fade = -1;
+        if (kind == 1) { const int start = (((P.nudge * grid + bay.barOffset) % br->slices) + br->slices) % br->slices; v.pos = start * (double) L; v.end = 1e18; v.loop = true; }
+        else { const int sl = idx % br->slices; v.pos = sl * (double) L; v.end = v.pos + L * juce::jlimit(0.05f, 1.0f, P.decay) + (P.decay >= 0.99f ? L * 0.6 : 0); v.loop = false; }
+        bay.padDelay = at;
+    }
+
     void renderBay(const BayParams& P, int b, int n) {
         auto& bay = bays[b];
         const float pl = std::cos((P.pan + 1) * juce::MathConstants<float>::pi * 0.25f) * 1.414f, pr = std::sin((P.pan + 1) * juce::MathConstants<float>::pi * 0.25f) * 1.414f;
         const int start = delayStart[b]; delayStart[b] = 0;
-        for (int k = 0; k < 2; ++k) {
-            auto& v = bay.v[k]; if (!v.brk) continue;
+        for (int k = 0; k < 3; ++k) {
+            auto& v = k < 2 ? bay.v[k] : bay.pad; if (!v.brk) continue;
             const int len = (int) v.brk->data.size();
-            const bool newest = (k == bay.cur);
-            for (int i = newest ? start : 0; i < n; ++i) {
+            const int from = k == 2 ? bay.padDelay : (k == bay.cur ? start : 0);
+            if (k == 2) { bay.padDelay = 0; uiSlice[b].store((int) (v.pos / juce::jmax(1, v.brk->sliceLen())) % juce::jmax(1, v.brk->slices)); }
+            if (k < 2 && P.mute) { v.brk = nullptr; continue; }   // a muted bay's sequence stops; its pad still plays
+            for (int i = from; i < n; ++i) {
+                if (v.loop && v.pos >= len - 1) v.pos -= (len - 1);
                 if (v.pos >= v.end || v.pos >= len - 1) { v.brk = nullptr; break; }
                 const int idx = (int) v.pos; const float t = (float) (v.pos - idx);
                 float x = v.brk->data[(size_t) idx] + (v.brk->data[(size_t) juce::jmin(idx + 1, len - 1)] - v.brk->data[(size_t) idx]) * t;
                 float g = v.gain;
                 if (v.fadeIn < 1) { v.fadeIn = juce::jmin(1.0f, v.fadeIn + 1.0f / 96.0f); g *= v.fadeIn; }
                 if (v.fade >= 0) { v.fade -= 1.0f / 96.0f; if (v.fade <= 0) { v.brk = nullptr; break; } g *= v.fade; }
-                const double remain = v.end - v.pos; if (remain < 240) g *= (float) (remain / 240.0);   // tail fade at the slice end
+                if (!v.loop) { const double remain = v.end - v.pos; if (remain < 240) g *= (float) (remain / 240.0); }   // tail fade at the slice end
                 // per-element sidechain: only this bay ducks
                 const float duck = (1 - P.duck[0] * duckCurve[0][(size_t) i]) * (1 - P.duck[1] * duckCurve[1][(size_t) i]) * (1 - P.duck[2] * duckCurve[2][(size_t) i]);
                 x *= g * P.level * duck;

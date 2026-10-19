@@ -246,6 +246,29 @@ class Engine {
     src.connect(g).connect(bay.lvl); src.start(T, Math.min(br.buf.duration - 0.001, slice * L)); src.stop(end + 0.02);
     bay.last = { src, g }; (this.onSlice || (() => {}))(b, slice, T);
   }
+  // pads: HOLD plays the bay's break from its start point (looping, in time) until released; a slice pad plays one
+  // slice. Both play even when the bay is muted or the transport is stopped.
+  padVoice(b, br, offset, loop, len, vel) {
+    const C = this.ctx, P = this.S.bays[b], T = C.currentTime + 0.005, rate = Math.pow(2, P.pitch / 12) * (P.fit ? this.S.bpm / br.bpm : 1);
+    const src = C.createBufferSource(); src.buffer = br.buf; src.playbackRate.value = rate; if (loop) { src.loop = true; src.loopStart = 0; src.loopEnd = br.buf.duration; }
+    const g = C.createGain(), lv = P.level * (0.45 + 0.55 * vel); g.gain.setValueAtTime(0, T); g.gain.linearRampToValueAtTime(lv, T + 0.003);
+    src.connect(g).connect(this.bays[b].pan); src.start(T, Math.min(br.buf.duration - 0.001, offset));
+    if (!loop) { const end = T + len / rate; g.gain.setValueAtTime(lv, Math.max(T + 0.004, end - 0.006)); g.gain.linearRampToValueAtTime(0, end); src.stop(end + 0.02); }
+    return { src, g };
+  }
+  holdBay(b, on) {
+    const bay = this.bays[b];
+    if (!on) { if (bay.hold) { const { src, g } = bay.hold, T = this.ctx.currentTime; g.gain.cancelScheduledValues(T); g.gain.setTargetAtTime(0, T, 0.004); src.stop(T + 0.05); bay.hold = null; } return; }
+    const P = this.S.bays[b], br = this.getBreak(P.brk); if (!br) return; if (!br.buf) renderBreak(br);
+    this.holdBay(b, false);
+    const grid = GRID[P.grid], start = (((P.nudge * grid + bay.offset) % br.slices) + br.slices) % br.slices;
+    bay.hold = this.padVoice(b, br, start * br.buf.duration / br.slices, true, 0, 0.9);
+  }
+  sliceBay(b, slice, vel = 0.9) {
+    const P = this.S.bays[b], br = this.getBreak(P.brk); if (!br) return; if (!br.buf) renderBreak(br);
+    const L = br.buf.duration / br.slices, sl = slice % br.slices;
+    this.padVoice(b, br, sl * L, false, L * P.decay + (P.decay >= 0.99 ? L * 0.6 : 0), vel); (this.onSlice || (() => {}))(b, sl, this.ctx.currentTime);
+  }
   stutEnv(T, per) {
     const F = this.S.fx, f = this.stutF.frequency, top = cutHz(Math.min(1, F.st_cut + F.st_env * 0.5)), base = cutHz(F.st_cut);
     f.cancelScheduledValues(T); f.setValueAtTime(top, T); f.setTargetAtTime(base, T + 0.001, Math.max(0.005, F.st_dec * 0.3) / 3);

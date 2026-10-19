@@ -54,7 +54,11 @@ canvas { display: block; }
 .lbl { color: var(--dim); font-size: 10px; margin: 6px 0 0; }
 .lane { margin-bottom: 8px; }
 .lane .head { display: flex; gap: 8px; align-items: center; margin-bottom: 4px; }
-.lane .head select { flex: 1; }
+.lane .head select { flex: 1; min-width: 0; }
+.hold { --tint: var(--gold); width: 100%; margin-top: 10px; padding: 18px 0; font-size: 15px; touch-action: none; }
+.spads { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; margin-top: 4px; }
+.spads button { padding: 14px 0; touch-action: none; font-size: 11px; }
+.hitbtn { --tint: var(--cyan); padding: 7px 8px; font-size: 11px; touch-action: none; }
 .lanemute { --tint: var(--blood); width: 78px; padding: 7px 0; font-size: 11px; color: var(--cyan); }
 .lanemute.on { color: #120a1c; }
 .steps { display: grid; grid-template-columns: repeat(16, 1fr); gap: 3px; touch-action: none; }
@@ -100,6 +104,9 @@ canvas { display: block; }
       <button id="rs" style="--tint:var(--pink)">RANDOM START</button><button id="rc" style="--tint:var(--cyan)">RANDOM CHOPS</button></div>
     <div class="row" style="margin-top:8px"><button id="mute" style="--tint:var(--blood)">MUTE</button><button id="fit" style="--tint:var(--lime)">FIT TEMPO</button>
       <label class="filebtn">LOAD YOUR BREAK<input type="file" id="file" accept="audio/*"></label></div>
+    <button id="hold" class="hold">HOLD TO PLAY THIS BAY</button>
+    <div class="lbl">SLICE PADS (tap to play a slice)</div>
+    <div class="spads" id="spads"></div>
     <div class="lbl">SIDECHAIN (ONLY THIS BAY DUCKS)</div>
     <div class="knobs k4" id="bayKnobs2"></div>
   </div>

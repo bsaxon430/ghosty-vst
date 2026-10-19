@@ -80,6 +80,7 @@ The **Standalone** folder has apps that work on their own: double-click and play
 - **Ghosty Beats is silent:** press play in your DAW (it follows the DAW's tempo), or play MIDI notes C1 to G1.
 - **Ghosty Spectrum:** pick a scene at the top, hit **PLAY**, and click on the colorful field. Use **+ TONE** / **+ DRUM** to place sounds.
 - **Mr. Mickens is silent:** press play in your DAW, or hit **PLAY** in the plugin. Bays 2-4 start muted; un-mute them.
+- **Mr. Mickens keys / pads:** C1 kick, D1 snare, F#1 hat, A#1 open hat. **C2 / C#2 / D2 / D#2** = hold Bay 1-4 (plays its break from its start point until you let go). **C3 and up** = one slice per key from the bay set to **KEYS**. On screen: **HOLD TO PLAY** in each bay, **HIT** on each drum lane.
 - **Mr. Mickens real breaks:** click **BREAKS FOLDER**, put your own break WAVs there (sub-folders become sections), then **RESCAN**. They stay on your computer.
 - **Update:** download again and run the installer; it replaces the old version.
 
