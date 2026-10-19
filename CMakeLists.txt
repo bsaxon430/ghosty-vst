@@ -99,14 +99,16 @@ juce_add_plugin(GhostySpectrum
   COPY_PLUGIN_AFTER_BUILD FALSE
   VST3_CATEGORIES Instrument Synth)
 
+# Ghosty Spectrum 2 (SpectrumX/): paint a loop on the frequency spectrum. Uses Poltergeist's engine for its
+# synth sounds and the Ghosty Beats 2 drum library.
 target_sources(GhostySpectrum PRIVATE
-  Spectrum/SpectrumProcessor.cpp
-  Spectrum/SpectrumEditor.cpp)
-target_include_directories(GhostySpectrum PRIVATE Shared Synth Beats Spectrum)
+  SpectrumX/SpecProcessor.cpp
+  SpectrumX/SpecEditor.cpp)
+target_include_directories(GhostySpectrum PRIVATE Shared SpectrumX Poltergeist BeatsX)
 target_compile_definitions(GhostySpectrum PUBLIC
   JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0 JUCE_DISPLAY_SPLASH_SCREEN=0)
 target_link_libraries(GhostySpectrum PRIVATE
-  juce::juce_audio_utils juce::juce_dsp
+  juce::juce_audio_utils juce::juce_dsp signalsmith-stretch
   PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_lto_flags juce::juce_recommended_warning_flags)
 
 # ---------------------------------------------------------------- Poltergeist (FM spirit synth)

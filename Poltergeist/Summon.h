@@ -256,6 +256,18 @@ public:
     }
 };
 
+// A patch (id -> value) turned into an engine Snap, with no plugin around it (Ghosty Spectrum's layers).
+inline Snap snapFromPatch(const Patch& patch) {
+    auto all = Summoner::base();
+    for (auto& [k, v] : patch) all[k] = v;
+    std::map<juce::String, std::unique_ptr<std::atomic<float>>> store;
+    for (auto& [k, v] : all) store[k] = std::make_unique<std::atomic<float>>(v);
+    std::atomic<float> zero { 0.0f };
+    ParamReader r; r.attachWith([&](const juce::String& id) { auto it = store.find(id); return it != store.end() ? it->second.get() : &zero; });
+    Snap s {}; r.read(s);
+    return s;
+}
+
 struct FactoryPreset { const char* name; const char* words; uint32_t seed; };
 inline const std::vector<FactoryPreset>& factoryPresets() {
     static const std::vector<FactoryPreset> v {

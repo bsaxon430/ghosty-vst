@@ -162,7 +162,7 @@ public:
         juce::AudioFormatManager fm; fm.registerBasicFormats();
         std::unique_ptr<juce::AudioFormatReader> r(fm.createReaderFor(f));
         if (!r) { err = "Can't read that file (try WAV, AIFF, MP3 or FLAC)."; return nullptr; }
-        const int n = (int) juce::jmin<juce::int64>(r->lengthInSamples, (juce::int64) (r->sampleRate * 12));
+        const int n = (int) std::min<juce::int64>(r->lengthInSamples, (juce::int64) (r->sampleRate * 12));
         juce::AudioBuffer<float> b((int) juce::jmin(2u, r->numChannels), juce::jmax(1, n)); r->read(&b, 0, n, 0, true, true);
         std::vector<float> mono((size_t) n, 0.0f);
         for (int c = 0; c < b.getNumChannels(); ++c) for (int i = 0; i < n; ++i) mono[(size_t) i] += b.getSample(c, i) / b.getNumChannels();

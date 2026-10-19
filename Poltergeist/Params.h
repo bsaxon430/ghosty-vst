@@ -177,12 +177,14 @@ struct ParamReader {
     std::atomic<float>* mod[kOps][kOps] {};
     std::atomic<float>* g[128] {};
     juce::StringArray gNames;
-    void attach(juce::AudioProcessorValueTreeState& s) {
+    void attach(juce::AudioProcessorValueTreeState& s) { attachWith([&s](const juce::String& id) { return s.getRawParameterValue(id); }); }
+    // any source of named atomics (used to play a saved patch without a plugin around it)
+    template <class Get> void attachWith(Get get) {
         const char* opw[] = { "ratio", "fine", "level", "wave", "fb", "a", "d", "s", "r", "vel" };
         for (int o = 0; o < kOps; ++o)
-            for (int k = 0; k < 10; ++k) op[o].p[k] = s.getRawParameterValue(opId(o, opw[k]));
+            for (int k = 0; k < 10; ++k) op[o].p[k] = get(opId(o, opw[k]));
         for (int f = 0; f < kOps; ++f)
-            for (int t = 0; t < kOps; ++t) mod[f][t] = f == t ? nullptr : s.getRawParameterValue(modId(f, t));
+            for (int t = 0; t < kOps; ++t) mod[f][t] = f == t ? nullptr : get(modId(f, t));
         gNames = { "penv_amt", "penv_dec", "flt_cut", "flt_res", "flt_type", "flt_env", "flt_a", "flt_d", "flt_s", "flt_r", "flt_key",
                    "lfo_rate", "lfo_sync", "lfo_div", "lfo_shape", "glide", "mono", "octave", "voices", "bend", "master" };
         for (auto& m : kMacroIds) gNames.add("macro_" + m);
@@ -192,7 +194,7 @@ struct ParamReader {
                           "scale_on", "scale_root", "scale_type", "chord", "arp_on", "arp_div", "arp_pat", "arp_oct", "arp_gate" }) gNames.add(id);
         for (int i = 0; i < 16; ++i) gNames.add("seq_" + juce::String(i + 1));
         gNames.add("smp_keep"); gNames.add("lab_oneshot");
-        for (int i = 0; i < gNames.size(); ++i) g[i] = s.getRawParameterValue(gNames[i]);
+        for (int i = 0; i < gNames.size(); ++i) g[i] = get(gNames[i]);
     }
     float v(int i) const { return g[i]->load(); }
     void read(Snap& n) const {

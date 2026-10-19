@@ -75,7 +75,7 @@ struct SampleData {
         juce::AudioFormatManager fm; fm.registerBasicFormats();
         std::unique_ptr<juce::AudioFormatReader> r(fm.createReaderFor(f));
         if (!r) { err = "That file isn't an audio file Poltergeist can read (try WAV, AIFF, MP3 or FLAC)."; return nullptr; }
-        const int n = (int) juce::jmin<juce::int64>(r->lengthInSamples, (juce::int64) (r->sampleRate * 60.0));
+        const int n = (int) std::min<juce::int64>(r->lengthInSamples, (juce::int64) (r->sampleRate * 60.0));
         juce::AudioBuffer<float> b((int) juce::jmin(2u, r->numChannels), n);
         r->read(&b, 0, n, 0, true, true);
         return fromBuffer(b, r->sampleRate, f.getFileNameWithoutExtension());
