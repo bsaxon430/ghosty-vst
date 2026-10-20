@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#120a22">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>ArpEZator</title>
+<meta name="description" content="Professor Bernstein's ArpEZator: type a vibe, press GENERATE, get a chord progression and a progressive-house style arpeggio you can bend, fatten and export as MIDI.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👻</text></svg>">
+<style>
+:root { --bg: #0c0718; --bg2: #160d2a; --card: #150c27; --card2: #23153d; --line: #3a2766; --ink: #f3eeff; --dim: #a597c4; --green: #39ff9a; --purple: #a46bff; --pink: #ff5ccf; --gold: #ffd84a; --cyan: #3de3ff; --red: #ff5a6e;
+  --roll: #0f0920; --rowA: rgba(255,255,255,.035); --rowB: rgba(0,0,0,.28); --grid: rgba(255,255,255,.06); --gridB: rgba(255,255,255,.14); --keyW: #e9e2fa; --keyB: #2a1d45; --chordRow: rgba(57,255,154,.07); }
+body.light { --bg: #f4efff; --bg2: #e8defc; --card: #ffffff; --card2: #efe7ff; --line: #cdbdf0; --ink: #1d1238; --dim: #6a5c8c; --green: #0fae5e; --purple: #7a3ff0; --pink: #d42a9c; --gold: #b88a00; --cyan: #0b8fb0; --red: #d8344a;
+  --roll: #fbf9ff; --rowA: rgba(0,0,0,.0); --rowB: rgba(80,50,140,.07); --grid: rgba(40,20,90,.07); --gridB: rgba(40,20,90,.2); --keyW: #ffffff; --keyB: #3b2a5e; --chordRow: rgba(15,174,94,.09); }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; }
+body { background: radial-gradient(1200px 500px at 70% -10%, var(--bg2), var(--bg)) fixed, var(--bg); color: var(--ink); font: 700 13px/1.3 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  padding: max(10px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom)); overflow-x: hidden; }
+.wrap { max-width: 1180px; margin: 0 auto; }
+header { display: flex; gap: 10px; align-items: center; }
+#logo { width: 84px; height: 84px; flex: none; border-radius: 15px; box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--green) 50%, transparent), 0 6px 20px rgba(57,255,154,.15); }
+.titles { flex: 1; min-width: 0; }
+.kicker { color: var(--dim); font-size: 10px; letter-spacing: 1.2px; }
+h1 { margin: 2px 0 0; font-size: clamp(26px, 8vw, 42px); line-height: 1; letter-spacing: .3px; background: linear-gradient(90deg, var(--green), var(--cyan) 45%, var(--purple) 75%, var(--pink)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.sub { color: var(--dim); font-size: 11px; margin-top: 4px; }
+.moodbox { flex: none; display: flex; flex-direction: column; align-items: center; width: 70px; }
+#mood { width: 64px; height: 64px; }
+#moodName { font-size: 10px; letter-spacing: 1px; color: var(--dim); }
+.card { background: color-mix(in srgb, var(--card) 92%, transparent); border: 1.3px solid var(--line); border-radius: 14px; padding: 12px; margin-top: 10px; min-width: 0; }
+.card h2 { margin: 0 0 8px; font-size: 12px; letter-spacing: 1px; color: var(--tint, var(--green)); display: flex; align-items: center; gap: 8px; }
+.card h2 small { color: var(--dim); font-weight: 600; letter-spacing: 0; font-size: 11px; }
+button, select, input[type=text], input[type=number], .filebtn { font: inherit; color: var(--ink); background: var(--card2); border: 1.2px solid color-mix(in srgb, var(--tint, var(--purple)) 55%, transparent); border-radius: 9px; padding: 9px 11px; }
+button, .filebtn { cursor: pointer; touch-action: manipulation; }
+button.on { background: var(--tint, var(--purple)); color: #0c0718; border-color: transparent; }
+button:active { transform: scale(.97); }
+button:disabled { opacity: .4; }
+select { padding: 8px 6px; min-width: 0; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.promptrow { display: flex; gap: 8px; }
+#prompt { flex: 1; min-width: 0; font-size: 15px; padding: 12px; border-color: color-mix(in srgb, var(--green) 45%, transparent); }
+#gen { --tint: var(--green); background: var(--green); color: #07140d; font-size: 15px; padding: 10px 14px; display: flex; align-items: center; gap: 6px; white-space: nowrap; box-shadow: 0 0 18px color-mix(in srgb, var(--green) 40%, transparent); }
+#gen svg { width: 18px; height: 18px; }
+.chips { display: flex; gap: 6px; overflow-x: auto; margin: 8px 0 2px; padding-bottom: 4px; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chips button { flex: none; font-size: 11px; padding: 6px 9px; border-radius: 99px; color: var(--dim); --tint: var(--purple); }
+.seedrow { margin-top: 8px; gap: 6px; }
+.seedrow label { color: var(--dim); font-size: 11px; display: flex; align-items: center; gap: 5px; }
+#seed { width: 92px; padding: 6px 8px; font-variant-numeric: tabular-nums; }
+#genInfo { color: var(--dim); font-size: 11px; flex: 1 1 160px; min-width: 0; }
+.seedrow button { padding: 6px 10px; }
+.master { margin-top: 10px; padding: 10px; border-radius: 12px; background: linear-gradient(90deg, color-mix(in srgb, var(--cyan) 14%, transparent), color-mix(in srgb, var(--pink) 18%, transparent)); border: 1.2px solid color-mix(in srgb, var(--pink) 40%, transparent); }
+.master .lbl { display: flex; justify-content: space-between; font-size: 11px; color: var(--dim); }
+.master .lbl b { color: var(--ink); font-size: 13px; letter-spacing: 1px; }
+input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; background: transparent; height: 30px; margin: 0; touch-action: pan-y; }
+input[type=range]::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--tint, var(--purple)) var(--p, 50%), var(--line) var(--p, 50%)); }
+input[type=range]::-moz-range-track { height: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--tint, var(--purple)) var(--p, 50%), var(--line) var(--p, 50%)); }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--ink); margin-top: -8px; border: 3px solid var(--tint, var(--purple)); }
+input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: var(--ink); border: 3px solid var(--tint, var(--purple)); }
+#master { --tint: var(--pink); height: 40px; }
+#master::-webkit-slider-runnable-track { height: 10px; background: linear-gradient(90deg, var(--cyan), var(--purple) 55%, var(--pink)); }
+#master::-webkit-slider-thumb { width: 30px; height: 30px; margin-top: -10px; }
+.transport { margin-top: 10px; gap: 6px; flex-wrap: nowrap; }
+#play { --tint: var(--green); font-size: 15px; padding: 11px 0; flex: 1.3; }
+#bpm { --tint: var(--cyan); flex: 1; padding: 11px 4px; touch-action: none; font-variant-numeric: tabular-nums; }
+#loop { --tint: var(--gold); flex: .8; padding: 11px 2px; }
+#undo, #theme { flex: .7; padding: 11px 2px; }
+.ctl { display: grid; grid-template-columns: 64px 1fr 40px; align-items: center; gap: 8px; margin-top: 4px; }
+.ctl > span:first-child { color: var(--dim); font-size: 11px; }
+.ctl output { color: var(--dim); font-size: 11px; text-align: right; font-variant-numeric: tabular-nums; }
+.seg { display: flex; gap: 4px; margin-top: 6px; }
+.seg button { flex: 1; padding: 8px 0; font-size: 11px; min-width: 0; }
+.seglbl { color: var(--dim); font-size: 11px; margin-top: 8px; }
+.rollcard { padding: 10px 10px 8px; }
+.rolltools { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+.rolltools button { padding: 6px 10px; font-size: 12px; }
+.rolltools .grow { flex: 1; color: var(--dim); font-size: 11px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#roll { width: 100%; height: 290px; display: block; touch-action: none; border-radius: 10px; }
+#mini { width: 100%; height: 26px; display: block; touch-action: none; margin-top: 6px; border-radius: 6px; }
+.linkbar { display: flex; gap: 6px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+.linkbar .t { color: var(--dim); font-size: 11px; }
+.linkbar button { padding: 7px 10px; font-size: 11px; }
+#lkGlide { --tint: var(--pink); } #lkFat { --tint: var(--gold); } #lkStep { --tint: var(--cyan); }
+#lkAmt { flex: 1 1 120px; --tint: var(--pink); }
+#presetSeg { display: grid; grid-template-columns: repeat(3, 1fr); }
+.hint { color: var(--dim); font-size: 10.5px; margin-top: 6px; }
+.chordchips { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.chordchips button { padding: 8px 2px 6px; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; --tint: var(--green); position: relative; }
+.chordchips button b { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.chordchips button i { font-style: normal; color: var(--dim); font-size: 10px; }
+.chordchips button.now { box-shadow: 0 0 0 2px var(--green); }
+.chordchips button.chrom b { color: var(--pink); }
+.cols { display: grid; grid-template-columns: 1fr; gap: 0 10px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+.two label { color: var(--dim); font-size: 11px; display: flex; flex-direction: column; gap: 4px; }
+.filebtn { display: inline-flex; align-items: center; justify-content: center; --tint: var(--cyan); }
+.filebtn input { display: none; }
+#drop { border: 1.5px dashed var(--line); border-radius: 10px; padding: 8px; color: var(--dim); font-size: 11px; text-align: center; margin-top: 8px; }
+#drop.over { border-color: var(--green); color: var(--green); }
+.btns { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 8px; }
+.slots { display: grid; grid-template-columns: 1.1fr repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+.slots button { padding: 9px 0; font-size: 11px; }
+#saveArm { --tint: var(--gold); }
+.slots button.full { border-color: var(--green); }
+footer { text-align: center; color: var(--dim); font-size: 11px; margin: 16px 0 6px; }
+footer a { color: var(--cyan); text-decoration: none; }
+#toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); background: var(--card2); border: 1px solid var(--green); padding: 10px 16px; border-radius: 10px; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 20; max-width: calc(100vw - 32px); text-align: center; }
+#menu { position: fixed; z-index: 30; background: var(--card); border: 1.3px solid var(--line); border-radius: 12px; padding: 6px; display: none; min-width: 180px; box-shadow: 0 10px 30px rgba(0,0,0,.4); }
+#menu button { display: block; width: 100%; text-align: left; margin: 3px 0; padding: 9px 10px; font-size: 12px; }
+#menu .mt { color: var(--dim); font-size: 11px; padding: 4px 6px; }
+@media (min-width: 700px) {
+  #logo { width: 104px; height: 104px; }
+  #mood { width: 80px; height: 80px; } .moodbox { width: 90px; }
+  .cols { grid-template-columns: 1fr 1fr; }
+  #roll { height: 340px; }
+}
+@media (min-width: 1040px) {
+  .top2 { display: grid; grid-template-columns: 1.25fr 1fr; gap: 10px; align-items: stretch; }
+  .top2 > .card { margin-top: 10px; }
+  .cols { grid-template-columns: 1.15fr 1fr 1fr; }
+  #roll { height: 380px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <canvas id="logo" width="208" height="208" aria-label="Professor Bernstein chilling in a hammock with a bubbling vial"></canvas>
+    <div class="titles"><div class="kicker">PROFESSOR BERNSTEIN'S</div><h1>ArpEZator</h1><div class="sub">type a vibe, press GENERATE, bend the flow</div></div>
+    <div class="moodbox"><canvas id="mood" width="160" height="160"></canvas><b id="moodName">HAPPY</b></div>
+  </header>
+
+  <div class="top2">
+    <section class="card">
+      <div class="promptrow">
+        <input type="text" id="prompt" placeholder="e.g. euphoric progressive in F minor" autocomplete="off" enterkeyhint="go">
+        <button id="gen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/><path d="M7 15h10" /></svg>GENERATE</button>
+      </div>
+      <div class="chips" id="examples"></div>
+      <div class="row seedrow">
+        <button id="prevGen" title="previous generation">&#9664;</button>
+        <label>SEED <input type="text" id="seed" inputmode="numeric" title="type a seed + Enter to recall it"></label>
+        <button id="nextGen" title="next generation">&#9654;</button>
+        <span id="genInfo"></span>
+      </div>
+      <div class="master">
+        <div class="lbl"><span>simple</span><b>MASTER</b><span>wild</span></div>
+        <input type="range" id="master" min="0" max="1" step="0.01" value="0.5" aria-label="Master: one slider changes everything">
+        <div class="lbl"><span>sparse, close, straight</span><span>busy, wide, syncopated</span></div>
+      </div>
+    </section>
+
+    <section class="card" style="--tint:var(--purple)">
+      <h2>CHORDS <small id="keyInfo"></small></h2>
+      <div class="chordchips" id="chips"></div>
+      <div class="two">
+        <label>KEY<select id="key"></select></label>
+        <label>SCALE / MOOD<select id="scale"></select></label>
+      </div>
+      <div class="ctl"><span>COLOUR</span><input type="range" id="colour" min="0" max="1" step="0.01" style="--tint:var(--purple)"><output id="colourV"></output></div>
+      <div class="seg" id="barsSeg"></div>
+      <div class="btns"><button id="newChords" style="--tint:var(--purple)">NEW CHORDS</button><label class="filebtn">IMPORT MIDI<input type="file" id="midiFile" accept=".mid,.midi,audio/midi,audio/x-midi"></label></div>
+      <div id="drop">or drop a .mid chord file here (tap a chord to cycle alternatives, long-press for the list)</div>
+    </section>
+  </div>
+
+  <div class="row transport">
+    <button id="play">PLAY</button>
+    <button id="bpm" title="drag up/down, long-press or right-click to type">128 BPM</button>
+    <button id="loop" class="on">LOOP</button>
+    <button id="undo">UNDO</button>
+    <button id="theme">LIGHT</button>
+  </div>
+
+  <section class="card rollcard" style="--tint:var(--cyan)">
+    <div class="rolltools">
+      <button id="zoomOut">&minus;</button><button id="zoomIn">+</button>
+      <span class="grow" id="rollInfo"></span>
+      <button id="follow" class="on" style="--tint:var(--cyan)">FOLLOW</button>
+    </div>
+    <canvas id="roll"></canvas>
+    <canvas id="mini"></canvas>
+    <div class="linkbar" id="linkbar">
+      <span class="t" id="lkInfo">tap a line between two notes</span>
+      <button id="lkGlide">GLIDE</button><button id="lkFat">FATTEN</button><button id="lkStep">STEP</button>
+      <input type="range" id="lkAmt" min="0" max="1" step="0.01" value="0.5">
+      <button id="lkAll" style="--tint:var(--purple)">SET ALL</button>
+    </div>
+    <div class="hint">Tap empty = add note &middot; tap note = delete &middot; drag note = move &middot; tap a line = select it, then drag its dot sideways to BEND (glide earlier/later) or up to FATTEN (next note louder) &middot; long-press / right-click a line for options</div>
+  </section>
+
+  <div class="cols">
+    <section class="card" style="--tint:var(--green)">
+      <h2>ARP</h2>
+      <div class="seglbl">RATE</div><div class="seg" id="rateSeg"></div>
+      <div class="seglbl">STYLE</div><select id="style" style="width:100%;margin-top:6px"></select>
+      <div class="seglbl">OCTAVES</div><div class="seg" id="octSeg"></div>
+      <div class="ctl"><span>GATE</span><input type="range" id="gate" min="0.1" max="1" step="0.01" style="--tint:var(--green)"><output id="gateV"></output></div>
+      <div class="ctl"><span>SWING</span><input type="range" id="swing" min="0" max="0.8" step="0.01" style="--tint:var(--green)"><output id="swingV"></output></div>
+      <div class="btns"><button id="newArp" style="--tint:var(--green)">NEW ARP</button><button id="regOct" style="--tint:var(--green)">REGISTER 0</button></div>
+    </section>
+    <section class="card" style="--tint:var(--pink)">
+      <h2>SOUND</h2>
+      <div class="seg" id="presetSeg" style="flex-wrap:wrap"></div>
+      <div class="ctl"><span>TONE</span><input type="range" id="fx_tone" min="0" max="1" step="0.01" style="--tint:var(--pink)"><output></output></div>
+      <div class="ctl"><span>DELAY</span><input type="range" id="fx_delay" min="0" max="1" step="0.01" style="--tint:var(--pink)"><output></output></div>
+      <div class="ctl"><span>REVERB</span><input type="range" id="fx_reverb" min="0" max="1" step="0.01" style="--tint:var(--pink)"><output></output></div>
+      <div class="ctl"><span>PUMP</span><input type="range" id="fx_pump" min="0" max="1" step="0.01" style="--tint:var(--pink)"><output></output></div>
+      <div class="ctl"><span>ARP</span><input type="range" id="mix_arp" min="0" max="1" step="0.01" style="--tint:var(--cyan)"><output></output></div>
+      <div class="ctl"><span>CHORDS</span><input type="range" id="mix_chords" min="0" max="1" step="0.01" style="--tint:var(--cyan)"><output></output></div>
+      <div class="ctl"><span>BASS</span><input type="range" id="mix_bass" min="0" max="1" step="0.01" style="--tint:var(--cyan)"><output></output></div>
+      <div class="ctl"><span>KICK</span><input type="range" id="mix_kick" min="0" max="1" step="0.01" style="--tint:var(--cyan)"><output></output></div>
+    </section>
+    <section class="card" style="--tint:var(--gold)">
+      <h2>EXPORT + SAVE</h2>
+      <div class="btns">
+        <button id="midArp" style="--tint:var(--gold)">MIDI: ARP</button><button id="midChords" style="--tint:var(--gold)">MIDI: CHORDS</button>
+        <button id="midAll" style="--tint:var(--gold)">MIDI: ALL</button><button id="wav" style="--tint:var(--green)">WAV / SHARE</button>
+      </div>
+      <div class="slots" id="slots"><button id="saveArm">SAVE TO</button></div>
+      <div class="hint">Tap a slot to load it. Press SAVE TO, then a slot, to store the current idea. Your last idea is kept in this browser automatically.</div>
+      <div class="hint">MIDI: glides export as overlapping (legato) notes so mono synths slide; fatten exports as velocity.</div>
+      <button id="reset" style="--tint:var(--red);margin-top:8px;width:100%">START OVER</button>
+    </section>
+  </div>
+  <footer><a id="fbMail" href="#">Send feedback by email</a> &middot; <a id="fbSms" href="#">by text</a><br>ArpEZator web preview &middot; all sounds made live in your browser</footer>
+</div>
+<div id="menu"></div>
+<div id="toast"></div>
+<script src="theory.js"></script>
+<script src="gfx.js"></script>
+<script src="audio.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
