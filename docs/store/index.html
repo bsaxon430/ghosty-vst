@@ -53,15 +53,29 @@ a { color: var(--ecto); }
   <div class="chips"><span>VST3 · AU · Standalone</span><span>Mac + Windows</span><span>One-time price, no subscription</span><span>Use on up to 5 computers</span><span>Try before you buy</span></div>
 
   <div class="bundle" style="background:var(--card);border-color:var(--line)">
-    <div><h2>Try them all free</h2><p>One installer with all five plugins. They run in demo mode until you enter a license key.</p></div>
+    <div><h2>Try them all free</h2><p>One installer with all six plugins. They run in demo mode until you enter a license key.</p></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap"><a class="btn alt" href="../download/GhostBlock-Plugins-Mac.pkg">Download for Mac</a><a class="btn alt" href="../download/GhostBlock-Plugins-Windows-Setup.exe">Download for Windows</a></div>
   </div>
   <div class="bundle">
-    <div><h2>Everything bundle</h2><p>Ghosty Pro + Mr. Mickens + Poltergeist + Ghosty Beats + Ghosty Spectrum, plus every update.</p></div>
-    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap"><div class="price">$59<s>$98</s></div><a class="btn" data-product="bundle" href="#">Get the bundle</a></div>
+    <div><h2>Everything bundle</h2><p>Ghost Box + Ghosty Pro + Mr. Mickens + Poltergeist + Ghosty Beats + Ghosty Spectrum, plus every update.</p></div>
+    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap"><div class="price">$69<s>$137</s></div><a class="btn" data-product="bundle" href="#">Get the bundle</a></div>
   </div>
 
   <div class="grid">
+    <div class="card">
+      <img src="ghostbox.png" alt="Ghost Box FX rack">
+      <div class="body">
+        <div class="tag">NEW · FX RACK FOR ANY TRACK</div>
+        <h3>📦 Ghost Box</h3>
+        <ul>
+          <li>19 effects in one drag-to-reorder rack, 25 scenes, 180+ presets, 12-step undo</li>
+          <li>FATTEN: one giant knob that makes anything fatter, same loudness</li>
+          <li>HAUNTED HALLS reverb (11 modes up to 60 s + freeze), CRACKLE multiband destroyer, RETRO vinyl/dust/tape colour</li>
+          <li>Ghosts bounce with every echo repeat so you can see your delay</li>
+        </ul>
+        <div class="row"><div class="price">$39</div><a class="btn" data-product="ghostbox" href="#">Buy</a></div>
+      </div>
+    </div>
     <div class="card">
       <img src="ghostypro.png" alt="Ghosty Pro synth">
       <div class="body">
@@ -142,7 +156,7 @@ a { color: var(--ecto); }
 </div>
 <script>
 // Gumroad product links: fill these in once the products exist on Gumroad (leave empty = "Coming soon")
-const GUMROAD = { ghostypro: 'https://brandonix06.gumroad.com/l/krerj', bundle: 'https://brandonix06.gumroad.com/l/umszza', mickens: 'https://brandonix06.gumroad.com/l/aimjtm', poltergeist: 'https://brandonix06.gumroad.com/l/tqlba', beatsSpectrum: 'https://brandonix06.gumroad.com/l/yausj' };
+const GUMROAD = { ghostbox: 'https://brandonix06.gumroad.com/l/bgrir', ghostypro: 'https://brandonix06.gumroad.com/l/krerj', bundle: 'https://brandonix06.gumroad.com/l/umszza', mickens: 'https://brandonix06.gumroad.com/l/aimjtm', poltergeist: 'https://brandonix06.gumroad.com/l/tqlba', beatsSpectrum: 'https://brandonix06.gumroad.com/l/yausj' };
 document.querySelectorAll('[data-product]').forEach(a => {
   const url = GUMROAD[a.dataset.product];
   if (url) { a.href = url; a.target = '_blank'; a.rel = 'noopener'; }
