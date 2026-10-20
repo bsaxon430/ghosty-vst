@@ -107,7 +107,7 @@ const FACES = {
 };
 const MOOD_WORD = { happy: 'HAPPY', dreamy: 'DREAMY', sad: 'SAD', tense: 'TENSE', epic: 'EPIC' };
 function lerpFace(cur, tgt, k) { const o = {}; for (const key in tgt) o[key] = Array.isArray(tgt[key]) ? tgt[key].map((v, i) => cur[key][i] + (v - cur[key][i]) * k) : cur[key] + (tgt[key] - cur[key]) * k; return o; }
-function drawMoodGhost(c, X, Y, W, F, t) {
+function drawMoodGhost(c, X, Y, W, F, t, ear = 0) {
   const s = W / 100; c.save(); c.translate(X, Y); c.scale(s, s);
   const [hr, hg, hb] = F.hue.map(Math.round), bob = Math.sin(t * 2.1) * 2.5 * (1 - F.sweat * 0.5) + Math.sin(t * 23) * F.sweat * 0.5;
   let g = c.createRadialGradient(50, 48, 10, 50, 50, 50); g.addColorStop(0, `rgba(${hr},${hg},${hb},0.35)`); g.addColorStop(1, `rgba(${hr},${hg},${hb},0)`); c.fillStyle = g; c.fillRect(0, 0, 100, 100);
@@ -151,5 +151,12 @@ function drawMoodGhost(c, X, Y, W, F, t) {
   if (F.spark > 0.05) for (let i = 0; i < 4; i++) { const a = t * 1.5 + i * Math.PI / 2, x = 50 + Math.cos(a) * 44, y = 42 + Math.sin(a) * 34, z = (2 + Math.sin(t * 5 + i) * 1.2) * F.spark;
     c.fillStyle = `rgba(${hr},${hg},${hb},${F.spark})`; c.beginPath(); for (let k = 0; k < 8; k++) { const r = k % 2 ? z * 0.35 : z, an = k * Math.PI / 4; c.lineTo(x + Math.cos(an) * r, y + Math.sin(an) * r); } c.closePath(); c.fill(); }
   if (F.dream > 0.05) { c.fillStyle = `rgba(200,180,255,${F.dream})`; c.font = '700 11px system-ui'; for (let i = 0; i < 2; i++) { const ph = (t * 0.35 + i * 0.5) % 1; c.globalAlpha = F.dream * (1 - ph); c.fillText('z', 78 + ph * 10, 26 - ph * 18 + i * 2); } c.globalAlpha = 1; }
+  // LISTEN: a little arm cups the right ear, sound waves drift in
+  if (ear > 0.02) { c.globalAlpha = Math.min(1, ear); c.lineWidth = 2.2; c.strokeStyle = '#1d1238'; c.fillStyle = '#fff';
+    c.beginPath(); c.moveTo(76, 62); c.quadraticCurveTo(90, 60, 86, 44); c.lineTo(80, 46); c.quadraticCurveTo(82, 56, 76, 56); c.closePath(); c.fill(); c.stroke();
+    c.beginPath(); c.moveTo(80, 47); c.quadraticCurveTo(84, 30, 92, 36); c.quadraticCurveTo(90, 44, 86, 46); c.closePath(); c.fill(); c.stroke();
+    c.strokeStyle = `rgba(61,227,255,${0.9 * Math.min(1, ear)})`; c.lineWidth = 1.8;
+    for (let i = 0; i < 3; i++) { const ph = (t * 0.9 + i / 3) % 1, r = 16 - ph * 12; c.globalAlpha = Math.min(1, ear) * ph; c.beginPath(); c.arc(90, 40, r, -0.6, 0.6); c.stroke(); }
+    c.globalAlpha = 1; }
   c.restore();
 }

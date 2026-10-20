@@ -34,13 +34,38 @@ button, select, input[type=text], input[type=number], .filebtn { font: inherit; 
 button, .filebtn { cursor: pointer; touch-action: manipulation; }
 button.on { background: var(--tint, var(--purple)); color: #0c0718; border-color: transparent; }
 button:active { transform: scale(.97); }
-button:disabled { opacity: .4; }
+button:disabled, input[type=range]:disabled { opacity: .4; }
 select { padding: 8px 6px; min-width: 0; }
 .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .promptrow { display: flex; gap: 8px; }
 #prompt { flex: 1; min-width: 0; font-size: 15px; padding: 12px; border-color: color-mix(in srgb, var(--green) 45%, transparent); }
 #gen { --tint: var(--green); background: var(--green); color: #07140d; font-size: 15px; padding: 10px 14px; display: flex; align-items: center; gap: 6px; white-space: nowrap; box-shadow: 0 0 18px color-mix(in srgb, var(--green) 40%, transparent); }
 #gen svg { width: 18px; height: 18px; }
+.listenrow { display: flex; gap: 8px; margin-top: 8px; }
+#listen { flex: 1; --tint: var(--cyan); background: linear-gradient(100deg, var(--cyan), var(--purple)); color: #0c0718; border: 0; font-size: 15px; letter-spacing: 1px; padding: 11px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 0 16px color-mix(in srgb, var(--cyan) 35%, transparent); }
+#listen svg { width: 22px; height: 22px; }
+#listen.on { background: linear-gradient(100deg, var(--pink), var(--purple)); animation: lsPulse 1.1s ease-in-out infinite; }
+@keyframes lsPulse { 50% { box-shadow: 0 0 26px color-mix(in srgb, var(--pink) 70%, transparent); } }
+#listenFileBtn { flex: none; font-size: 10.5px; line-height: 1.15; padding: 6px 12px; text-align: center; }
+#lsBox { position: relative; margin-top: 8px; padding: 10px; border-radius: 12px; border: 1.3px solid color-mix(in srgb, var(--cyan) 50%, transparent); background: color-mix(in srgb, var(--cyan) 7%, transparent); }
+#lsBox[hidden], #lsRes[hidden] { display: none; }
+#lsClose { position: absolute; top: 6px; right: 6px; padding: 2px 9px; font-size: 16px; line-height: 1.2; --tint: var(--dim); }
+.lsTop { display: flex; gap: 12px; align-items: center; padding-right: 26px; }
+#lsCv { width: 124px; height: 124px; flex: none; cursor: pointer; touch-action: manipulation; }
+.lsTxt { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+#lsState { color: var(--cyan); font-size: 15px; letter-spacing: 1.2px; }
+#lsSub { color: var(--ink); font-weight: 600; font-size: 12px; }
+.lsPriv { color: var(--dim); font-size: 10.5px; font-weight: 600; }
+#lsHeard { margin-top: 10px; font-size: 15px; line-height: 1.4; }
+#lsHeard .lc { color: var(--dim); font-size: 11px; font-weight: 600; }
+#lsHeard .pr { color: var(--green); display: block; font-size: 16px; letter-spacing: .3px; }
+#lsConf { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 8px 0 4px; }
+#lsConf div { font-size: 10px; color: var(--dim); letter-spacing: .6px; }
+#lsConf i { display: block; height: 5px; border-radius: 3px; margin-top: 3px; background: linear-gradient(90deg, var(--c) var(--p), var(--line) var(--p)); }
+#lsFeel { color: var(--dim); font-size: 11px; margin-bottom: 8px; }
+#lsRes .btns3 button { padding: 10px 2px; font-size: 11px; }
+#lsUse { --tint: var(--green); background: var(--green); color: #07140d; border-color: transparent; }
+#lsAgain { --tint: var(--cyan); } #lsKeep { --tint: var(--purple); }
 .chips { display: flex; gap: 6px; overflow-x: auto; margin: 8px 0 2px; padding-bottom: 4px; scrollbar-width: none; }
 .chips::-webkit-scrollbar { display: none; }
 .chips button { flex: none; font-size: 11px; padding: 6px 9px; border-radius: 99px; color: var(--dim); --tint: var(--purple); }
@@ -169,6 +194,21 @@ footer a { color: var(--cyan); text-decoration: none; }
         <input type="text" id="prompt" placeholder="e.g. euphoric progressive in F minor" autocomplete="off" enterkeyhint="go">
         <button id="gen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/><path d="M7 15h10" /></svg>GENERATE</button>
       </div>
+      <div class="listenrow">
+        <button id="listen" title="listen to music playing near you, then write a new arp in that style"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9a5.5 5.5 0 0 1 11 0c0 3-2.4 3.9-3.3 5.6-.8 1.5-.8 3.1-2.2 4.3A3 3 0 0 1 7 17.4"/><path d="M9.5 9.5a2.5 2.5 0 0 1 5 0c0 1.5-1.5 1.9-1.9 3"/><path d="M20 6.5c1.3 1.8 1.3 5.2 0 7"/></svg><span id="listenTxt">LISTEN</span></button>
+        <label class="filebtn" id="listenFileBtn" title="analyse an audio file (mp3, wav, m4a)">LISTEN TO<br>A FILE<input type="file" id="listenFile" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.flac"></label>
+      </div>
+      <div id="lsBox" hidden>
+        <button id="lsClose" aria-label="close">&times;</button>
+        <div class="lsTop"><canvas id="lsCv" width="280" height="280" aria-label="listening"></canvas>
+          <div class="lsTxt"><b id="lsState">LISTENING</b><span id="lsSub"></span><span class="lsPriv">&#128274; analysed on this device; nothing is uploaded</span></div></div>
+        <div id="lsRes" hidden>
+          <div id="lsHeard"></div>
+          <div id="lsConf"></div>
+          <div id="lsFeel"></div>
+          <div class="btns3"><button id="lsUse">USE THIS</button><button id="lsAgain">TRY ANOTHER</button><button id="lsKeep">KEEP MY CHORDS</button></div>
+        </div>
+      </div>
       <div class="chips" id="examples"></div>
       <div class="row seedrow">
         <button id="prevGen" title="previous generation">&#9664;</button>
@@ -287,9 +327,10 @@ footer a { color: var(--cyan); text-decoration: none; }
 </div>
 <div id="menu"></div>
 <div id="toast"></div>
-<script src="theory.js?v=202610201200"></script>
-<script src="gfx.js?v=202610201200"></script>
-<script src="audio.js?v=202610201200"></script>
-<script src="app.js?v=202610201200"></script>
+<script src="theory.js?v=202610202100"></script>
+<script src="gfx.js?v=202610202100"></script>
+<script src="audio.js?v=202610202100"></script>
+<script src="listen.js?v=202610202100"></script>
+<script src="app.js?v=202610202100"></script>
 </body>
 </html>

@@ -111,7 +111,7 @@ function syncUI() {
   $('style').value = S.style; $('key').value = S.key; $('scale').value = S.scale;
   $('seed').value = S.seed; $('bpm').textContent = S.bpm + ' BPM'; $('loop').classList.toggle('on', S.loop);
   $('regOct').textContent = 'REGISTER ' + (S.reg > 0 ? '+' : '') + S.reg;
-  $('genInfo').textContent = S.imported ? 'chords from your MIDI file' : `${A.keyName(S.key, S.scale)} ${A.SCALE_LABEL[S.scale].toLowerCase()} | ${S.genre} | ${S.style} | ${S.rate}`;
+  $('genInfo').textContent = S.imported ? 'chords from your MIDI file' : S.heard ? `learned by ear | ${A.keyName(S.key, S.scale)} | ${S.bpm} bpm | ${S.rate}` : `${A.keyName(S.key, S.scale)} ${A.SCALE_LABEL[S.scale].toLowerCase()} | ${S.genre} | ${S.style} | ${S.rate}`;
   document.body.classList.toggle('light', S.theme === 'light'); $('theme').textContent = S.theme === 'light' ? 'DARK' : 'LIGHT';
   $('undo').disabled = !undoStack.length;
 }
@@ -194,6 +194,7 @@ $('midiFile').onchange = e => { const f = e.target.files[0]; if (f) importMidi(f
   body.addEventListener('drop', async e => { e.preventDefault(); d.classList.remove('over');
     const fs = [...e.dataTransfer.files], ents = [...(e.dataTransfer.items || [])].map(it => it.webkitGetAsEntry && it.webkitGetAsEntry()).filter(Boolean);
     // one .mid = import its chords (as before); many files, a folder or a zip = add to the library
+    if (fs.length === 1 && !/\.midi?$/i.test(fs[0].name) && (/^audio\//.test(fs[0].type) || /\.(mp3|wav|m4a|aac|ogg|flac|aiff?)$/i.test(fs[0].name))) return hrFile(fs[0]);
     if (fs.length === 1 && /\.midi?$/i.test(fs[0].name) && !ents.some(x => x.isDirectory)) return importMidi(fs[0]);
     if (ents.some(x => x.isDirectory)) { const out = []; const walk = ent => new Promise(res => { if (ent.isFile) ent.file(f => { out.push(f); res(); }, () => res()); else { const rd = ent.createReader(), all = []; const more = () => rd.readEntries(async es => { if (!es.length) { for (const x of all) await walk(x); res(); } else { all.push(...es); more(); } }, () => res()); more(); } });
       for (const x of ents) await walk(x); return addToLibrary(out); }
@@ -408,13 +409,16 @@ function linkBar() {
   ['lkGlide', 'lkFat', 'lkStep', 'lkAmt', 'lkAll'].forEach(id => $(id).disabled = !ok);
   $('lkGlide').classList.toggle('on', !!l && l.type === 'glide'); $('lkFat').classList.toggle('on', !!l && l.type === 'fatten'); $('lkStep').classList.toggle('on', !!l && l.type === 'step');
   $('lkInfo').textContent = !ok ? 'tap a line between two notes' : l.type === 'glide' ? 'GLIDE starts at ' + Math.round(l.w * 100) + '%' : l.type === 'fatten' ? 'FATTEN ' + Math.round(l.f * 100) + '%' : 'STEP';
-  const amt = $('lkAmt'); if (ok) { amt.value = l.type === 'fatten' ? l.f : l.w; amt.style.setProperty('--tint', l.type === 'fatten' ? 'var(--gold)' : 'var(--pink)'); setP(amt); }
+  // STEP has no amount: the slider is greyed out and can't turn a STEP line into a GLIDE
+  const amt = $('lkAmt'), step = !!l && l.type === 'step'; amt.disabled = !ok || step;
+  if (ok) { amt.value = step ? 0 : l.type === 'fatten' ? l.f : l.w; amt.style.setProperty('--tint', step ? 'var(--line)' : l.type === 'fatten' ? 'var(--gold)' : 'var(--pink)'); setP(amt); }
+  if (ok && step) $('lkInfo').textContent = 'STEP (no amount: pick GLIDE or FATTEN to use the slider)';
 }
 $('lkGlide').onclick = () => setLink(selLink, { type: 'glide' });
 $('lkFat').onclick = () => setLink(selLink, { type: 'fatten' });
 $('lkStep').onclick = () => setLink(selLink, { type: 'step' });
 $('lkAll').onclick = () => setAllLinks(S.notes[selLink].l);
-$('lkAmt').addEventListener('input', e => { const l = S.notes[selLink].l, v = +e.target.value; if (l.type === 'fatten') l.f = v; else { l.type = 'glide'; l.w = Math.min(0.97, v); } S.edited = true; plan = buildPlan(S, chords, S.notes); drawRoll(); save(); });
+$('lkAmt').addEventListener('input', e => { const l = S.notes[selLink].l, v = +e.target.value; if (l.type === 'step') return; if (l.type === 'fatten') l.f = v; else l.w = Math.min(0.97, v); S.edited = true; plan = buildPlan(S, chords, S.notes); drawRoll(); save(); });
 
 // ---------------------------------------------------------------- export + save
 function download(blob, name) {
@@ -612,6 +616,107 @@ function buildFxUI() {
 }
 function fxChanged(quiet) { if (eng) eng.apply(S); save(); if (!quiet) syncUI(); else { $('fxScene').textContent = S.fx2.scene; [...$('scenes').children].forEach(b => b.classList.toggle('on', b.dataset.v === S.fx2.scene)); } }
 
+// ---------------------------------------------------------------- LISTEN: hear music (mic or a file), learn tempo / key / chord loop / feel,
+// then write a NEW arp (and voice the chords) in that style with the normal generator. The melody it heard is never copied. All local.
+const HR_MAX = 12, HR_MIN = 4;
+const HR = { st: 'off', mic: null, res: null, pre: null, chroma: new Float32Array(12), ear: 0, timer: 0, fbuf: null };
+const hrName = (c, h) => A.noteName(c.root, h.key, h.scale) + Listen.SUF[c.type];
+const hrKey = h => A.noteName(h.key, h.key, h.scale) + ' ' + h.scale;
+function hrShow(st, sub) {
+  HR.st = st; $('lsBox').hidden = st === 'off'; $('listen').classList.toggle('on', st === 'mic'); $('listenTxt').textContent = st === 'mic' ? 'STOP' : 'LISTEN';
+  $('lsState').textContent = { mic: 'LISTENING...', busy: 'THINKING...', res: 'HEARD IT!', err: 'HMM...' }[st] || ''; if (sub !== undefined) $('lsSub').textContent = sub; $('lsRes').hidden = st !== 'res';
+}
+const hrSession = t => { try { if (navigator.audioSession) navigator.audioSession.type = t; } catch (e) {} };
+async function hrStart() {
+  if (HR.st === 'mic') return hrStop();
+  if (HR.st === 'busy') return;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return hrShow('err', "This browser can't use the microphone here (it needs https). Try LISTEN TO A FILE.");
+  await setPlay(false); await ensureAudio(); hrSession('play-and-record');
+  try { HR.mic = await Listen.startMic(ctx); }
+  catch (e) { hrSession('playback'); return hrShow('err', e && (e.name === 'NotAllowedError' || e.name === 'SecurityError') ? 'Microphone access was blocked. Allow it in your browser settings, or use LISTEN TO A FILE.' : 'No microphone available (' + (e && e.name) + '). Try LISTEN TO A FILE.'); }
+  HR.fbuf = new Float32Array(HR.mic.analyser.frequencyBinCount); HR.chroma = new Float32Array(12);
+  hrShow('mic', `Play music near your device. About ${HR_MAX} s; tap the ring or STOP to finish early.`);
+  HR.timer = setInterval(() => { if (HR.mic && HR.mic.seconds >= HR_MAX) hrStop(); }, 150);
+}
+function hrStop() {
+  clearInterval(HR.timer); const m = HR.mic; HR.mic = null; if (!m) return;
+  const secs = m.seconds, x = m.stop(); hrSession('playback');
+  if (secs < HR_MIN) return hrShow('err', `Only ${secs.toFixed(1)} s heard. Let it listen for at least ${HR_MIN} s.`);
+  hrAnalyze(x, m.sr);
+}
+async function hrFile(file) {
+  if (HR.mic) { clearInterval(HR.timer); HR.mic.stop(); HR.mic = null; hrSession('playback'); }
+  hrShow('busy', 'Reading ' + file.name + '...'); await setPlay(false);
+  try { await ensureAudio(); const ab = await file.arrayBuffer(); const buf = await new Promise((res, rej) => { const p = ctx.decodeAudioData(ab, res, rej); if (p && p.then) p.then(res, rej); });
+    hrAnalyze(Listen.mono(buf), buf.sampleRate); }
+  catch (e) { hrShow('err', "Couldn't decode that file. Try an mp3, wav or m4a."); }
+}
+function hrAnalyze(x, sr) {
+  hrShow('busy', 'Working out tempo, key and chords...');
+  setTimeout(() => { let r; try { r = Listen.analyze(x, sr); } catch (e) { r = { ok: false, why: e.message }; }
+    if (!r.ok) return hrShow('err', r.why === 'too quiet' ? 'That was too quiet. Turn the music up or move closer, then LISTEN again.' : `Couldn't analyse that (${r.why}).`);
+    HR.res = r; HR.pre = JSON.stringify(S); HR.chroma = Float32Array.from(r.chroma); hrResult(r); hrApply(newSeed(), false); }, 40);
+}
+function hrResult(h) {
+  const pct = v => Math.round(v * 100), lvl = h.conf >= 0.7 ? 'high' : h.conf >= 0.4 ? 'medium' : 'low';
+  $('lsHeard').innerHTML = `<span class="lc">HEARD (${lvl} confidence${lvl === 'low' ? ': try a louder or longer clip' : ''})</span><br><b>${h.bpmInt} BPM</b> &middot; <b>${hrKey(h)}</b><span class="pr">${h.chords.map(c => hrName(c, h)).join(' &ndash; ')}</span>`;
+  $('lsConf').innerHTML = [['TEMPO', h.tempoConf, 'var(--cyan)'], ['KEY', h.keyConf, 'var(--purple)'], ['CHORDS', h.chordConf, 'var(--green)']].map(([n, v, c]) => `<div>${n} ${pct(v)}%<i style="--p:${pct(v)}%;--c:${c}"></i></div>`).join('');
+  $('lsFeel').textContent = `Feel: ${h.rate === '1/16T' ? '1/16 triplets' : h.rate} arp, groove ${pct(h.groove)}%, ${h.centroid < 1100 ? 'dark' : h.centroid > 2600 ? 'bright' : 'warm'} tone -> ${h.oct} octave${h.oct > 1 ? 's' : ''}, ${h.preset}. New arp written from scratch.`;
+  hrShow('res', `${h.dur.toFixed(1)} s analysed in ${h.ms} ms. Now playing a new idea in that style.`);
+}
+function hrPrompt(h) {
+  const g = h.bpmInt < 96 ? (h.centroid < 1600 ? 'lofi' : 'cinematic') : h.bpmInt < 121 ? 'house' : h.bpmInt < 133 ? 'progressive' : 'trance';
+  const mood = h.centroid < 1100 ? 'dark' : h.scale === 'minor' ? 'emotional' : 'happy';
+  return `${mood} ${g} in ${A.noteName(h.key, h.key, h.scale).toLowerCase()} ${h.scale} ${h.bpmInt} bpm ${h.rate === '1/16T' ? 'triplet' : h.rate}`;
+}
+// the heard chord as a generator slot: a numeral token when it has one (so the generator voices / colours it its own way), else a fixed chord
+function hrSlot(c, h, R) {
+  const rel = A.mod12(c.root - h.key), tri = c.iv.slice(0, 3), tok = A.degToken(rel, tri, h.scale === 'minor' ? 'minor' : 'major');
+  const q = { '7': 'sev', m7: 'sev', maj7: 'sev', add9: 'add9', sus2: 'sus', sus4: 'sus' }[c.type];
+  if (tok) { const slot = { tok, r: R(), r2: R(), alt: 0, len: 4 }, a = A.altChord(slot, h.scale, 0);
+    if (A.mod12(a.root) === rel && (A.triadQuality(a.iv) === A.triadQuality(tri) || q === 'sus')) { if (q) slot.q = q; return slot; } }
+  const sc = A.SCALES[h.scale], iv = c.iv.map(x => c.type === 'add9' && x === 2 ? 14 : x);
+  return { fixed: { root: rel, iv, bass: null, chrom: iv.some(x => !sc.includes(A.mod12(rel + x))) }, len: 4, alt: 0, r: 0.5, r2: 0.9 };
+}
+function hrApply(seed, keepChords, play = true) {
+  const h = HR.res; if (!h) return; pushUndo();
+  if (keepChords) { S = JSON.parse(HR.pre); S.bpm = h.bpmInt; S.key = h.key; S.scale = h.scale; }
+  else {
+    const prev = JSON.parse(HR.pre), p = hrPrompt(h), g = A.generate(p, seed, styArg()), R = A.rng((seed ^ 0x11573) >>> 0);
+    S = fromGen(g, { mix: prev.mix, loop: prev.loop, theme: prev.theme, fx2: prev.fx2 });
+    Object.assign(S, { bpm: h.bpmInt, key: h.key, scale: h.scale, rate: h.rate, groove: h.groove, oct: h.oct, preset: h.preset, heard: true });
+    if (h.rate === '1/16T') S.swing = 0;
+    S.prog = h.chords.map(c => hrSlot(c, h, R)); if (S.sty) A.guardProg(S, guard);
+    $('prompt').value = p;
+  }
+  rebuild(true); syncUI();
+  if (play) setPlay(true, true);
+}
+$('listen').onclick = hrStart;
+$('lsCv').onclick = () => { if (HR.st === 'mic') hrStop(); };
+$('listenFile').onchange = e => { const f = e.target.files[0]; if (f) hrFile(f); e.target.value = ''; };
+$('lsClose').onclick = () => { if (HR.mic) { clearInterval(HR.timer); HR.mic.stop(); HR.mic = null; hrSession('playback'); } hrShow('off'); };
+$('lsUse').onclick = () => { hrShow('off'); toast('Kept. LISTEN again any time.'); };
+$('lsAgain').onclick = () => { hrApply(newSeed(), false); toast('Another idea from what it heard'); };
+$('lsKeep').onclick = () => { hrApply(0, true); toast(`Your chords, now at ${HR.res.bpmInt} BPM in ${hrKey(HR.res)}`); };
+function drawListen(t) {
+  const cv = $('lsCv'), c = cv.getContext('2d'), W = cv.width, cx = W / 2, cy = W / 2, css = getComputedStyle(document.body), col = n => css.getPropertyValue(n).trim();
+  c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, W, W);
+  let ch = HR.chroma;
+  if (HR.st === 'mic' && HR.mic) { const live = Listen.liveChroma(HR.mic.analyser, HR.mic.sr, HR.fbuf); for (let i = 0; i < 12; i++) ch[i] = ch[i] * 0.75 + (live[i] || 0) * 0.25; }
+  const busy = HR.st === 'busy';
+  for (let i = 0; i < 12; i++) {
+    const v = busy ? 0.25 + 0.75 * Math.max(0, Math.cos(t * 5 - i * Math.PI / 6)) ** 3 : ch[i], a0 = -Math.PI / 2 + (i - 0.5) * Math.PI / 6 + 0.04, a1 = a0 + Math.PI / 6 - 0.08, r0 = W * 0.31, r1 = r0 + W * 0.03 + W * 0.1 * v;
+    c.beginPath(); c.arc(cx, cy, r1, a0, a1); c.arc(cx, cy, r0, a1, a0, true); c.closePath(); c.fillStyle = `hsla(${i * 30 + 180},85%,62%,${0.2 + 0.8 * v})`; c.fill();
+    if (HR.st === 'res' && HR.res && i === HR.res.key) { c.lineWidth = W * 0.012; c.strokeStyle = col('--ink'); c.stroke(); }
+  }
+  const R = W * 0.465, p = HR.st === 'mic' && HR.mic ? Math.min(1, HR.mic.seconds / HR_MAX) : HR.st === 'res' ? 1 : 0;
+  c.lineCap = 'round'; c.lineWidth = W * 0.03; c.strokeStyle = col('--line'); c.beginPath(); c.arc(cx, cy, R, 0, 7); c.stroke();
+  if (p > 0) { c.strokeStyle = HR.st === 'res' ? col('--green') : col('--cyan'); c.beginPath(); c.arc(cx, cy, R, -Math.PI / 2, -Math.PI / 2 + p * 2 * Math.PI); c.stroke(); }
+  if (busy) { c.strokeStyle = col('--pink'); c.beginPath(); c.arc(cx, cy, R, t * 6, t * 6 + 1.2); c.stroke(); }
+  drawMoodGhost(c, cx - W * 0.25, cy - W * 0.26, W * 0.5, face, t, HR.st === 'mic' || busy ? 1 : 0.35);
+}
+
 // ---------------------------------------------------------------- animation
 const logo = $('logo'), moodCv = $('mood');
 let moodTarget = FACES.happy, face = JSON.parse(JSON.stringify(FACES.happy)), lastMood = null, lastFrame = 0;
@@ -619,7 +724,8 @@ function frame(ms) {
   const t = ms / 1000, dt = Math.min(0.1, t - lastFrame); lastFrame = t;
   const lc = logo.getContext('2d'); lc.setTransform(1, 0, 0, 1, 0, 0); lc.clearRect(0, 0, logo.width, logo.height); drawProfessor(lc, 0, 0, logo.width, t);
   face = lerpFace(face, moodTarget, 1 - Math.exp(-dt * 4));
-  const mc = moodCv.getContext('2d'); mc.setTransform(1, 0, 0, 1, 0, 0); mc.clearRect(0, 0, moodCv.width, moodCv.height); drawMoodGhost(mc, 0, 0, moodCv.width, face, t);
+  const mc = moodCv.getContext('2d'); mc.setTransform(1, 0, 0, 1, 0, 0); mc.clearRect(0, 0, moodCv.width, moodCv.height); HR.ear += ((HR.st === 'mic' || HR.st === 'busy' ? 1 : 0) - HR.ear) * Math.min(1, dt * 6); drawMoodGhost(mc, 0, 0, moodCv.width, face, t, HR.ear);
+  if (HR.st !== 'off') drawListen(t);
   if (playing && ctx) {
     const now = ctx.currentTime; while (marks.length && marks[0].t <= now) playTick = marks.shift().tick;
     while (lit.length && lit[0].t1 < now - 0.05) lit.shift();
@@ -758,5 +864,29 @@ if (location.hash === '#selftest') (async () => {
     log(`render FX ${scn}: peak=${pk.toFixed(3)} rms=${rms.toFixed(4)} nan=${nan} ms=${Math.round(performance.now() - tr)}`);
     ok(!nan && pk > 0.05 && pk <= 1.0 && rms > 0.01 && (scn === 'Clean' || Math.abs(rms - cleanRms) > 1e-4), 'render FX ' + scn);
   }
+  // LISTEN: synthetic drums + saw pad rendered offline -> tempo / key / chord loop; noise -> low confidence; result -> a new arp in that style
+  const hear = async spec => { const b = await Listen.synth(spec); return Listen.analyze(Listen.mono(b), b.sampleRate); };
+  const near = (b, w) => [w, w * 2, w / 2].some(x => Math.abs(b - x) <= 2);
+  const cyc = (got, want) => { let best = 0; for (let r = 0; r < want.length; r++) { let m = 0; want.forEach((w, i) => { const g = got[(i + r) % got.length]; if (g && got.length === want.length && g.root === w[0] && (g.iv[1] === 3) === w[1]) m++; }); best = Math.max(best, m); } return best; };
+  const AmFCG = [[45, 57, 60, 64], [41, 57, 60, 65], [48, 55, 60, 64], [43, 55, 59, 62]], wAm = [[9, true], [5, false], [0, false], [7, false]];
+  const lsLog = (n, r) => log(`listen ${n}: ok=${r.ok} bpm=${r.bpm} (${(r.tempoConf || 0).toFixed(2)}) key=${r.ok ? A.keyName(r.key, r.scale === 'minor' ? 'minor' : 'major') : '-'} (${(r.keyConf || 0).toFixed(2)}) loop=${r.chords ? r.chords.map(c => c.name).join(' ') : '-'} bars=${r.bars ? r.bars.join(' ') : '-'} (${(r.chordConf || 0).toFixed(2)}) rate=${r.rate} groove=${r.groove} conf=${r.conf} ms=${r.ms}`);
+  for (const [n, spec] of [['120 Am-F-C-G', { bpm: 120, prog: AmFCG, dur: 12 }], ['120 Am-F-C-G, starts mid-bar', { bpm: 120, prog: AmFCG, dur: 12, lead: 2.7 }]]) {
+    const r = await hear(spec); lsLog(n, r);
+    ok(r.ok && near(r.bpm, 120), `listen ${n}: tempo ${r.bpm}`); ok((r.key === 9 && r.scale === 'minor') || (r.key === 0 && r.scale === 'major'), `listen ${n}: key A minor / C major`);
+    ok(cyc(r.chords, wAm) >= 3, `listen ${n}: chords ${r.chords.map(c => c.name)}`); if (!spec.lead) window.__heard120 = r; }
+  const r92 = await hear({ bpm: 92, prog: [[39, 55, 58, 63], [46, 58, 62, 65], [48, 55, 60, 63], [44, 56, 60, 63]], dur: 16 }); lsLog('92 Eb-Bb-Cm-Ab', r92);
+  ok(r92.ok && near(r92.bpm, 92), 'listen 92: tempo ' + r92.bpm); ok((r92.key === 3 && r92.scale === 'major') || (r92.key === 0 && r92.scale === 'minor'), 'listen 92: key Eb major');
+  ok(cyc(r92.chords, [[3, false], [10, false], [0, true], [8, false]]) >= 3, 'listen 92: chords ' + r92.chords.map(c => c.name));
+  let rn = null; try { rn = await hear({ noise: true, dur: 8 }); } catch (e) { log('noise threw ' + e.message); }
+  if (rn) lsLog('noise', rn); ok(rn && (!rn.ok || rn.conf < 0.4), 'listen noise: low confidence ' + (rn && rn.conf));
+  let rq = null; try { rq = Listen.analyze(new Float32Array(44100 * 5), 44100); } catch (e) {} ok(rq && !rq.ok, 'listen silence: handled');
+  { const keep = JSON.stringify(S), u = undoStack.length; HR.res = window.__heard120; HR.pre = keep; hrApply(777, false, false);
+    const names = chords.map(c => A.mod12(S.key + c.root)), okKey = S.key === HR.res.key && S.bpm === HR.res.bpmInt && S.rate === HR.res.rate;
+    let out = 0; for (const n of S.notes) { const c = A.chordAt(chords, n.t), pc = A.mod12(n.p - S.key); if (!(A.SCALES[S.scale].includes(pc) || c.pcs.includes(A.mod12(n.p)))) out++; }
+    const a1 = JSON.stringify(S.notes); hrApply(778, false, false); const a2 = JSON.stringify(S.notes), roots2 = chords.map(c => A.mod12(S.key + c.root));
+    ok(okKey && S.prog.length === HR.res.chords.length && names.join() === HR.res.chords.map(c => c.root).join() && S.notes.length > 8 && out === 0, `listen -> generator: ${chords.map(c => c.name).join(' ')} ${S.notes.length} notes, ${out} out of key`);
+    ok(a1 !== a2 && roots2.join() === names.join(), 'listen TRY ANOTHER: new arp, same heard chords');
+    hrApply(0, true, false); ok(S.bpm === HR.res.bpmInt && S.key === HR.res.key && JSON.stringify(S.prog) === JSON.stringify(JSON.parse(keep).prog), 'listen KEEP MY CHORDS: only tempo + key');
+    S = JSON.parse(keep); rebuild(false); syncUI(); undoStack.length = u; HR.res = null; }
   log(`done pass=${pass} fail=${fail}`);
 })();
