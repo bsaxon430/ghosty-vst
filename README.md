@@ -8,10 +8,11 @@ A free ghost synth by **GhostBlock** for Windows and Mac (VST3 / AU / standalone
 
 ## 🛒 The full GhostBlock collection
 
-Like Ghosty? The rest of the family lives in the **[GhostBlock store](https://bsaxon430.github.io/ghosty-vst/store/)**:
+Like Ghosty? The rest of the family lives in the **[GhostBlock store](https://bsaxon430.github.io/ghosty-vst/store/)**. Get all five in the **Everything bundle**, or try them free first (demo mode):
 
 | | |
 |---|---|
+| 👻 **Ghosty Pro** | The big brother of Ghosty: 245 presets (about 60 basses), 8-voice unison supersaws, 19 wavetables + drop any WAV in as a wavetable, 8-slot mod matrix, 10 filters, and a built-in 15-unit Ghost FX studio (spectral EQ, pattern gate, stutter pads, analog saturation, tape echo, crystal, shimmer, OTT) |
 | 🦄 **Mr. Mickens** | Dark hardcore drum & bass break machine: 100 breaks, 4 bays, random starts and chops, drums with per-drum sidechain, every filter in parallel, stutter. **[Play it free in your browser](https://bsaxon430.github.io/ghosty-vst/mickens/)** |
 | 🔮 **Poltergeist** | FM spirit synth: drag ghosts onto each other to haunt them, drop any sample in, SAMPLE LAB, type-what-you-want SUMMON |
 | 🥁🌈 **Ghosty Beats + Spectrum** | A 16-track drum machine with MPC pads and drag-out stems, plus a paint-a-loop spectrum instrument |
