@@ -160,13 +160,14 @@ footer a { color: var(--cyan); text-decoration: none; }
       <div class="ctl"><span>COLOUR</span><input type="range" id="colour" min="0" max="1" step="0.01" style="--tint:var(--purple)"><output id="colourV"></output></div>
       <div class="seg" id="barsSeg"></div>
       <div class="btns"><button id="newChords" style="--tint:var(--purple)">NEW CHORDS</button><label class="filebtn">IMPORT MIDI<input type="file" id="midiFile" accept=".mid,.midi,audio/midi,audio/x-midi"></label></div>
-      <div id="drop">or drop a .mid chord file here (tap a chord to cycle alternatives, long-press for the list)</div>
+      <div id="drop">or drop a .mid chord file here (tap a chord = next version &middot; long-press = list, or copy another chord into this slot)</div>
     </section>
   </div>
 
   <div class="row transport">
     <button id="play">PLAY</button>
     <button id="bpm" title="tap to type a tempo, or drag up/down">128 BPM</button><button id="tap" title="tap in time to set the tempo">TAP</button>
+    <button id="arpOn" class="on" style="--tint:var(--green)" title="turn the arpeggio off to hear just the chords">ARP ON</button>
     <button id="loop" class="on">LOOP</button>
     <button id="undo">UNDO</button>
     <button id="theme">LIGHT</button>
@@ -227,9 +228,9 @@ footer a { color: var(--cyan); text-decoration: none; }
 </div>
 <div id="menu"></div>
 <div id="toast"></div>
-<script src="theory.js?v=202610200126"></script>
-<script src="gfx.js?v=202610200126"></script>
-<script src="audio.js?v=202610200126"></script>
-<script src="app.js?v=202610200126"></script>
+<script src="theory.js?v=202610200132"></script>
+<script src="gfx.js?v=202610200132"></script>
+<script src="audio.js?v=202610200132"></script>
+<script src="app.js?v=202610200132"></script>
 </body>
 </html>

@@ -105,6 +105,7 @@ function setBars(n) {
 function syncUI() {
   sliders.forEach(f => f());
   $('snap').classList.toggle('on', S.snapKey !== false);
+  $('arpOn').classList.toggle('on', !S.arpOff); $('arpOn').textContent = S.arpOff ? 'ARP OFF' : 'ARP ON';
   $('style').value = S.style; $('key').value = S.key; $('scale').value = S.scale;
   $('seed').value = S.seed; $('bpm').textContent = S.bpm + ' BPM'; $('loop').classList.toggle('on', S.loop);
   $('regOct').textContent = 'REGISTER ' + (S.reg > 0 ? '+' : '') + S.reg;
@@ -127,6 +128,7 @@ $('loop').onclick = () => { S.loop = !S.loop; syncUI(); save(); };
     if (taps.length >= 2) { const avg = (taps[taps.length - 1] - taps[0]) / (taps.length - 1); let bpm = 60000 / avg; while (bpm < 60) bpm *= 2; while (bpm > 200) bpm /= 2; setBpm(bpm); }
     $('tap').classList.add('on'); setTimeout(() => $('tap').classList.remove('on'), 90); };
 })();
+$('arpOn').onclick = () => { S.arpOff = !S.arpOff; if (S.arpOff) { S.mixArpKeep = S.mix.arp; S.mix.arp = 0; } else S.mix.arp = S.mixArpKeep || 0.8; syncUI(); if (eng) eng.apply(S); save(); };
 $('snap').onclick = () => { S.snapKey = S.snapKey === false; $('snap').classList.toggle('on', S.snapKey !== false); save(); };
 
 // ---------------------------------------------------------------- chord chips
@@ -151,8 +153,13 @@ function chordMenu(i, x, y) {
   const n = S.prog[i].fixed ? 3 : A.ALT_NAMES.length, items = [];
   for (let a = 0; a < n; a++) { const tmp = { ...S, prog: S.prog.map((p, j) => j === i ? { ...p, alt: a } : p) }; const c = A.resolveProg(tmp)[i];
     items.push([(a === (S.prog[i].alt || 0) % n ? '> ' : '') + c.name + '  (' + (S.prog[i].fixed ? ['as imported', 'plain triad', 'no slash bass'][a] : A.ALT_NAMES[a]) + ')', () => setAlt(i, a)]); }
+  // make this slot a copy of another slot (then cycle it on its own): e.g. chord 1, chord 1, chord 4, chord 3
+  const names = A.resolveProg(S).map(c => c.name);
+  S.prog.forEach((p, j) => { if (j !== i) items.push(['= chord ' + (j + 1) + ' (' + names[j] + ')', () => copySlot(j, i)]); });
+  items.push(['Set ALL slots to this chord', () => { pushUndo(); const src = JSON.stringify(S.prog[i]); S.prog = S.prog.map(p => ({ ...JSON.parse(src), len: p.len || 4 })); S.edited = false; rebuild(true); }]);
   showMenu(x, y, 'Chord ' + (i + 1), items);
 }
+function copySlot(from, to) { pushUndo(); S.prog[to] = { ...JSON.parse(JSON.stringify(S.prog[from])), len: S.prog[to].len || 4 }; S.edited = false; rebuild(true); previewChord(to); }
 function showMenu(x, y, title, items) {
   const m = $('menu'); m.innerHTML = `<div class="mt">${title}</div>`;
   for (const [label, fn] of items) { const b = document.createElement('button'); b.textContent = label; b.onclick = () => { hideMenu(); fn(); }; m.appendChild(b); }
