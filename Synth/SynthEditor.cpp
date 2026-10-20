@@ -167,6 +167,129 @@ void FlowStrip::timerCallback()
     repaint();
 }
 
+// ------------------------------------------------------------------ "Get Pro" pill + info panel (no nags, no locks: free Ghosty stays free)
+namespace
+{
+const char* const proStoreUrl = "https://bsaxon430.github.io/ghosty-vst/store/?from=ghosty";
+
+// Small glowing pill in the header. Only does something when you click it.
+struct ProPill : public juce::Button
+{
+    ProPill() : juce::Button ("GET PRO") { setMouseCursor (juce::MouseCursor::PointingHandCursor); setTooltip ("What Ghosty Pro adds"); }
+    void paintButton (juce::Graphics& g, bool over, bool down) override
+    {
+        auto r = getLocalBounds().toFloat().reduced (5.0f, 4.0f);
+        const float rad = r.getHeight() * 0.5f;
+        for (int k = 3; k >= 1; --k)
+        {
+            g.setColour (col::ecto.withAlpha ((over ? 0.10f : 0.06f) * (float) (4 - k)));
+            g.fillRoundedRectangle (r.expanded ((float) k * 1.6f), rad + (float) k * 1.6f);
+        }
+        juce::ColourGradient gr (col::ecto.withAlpha (down ? 0.9f : 0.55f), r.getX(), 0, col::pink.withAlpha (down ? 0.9f : 0.5f), r.getRight(), 0, false);
+        g.setGradientFill (gr); g.fillRoundedRectangle (r, rad);
+        g.setColour (col::white.withAlpha (over ? 0.9f : 0.55f)); g.drawRoundedRectangle (r, rad, 1.0f);
+        // tiny ghost on the left of the label
+        {
+            juce::Graphics::ScopedSaveState ss (g);
+            juce::Path clip; clip.addRoundedRectangle (r, rad); g.reduceClipRegion (clip);
+            GhostLook L; L.eyes = 3; L.mouth = 1; L.lines = false;
+            drawGhost (g, L, r.getX() + rad + 4.0f, r.getCentreY() + 2.0f, r.getHeight() * 0.72f, 0.0f, false, 0.95f);
+        }
+        g.setColour (col::white); g.setFont (font (12.5f));
+        g.drawText ("GET PRO", r.withTrimmedLeft (rad * 2.0f + 2.0f), juce::Justification::centred);
+    }
+};
+
+// Compact panel drawn inside the plugin window: what Ghosty Pro adds. Closed by "Not now", Esc, or a click outside.
+struct ProPanel : public juce::Component
+{
+    std::function<void()> onClose;
+    juce::TextButton seeBtn { "See Ghosty Pro" }, laterBtn { "Not now" };
+
+    ProPanel()
+    {
+        addAndMakeVisible (seeBtn); addAndMakeVisible (laterBtn);
+        seeBtn.setClickingTogglesState (false);
+        seeBtn.setToggleState (true, juce::dontSendNotification);   // the Ghosty LnF draws "on" buttons in slime green
+        seeBtn.onClick = [this] { juce::URL (proStoreUrl).launchInDefaultBrowser(); close(); };
+        laterBtn.onClick = [this] { close(); };
+        setWantsKeyboardFocus (true);
+    }
+
+    juce::Rectangle<float> card() const
+    {
+        return juce::Rectangle<float> (0, 0, 600, 436).withCentre (getLocalBounds().toFloat().getCentre());
+    }
+
+    void close() { setVisible (false); if (onClose) onClose(); }
+
+    bool keyPressed (const juce::KeyPress& k) override { if (k == juce::KeyPress::escapeKey) { close(); return true; } return false; }
+    void mouseDown (const juce::MouseEvent& e) override { if (! card().contains (e.position)) close(); }
+
+    void resized() override
+    {
+        auto c = card().toNearestInt();
+        const int by = c.getBottom() - 64;
+        seeBtn.setBounds (c.getX() + 28, by, 300, 36);
+        laterBtn.setBounds (c.getRight() - 28 - 140, by, 140, 36);
+    }
+
+    void paint (juce::Graphics& g) override
+    {
+        g.fillAll (col::bg.withAlpha (0.78f));
+        const auto c = card();
+        for (int k = 4; k >= 1; --k) { g.setColour (col::ecto.withAlpha (0.05f)); g.fillRoundedRectangle (c.expanded ((float) k * 5.0f), 18.0f + (float) k * 5.0f); }
+        g.setColour (col::card); g.fillRoundedRectangle (c, 18);
+        juce::ColourGradient haze (col::ecto.withAlpha (0.22f), c.getX(), c.getY(), col::card.withAlpha (0.0f), c.getX() + c.getWidth() * 0.6f, c.getY() + 160, true);
+        g.setGradientFill (haze); g.fillRoundedRectangle (c, 18);
+        g.setColour (col::ecto.withAlpha (0.55f)); g.drawRoundedRectangle (c, 18, 1.2f);
+
+        // header: a happy ghost + "ghosty PRO"
+        GhostLook look; look.eyes = 3; look.mouth = 1; look.acc = 4; look.lines = false; look.slime = col::pink;
+        drawGhost (g, look, c.getX() + 70, c.getY() + 62, 62);
+        drawWordmark (g, { c.getX() + 112, c.getY() + 26, 300, 40 }, "PRO", 0.0f);
+        g.setColour (col::dim); g.setFont (font (12.0f, false));
+        g.drawText ("Everything in free Ghosty, plus:", juce::Rectangle<float> (c.getX() + 114, c.getY() + 68, 400, 18), juce::Justification::centredLeft);
+
+        struct Row { juce::Colour c; const char* head; const char* sub; };
+        const Row rows[] {
+            { col::slime, "245 presets",            "about 60 of them basses" },
+            { col::pink,  "8-voice unison supersaws", "huge, wide leads and pads" },
+            { col::ice,   "WAV to wavetable",        "drop in any sound and play it as a wave" },
+            { col::gold,  "8-slot mod matrix",       "route anything to anything" },
+            { col::ecto,  "15-unit Ghost FX studio", "stack, reorder and tweak effects" },
+        };
+        float y = c.getY() + 104;
+        for (auto& rw : rows)
+        {
+            g.setColour (rw.c.withAlpha (0.25f)); g.fillEllipse (c.getX() + 30, y + 5, 14, 14);
+            g.setColour (rw.c); g.fillEllipse (c.getX() + 33, y + 8, 8, 8);
+            g.setColour (col::white); g.setFont (font (15.0f));
+            g.drawText (rw.head, juce::Rectangle<float> (c.getX() + 54, y, 250, 24), juce::Justification::centredLeft);
+            g.setColour (col::dim); g.setFont (font (12.5f, false));
+            g.drawText (rw.sub, juce::Rectangle<float> (c.getX() + 290, y, c.getWidth() - 310, 24), juce::Justification::centredLeft);
+            y += 34;
+        }
+
+        // Ghost Box + bundle
+        y += 6;
+        auto box = juce::Rectangle<float> (c.getX() + 24, y, c.getWidth() - 48, 74);
+        g.setColour (col::card2); g.fillRoundedRectangle (box, 10);
+        g.setColour (col::slime.withAlpha (0.25f)); g.drawRoundedRectangle (box, 10, 1.0f);
+        g.setColour (col::slime); g.setFont (font (12.5f));
+        g.drawText ("ALSO: GHOST BOX", box.reduced (14, 8).removeFromTop (16), juce::Justification::centredLeft);
+        g.setColour (col::white.withAlpha (0.85f)); g.setFont (font (12.5f, false));
+        g.drawText ("FX rack for any track: Fatten, Haunted Halls reverb, Crackle, Retro", box.reduced (14, 8).withTrimmedTop (18).removeFromTop (18), juce::Justification::centredLeft);
+        g.setColour (col::gold); g.setFont (font (12.5f));
+        g.drawText ("Everything bundle: all six plugins for $69", box.reduced (14, 8).withTrimmedTop (38).removeFromTop (18), juce::Justification::centredLeft);
+
+        g.setColour (col::dim.withAlpha (0.8f)); g.setFont (font (10.0f, false));
+        g.drawText ("You're on Ghosty " JucePlugin_VersionString " - free and open source (AGPL-3.0), nothing locked.",
+                    juce::Rectangle<float> (c.getX(), c.getBottom() - 18, c.getWidth(), 14), juce::Justification::centred);
+    }
+};
+} // namespace
+
 // ------------------------------------------------------------------ editor content (fixed size, scaled by the editor)
 class SynthContent : public juce::Component, private juce::Timer
 {
@@ -206,6 +329,7 @@ public:
         presetBox.onChange = [this]
         {
             const int id = presetBox.getSelectedId();
+            if (id == proTeaserId) { syncPresetBox(); showPro(); return; }
             if (id >= userBase && id - userBase < userFiles.size()) proc.loadUserPreset (userFiles[id - userBase]);
             else if (id >= 1 && id <= proc.getNumPrograms()) proc.setCurrentProgram (id - 1);
             wordGlitch = 1;
@@ -219,6 +343,10 @@ public:
         editA.onClick = [this] { wave.editB = false; editA.setToggleState (true, juce::dontSendNotification); editB.setToggleState (false, juce::dontSendNotification); };
         editB.onClick = [this] { wave.editB = true; editB.setToggleState (true, juce::dontSendNotification); editA.setToggleState (false, juce::dontSendNotification); };
         diceBtn.onClick = [this] { wave.randomise(); wordGlitch = 1; };
+        addAndMakeVisible (proPill);
+        proPill.onClick = [this] { showPro(); };
+        addChildComponent (proPanel);
+        proPanel.onClose = [this] { wordGlitch = 1; };
 
         pad.addGhost ("TONE",  col::ice,  proc.apvts.getParameter ("cutoff"), proc.apvts.getParameter ("res"), 4);
         pad.addGhost ("MORPH", col::pink, proc.apvts.getParameter ("morph"),  proc.apvts.getParameter ("width"), 9);
@@ -298,6 +426,8 @@ public:
         // header
         prevBtn.setBounds (300, 14, 34, 32); presetBox.setBounds (338, 14, 300, 32); nextBtn.setBounds (642, 14, 34, 32);
         saveBtn.setBounds (692, 14, 72, 32); loadBtn.setBounds (770, 14, 72, 32); initBtn.setBounds (848, 14, 72, 32);
+        proPill.setBounds (952, 12, 132, 36);
+        proPanel.setBounds (getLocalBounds());
         // wave + ghosts
         waveABox.setBounds (20, 78, 130, 28); waveBBox.setBounds (156, 78, 130, 28);
         editA.setBounds (296, 78, 88, 28); editB.setBounds (390, 78, 88, 28); diceBtn.setBounds (484, 78, 96, 28);
@@ -369,6 +499,8 @@ private:
     juce::TextButton arpBtn { "ARP" }, monoBtn { "MONO" }, legatoBtn { "LEGATO" }, linkBtn { "LINK TO AMP" }, syncBtn { "SYNC" };
     juce::TextButton prevBtn { "<" }, nextBtn { ">" }, saveBtn { "SAVE" }, loadBtn { "LOAD" }, initBtn { "INIT" };
     juce::TextButton editA { "DRAW A" }, editB { "DRAW B" }, diceBtn { "DICE" };
+    ProPill proPill;
+    ProPanel proPanel;       // declared after everything else it covers, so it sits on top
     std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment>> comboAtts;
     std::vector<std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment>> buttonAtts;
     juce::OwnedArray<GhostKnob> knobs;
@@ -380,7 +512,7 @@ private:
     std::vector<BgGhost> bg;
     float phase = 0, wordGlitch = 0, arpFlash = 0;
     int lastArpCount = 0;
-    static constexpr int userBase = 1001;
+    static constexpr int userBase = 1001, proTeaserId = 900000;
     juce::Array<juce::File> userFiles;
 
     void refreshPresetBox()
@@ -399,6 +531,12 @@ private:
             presetBox.addSectionHeading ("YOUR SOUNDS");
             for (int i = 0; i < userFiles.size(); ++i) presetBox.addItem (userFiles[i].getFileNameWithoutExtension(), userBase + i);
         }
+        // one quiet, greyed line at the very end; picking it just shows what Pro adds
+        presetBox.addSeparator();
+        juce::PopupMenu::Item teaser ("+ 245 more in Ghosty Pro");
+        teaser.itemID = proTeaserId;
+        teaser.colour = col::dim;
+        presetBox.getRootMenu()->addItem (std::move (teaser));
         syncPresetBox();
     }
 
@@ -438,6 +576,13 @@ private:
                                                     "Replace", "Cancel", nullptr, juce::ModalCallbackFunction::create ([doSave] (int r) { if (r == 1) doSave(); }));
             else doSave();
         }), true);
+    }
+
+    void showPro()
+    {
+        proPanel.setVisible (true);
+        proPanel.toFront (true);
+        proPanel.grabKeyboardFocus();
     }
 
     void showLoadMenu()
