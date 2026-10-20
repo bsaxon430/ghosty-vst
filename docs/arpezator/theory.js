@@ -56,15 +56,15 @@ const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
 // tags: what moods / genres a template suits. Minor templates use minor numerals, major ones major numerals.
 const TEMPLATES = {
   minor: [
-    ['i VI III VII', 'progressive trance epic sad euphoric deadmau5 house pop'], ['i VII VI VII', 'trance epic dark'], ['VI VII i i', 'epic trance euphoric cinematic'],
-    ['i iv VI V', 'sad tense cinematic'], ['i VI iv VII', 'progressive sad deadmau5'], ['i III VII VI', 'progressive epic euphoric'], ['iv VI i VII', 'progressive deadmau5 dreamy'],
-    ['i v VI iv', 'sad chill lofi'], ['VI iv i VII', 'progressive dreamy deadmau5 chill'], ['i i VI VII', 'trance techno epic'], ['i VII v VI', 'dark sad'],
-    ['i iv i VII', 'dark techno'], ['i VI VII v', 'progressive deadmau5 dark'], ['VI III VII i', 'epic euphoric progressive'], ['i iv VII III', 'sad chill lofi dreamy'],
-    ['i III iv VI', 'dreamy sad cinematic'], ['i VII i VI', 'dark techno tense'], ['i bII i VII', 'tense dark techno'], ['VI VII v i', 'deadmau5 progressive sad'],
+    ['i VI III VII', 'progressive trance epic sad euphoric melodic house pop'], ['i VII VI VII', 'trance epic dark'], ['VI VII i i', 'epic trance euphoric cinematic'],
+    ['i iv VI V', 'sad tense cinematic'], ['i VI iv VII', 'progressive sad melodic'], ['i III VII VI', 'progressive epic euphoric'], ['iv VI i VII', 'progressive melodic dreamy'],
+    ['i v VI iv', 'sad chill lofi'], ['VI iv i VII', 'progressive dreamy melodic chill'], ['i i VI VII', 'trance techno epic'], ['i VII v VI', 'dark sad'],
+    ['i iv i VII', 'dark techno'], ['i VI VII v', 'progressive melodic dark'], ['VI III VII i', 'epic euphoric progressive'], ['i iv VII III', 'sad chill lofi dreamy'],
+    ['i III iv VI', 'dreamy sad cinematic'], ['i VII i VI', 'dark techno tense'], ['i bII i VII', 'tense dark techno'], ['VI VII v i', 'melodic progressive sad'],
     ['i VI III V', 'tense epic cinematic trance'], ['iv i VI VII', 'progressive euphoric house'], ['i iv v iv', 'dark techno chill'],
   ],
   major: [
-    ['I V vi IV', 'pop happy euphoric progressive'], ['vi IV I V', 'euphoric progressive pop sad house deadmau5 trance'], ['IV I V vi', 'euphoric progressive house happy'],
+    ['I V vi IV', 'pop happy euphoric progressive'], ['vi IV I V', 'euphoric progressive pop sad house melodic trance'], ['IV I V vi', 'euphoric progressive house happy'],
     ['I vi IV V', 'happy pop'], ['IV V iii vi', 'euphoric dreamy sad pop'], ['I iii IV V', 'happy dreamy'], ['IV vi I V', 'euphoric progressive dreamy'],
     ['I IV vi V', 'happy pop house'], ['vi V IV V', 'euphoric sad trance'], ['IV I vi V', 'dreamy progressive chill'], ['I V IV IV', 'happy house'],
     ['I bVII IV I', 'happy house epic'], ['IV iv I I', 'dreamy sad cinematic chill'], ['ii V I vi', 'lofi chill jazz happy'], ['I vi ii V', 'lofi chill happy'],
@@ -115,6 +115,16 @@ function ladder(b, L, r) {
   if (third === 4 && sev === 11 && ok9 && elev === 18) return [0, 4, 11, 14, 18];                         // maj9#11 (lydian colour)
   return ladder(b, 3, r);
 }
+// a chord colour asked for by the style profile (tri / add9 / sus / sev / ext / six), still only diatonic tones
+function qChord(b, q, r) {
+  const third = csTone(b, 2), fifth = csTone(b, 4);
+  if (q === 'add9') return ladder(b, 1, 0.1);
+  if (q === 'sus') { const sec = csTone(b, 1), fourth = csTone(b, 3); return sec === 2 && fifth === 7 ? [0, 2, 7] : fourth === 5 && fifth === 7 ? [0, 5, 7] : ladder(b, 1, 0.1); }
+  if (q === 'sev') return ladder(b, 2, r);
+  if (q === 'ext') return ladder(b, r < 0.5 ? 3 : 4, r);
+  if (q === 'six') return csTone(b, 5) === 9 && fifth === 7 ? [0, third, 7, 9] : [0, third, fifth];
+  return [0, third, fifth];
+}
 const colourLevel = (colour, r) => colour < 0.04 ? 0 : clamp(Math.round(colour * 4 + (r - 0.5) * 1.4), 0, 4);
 
 // the alternatives a chord chip cycles through
@@ -137,11 +147,12 @@ function altChord(slot, scale, colour) {
   if (alt === 1) { const fifth = csTone(b, 4), sec = csTone(b, 1), fourth = csTone(b, 3); iv = sec === 2 && fifth === 7 ? [0, 2, 7] : fourth === 5 && fifth === 7 ? [0, 5, 7] : ladder(b, 1, 0.1); }
   else if (alt === 2) iv = ladder(b, 2, r);
   else if (alt === 3) iv = ladder(b, 4, r);
+  else if (alt === 0 && slot.q) iv = qChord(b, slot.q, r);
   else iv = ladder(b, L, r);
   // a raised 3rd / 7th of a harmonic or borrowed chord is chromatic; mark it
   const keyS = SCALES[scale], abs = iv.map(x => mod12(b.root + x));
   const chrom = b.chrom || abs.some(p => !keyS.includes(p));
-  const bass = alt === 4 ? mod12(b.root + iv[1]) : null;
+  const bass = alt === 4 ? mod12(b.root + iv[1]) : alt === 0 && slot.sl === '3rd' && triadQuality(iv) !== 'sus' ? mod12(b.root + iv[1]) : null;
   return { root: b.root, iv, bass, deg: b.dd, chrom, cs: b.cs };
 }
 function romanOf(ch, scale) {
@@ -192,7 +203,7 @@ function resolveProg(S) {
   S.prog.forEach((slot, i) => {
     const c = altChord(slot, S.scale, S.colour);
     let bass = c.bass;
-    if (bass === null && S.pedal && !slot.fixed && i > 0) {   // tonic pedal under chords that don't clash with it
+    if (bass === null && (S.pedal || slot.sl === 'ped') && !slot.fixed && i > 0) {   // tonic pedal under chords that don't clash with it
       const abs = c.iv.map(x => mod12(c.root + x)); if (!abs.some(p => p === 1 || p === 11) && c.root !== 0) bass = 0;
     }
     if (bass === null && !slot.fixed && prevBass !== null && slot.r2 !== undefined && slot.r2 < 0.3 && S.colour > 0.3) {   // walk the bass by step when the root would leap
@@ -224,7 +235,7 @@ const LEX = [
   [/epic|hero|massive|huge|anthemic|power|triumph|orchestral|giant|stadium|climax/, f => f.tags.epic = 1],
   [/chill|relax|calm|mellow|soft|gentle|lazy|smooth|laid ?back|sunset|beach|cozy|cosy/, f => f.tags.chill = 1],
   [/progressive|\bprog\b/, f => f.genre = f.genre || 'progressive'],
-  [/deadmau5|mau5|deadmouse|dead mouse|strobe|prydz|kaskade|melodic/, f => f.genre = f.genre || 'deadmau5'],
+  [/prydz|kaskade|melodic/, f => f.genre = f.genre || 'melodic'],
   [/trance|psy\b|goa/, f => f.genre = f.genre || 'trance'],
   [/house|disco|club|groove|garage/, f => f.genre = f.genre || 'house'],
   [/techno|industrial|warehouse|berlin|minimal techno|hypnotic techno/, f => f.genre = f.genre || 'techno'],
@@ -258,6 +269,9 @@ const LEX = [
   [/sparse|minimal|simple|easy|basic|few notes|stripped|space between/, f => f.master = 0.2],
   [/busy|complex|crazy|wild|intricate|dense|lots of notes|insane|frantic|nerdy/, f => f.master = 0.85],
   [/ratchet|stutter|repeat/, f => f.flags.ratchet = 1],
+  [/glitch|chaotic|chaos|crazy|wild|frantic|busy/, f => f.groove = Math.max(f.groove || 0, 0.7)],
+  [/rolling|syncopat|groov|swing|shuffl|offbeat|off-beat/, f => f.groove = Math.max(f.groove || 0, 0.6)],
+  [/human|loose|sloppy|ratchet|stutter/, f => f.groove = Math.max(f.groove || 0, 0.5)],
   [/glide|legato|slide|portamento|smooth/, f => f.flags.glide = 1],
   [/lush|jazzy|rich|7ths?\b|sevenths|9ths?\b|ninths|extended|neo soul/, f => f.colour = 0.85],
   [/triads|plain|simple chords|basic chords|power chords/, f => f.colour = 0.08],
@@ -270,7 +284,7 @@ const LEX = [
 ];
 function parsePrompt(p) {
   const s = ' ' + String(p || '').toLowerCase().replace(/♯/g, '#').replace(/♭/g, 'b').replace(/[,;!?()"]/g, ' ') + ' ';
-  const f = { tags: {}, genre: null, key: null, scale: null, bpm: null, rate: null, oct: null, reg: null, master: null, colour: null, preset: null, style: null, bars: null, speed: 0, flags: {} };
+  const f = { tags: {}, genre: null, key: null, scale: null, bpm: null, rate: null, oct: null, reg: null, master: null, colour: null, preset: null, style: null, bars: null, speed: 0, flags: {}, groove: 0 };
   for (const [re, fn] of LEX) { const m = re.exec(s); if (m) fn(f, m); }
   const bpm = /\b(\d{2,3}) ?(bpm|beats)/.exec(s) || /(?:^|\s)(\d{2,3})(?=\s)/.exec(s);
   if (bpm && +bpm[1] >= 60 && +bpm[1] <= 200) f.bpm = +bpm[1];
@@ -290,7 +304,7 @@ function parsePrompt(p) {
 // ---------------------------------------------------------------- genre / mood profiles for the generator
 const GENRES = {
   progressive: { bpm: 126, styles: { motif: 4, pedal: 2, broken: 1, updown: 1, converge: 1 }, presets: { pluck: 4, supersaw: 1, bell: 1 }, colour: 0.5, scales: { minor: 6, major: 2, dorian: 1 }, oct: 2, master: 0.5, pedal: 0.35, bars: { 4: 6, 8: 4, 2: 1 } },
-  deadmau5: { bpm: 128, styles: { motif: 5, pedal: 2, broken: 1, converge: 1 }, presets: { pluck: 4, keys: 1, bell: 1 }, colour: 0.55, scales: { minor: 7, major: 1, dorian: 1, phrygian: 1 }, oct: 2, master: 0.5, pedal: 0.45, bars: { 4: 6, 8: 4, 2: 1 } },
+  melodic: { bpm: 128, styles: { motif: 5, pedal: 2, broken: 1, converge: 1 }, presets: { pluck: 4, keys: 1, bell: 1 }, colour: 0.55, scales: { minor: 7, major: 1, dorian: 1, phrygian: 1 }, oct: 2, master: 0.5, pedal: 0.45, bars: { 4: 6, 8: 4, 2: 1 } },
   trance: { bpm: 138, styles: { pedal: 4, up: 2, updown: 2, motif: 2 }, presets: { supersaw: 3, pluck: 2 }, colour: 0.3, scales: { minor: 6, major: 1, harmonic: 1 }, oct: 2, master: 0.6, pedal: 0.25, bars: { 4: 5, 8: 4 } },
   house: { bpm: 124, styles: { broken: 2, motif: 3, up: 1, walk: 1 }, presets: { pluck: 3, keys: 2 }, colour: 0.6, scales: { minor: 3, major: 3, dorian: 2 }, oct: 2, master: 0.5, pedal: 0.2, bars: { 4: 6, 2: 2, 8: 2 } },
   techno: { bpm: 130, styles: { walk: 2, motif: 4, pedal: 2 }, presets: { acid: 3, pluck: 3 }, colour: 0.15, scales: { minor: 3, phrygian: 3, dorian: 1 }, oct: 1, master: 0.5, pedal: 0.5, bars: { 2: 3, 4: 4 } },
@@ -312,11 +326,11 @@ const MOODS = {
 const STYLES = ['motif', 'pedal', 'up', 'down', 'updown', 'converge', 'broken', 'walk'];
 const PRESETS = ['pluck', 'supersaw', 'keys', 'bell', 'acid'];
 
-function generate(prompt, seed) {
+function generate(prompt, seed, sty) {
   const f = parsePrompt(prompt), R = rng((seed >>> 0) ^ hashStr(String(prompt || '').trim().toLowerCase()) ^ 0x9e3779b9);
   for (let i = 0; i < 3; i++) R();
   const moods = Object.keys(f.tags);
-  const genre = f.genre || pickW(R, moods.includes('chill') ? { progressive: 2, deadmau5: 2, house: 2, lofi: 1 } : { progressive: 4, deadmau5: 4, trance: 1, house: 1 });
+  const genre = f.genre || pickW(R, moods.includes('chill') ? { progressive: 2, melodic: 2, house: 2, lofi: 1 } : { progressive: 4, melodic: 4, trance: 1, house: 1 });
   const G = GENRES[genre];
   const add = (a, b, w = 1) => { const o = { ...a }; for (const k in b) o[k] = (o[k] || 0) + b[k] * w; return o; };
   let scales = { ...G.scales }, presets = { ...G.presets };
@@ -357,18 +371,222 @@ function generate(prompt, seed) {
   const gate = preset === 'keys' || preset === 'bell' ? 0.85 : preset === 'supersaw' ? 0.7 : preset === 'acid' ? 0.6 : 0.5;
   const fx = { tone: preset === 'acid' ? 0.5 : 0.72, delay: moods.includes('dreamy') || genre === 'ambient' ? 0.45 : genre === 'techno' ? 0.2 : 0.32, reverb: moods.includes('dreamy') || genre === 'cinematic' || genre === 'ambient' ? 0.5 : 0.3,
     pump: genre === 'lofi' || genre === 'ambient' || genre === 'cinematic' ? 0.1 : 0.45 };
-  return { prompt: String(prompt || ''), seed: seed >>> 0, genre, moods, key, scale, bars, colour, prog, style, preset, rate, bpm, master, oct, reg: f.reg ?? 0, glide, ratchet: !!f.flags.ratchet, rolling: !!f.flags.rolling,
-    pedal, gate, swing: G.swing || 0, fx, arpSeed: Math.floor(R() * 1e9), progSeed: Math.floor(R() * 1e9) };
+  const g0 = { prompt: String(prompt || ''), seed: seed >>> 0, genre, moods, key, scale, bars, colour, prog, style, preset, rate, bpm, master, oct, reg: f.reg ?? 0, glide, ratchet: !!f.flags.ratchet, rolling: !!f.flags.rolling,
+    pedal, gate, swing: f.groove ? G.swing || 0 : 0, groove: f.groove, fx, arpSeed: Math.floor(R() * 1e9), progSeed: Math.floor(R() * 1e9) };
+  if (!sty || !(sty.amt > 0) || !sty.prof) return g0;   // STYLE 0: exactly the classic generator
+  return applyStyle(g0, f, sty, seed, String(prompt || '').trim().toLowerCase());
 }
 // new progression only (same key/scale/genre), used by NEW CHORDS
-function newProg(S, seed) {
+function newProg(S, seed, sty) {
   const R = rng(seed), fam = tplFamily(S.scale), pool = TEMPLATES[fam] || TEMPLATES.minor;
   const want = (S.moods || []).concat([S.genre || 'progressive']);
   const tw = {}; pool.forEach(([t, tags], i) => { const tg = tags.split(' '); tw[i] = 1 + 3 * want.filter(w => tg.includes(w)).length; });
   const bars = Math.max(2, Math.round(progTicks(S) / BAR)) || 4;
   let toks = pool[+pickW(R, tw)][0].split(' ');
   if (bars === 2) toks = toks.slice(0, 2); else if (bars >= 8) { const t2 = pool[+pickW(R, tw)][0].split(' '); toks = toks.concat(t2); if (bars === 16) toks = toks.concat(toks); }
-  return toks.map(tok => ({ tok, r: R(), r2: R(), alt: 0, len: 4 }));
+  const prog = toks.map(tok => ({ tok, r: R(), r2: R(), alt: 0, len: 4 }));
+  if (!sty || !(sty.amt > 0) || !sty.prof) return prog;
+  const FP = sty.prof.fam && sty.prof.fam[famOf(S.scale)]; if (!FP) return prog;
+  const R2 = rng((seed ^ 0x51a7e5) >>> 0), amt = clamp(sty.amt, 0, 1);
+  return styleProg(sty.prof, FP, prog, bars, R2() < amt, amt, R2, S.scale);
+}
+
+// ---------------------------------------------------------------- STYLE: profiles learned from MIDI files the user loads (parsed locally, kept in
+// their browser), plus one built-in profile. A profile is aggregate statistics only (degree transitions, colour / length / rate histograms).
+const COLOURS = ['tri', 'add9', 'sus', 'sev', 'ext', 'six'];
+function colourClass(iv) {
+  const s = new Set(iv.map(mod12)), third = s.has(3) || s.has(4), sev = s.has(10) || s.has(11), nine = iv.some(x => x >= 12) || (third && (s.has(2) || s.has(5)));
+  if (!third) return 'sus'; if (sev) return nine ? 'ext' : 'sev'; if (nine) return 'add9'; if (s.has(9)) return 'six'; return 'tri';
+}
+const famOf = scale => MINORISH(scale) ? 'minor' : 'major';
+const DIA_TOK = { minor: ['i', 'ii', 'III', 'iv', 'v', 'VI', 'VII'], major: ['I', 'ii', 'iii', 'IV', 'V', 'vi', 'vii'] };
+const CHROM_TOK = { minor: { 1: 'bII' }, major: { 1: 'bII', 3: 'bIII', 8: 'bVI', 10: 'bVII' } };
+// a chord (root relative to the key) as a numeral token the generator understands, or null if it has none
+function degToken(rel, iv, fam) {
+  const d = SCALES[fam].indexOf(mod12(rel)), q = triadQuality(iv);
+  if (d < 0) return CHROM_TOK[fam][mod12(rel)] || null;
+  if (fam === 'minor' && d === 4 && q === 'maj') return 'V';
+  if (fam === 'major' && (d === 3 || d === 0) && q === 'min') return d ? 'iv' : 'i';
+  return DIA_TOK[fam][d];
+}
+// one MIDI file -> a library item (parsed data only, 96 PPQ). kind 'arp' = mostly one note at a time (or "arp" in the name).
+function libItem(name, bytes) {
+  const midi = readMidi(bytes), raw = midi.notes.filter(n => n.ch !== 9);
+  if (!raw.length) throw new Error('no notes');
+  const k = PPQ / midi.ppq, t0 = Math.floor(Math.round(raw[0].t * k) / BAR) * BAR;
+  const q = raw.map(n => ({ t: Math.round(n.t * k) - t0, d: Math.max(1, Math.round(n.d * k)), p: n.p, v: Math.round(n.v * 100) / 100 }));
+  const ons0 = [...new Set(q.map(n => n.t))], sounding = ons0.reduce((a, t) => a + q.filter(n => n.t <= t + 1 && n.t + n.d > t + 1).length, 0) / ons0.length;
+  const end = Math.max(...q.map(n => n.t + n.d)), bars = Math.max(1, Math.ceil((end - 2) / BAR));
+  const hist = new Array(12).fill(0); for (const n of q) hist[n.p % 12] += n.d;
+  const base = { name: String(name).replace(/\.midi?$/i, ''), bpm: midi.bpm, bars };
+  if (/(^|[^a-z])arp/i.test(name) || (sounding < 1.3 && ons0.length >= bars * 6)) {
+    const key = detectKey(hist, -1, false), ons = [...new Set(q.map(n => n.t))];
+    let rate = '1/32'; for (const r of ['1/8', '1/16', '1/16T', '1/32']) { const st = BAR / RATES[r]; if (ons.filter(t => Math.abs(t - Math.round(t / st) * st) <= 2).length >= ons.length * 0.9) { rate = r; break; } }
+    return { ...base, kind: 'arp', key: key.key, scale: key.scale, rate, notes: q };
+  }
+  const r = chordsFromMidi(midi), qq = midi.ppq / 2, ts = Math.floor(Math.min(...raw.map(n => Math.round(n.t / qq))) / 8) * 8 * qq;
+  let beats = 0; const vo = r.chords.map(c => { const x = ts + beats * midi.ppq + midi.ppq / 8; beats += c.len; return raw.filter(n => n.t <= x && n.t + n.d > x).map(n => n.p).sort((a, b) => a - b); });
+  return { ...base, kind: 'chords', key: r.key, scale: r.scale, chords: r.chords, vo };
+}
+// histogram -> probabilities rounded to 2 decimals (tiny entries dropped)
+function normH(h) { let t = 0; for (const k in h) t += h[k]; const o = {}; if (!t) return o; for (const k in h) { const v = Math.round(h[k] / t * 100) / 100; if (v >= 0.01) o[k] = v; } return o; }
+const hasH = h => !!h && Object.keys(h).length > 0;
+const inc = (h, k, w = 1) => { h[k] = (h[k] || 0) + w; };
+// learn a style profile from library items. minFiles: an n-gram (and a start chord) is kept only if that many different files use it.
+function learnProfile(items, name, minFiles = 1) {
+  const P = { v: 1, name: name || 'My style', n: { chords: 0, arps: 0 }, fam: {}, famP: {}, colour: {}, slash: 0, ped: 0, len: {}, cpb: {}, bars: {}, bpm: null, arp: null };
+  const fams = {}, col = {}, lens = {}, cpb = {}, bars = {}, famN = {}, bpms = []; let nCh = 0, nSl = 0, nPed = 0;
+  const pairs = {}; const norm = s => s.replace(/(^|[\s_-]+)arp\b/i, '').trim().toLowerCase();
+  for (const it of items) if (it.kind === 'chords') pairs[norm(it.name)] = it;
+  for (const it of items) {
+    if (it.bpm && Math.abs(it.bpm - 120) > 0.5) bpms.push(it.bpm);
+    if (it.kind !== 'chords') continue;
+    P.n.chords++; const fam = famOf(it.scale), F = fams[fam] || (fams[fam] = { start: {}, tr: {}, tri: {} }); inc(famN, fam);
+    const toks = it.chords.map(c => degToken(c.root - it.key, c.iv, fam)), n = toks.length, seen = new Set();
+    const note = (h, key, val) => { const id = key + '>' + val; if (seen.has(id)) return; seen.add(id); ((h[key] || (h[key] = {}))[val] = ((h[key] || {})[val] || 0) + 1); };
+    if (toks[0]) { if (!seen.has('s' + toks[0])) { seen.add('s' + toks[0]); inc(F.start, toks[0]); } }
+    for (let i = 0; i < n && n > 1; i++) {
+      const a = toks[i], b = toks[(i + 1) % n], c = toks[(i + 2) % n];
+      if (a && b && a !== b) inc(F.tr[a] || (F.tr[a] = {}), b);
+      if (a && b && c && n > 2 && a !== b && b !== c) note(F.tri, a + ' ' + b, c);   // trigrams counted once per file
+    }
+    for (const c of it.chords) { nCh++; inc(col, colourClass(c.iv)); inc(lens, Math.min(16, c.len)); if (c.bass !== null && c.bass !== undefined) { nSl++; if (mod12(c.bass - it.key) === 0) nPed++; } }
+    inc(cpb, Math.max(1, Math.round(it.chords.length / Math.max(1, it.bars)))); inc(bars, [2, 4, 8, 16].reduce((a, b) => Math.abs(b - it.bars) < Math.abs(a - it.bars) ? b : a, 4));
+  }
+  for (const fam in fams) {
+    const F = fams[fam], start = {}; for (const k in F.start) if (F.start[k] >= minFiles) start[k] = F.start[k];
+    const tr = {}; for (const a in F.tr) { const h = normH(F.tr[a]); if (Object.keys(h).length) tr[a] = h; }
+    const tri = {}; for (const ab in F.tri) { const h = {}; for (const c in F.tri[ab]) if (F.tri[ab][c] >= minFiles) h[c] = F.tri[ab][c]; if (Object.keys(h).length) tri[ab] = normH(h); }
+    P.fam[fam] = { start: normH(Object.keys(start).length || minFiles > 1 ? start : F.start), tr, tri };
+  }
+  P.famP = normH(famN); P.colour = normH(col); P.len = normH(lens); P.cpb = normH(cpb); P.bars = normH(bars);
+  P.slash = nCh ? Math.round(nSl / nCh * 100) / 100 : 0; P.ped = nSl ? Math.round(nPed / nSl * 100) / 100 : 0;
+  if (bpms.length) { bpms.sort((a, b) => a - b); P.bpm = [Math.round(bpms[Math.floor(bpms.length * 0.1)]), Math.round(bpms[Math.floor(bpms.length * 0.9)])]; }
+  // arps
+  const rate = {}, step = {}, oct = {}, motif = {}; let rest = 0, acc = 0, rat = 0, nA = 0, nAcc = 0, nRat = 0, nPairs = 0;
+  for (const it of items) {
+    if (it.kind !== 'arp' || it.notes.length < 4) continue;
+    P.n.arps++; inc(rate, it.rate); const st = BAR / RATES[it.rate], ns = it.notes;
+    const ons = new Set(ns.map(n => Math.round(n.t / st))); rest += 1 - Math.min(1, ons.size / Math.max(1, it.bars * RATES[it.rate])); nA++;
+    const vm = ns.reduce((a, n) => a + n.v, 0) / ns.length, varies = ns.some(n => Math.abs(n.v - vm) > 0.06);
+    if (varies) { acc += ns.filter(n => n.v >= vm + 0.1).length / ns.length; nAcc++; }
+    let r = 0; for (let i = 1; i < ns.length; i++) if (ns[i].p === ns[i - 1].p && ns[i].t - ns[i - 1].t < st * 0.9 && ns[i].t > ns[i - 1].t) r++; rat += r / ns.length; nRat++;
+    const lo = Math.min(...ns.map(n => n.p)), hi = Math.max(...ns.map(n => n.p)); inc(oct, clamp(Math.ceil((hi - lo + 1) / 12), 1, 3));
+    const ps = ns.filter((n, i) => i === 0 || n.t !== ns[i - 1].t).map(n => n.p).slice(0, 32);
+    for (let L = 2; L <= 8; L++) { let m = 0, c = 0; for (let i = 0; i + L < ps.length; i++) { c++; if (ps[i] === ps[i + L]) m++; } if (c >= 6 && m / c >= 0.75) { inc(motif, L); break; } }
+    // moves measured in chord tones: against the matching chord file when there is one, else in scale thirds
+    const ch = pairs[norm(it.name)], S7 = SCALES[it.scale];
+    const ctIdx = (p, t) => { if (!ch) return null; let b = 0, c = ch.chords[ch.chords.length - 1]; for (const x of ch.chords) { if (t < (b + x.len) * PPQ) { c = x; break; } b += x.len; }
+      const pcs = c.iv.map(i => mod12(c.root + i)); if (!pcs.includes(p % 12)) return null; let k = 0; for (let x = 24; x < p; x++) if (pcs.includes(x % 12)) k++; return k; };
+    const dia = p => { const r0 = mod12(p - it.key); let d = 0; for (let i = 0; i < 7; i++) if (S7[i] <= r0) d = i; return Math.floor((p - it.key) / 12) * 7 + d; };
+    let prev = null;
+    for (let i = 0; i < ps.length; i++) {
+      const n = ns.filter((x, j) => j === 0 || x.t !== ns[j - 1].t)[i]; let cur = ch ? ctIdx(n.p, n.t % (ch.bars * BAR)) : null, mv = null;
+      if (ch) { if (cur !== null && prev !== null) mv = cur - prev; prev = cur; }
+      else { cur = dia(n.p); if (prev !== null) mv = Math.round((cur - prev) / 2); prev = cur; }
+      if (mv !== null) { inc(step, clamp(mv, -5, 5)); nPairs++; }
+    }
+  }
+  if (nA) P.arp = { rate: normH(rate), step: normH(step), rest: Math.round(rest / nA * 100) / 100, accent: nAcc ? Math.round(acc / nAcc * 100) / 100 : null, ratchet: Math.round(rat / Math.max(1, nRat) * 100) / 100, oct: normH(oct), motif: normH(motif) };
+  return P;
+}
+// next chord token from a profile: trigram if known, blended with the transition table, else the start table
+// a sampled token must make a non-diminished chord in the scale actually used (lydian / dorian etc. borrow the minor / major tables)
+const okTok = (tok, scale) => { const b = tok && resolveToken(tok, scale); return !!b && triadQuality([0, csTone(b, 2), csTone(b, 4)]) !== 'dim'; };
+function sampleTok(R, FP, p2, p1, scale) {
+  for (let k = 0; k < 4; k++) { const t = sampleTok1(R, FP, p2, p1); if (!scale || okTok(t, scale)) return t; }
+  return null;
+}
+function sampleTok1(R, FP, p2, p1) {
+  if (p1 == null) return Object.keys(FP.start).length ? pickW(R, FP.start) : null;
+  const t3 = p2 != null ? FP.tri[p2 + ' ' + p1] : null, t2 = FP.tr[p1]; let d = {};
+  if (t2) for (const k in t2) d[k] = t2[k] * 0.4; if (t3) for (const k in t3) d[k] = (d[k] || 0) + t3[k] * 0.6;
+  if (!Object.keys(d).length) d = FP.start;
+  return Object.keys(d).length ? pickW(R, d) : null;
+}
+// progression slots from a profile. full = whole progression (lengths + chain), else the template chords with some swapped in
+function styleProg(P, FP, base, bars, full, amt, R, scale) {
+  const colour = () => P.colour && Object.keys(P.colour).length ? pickW(R, P.colour) : undefined, slash = () => R() < (P.slash || 0) ? (R() < (P.ped || 0) ? 'ped' : '3rd') : undefined;
+  const out = []; let p2 = null, p1 = null;
+  if (full) {
+    // one phrase (<= 8 bars, <= 8 chords, lengths of 2 / 4 / 8 beats), repeated to fill the bars
+    let beats = 0; const lens = { 2: 0, 4: 0, 8: 0 }; for (const k in P.len || {}) { const n = +k <= 2 ? 2 : +k < 6 ? 4 : 8; lens[n] += P.len[k]; } if (!(lens[2] + lens[4] + lens[8])) lens[4] = 1;
+    const pb = bars > 8 ? 8 : bars, reps = bars / pb, maxC = Math.max(2, Math.min(8, Math.floor(16 / reps)));
+    while (beats < pb * 4) {
+      let len = +pickW(R, lens); const rem = pb * 4 - beats, inBar = 4 - beats % 4;
+      if (beats % 4 && len > inBar) len = inBar; if (len > rem) len = rem; if (out.length >= maxC - 1) len = rem;
+      let tok = sampleTok(R, FP, p2, p1, scale); if (tok === p1) tok = sampleTok(R, FP, p2, p1, scale);
+      if (!tok) tok = base[out.length % base.length].tok;
+      out.push({ tok, r: R(), r2: R(), alt: 0, len, q: colour(), sl: slash() }); p2 = p1; p1 = tok; beats += len;
+    }
+    const ph = out.slice(); for (let k = 1; k < reps; k++) out.push(...ph.map(x => ({ ...x })));
+    return out;
+  }
+  return base.map((s0, i) => { const s = { ...s0 };
+    if (i > 0 && R() < amt * 0.6) { const t = sampleTok(R, FP, p2, p1, scale); if (t && t !== p1) s.tok = t; }
+    if (R() < amt) s.q = colour(); if (R() < amt) s.sl = slash();
+    p2 = p1; p1 = s.tok; return s; });
+}
+// how lush a profile is, on the COLOUR slider's 0..1 scale
+const profColour = P => { const c = P.colour || {}; return clamp((c.add9 || 0) * 0.45 + (c.sus || 0) * 0.35 + (c.sev || 0) * 0.6 + (c.ext || 0) * 0.95 + (c.six || 0) * 0.45, 0, 1); };
+function applyStyle(g, f, sty, seed, prompt) {
+  const amt = clamp(sty.amt, 0, 1), P = sty.prof, R = rng(((seed >>> 0) ^ hashStr('style|' + prompt) ^ 0x51a7e5) >>> 0);
+  const FP = P.fam && P.fam[famOf(g.scale)];
+  if (FP) {
+    const full = R() < amt; let bars = g.bars;
+    if (full && !f.bars && P.bars && Object.keys(P.bars).length) bars = +pickW(R, P.bars);
+    g.prog = styleProg(P, FP, g.prog, bars, full, amt, R, g.scale); g.bars = bars;
+    g.colour = clamp(lerp(g.colour, profColour(P), amt), 0, 1);
+  }
+  const PA = P.arp;
+  if (PA) {
+    if (!f.rate && PA.rate && Object.keys(PA.rate).length && R() < amt) g.rate = pickW(R, PA.rate);
+    if (!f.oct && PA.oct && Object.keys(PA.oct).length && R() < amt) g.oct = +pickW(R, PA.oct);
+    if (!f.style && R() < amt) g.style = 'motif';
+  }
+  if (!f.bpm && P.bpm && R() < amt * 0.5) g.bpm = clamp(Math.round(lerp(P.bpm[0], P.bpm[1], R())), 60, 200);
+  g.sty = { amt, name: P.name, arp: PA ? { step: PA.step, rest: PA.rest, accent: PA.accent, ratchet: PA.ratchet, motif: PA.motif } : null };
+  return g;
+}
+// ---------------------------------------------------------------- copy guard: a generated idea must never be one of the user's library files.
+// chords: any 4 chords in a row with the same lengths AND the same voicing (in any key); arps: any 8 notes with the same shape and rhythm.
+function chordWins(seq, wrap) {
+  const s = wrap ? seq.concat(seq.slice(0, 3)) : seq, out = [];
+  for (let i = 0; i + 4 <= s.length && i < seq.length; i++) { const w = s.slice(i, i + 4); if (w.some(c => !c.vo || !c.vo.length)) continue; const b = Math.min(...w[0].vo); out.push(w.map(c => c.vo.map(p => p - b).join('.') + ':' + c.len).join('|')); }
+  return out;
+}
+function arpWins(notes, L, W = 8) {
+  const ns = L ? notes.concat(notes.slice(0, W - 1).map(n => ({ ...n, t: n.t + L }))) : notes, out = [];
+  for (let i = 0; i + W <= ns.length && i < notes.length; i++) { const p0 = ns[i].p, t0 = ns[i].t; let s = ''; for (let j = i; j < i + W; j++) s += (ns[j].p - p0) + '@' + (ns[j].t - t0) + ','; out.push(s); }
+  return out;
+}
+function buildGuard(items) {
+  const g = { ch: new Set(), arp: new Set() };
+  for (const it of items) {
+    if (it.kind === 'chords' && it.vo) for (const w of chordWins(it.chords.map((c, i) => ({ vo: it.vo[i], len: c.len })), false)) g.ch.add(w);
+    if (it.kind === 'arp') for (const w of arpWins(it.notes, 0)) g.arp.add(w);
+  }
+  return g;
+}
+const chordHits = (chords, guard) => chordWins(chords.map(c => ({ vo: c.voicing, len: c.len })), true).map((w, i) => guard.ch.has(w) ? i : -1).filter(i => i >= 0);
+// change one chord's colour inside each copied window until nothing matches; returns how many changes it made
+function guardProg(S, guard) {
+  let n = 0;
+  for (let it = 0; it < 24 && guard && guard.ch.size; it++) {
+    const ch = resolveProg(S), hits = chordHits(ch, guard); if (!hits.length) break;
+    const j = (hits[0] + 2) % S.prog.length, slot = S.prog[j]; if (slot.fixed) break;
+    const cur = slot.q || colourClass(ch[j].iv); slot.q = COLOURS[(COLOURS.indexOf(cur) + 1 + (it >> 2)) % COLOURS.length]; if (it % 4 === 3) slot.alt = (slot.alt || 0) + 1; n++;
+  }
+  return n;
+}
+// move one note of each copied 8-note window by an octave (still in key)
+function guardArp(notes, guard, L) {
+  let n = 0;
+  for (let it = 0; it < 60 && guard && guard.arp.size; it++) {
+    const w = arpWins(notes, L), i = w.findIndex(x => guard.arp.has(x)); if (i < 0) break;
+    const nt = notes[(i + 4) % notes.length]; nt.p += nt.p + 12 <= 98 ? 12 : -12; n++;
+  }
+  return n;
 }
 
 // ---------------------------------------------------------------- the arpeggio engine
@@ -380,19 +598,29 @@ function buildArp(S, chords) {
   // DNA: every random number is drawn up front so the MASTER slider morphs the same idea instead of re-rolling it
   const dna = { cyc: R(), phase: R() < 0.55, eat: R() < 0.45, resp: Math.floor(R() * 4), pedalTop: R() < 0.65, acc: R(), start: R(), motifMax: R(), glideU: R(), fatU: R() };
   const uHit = U(spb * 2), uVar = U(spb), uAcc = U(spb * 2), uRat = U(spb * 2), uPass = U(spb * 2), uOct = U(spb * 2), uGate = U(spb), uWalk = U(64), uMotif = U(16), uGl = U(spb * 2), uHum = U(spb * 4);
+  // STYLE: a learned profile nudges rest density, motif moves / length, accents and ratchets (own random stream, so STYLE 0 = classic)
+  const SA = S.sty && S.sty.amt > 0 && S.sty.arp ? S.sty.arp : null, sa = SA ? clamp(S.sty.amt, 0, 1) : 0, R2 = SA ? rng((S.arpSeed ^ 0x51a7e5) >>> 0) : null;
+  const U2 = n => { const a = new Array(n); for (let i = 0; i < n; i++) a[i] = R2(); return a; };
+  const sMot = SA ? U2(16) : null, sAcc = SA ? U2(spb * 2) : null, sAcc2 = SA ? U2(spb * 2) : null;
+  // GROOVE 0 = a perfectly even grid (a note on every step, one gate length, flat velocities); rests, ratchets, gate and velocity
+  // variety come in as GROOVE rises (1 = the old humanised rhythm). Pitch movement does not depend on it.
+  const GR = clamp(S.groove ?? 0, 0, 1), gz = (even, legacy) => GR >= 1 ? legacy : GR <= 0 ? even : even + (legacy - even) * GR;
   const bl = spb / 4, triplet = spb === 24;
   const strength = pos => pos === 0 ? 4 : pos % bl === 0 ? 3 : (!triplet && pos % (bl / 2) === 0) || (triplet && pos % 3 === 0) ? 2 : 1;
   // rhythm (bar A + a variation B used in "response" bars)
   const hitP = s => s === 4 ? 1 : s === 3 ? 0.97 : s === 2 ? (spb === 8 ? 1 : 0.78 + 0.22 * m) : spb === 32 ? 0.12 + 0.6 * m : triplet ? 0.3 + 0.55 * m : 0.32 + 0.62 * m;
-  const rhythm = (off) => { const r = []; for (let p = 0; p < spb; p++) { let h = uHit[(p + off) % (spb * 2)] < hitP(strength(p)); if (S.rolling && strength(p) >= 3) h = uHit[(p + off + 3) % (spb * 2)] < 0.12; else if (S.rolling && strength(p) === 1) h = true; r.push(h); } return r; };
-  const rA = rhythm(0), rB = rA.map((h, p) => uVar[p] < 0.12 + 0.3 * m && strength(p) < 3 ? !h : h);
+  const restP = st => st === 4 ? 1 : clamp(1 - SA.rest * (st === 3 ? 0.4 : st === 2 ? 0.9 : 1.35), 0.05, 1);
+  const hitQ = p => SA && SA.rest != null ? lerp(hitP(strength(p)), restP(strength(p)), sa) : hitP(strength(p));
+  const rhythm = (off) => { const r = []; for (let p = 0; p < spb; p++) { let h = uHit[(p + off) % (spb * 2)] < gz(1, hitQ(p)); if (S.rolling && strength(p) >= 3) h = uHit[(p + off + 3) % (spb * 2)] < 0.12; else if (S.rolling && strength(p) === 1) h = true; r.push(h); } return r; };
+  const rA = rhythm(0), rB = rA.map((h, p) => uVar[p] < gz(0, 0.12 + 0.3 * m) && strength(p) < 3 ? !h : h);
   for (const r of [rA, rB]) { let n = r.filter(Boolean).length; for (let p = 0; n < Math.max(2, spb / 4); p = (p + Math.max(1, bl / 2)) % spb) { if (!r[p]) { r[p] = true; n++; } } }
   // motif (cycle) for the motif style: short contour, 3..7 notes, phasing against the bar = the hypnotic prog-house thing
   const lens = m < 0.33 ? [3, 4, 4, 3] : m < 0.66 ? [3, 4, 6, 5] : [5, 6, 7, 3];
-  const cycLen = lens[Math.floor(dna.cyc * 4)];
+  let cycLen = lens[Math.floor(dna.cyc * 4)];
+  if (SA && hasH(SA.motif) && R2() < sa) cycLen = clamp(+pickW(R2, SA.motif), 2, 8);
   const mMax = 3 + Math.round(dna.motifMax * 2 + m * 2);
   const motif = [dna.start < 0.5 ? 0 : dna.start < 0.8 ? 2 : 1];
-  for (let i = 1; i < cycLen; i++) { const u = uMotif[i]; let st2 = u < 0.32 ? 1 : u < 0.52 ? 2 : u < 0.72 ? -1 : u < 0.86 ? 3 : -2; let v = motif[i - 1] + st2; if (v < 0) v = -v; if (v > mMax) v = 2 * mMax - v; motif.push(clamp(v, 0, mMax)); }
+  for (let i = 1; i < cycLen; i++) { const u = uMotif[i]; let st2 = u < 0.32 ? 1 : u < 0.52 ? 2 : u < 0.72 ? -1 : u < 0.86 ? 3 : -2; if (SA && hasH(SA.step) && sMot[i] < sa) st2 = +pickW(R2, SA.step); let v = motif[i - 1] + st2; if (v < 0) v = -v; if (v > mMax) v = 2 * mMax - v; motif.push(clamp(v, 0, mMax)); }
   if (new Set(motif).size === 1) motif[motif.length - 1] = motif[0] + 2;
   const walk = [0]; for (let i = 1; i < 64; i++) { const u = uWalk[i]; let v = walk[i - 1] + (u < 0.35 ? 1 : u < 0.7 ? -1 : u < 0.85 ? 2 : -2); if (v < 0) v = 1; if (v > 7) v = 6; walk.push(v); }
   const seqIdx = (c, P) => {
@@ -438,10 +666,10 @@ function buildArp(S, chords) {
         const dir = p > prevP ? 1 : -1; let q = prevP + dir; while (!inKey(q, ch)) q += dir; if (q !== p) { p = q; pass = true; }
       }
       while (p > 98) p -= 12; while (p < 50) p += 12;
-      const accented = (() => { const g16 = Math.round(pos * 16 / spb); if (m < 0.35 || dna.acc < 0.5) return s >= 3; return [0, 3, 6, 8, 11, 14].includes(g16) && (pos * 16) % spb === 0; })();
-      let v = (accented ? 0.86 : s === 2 ? 0.7 : 0.6) + (uHum[(b * 7 + pos) % (spb * 4)] - 0.5) * 0.06;
-      const gt = clamp((S.gate || 0.5) * (s >= 3 ? 1 : 0.85 + 0.3 * uGate[pos]), 0.12, 1);
-      const rat = (spb <= 16 && s < 4 && uRat[(b * 11 + pos) % (spb * 2)] < Math.max(0, m - 0.55) * (S.ratchet ? 1.2 : 0.42)) ? (spb === 8 && uRat[pos] < 0.05 ? 3 : 2) : 1;
+      const accented = SA && SA.accent != null && sAcc[(b * 3 + pos) % (spb * 2)] < sa ? s === 4 || sAcc2[(b * 5 + pos) % (spb * 2)] < SA.accent : (() => { const g16 = Math.round(pos * 16 / spb); if (m < 0.35 || dna.acc < 0.5) return s >= 3; return [0, 3, 6, 8, 11, 14].includes(g16) && (pos * 16) % spb === 0; })();
+      let v = gz(s >= 3 ? 0.8 : 0.72, (accented ? 0.86 : s === 2 ? 0.7 : 0.6) + (uHum[(b * 7 + pos) % (spb * 4)] - 0.5) * 0.06);
+      const gt = clamp((S.gate || 0.5) * gz(1, s >= 3 ? 1 : 0.85 + 0.3 * uGate[pos]), 0.12, 1);
+      const rat = (spb <= 16 && s < 4 && uRat[(b * 11 + pos) % (spb * 2)] < (S.ratchet ? 1 : GR) * (SA && SA.ratchet != null ? lerp(Math.max(0, m - 0.55) * (S.ratchet ? 1.2 : 0.42), SA.ratchet * 1.5, sa) : Math.max(0, m - 0.55) * (S.ratchet ? 1.2 : 0.42))) ? (spb === 8 && uRat[pos] < 0.05 ? 3 : 2) : 1;
       for (let k = 0; k < rat; k++) notes.push({ t: t + Math.round(k * st / rat), d: Math.max(6, Math.round(st * gt / rat)), p, v: clamp(v * (k ? 0.82 : 1), 0.1, 1), pass, l: { type: 'step', w: 0.55, f: 0.5, c: 0 } });
       prevP = p;
     }
@@ -516,7 +744,7 @@ function chordMidiNotes(chords, withBass) {
   const out = []; for (const c of chords) { for (const p of c.voicing) out.push({ t: c.t, d: c.len * PPQ - 2, p, v: 0.62 }); if (withBass) out.push({ t: c.t, d: c.len * PPQ - 2, p: c.bassNote, v: 0.7 }); } return out;
 }
 
-// ---------------------------------------------------------------- MIDI reader + chord detection (for Josh's chord packs)
+// ---------------------------------------------------------------- MIDI reader + chord detection (for chord packs the user loads)
 function readMidi(buf) {
   const d = buf instanceof Uint8Array ? buf : new Uint8Array(buf); let o = 0;
   const u32 = () => { const v = (d[o] << 24 | d[o + 1] << 16 | d[o + 2] << 8 | d[o + 3]) >>> 0; o += 4; return v; }, u16 = () => { const v = d[o] << 8 | d[o + 1]; o += 2; return v; };
@@ -609,6 +837,23 @@ function chordsFromMidi(midi) {
   return { key: key.key, scale: key.scale, bpm: midi.bpm, chords: cut };
 }
 
+// built-in profile "Professor B5": aggregate style statistics; contains no third-party note data.
+// Built from this app's own progression templates plus hand-set colour / arp numbers.
+const BUILTIN_PROFILE = (() => {
+  const fam = {};
+  for (const f of ['minor', 'major']) {
+    const start = {}, tr = {}, tri = {};
+    for (const [t] of TEMPLATES[f]) { const k = t.split(' '), n = k.length; inc(start, k[0]);
+      for (let i = 0; i < n; i++) { const a = k[i], b = k[(i + 1) % n], c = k[(i + 2) % n]; if (a !== b) inc(tr[a] || (tr[a] = {}), b); if (a !== b && b !== c) inc(tri[a + ' ' + b] || (tri[a + ' ' + b] = {}), c); } }
+    const trN = {}, triN = {}; for (const a in tr) trN[a] = normH(tr[a]); for (const ab in tri) triN[ab] = normH(tri[ab]);
+    fam[f] = { start: normH(start), tr: trN, tri: triN };
+  }
+  return { v: 1, name: 'Professor B5', builtin: true, fam, famP: { minor: 0.7, major: 0.3 }, colour: { tri: 0.36, sus: 0.24, add9: 0.18, sev: 0.13, ext: 0.07, six: 0.02 }, slash: 0.16, ped: 0.35,
+    len: { 2: 0.22, 4: 0.6, 8: 0.18 }, cpb: { 1: 0.75, 2: 0.25 }, bars: { 4: 0.55, 8: 0.45 },
+    arp: { rate: { '1/16': 0.86, '1/8': 0.14 }, step: { 1: 0.28, 2: 0.2, '-1': 0.2, 3: 0.1, '-2': 0.12, 0: 0.06, 4: 0.04 }, rest: 0.16, accent: 0.24, ratchet: 0.03, oct: { 2: 0.6, 3: 0.4 }, motif: { 3: 0.22, 4: 0.26, 5: 0.18, 6: 0.26, 7: 0.08 } } };
+})();
+
 const ArpCore = { BAR, PPQ, RATES, SCALES, SCALE_LABEL, SCALE_FEEL, MINORISH, STYLES, PRESETS, ALT_NAMES, GENRES, rng, hashStr, mod12, clamp, noteName, keyName, chordSuffix, triadQuality, resolveToken, altChord,
-  resolveProg, progTicks, voiceChord, vlCost, parsePrompt, generate, newProg, buildArp, chordAt, playVel, analyzeMood, writeMidi, readMidi, arpMidiNotes, chordMidiNotes, chordsFromMidi, identifyChord, detectKey };
+  resolveProg, progTicks, voiceChord, vlCost, parsePrompt, generate, newProg, buildArp, chordAt, playVel, analyzeMood, writeMidi, readMidi, arpMidiNotes, chordMidiNotes, chordsFromMidi, identifyChord, detectKey,
+  COLOURS, colourClass, degToken, libItem, learnProfile, sampleTok, styleProg, chordWins, arpWins, buildGuard, chordHits, guardProg, guardArp, BUILTIN_PROFILE };
 if (typeof module !== 'undefined') module.exports = ArpCore;

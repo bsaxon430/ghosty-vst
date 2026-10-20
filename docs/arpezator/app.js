@@ -5,8 +5,8 @@
 const $ = id => document.getElementById(id);
 const A = ArpCore;   // BAR, PPQ, clamp come from theory.js
 const LS = 'arpezator.v1';
-const EXAMPLES = ['euphoric progressive intro', 'deadmau5-style minor pluck', 'dreamy lofi chill keys', 'dark techno rolling acid', 'epic trance 1/16 octave up', 'sad piano slow', 'happy house 124 bpm', 'tense cinematic triplet', 'hypnotic sparse bell in A minor', 'busy wild glide supersaw'];
-const DEF_PROMPT = 'euphoric progressive deadmau5-style pluck';
+const EXAMPLES = ['euphoric progressive intro', 'melodic minor pluck', 'dreamy lofi chill keys', 'dark techno rolling acid', 'epic trance 1/16 octave up', 'sad piano slow', 'happy house 124 bpm', 'tense cinematic triplet', 'hypnotic sparse bell in A minor', 'busy wild glide supersaw'];
+const DEF_PROMPT = 'euphoric progressive melodic pluck';
 
 let S = null, chords = [], plan = null, undoStack = [], genHist = [], genIdx = -1;
 const toast = msg => { const t = $('toast'); t.textContent = msg; t.style.opacity = 1; clearTimeout(toast.h); toast.h = setTimeout(() => t.style.opacity = 0, 2400); };
@@ -14,8 +14,8 @@ const toast = msg => { const t = $('toast'); t.textContent = msg; t.style.opacit
 function fromGen(g, keep) {
   const base = keep || {};
   return { v: 1, prompt: g.prompt, seed: g.seed, genre: g.genre, moods: g.moods, key: g.key, scale: g.scale, prog: g.prog, colour: g.colour, pedal: g.pedal, style: g.style, preset: g.preset,
-    rate: g.rate, bpm: g.bpm, master: g.master, oct: g.oct, reg: g.reg, glide: g.glide, ratchet: g.ratchet, rolling: g.rolling, gate: g.gate, swing: g.swing, fx: { ...g.fx },
-    mix: base.mix || { arp: 0.8, chords: 0.45, bass: 0.5, kick: 0.5 }, arpSeed: g.arpSeed, progSeed: g.progSeed, notes: [], loop: base.loop ?? true, theme: base.theme || 'dark', edited: false, imported: false };
+    rate: g.rate, bpm: g.bpm, master: g.master, oct: g.oct, reg: g.reg, glide: g.glide, ratchet: g.ratchet, rolling: g.rolling, gate: g.gate, swing: g.swing, groove: g.groove ?? 0, fx: { ...g.fx },
+    mix: base.mix || { arp: 0.8, chords: 0.45, bass: 0.5, kick: 0.5 }, fx2: base.fx2 || fx2Defaults(), sty: g.sty || null, arpSeed: g.arpSeed, progSeed: g.progSeed, notes: [], loop: base.loop ?? true, theme: base.theme || 'dark', edited: false, imported: false };
 }
 function save() { clearTimeout(save.h); save.h = setTimeout(() => { try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {} }, 300); }
 function load() { try { const s = JSON.parse(localStorage.getItem(LS)); if (s && s.v === 1 && s.prog && s.prog.length) return s; } catch (e) {} return null; }
@@ -25,7 +25,7 @@ $('undo').onclick = () => { const s = undoStack.pop(); if (!s) return; S = JSON.
 // ---------------------------------------------------------------- derived state
 function rebuild(regen) {
   chords = A.resolveProg(S);
-  if (regen) { if (S.edited) { toast('Your note edits were replaced (UNDO brings them back)'); } S.notes = A.buildArp(S, chords); S.edited = false; }
+  if (regen) { if (S.edited) { toast('Your note edits were replaced (UNDO brings them back)'); } S.notes = A.buildArp(S, chords); S.edited = false; if (S.sty && S.sty.amt > 0) A.guardArp(S.notes, guard, A.progTicks(S)); }
   plan = buildPlan(S, chords, S.notes);
   const m = A.analyzeMood(chords, S); moodTarget = FACES[m.mood]; $('moodName').textContent = MOOD_WORD[m.mood]; lastMood = m;
   if (eng) eng.apply(S);
@@ -37,8 +37,9 @@ function regen() { if (S.edited) pushUndo(); rebuild(true); }
 // ---------------------------------------------------------------- generator
 function doGenerate(prompt, seed, push = true) {
   if (push) pushUndo();
-  const keep = S ? { mix: S.mix, loop: S.loop, theme: S.theme } : null;
-  const g = A.generate(prompt, seed); S = fromGen(g, keep);
+  const keep = S ? { mix: S.mix, loop: S.loop, theme: S.theme, fx2: S.fx2 } : null;
+  const g = A.generate(prompt, seed, styArg()); S = fromGen(g, keep);
+  if (S.sty) A.guardProg(S, guard);
   if (push) { genHist = genHist.slice(0, genIdx + 1); genHist.push({ prompt, seed }); if (genHist.length > 60) genHist.shift(); genIdx = genHist.length - 1; }
   rebuild(true); syncUI();
 }
@@ -80,6 +81,7 @@ let masterUndo = false;
 slider('master', () => S.master, v => { if (!masterUndo && S.edited) { pushUndo(); masterUndo = true; } S.master = v; rebuild(true); }, null, () => { masterUndo = false; });
 slider('colour', () => S.colour, v => { S.colour = v; rebuild(true); }, v => Math.round(v * 100) + '%');
 slider('gate', () => S.gate, v => { S.gate = v; rebuild(true); }, v => Math.round(v * 100) + '%');
+slider('groove', () => S.groove ?? 0, v => { if (S.edited) pushUndo(); S.groove = v; rebuild(true); }, v => v < 0.005 ? 'EVEN' : Math.round(v * 100) + '%');
 slider('swing', () => S.swing, v => { S.swing = v; plan = buildPlan(S, chords, S.notes); save(); }, v => Math.round(v * 100) + '%');
 for (const k of ['tone', 'delay', 'reverb', 'pump']) slider('fx_' + k, () => S.fx[k], v => { S.fx[k] = v; if (eng) eng.apply(S); save(); });
 for (const k of ['arp', 'chords', 'bass', 'kick']) slider('mix_' + k, () => S.mix[k], v => { S.mix[k] = v; if (eng) eng.apply(S); save(); });
@@ -94,8 +96,8 @@ for (let k = 0; k < 12; k++) $('key').add(new Option(A.noteName(k, k, 'major') +
 Object.keys(A.SCALES).forEach(s => $('scale').add(new Option(A.SCALE_LABEL[s] + ' (' + A.SCALE_FEEL[s] + ')', s)));
 $('key').onchange = e => { pushUndo(); const k = +e.target.value; let d = A.mod12(k - S.key); if (d > 6) d -= 12; S.key = k; S.notes.forEach(n => n.p += d); rebuild(false); syncUI(); };
 $('scale').onchange = e => { pushUndo(); S.scale = e.target.value; S.edited = false; rebuild(true); syncUI(); };
-$('newChords').onclick = () => { pushUndo(); S.progSeed = newSeed(); S.prog = A.newProg(S, S.progSeed); S.imported = false; S.edited = false; rebuild(true); syncUI(); };
-$('newArp').onclick = () => { pushUndo(); S.arpSeed = newSeed(); S.edited = false; rebuild(true); toast('New arp, same chords'); };
+$('newChords').onclick = () => { pushUndo(); S.progSeed = newSeed(); S.prog = A.newProg(S, S.progSeed, styArg()); S.sty = stySnap(); if (S.sty) A.guardProg(S, guard); S.imported = false; S.edited = false; rebuild(true); syncUI(); };
+$('newArp').onclick = () => { pushUndo(); S.arpSeed = newSeed(); S.sty = stySnap(); S.edited = false; rebuild(true); toast('New arp, same chords'); };
 $('regOct').onclick = () => { S.reg = S.reg >= 1 ? -1 : S.reg + 1; regen(); syncUI(); };
 function setBars(n) {
   pushUndo(); const cur = S.prog, out = []; let beats = 0, i = 0;
@@ -174,19 +176,28 @@ function hideMenu() { $('menu').style.display = 'none'; document.removeEventList
 async function importMidi(file) {
   try {
     const midi = A.readMidi(new Uint8Array(await file.arrayBuffer())), r = A.chordsFromMidi(midi);
+    useChords(r, midi.bpm);
+  } catch (e) { toast("Couldn't read chords from that file: " + e.message); }
+}
+function useChords(r, bpm) {
     pushUndo(); S.key = r.key; S.scale = r.scale; S.imported = true; S.edited = false;
     const sc = A.SCALES[S.scale];
     S.prog = r.chords.map(c => { const root = A.mod12(c.root - r.key), bass = c.bass === null ? null : A.mod12(c.bass - r.key);
       return { fixed: { root, iv: c.iv, bass, chrom: c.iv.some(x => !sc.includes(A.mod12(root + x))) }, len: c.len, alt: 0, r: 0.5, r2: 0.9 }; });
-    if (midi.bpm && Math.abs(midi.bpm - 120) > 0.5) S.bpm = clamp(Math.round(midi.bpm), 60, 200);
+    if (bpm && Math.abs(bpm - 120) > 0.5) S.bpm = clamp(Math.round(bpm), 60, 200);
     rebuild(true); syncUI(); toast(`Imported ${r.chords.length} chords in ${A.keyName(r.key, r.scale)}`);
-  } catch (e) { toast("Couldn't read chords from that file: " + e.message); }
 }
 $('midiFile').onchange = e => { const f = e.target.files[0]; if (f) importMidi(f); e.target.value = ''; };
 (() => { const d = $('drop'), body = document.body;
   body.addEventListener('dragover', e => { e.preventDefault(); d.classList.add('over'); });
   body.addEventListener('dragleave', e => { if (e.target === body || e.target === d) d.classList.remove('over'); });
-  body.addEventListener('drop', e => { e.preventDefault(); d.classList.remove('over'); const f = e.dataTransfer.files[0]; if (f) importMidi(f); });
+  body.addEventListener('drop', async e => { e.preventDefault(); d.classList.remove('over');
+    const fs = [...e.dataTransfer.files], ents = [...(e.dataTransfer.items || [])].map(it => it.webkitGetAsEntry && it.webkitGetAsEntry()).filter(Boolean);
+    // one .mid = import its chords (as before); many files, a folder or a zip = add to the library
+    if (fs.length === 1 && /\.midi?$/i.test(fs[0].name) && !ents.some(x => x.isDirectory)) return importMidi(fs[0]);
+    if (ents.some(x => x.isDirectory)) { const out = []; const walk = ent => new Promise(res => { if (ent.isFile) ent.file(f => { out.push(f); res(); }, () => res()); else { const rd = ent.createReader(), all = []; const more = () => rd.readEntries(async es => { if (!es.length) { for (const x of all) await walk(x); res(); } else { all.push(...es); more(); } }, () => res()); more(); } });
+      for (const x of ents) await walk(x); return addToLibrary(out); }
+    addToLibrary(fs); });
 })();
 
 // ---------------------------------------------------------------- audio + transport (lookahead scheduler like Mr. Mickens)
@@ -440,6 +451,167 @@ function fbText() { return `ArpEZator feedback\n\n(what I liked / what to change
 $('fbMail').onclick = e => { e.preventDefault(); location.href = 'mailto:?subject=' + encodeURIComponent('ArpEZator feedback') + '&body=' + encodeURIComponent(fbText()); };
 $('fbSms').onclick = e => { e.preventDefault(); location.href = 'sms:?&body=' + encodeURIComponent(fbText()); };
 
+// ---------------------------------------------------------------- STYLE knob + profiles (built-in "Professor B5" or ones learned from the user's library)
+const LS_STY = LS + '.style';
+let styPref = { amt: 0, prof: 'Professor B5' }, profiles = [], lib = [], guard = { ch: new Set(), arp: new Set() };
+try { styPref = { ...styPref, ...JSON.parse(localStorage.getItem(LS_STY) || '{}') }; } catch (e) {}
+const curProf = () => profiles.find(p => p.name === styPref.prof) || A.BUILTIN_PROFILE;
+const styArg = () => styPref.amt > 0 ? { amt: styPref.amt, prof: curProf() } : null;
+function stySnap() { if (!(styPref.amt > 0)) return null; const P = curProf(), a = P.arp; return { amt: styPref.amt, name: P.name, arp: a ? { step: a.step, rest: a.rest, accent: a.accent, ratchet: a.ratchet, motif: a.motif } : null }; }
+function saveSty() { try { localStorage.setItem(LS_STY, JSON.stringify(styPref)); } catch (e) {} }
+function drawProfiles() {
+  const sel = $('styleProf'); sel.innerHTML = ''; [A.BUILTIN_PROFILE, ...profiles].forEach(p => sel.add(new Option(p.name, p.name)));
+  const P0 = curProf(); sel.value = P0.name; $('styleLbl').textContent = 'STYLE: ' + P0.name;   // (a missing profile falls back to the built-in, the choice is kept)
+  const P = curProf(); $('profRename').disabled = $('profDel').disabled = !!P.builtin; $('profInfo').textContent = profSummary(P);
+}
+function profSummary(P) {
+  const top = []; for (const f in P.fam || {}) for (const a in P.fam[f].tr) for (const b in P.fam[f].tr[a]) top.push([a + '>' + b, P.fam[f].tr[a][b]]);
+  top.sort((x, y) => y[1] - x[1]); const r = P.arp && P.arp.rate ? Object.entries(P.arp.rate).sort((x, y) => y[1] - x[1])[0] : null;
+  return `${P.name}${P.n ? ` (${P.n.chords} progressions, ${P.n.arps} arps)` : ''}: ${top.slice(0, 3).map(t => t[0]).join(', ')}${r ? ' · arps ' + r[0] + ' ' + Math.round(r[1] * 100) + '%' : ''}`;
+}
+function initStyleUI() {
+  slider('styleAmt', () => styPref.amt, v => { styPref.amt = v; saveSty(); S.sty = stySnap(); rebuild(true); }, v => Math.round(v * 100) + '%');
+  $('styleProf').onchange = e => { styPref.prof = e.target.value; saveSty(); drawProfiles(); S.sty = stySnap(); rebuild(true); toast('Style: ' + styPref.prof + (styPref.amt > 0 ? '' : ' (raise STYLE, then GENERATE)')); };
+  drawProfiles();
+}
+$('learn').onclick = async () => {
+  if (!lib.length) return toast('Add some MIDI files to the library first');
+  const name = (prompt('Name this style', 'My style') || '').trim(); if (!name) return;
+  if (name === A.BUILTIN_PROFILE.name) return toast('That name is taken by the built-in style');
+  const P = A.learnProfile(lib, name, 1); P.n = P.n || {}; P.made = Date.now();
+  try { await DB.put('prof', P); } catch (e) { toast('Could not store the style in this browser'); }
+  profiles = profiles.filter(p => p.name !== name).concat([P]); styPref.prof = name; if (!(styPref.amt > 0)) styPref.amt = 0.7; saveSty(); drawProfiles(); sliders.forEach(f => f());
+  S.sty = stySnap(); rebuild(true); toast(`Learned "${name}" from ${P.n.chords} progressions + ${P.n.arps} arps. Press GENERATE.`);
+};
+$('profRename').onclick = async () => { const P = curProf(); if (P.builtin) return; const nn = (prompt('Rename style', P.name) || '').trim(); if (!nn || nn === P.name || nn === A.BUILTIN_PROFILE.name || profiles.some(p => p.name === nn)) return;
+  try { await DB.del('prof', P.name); P.name = nn; await DB.put('prof', P); } catch (e) {} styPref.prof = nn; saveSty(); drawProfiles(); };
+$('profDel').onclick = async () => { const P = curProf(); if (P.builtin || !confirm('Delete the style "' + P.name + '"?')) return; try { await DB.del('prof', P.name); } catch (e) {} profiles = profiles.filter(p => p !== P); drawProfiles(); S.sty = stySnap(); rebuild(true); };
+
+// ---------------------------------------------------------------- IndexedDB (library items + learned profiles stay in this browser)
+const DB = (() => {
+  let p = null;
+  const open = () => p || (p = new Promise((res, rej) => { const r = indexedDB.open('arpezator', 1);
+    r.onupgradeneeded = () => { const d = r.result; if (!d.objectStoreNames.contains('lib')) d.createObjectStore('lib', { keyPath: 'id' }); if (!d.objectStoreNames.contains('prof')) d.createObjectStore('prof', { keyPath: 'name' }); };
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }));
+  const tx = async (st, mode, fn) => { const d = await open(); return new Promise((res, rej) => { const t = d.transaction(st, mode), q = fn(t.objectStore(st)); t.oncomplete = () => res(q ? q.result : undefined); t.onerror = () => rej(t.error); }); };
+  return { all: st => tx(st, 'readonly', s => s.getAll()), put: (st, v) => tx(st, 'readwrite', s => { (Array.isArray(v) ? v : [v]).forEach(x => s.put(x)); }), del: (st, k) => tx(st, 'readwrite', s => s.delete(k)), clear: st => tx(st, 'readwrite', s => s.clear()) };
+})();
+
+// ---------------------------------------------------------------- MIDI library
+async function loadLibrary() {
+  try { lib = (await DB.all('lib')) || []; profiles = (await DB.all('prof')) || []; } catch (e) { lib = []; profiles = []; }
+  lib.sort((a, b) => a.name.localeCompare(b.name)); guard = A.buildGuard(lib); drawLib(); drawProfiles();
+}
+// zip: read the central directory, inflate with the browser's DecompressionStream (JSZip from cdnjs as a fallback)
+async function unzip(buf) {
+  if (typeof DecompressionStream === 'undefined') {
+    if (!window.JSZip) await new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'; sc.onload = res; sc.onerror = () => rej(new Error('zip support did not load')); document.head.appendChild(sc); });
+    const z = await JSZip.loadAsync(buf), out = []; for (const n in z.files) if (/\.midi?$/i.test(n) && !/(^|\/)(__MACOSX|\.)/.test(n)) out.push({ name: n.split('/').pop(), bytes: await z.files[n].async('uint8array') }); return out;
+  }
+  const u8 = new Uint8Array(buf), d = new DataView(buf); let e = -1;
+  for (let i = u8.length - 22; i >= Math.max(0, u8.length - 65557); i--) if (d.getUint32(i, true) === 0x06054b50) { e = i; break; }
+  if (e < 0) throw new Error('not a zip file');
+  const n = d.getUint16(e + 10, true), out = []; let o = d.getUint32(e + 16, true);
+  for (let k = 0; k < n && d.getUint32(o, true) === 0x02014b50; k++) {
+    const meth = d.getUint16(o + 10, true), csz = d.getUint32(o + 20, true), nl = d.getUint16(o + 28, true), xl = d.getUint16(o + 30, true), cl = d.getUint16(o + 32, true), lho = d.getUint32(o + 42, true);
+    const name = new TextDecoder().decode(u8.subarray(o + 46, o + 46 + nl)); o += 46 + nl + xl + cl;
+    if (!/\.midi?$/i.test(name) || /(^|\/)(__MACOSX|\.)/.test(name)) continue;
+    const ds = lho + 30 + d.getUint16(lho + 26, true) + d.getUint16(lho + 28, true), raw = u8.subarray(ds, ds + csz);
+    let bytes = null; if (meth === 0) bytes = raw.slice(); else if (meth === 8) bytes = new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());
+    if (bytes) out.push({ name: name.split('/').pop(), bytes });
+  }
+  return out;
+}
+// files (File objects or {name, bytes}) -> parsed items in IndexedDB
+async function addToLibrary(files) {
+  const ents = [];
+  for (const f of files) {
+    try {
+      if (f.bytes) ents.push(f);
+      else if (/\.zip$/i.test(f.name)) ents.push(...await unzip(await f.arrayBuffer()));
+      else if (/\.midi?$/i.test(f.name)) ents.push({ name: f.name, bytes: new Uint8Array(await f.arrayBuffer()) });
+    } catch (e) { toast(f.name + ': ' + e.message); }
+  }
+  if (!ents.length) return toast('No .mid files found');
+  const add = [], bad = [];
+  for (const en of ents) {
+    try { const it = A.libItem(en.name, en.bytes); it.id = it.name + '|' + en.bytes.length + '|' + A.hashStr(String.fromCharCode.apply(null, en.bytes.subarray(0, 4096))); add.push(it); }
+    catch (e) { bad.push(en.name); }
+  }
+  try { await DB.put('lib', add); } catch (e) { toast('This browser blocks storage; the library lasts until reload'); }
+  const ids = new Set(add.map(x => x.id)); lib = lib.filter(x => !ids.has(x.id)).concat(add).sort((a, b) => a.name.localeCompare(b.name));
+  guard = A.buildGuard(lib); drawLib();
+  toast(`Added ${add.length} file${add.length === 1 ? '' : 's'}${bad.length ? `, skipped ${bad.length} (no chords or notes)` : ''}`);
+  return { added: add.length, skipped: bad.length };
+}
+['libFiles', 'libDir', 'libZip'].forEach(id => $(id).onchange = e => { const fs = [...e.target.files]; e.target.value = ''; if (fs.length) addToLibrary(fs); });
+$('libSearch').addEventListener('input', () => drawLib());
+$('libClear').onclick = async () => { if (!lib.length || !confirm('Remove all ' + lib.length + ' files from the library? (learned styles are kept)')) return; try { await DB.clear('lib'); } catch (e) {} lib = []; guard = A.buildGuard(lib); drawLib(); };
+const libDesc = it => `${A.keyName(it.key, it.scale)} · ${it.bars} bar${it.bars === 1 ? '' : 's'} · ${it.kind === 'arp' ? 'arp ' + it.rate : it.chords.length + ' chords'}`;
+function drawLib() {
+  const q = $('libSearch').value.trim().toLowerCase(), box = $('libList'); box.innerHTML = '';
+  const nA = lib.filter(x => x.kind === 'arp').length; $('libInfo').textContent = lib.length ? `${lib.length} files · ${lib.length - nA} progressions · ${nA} arps` : 'empty';
+  const show = lib.filter(it => !q || (it.name + ' ' + libDesc(it) + ' ' + (it.kind === 'arp' ? 'arp' : 'chords')).toLowerCase().includes(q)).slice(0, 300);
+  for (const it of show) {
+    const row = document.createElement('div'); row.className = 'li' + (it.kind === 'arp' ? ' arp' : '');
+    const pl = document.createElement('button'); pl.textContent = '▶'; pl.title = 'listen'; pl.onclick = () => audition(it, pl);
+    const tx = document.createElement('div'); tx.className = 'lt'; const b = document.createElement('b'); b.textContent = it.name; const i = document.createElement('i'); i.textContent = libDesc(it); tx.append(b, i);
+    const use = document.createElement('button'); use.textContent = it.kind === 'arp' ? 'USE ARP' : 'USE CHORDS'; use.style.setProperty('--tint', it.kind === 'arp' ? 'var(--cyan)' : 'var(--green)');
+    use.onclick = () => it.kind === 'arp' ? useArp(it) : useChords({ key: it.key, scale: it.scale, chords: it.chords }, it.bpm);
+    row.append(pl, tx, use); box.appendChild(row);
+  }
+}
+// listen to a library item with the built-in synth (first 4 bars), on its own output so STOP cuts it at once
+let aud = null;
+async function audition(it, btn) {
+  await ensureAudio(); const was = aud && aud.btn === btn;
+  if (aud) { try { aud.g.disconnect(); } catch (e) {} aud.btn.textContent = '▶'; aud.btn.classList.remove('on'); clearTimeout(aud.tm); aud = null; }
+  if (was) return; if (playing) await setPlay(false);
+  const g = ctx.createGain(); g.connect(ctx.destination); const e2 = new Engine(ctx, g); e2.apply(S);
+  const td = 60 / S.bpm / PPQ, t0 = ctx.currentTime + 0.05, lim = BAR * 4;
+  if (it.kind === 'arp') { for (const n of it.notes) if (n.t < lim) e2.lead([{ time: t0 + n.t * td, end: t0 + (n.t + Math.max(6, n.d)) * td, p: n.p, v: 0.55 + 0.4 * n.v, gs: t0 + n.t * td, cv: 0 }]); }
+  else { let b = 0; it.chords.forEach((c, i) => { if (b * PPQ < lim) { const vo = it.vo && it.vo[i] && it.vo[i].length >= 2 ? it.vo[i] : c.iv.map(x => 48 + A.mod12(c.root) + x); const T = t0 + b * PPQ * td, D = Math.min(c.len, 16 - b) * PPQ * td;
+    e2.chord(vo.filter(p => p >= 45), T, D, 0.9); e2.bass(36 + A.mod12(c.bass ?? c.root) + (A.mod12(c.bass ?? c.root) < 2 ? 12 : 0), T, D, 1); } b += c.len; }); }
+  btn.textContent = '■'; btn.classList.add('on');
+  const len = Math.min(lim, (it.kind === 'arp' ? it.bars : it.chords.reduce((a, c) => a + c.len, 0) / 4) * BAR);
+  aud = { g, btn, tm: setTimeout(() => { if (aud && aud.btn === btn) { btn.textContent = '▶'; btn.classList.remove('on'); aud = null; } }, len * td * 1000 + 1500) };
+}
+// an arp file -> the roll: moved to the current key, snapped to its grid, repeated / cut to the progression; overlapping notes become GLIDE lines
+function useArp(it) {
+  pushUndo(); const L = A.progTicks(S), st = BAR / A.RATES[it.rate], len = Math.max(1, it.bars) * BAR; let sh = A.mod12(S.key - it.key); if (sh > 6) sh -= 12;
+  const out = [], seen = new Set();
+  for (let base = 0; base < L; base += len) for (const n of it.notes) { const t = base + Math.round(n.t / st) * st, p = clamp(n.p + sh, 24, 108); if (t >= L || seen.has(t + ':' + p)) continue; seen.add(t + ':' + p);
+    out.push({ t, d: Math.max(6, Math.round(n.d / st * st) || st), p, v: clamp(n.v || 0.75, 0.1, 1), pass: false, l: { type: 'step', w: 0.55, f: 0.5, c: 0 }, end: n.t + n.d + base }); }
+  out.sort((a, b) => a.t - b.t || a.p - b.p);
+  for (let i = 0; i + 1 < out.length; i++) if (out[i].end > out[i + 1].t + 2 && out[i + 1].t > out[i].t) out[i].l = { type: 'glide', w: 0.6, f: 0.5, c: 0 };
+  out.forEach(n => delete n.end);
+  S.rate = it.rate; S.notes = out; S.edited = true; selLink = -1; rebuild(false); syncUI(); toast(`Arp loaded (${out.length} notes, moved ${sh >= 0 ? '+' : ''}${sh} to ${A.keyName(S.key, S.scale)})`);
+}
+
+// ---------------------------------------------------------------- FX rack UI
+const FX_HINT = { echo: 'repeats that wobble like tape', filt: 'filter moving in time', shim: 'big space, octave-up shimmer', crys: 'backwards sparkly grains', drive: 'warm saturation', wide: 'spreads the sound left / right' };
+function buildFxUI() {
+  const sc = $('scenes'); Object.keys(FX_SCENES).forEach(n => { const b = document.createElement('button'); b.textContent = n.toUpperCase(); b.dataset.v = n; b.onclick = () => { S.fx2 = sceneFx(n, S.fx2.chords); fxChanged(); toast('FX scene: ' + n); }; sc.appendChild(b); });
+  sliders.push(() => { [...sc.children].forEach(b => b.classList.toggle('on', b.dataset.v === S.fx2.scene)); $('fxScene').textContent = S.fx2.scene || 'custom';
+    $('fxChords').classList.toggle('on', !!S.fx2.chords); $('fxChords').textContent = 'FX ON CHORDS: ' + (S.fx2.chords ? 'ON' : 'OFF');
+    for (const k of ['drive', 'filt', 'echo', 'crys', 'shim', 'wide']) { const on = !!S.fx2[k].on; $('fxon_' + k).classList.toggle('on', on); $('fxb_' + k).classList.toggle('off', !on); } });
+  const box = $('fxBlocks');
+  const defs = [['echo', 'TAPE ECHO', [['fb', 'FEEDBACK'], ['wob', 'WOBBLE'], ['mix', 'MIX']], ['time', Object.keys(ECHO_SYNC)]], ['filt', 'FILTER SWEEP', [['cut', 'CUTOFF'], ['res', 'RESO'], ['depth', 'LFO DEPTH']], ['rate', Object.keys(LFO_SYNC)], ['type', ['lp', 'hp']]],
+    ['shim', 'SHIMMER', [['size', 'SIZE'], ['amt', 'SHIMMER'], ['mix', 'MIX']]], ['crys', 'CRYSTAL', [['mix', 'MIX']]], ['drive', 'DRIVE', [['amt', 'AMOUNT'], ['tone', 'TONE']]], ['wide', 'WIDE', [['amt', 'WIDTH']]]];
+  for (const [k, label, ctls, seg1, seg2] of defs) {
+    const b = document.createElement('div'); b.className = 'fxb'; b.id = 'fxb_' + k;
+    b.innerHTML = `<div class="fxh"><button id="fxon_${k}">${label}</button><small>${FX_HINT[k]}</small></div>` + (seg1 ? `<div class="seg" id="fxs_${k}"></div>` : '') + (seg2 ? `<div class="seg" id="fxs2_${k}"></div>` : '') +
+      ctls.map(([c, l]) => `<div class="ctl"><span>${l}</span><input type="range" id="fx2_${k}_${c}" min="0" max="1" step="0.01" style="--tint:var(--purple)"><output></output></div>`).join('');
+    box.appendChild(b);
+    $('fxon_' + k).onclick = () => { S.fx2[k].on = S.fx2[k].on ? 0 : 1; S.fx2.scene = 'custom'; fxChanged(); };
+    for (const [c] of ctls) slider(`fx2_${k}_${c}`, () => S.fx2[k][c], v => { S.fx2[k][c] = v; S.fx2.scene = 'custom'; fxChanged(true); });
+    if (seg1) seg('fxs_' + k, seg1[1].map(x => [x, x.toUpperCase()]), () => S.fx2[k][seg1[0]], v => { S.fx2[k][seg1[0]] = v; S.fx2.scene = 'custom'; fxChanged(); });
+    if (seg2) seg('fxs2_' + k, seg2[1].map(x => [x, x === 'lp' ? 'LOW-PASS' : 'HIGH-PASS']), () => S.fx2[k][seg2[0]], v => { S.fx2[k][seg2[0]] = v; S.fx2.scene = 'custom'; fxChanged(); });
+  }
+  $('fxChords').onclick = () => { S.fx2.chords = !S.fx2.chords; fxChanged(); };
+}
+function fxChanged(quiet) { if (eng) eng.apply(S); save(); if (!quiet) syncUI(); else { $('fxScene').textContent = S.fx2.scene; [...$('scenes').children].forEach(b => b.classList.toggle('on', b.dataset.v === S.fx2.scene)); } }
+
 // ---------------------------------------------------------------- animation
 const logo = $('logo'), moodCv = $('mood');
 let moodTarget = FACES.happy, face = JSON.parse(JSON.stringify(FACES.happy)), lastMood = null, lastFrame = 0;
@@ -461,8 +633,9 @@ addEventListener('resize', () => drawRoll());
 
 // ---------------------------------------------------------------- start
 S = load();
-if (S) { S.fx = { tone: 0.72, delay: 0.3, reverb: 0.3, pump: 0.4, ...S.fx }; S.mix = { arp: 0.8, chords: 0.45, bass: 0.5, kick: 0.5, ...S.mix }; if (!S.notes || !S.notes.length) S.edited = false; chords = A.resolveProg(S); if (!S.notes || !S.notes.length) S.notes = A.buildArp(S, chords); }
+if (S) { S.fx = { tone: 0.72, delay: 0.3, reverb: 0.3, pump: 0.4, ...S.fx }; S.fx2 = { ...fx2Defaults(), ...S.fx2 }; if (!A.GENRES[S.genre]) S.genre = 'melodic'; if (S.groove === undefined) S.groove = 0; S.mix = { arp: 0.8, chords: 0.45, bass: 0.5, kick: 0.5, ...S.mix }; if (!S.notes || !S.notes.length) S.edited = false; chords = A.resolveProg(S); if (!S.notes || !S.notes.length) S.notes = A.buildArp(S, chords); }
 else { const g = A.generate(DEF_PROMPT, 128); S = fromGen(g); }
+initStyleUI(); buildFxUI(); loadLibrary();
 view.bars = innerWidth < 560 ? (S.rate === '1/32' ? 1 : 2) : Math.min(8, Math.ceil(A.progTicks(S) / BAR));
 $('prompt').value = S.prompt || '';
 rebuild(false); syncUI(); drawSlots();
@@ -470,8 +643,9 @@ genHist = [{ prompt: S.prompt, seed: S.seed }]; genIdx = 0;
 requestAnimationFrame(frame);
 
 // ---------------------------------------------------------------- example render helper (used to make MP3 demos headless)
-window.renderExample = async (prompt, seed, loops = 2) => {
-  doGenerate(prompt, seed); const buf = await renderOffline(S, chords, S.notes, loops); const b = await wavBlob(buf).arrayBuffer();
+window.renderExample = async (prompt, seed, loops = 2, styleAmt = null, scene = null, profName = null) => {
+  if (profName) styPref.prof = profName; if (styleAmt !== null) styPref.amt = styleAmt; if (scene && S) S.fx2 = sceneFx(scene, false);
+  doGenerate(prompt, seed); window.lastExample = { chords: chords.map(c => c.name + (c.len !== 4 ? '(' + c.len + ')' : '')).join(' '), key: A.keyName(S.key, S.scale), bpm: S.bpm, rate: S.rate, style: S.style, notes: S.notes.length }; const buf = await renderOffline(S, chords, S.notes, loops); const b = await wavBlob(buf).arrayBuffer();
   let s = ''; const u = new Uint8Array(b); for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s);
 };
 
@@ -479,7 +653,7 @@ window.renderExample = async (prompt, seed, loops = 2) => {
 if (location.hash === '#selftest') (async () => {
   const log = (...a) => console.log('SELFTEST', ...a); let pass = 0, fail = 0;
   const ok = (cond, what) => { if (cond) pass++; else { fail++; log('FAIL', what); } };
-  const words = ['euphoric', 'dreamy', 'dark', 'sad', 'happy', 'tense', 'epic', 'chill', 'trance', 'progressive', 'deadmau5-y', 'house', 'techno', 'lofi', 'cinematic', 'in F minor', 'in D major', 'c#m', 'dorian', 'lydian', 'fast', 'slow', '1/8', '1/16', 'triplet', '1/32', 'octave up', 'sparse', 'busy', 'rolling', 'pluck', 'bell', 'acid glide', 'lush', '8 bars', '2 bars', 'pedal', 'random walk', 'harmonic', 'phrygian'];
+  const words = ['euphoric', 'dreamy', 'dark', 'sad', 'happy', 'tense', 'epic', 'chill', 'trance', 'progressive', 'melodic', 'house', 'techno', 'lofi', 'cinematic', 'in F minor', 'in D major', 'c#m', 'dorian', 'lydian', 'fast', 'slow', '1/8', '1/16', 'triplet', '1/32', 'octave up', 'sparse', 'busy', 'rolling', 'pluck', 'bell', 'acid glide', 'lush', '8 bars', '2 bars', 'pedal', 'random walk', 'harmonic', 'phrygian'];
   const R = A.rng(99); let vlSum = 0, vlN = 0, vlMax = 0, outKey = 0, totalNotes = 0, emptyBars = 0, moods = {};
   const t0 = performance.now();
   for (let k = 0; k < 50; k++) {
@@ -511,7 +685,7 @@ if (location.hash === '#selftest') (async () => {
   log(`moods: I-V-vi-IV=${mh} i-iv-v-i=${ms} harmonic i-iv-V7-i=${mt} lydian lush=${md} VI-VII-i fast=${me}`);
   ok(mh === 'happy', 'mood happy'); ok(ms === 'sad', 'mood sad'); ok(mt === 'tense', 'mood tense'); ok(md === 'dreamy', 'mood dreamy'); ok(me === 'epic', 'mood epic');
   // MIDI round trip
-  const gm = A.generate('deadmau5 minor pluck acid glide', 7), sm = { ...gm }, cm = A.resolveProg(sm), nm = A.buildArp(sm, cm);
+  const gm = A.generate('dark minor pluck acid glide', 7), sm = { ...gm }, cm = A.resolveProg(sm), nm = A.buildArp(sm, cm);
   const bytes = A.writeMidi(sm.bpm, [{ name: 'Arp', ch: 0, notes: A.arpMidiNotes(nm) }, { name: 'Chords', ch: 1, notes: A.chordMidiNotes(cm, true) }]), back = A.readMidi(bytes);
   const arpBack = back.notes.filter(n => n.ch === 0), exp = A.arpMidiNotes(nm);
   ok(arpBack.length === exp.length && arpBack.every((n, i) => n.p === exp[i].p && n.t === exp[i].t), 'midi arp round trip');
@@ -528,6 +702,61 @@ if (location.hash === '#selftest') (async () => {
     for (let i = 0; i < L.length; i++) { const x = L[i]; if (!Number.isFinite(x)) nan = true; else { pk = Math.max(pk, Math.abs(x)); rms += x * x; } }
     rms = Math.sqrt(rms / L.length); log(`render ${preset} 4 bars: peak=${pk.toFixed(3)} rms=${rms.toFixed(4)} nan=${nan} ms=${Math.round(performance.now() - tr)}`);
     ok(!nan && pk > 0.05 && pk <= 1.0 && rms > 0.01, 'render ' + preset);
+  }
+  // ---- style: synthetic library written with writeMidi (no outside files), learned profile, STYLE 0 = classic, STYLE 100 follows the profile
+  const synth = []; const mkProg = (toks, scale, key) => ({ key, scale, colour: 0.3, pedal: false, prog: toks.split(' ').map((tok, i) => ({ tok, r: 0.3 + 0.05 * i, r2: 0.9, alt: 0, len: 4 })) });
+  const pats = ['i v VI III', 'i v III VI', 'VI III i v', 'i v VI v', 'III VI i v', 'i v VI III i v VI VII'];
+  pats.forEach((t, i) => { const sp = mkProg(t, 'minor', (i * 5) % 12), cp = A.resolveProg(sp); synth.push(A.libItem('synth prog ' + i + '.mid', A.writeMidi(120, [{ name: 'Chords', ch: 0, notes: A.chordMidiNotes(cp, true) }]))); });
+  const synRates = []; for (let i = 0; i < 4; i++) { const ga = A.generate('hypnotic pluck in A minor', 300 + i), ca = A.resolveProg(ga); synRates.push(ga.rate); synth.push(A.libItem('synth ' + i + ' arp.mid', A.writeMidi(124, [{ name: 'Arp', ch: 0, notes: A.arpMidiNotes(A.buildArp(ga, ca)) }]))); }
+  ok(synth.filter(x => x.kind === 'chords').length === pats.length && synth.filter(x => x.kind === 'arp').length === 4, 'library: synthetic files parsed + classified');
+  ok(synth.filter(x => x.kind === 'chords').every((x, i) => x.chords.length === pats[i].split(' ').length && (pats[i][0] !== 'i' || A.mod12(x.key) === (i * 5) % 12)), 'library: chord count + key per file');
+  ok(synth.filter(x => x.kind === 'arp').every((x, i) => x.rate === synRates[i]), 'library: arp rate detected ' + synRates.join(','));
+  const SP = A.learnProfile(synth, 'Selftest style', 1), FPm = SP.fam.minor;
+  ok(FPm && FPm.tr.i && FPm.tr.i.v >= 0.9 && SP.arp && Object.keys(SP.arp.rate).length > 0, 'learn: transitions + arp rate ' + JSON.stringify(FPm && FPm.tr.i));
+  log('learned profile: ' + profSummary(SP) + ' colour=' + JSON.stringify(SP.colour) + ' arp=' + JSON.stringify(SP.arp));
+  // STYLE 0 = the classic generator, byte for byte (hash recorded from the previous version)
+  const baseHash = (sty, leg) => { const P = ['euphoric progressive pluck', 'dreamy lofi chill keys', 'dark techno rolling acid', 'epic trance 1/16 octave up', 'sad piano slow in F minor', 'melodic minor pluck', 'happy house 124 bpm 8 bars', ''], out = [];
+    for (const pr of P) for (const sd of [1, 128, 4242, 99999]) { const g = { ...A.generate(pr, sd, sty), ...(leg ? { groove: 1 } : {}) }, ch = A.resolveProg(g), n = A.buildArp(g, ch);
+      out.push(A.hashStr(JSON.stringify({ prog: g.prog, key: g.key, scale: g.scale, bpm: g.bpm, rate: g.rate, style: g.style, preset: g.preset, oct: g.oct, master: g.master, colour: g.colour, v: ch.map(c => c.voicing), n })));
+      out.push(A.hashStr(JSON.stringify(A.newProg(g, sd + 5, sty)))); }
+    return A.hashStr(out.join(',')); };
+  // (GROOVE 100 = the previous version's humanised rhythm, byte for byte; the default even grid has its own fixed hash)
+  ok(baseHash(null, true) === 1667418328, 'GROOVE 100 = previous version'); ok(baseHash(null) === 2991085046 && baseHash({ amt: 0, prof: SP }) === 2991085046, 'STYLE 0 identical to the generator without style');
+  // GROOVE 0: every bar has a note on every step of the rate grid, one length for all (ties are links, not longer notes)
+  let uneven = 0, gb = 0; for (const [pr, sty] of [['euphoric progressive pluck', null], ['sparse dreamy bell', null], ['tense cinematic triplet', null], ['dark techno 1/32', null], ['euphoric progressive', { amt: 1, prof: A.BUILTIN_PROFILE }]]) for (let sd = 1; sd <= 12; sd++) {
+    const g = A.generate(pr, sd, sty), ch = A.resolveProg(g), n = A.buildArp(g, ch), spb = A.RATES[g.rate], st = BAR / spb; if (g.groove) uneven++; if (new Set(n.map(x => x.d)).size > 1) uneven++;
+    for (let b = 0; b * BAR < A.progTicks(g); b++) { gb++; const on = n.filter(x => x.t >= b * BAR && x.t < (b + 1) * BAR).map(x => x.t).join(), want = Array.from({ length: spb }, (_, k) => b * BAR + Math.round(k * st)).join(); if (on !== want) uneven++; } }
+  ok(uneven === 0, `GROOVE 0 even grid (${gb} bars, ${uneven} problems)`); log(`groove 0: ${gb} bars checked, ${uneven} uneven`);
+  ok(A.parsePrompt('rolling glitchy acid').groove > 0 && A.parsePrompt('euphoric progressive pluck').groove === 0, 'prompt words raise GROOVE');
+  // STYLE 100 follows the profile's most likely next chord more often than STYLE 0
+  const best = {}; for (const a in FPm.tr) best[a] = Object.entries(FPm.tr[a]).sort((x, y) => y[1] - x[1])[0][0];
+  const follow = amt => { let hit = 0, n = 0; for (let sd = 1; sd <= 60; sd++) { const g = A.generate('emotional minor pluck', sd, amt ? { amt, prof: SP } : null); for (let i = 1; i < g.prog.length; i++) { const a = g.prog[i - 1].tok; if (best[a]) { n++; if (g.prog[i].tok === best[a]) hit++; } } } return hit / Math.max(1, n); };
+  const f0 = follow(0), f1 = follow(1); log(`style follow rate: STYLE 0 = ${(f0 * 100).toFixed(1)}%  STYLE 100 = ${(f1 * 100).toFixed(1)}%`);
+  ok(f1 > f0 + 0.15, 'STYLE 100 follows the learned transitions');
+  ok(JSON.stringify(A.generate('emotional minor pluck', 9, { amt: 1, prof: SP })) === JSON.stringify(A.generate('emotional minor pluck', 9, { amt: 1, prof: SP })), 'style determinism');
+  // copy guard: a library file that equals a generated idea is caught and the idea is changed; 60 STYLE 100 ideas end with no copies
+  const gc = A.generate('emotional minor pluck', 21, { amt: 1, prof: SP }), cc = A.resolveProg(gc), nc = A.buildArp(gc, cc);
+  const twin = [A.libItem('twin.mid', A.writeMidi(120, [{ name: 'C', ch: 0, notes: A.chordMidiNotes(cc, false) }])), A.libItem('twin arp.mid', A.writeMidi(120, [{ name: 'A', ch: 0, notes: nc.map(n => ({ t: n.t, d: n.d, p: n.p, v: n.v })) }]))];
+  const G2 = A.buildGuard(synth.concat(twin)), hits0 = A.chordHits(cc, G2).length, sc2 = { ...gc, prog: gc.prog.map(p => ({ ...p })) }, ch2 = A.guardProg(sc2, G2), hits1 = A.chordHits(A.resolveProg(sc2), G2).length;
+  const an = nc.map(n => ({ ...n })), aw0 = A.arpWins(an, A.progTicks(gc)).filter(w => G2.arp.has(w)).length, achg = A.guardArp(an, G2, A.progTicks(gc)), aw1 = A.arpWins(an, A.progTicks(gc)).filter(w => G2.arp.has(w)).length;
+  ok(hits0 > 0 && hits1 === 0 && ch2 > 0, `guard chords: ${hits0} copied windows -> ${hits1} after ${ch2} changes`); ok(aw0 > 0 && aw1 === 0, `guard arp: ${aw0} copied windows -> ${aw1} after ${achg} changes`);
+  let left = 0, changed = 0; for (let sd = 1; sd <= 60; sd++) { const g = A.generate('emotional minor pluck', sd, { amt: 1, prof: SP }); changed += A.guardProg(g, G2); left += A.chordHits(A.resolveProg(g), G2).length;
+    const n = A.buildArp(g, A.resolveProg(g)); A.guardArp(n, G2, A.progTicks(g)); left += A.arpWins(n, A.progTicks(g)).filter(w => G2.arp.has(w)).length; }
+  ok(left === 0, 'no exact copies in 60 STYLE 100 ideas'); log(`guard: 60 ideas, ${changed} chord changes, ${left} copies left`);
+  // built-in profile works too, and stays in key
+  let outB = 0; for (let sd = 1; sd <= 30; sd++) { const g = A.generate(['euphoric progressive', 'dreamy lydian', 'dark phrygian'][sd % 3], sd, { amt: 1, prof: A.BUILTIN_PROFILE }), ch = A.resolveProg(g); for (const n of A.buildArp(g, ch)) { if (!Number.isFinite(n.p)) { outB++; continue; } const c = A.chordAt(ch, n.t), pc = A.mod12(n.p - g.key); if (!(A.SCALES[g.scale].includes(pc) || c.pcs.includes(A.mod12(n.p)) || (c.cs && c.cs.includes(pc)))) outB++; } }
+  ok(outB === 0, 'Professor B5 STYLE 100: notes in key (' + outB + ' out)');
+  // library storage round trip
+  try { await DB.put('lib', { ...synth[0], id: '__selftest' }); const back = (await DB.all('lib')).find(x => x.id === '__selftest'); await DB.del('lib', '__selftest'); ok(back && back.chords.length === synth[0].chords.length, 'IndexedDB round trip'); }
+  catch (e) { ok(false, 'IndexedDB round trip ' + e.message); }
+  // FX: every scene renders (arp + chords through the rack), no NaN, sane peaks, and differs from Clean
+  let cleanRms = 0;
+  for (const scn of Object.keys(FX_SCENES)) {
+    const tr = performance.now(), buf = await renderOffline({ ...s4, preset: 'pluck', fx2: sceneFx(scn, scn === 'Dreamy' || scn === 'Tape') }, c4, n4, 1, 1.5); let pk = 0, rms = 0, nan = false;
+    for (let chn = 0; chn < 2; chn++) { const L = buf.getChannelData(chn); for (let i = 0; i < L.length; i++) { const x = L[i]; if (!Number.isFinite(x)) nan = true; else { pk = Math.max(pk, Math.abs(x)); rms += x * x; } } }
+    rms = Math.sqrt(rms / buf.length / 2); if (scn === 'Clean') cleanRms = rms;
+    log(`render FX ${scn}: peak=${pk.toFixed(3)} rms=${rms.toFixed(4)} nan=${nan} ms=${Math.round(performance.now() - tr)}`);
+    ok(!nan && pk > 0.05 && pk <= 1.0 && rms > 0.01 && (scn === 'Clean' || Math.abs(rms - cleanRms) > 1e-4), 'render FX ' + scn);
   }
   log(`done pass=${pass} fail=${fail}`);
 })();

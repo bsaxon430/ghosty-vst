@@ -65,6 +65,8 @@ input[type=range]::-moz-range-thumb { width: 18px; height: 18px; border-radius: 
 #bpm { --tint: var(--cyan); flex: 1; padding: 11px 4px; touch-action: none; font-variant-numeric: tabular-nums; }
 #loop { --tint: var(--gold); flex: .8; padding: 11px 2px; }
 #undo, #theme { flex: .7; padding: 11px 2px; }
+.transport > button { min-width: 0; }
+@media (max-width: 400px) { .transport { gap: 4px; } .transport > button { font-size: 11px; padding-left: 1px; padding-right: 1px; } #play { font-size: 13px; } }
 .ctl { display: grid; grid-template-columns: 64px 1fr 40px; align-items: center; gap: 8px; margin-top: 4px; }
 .ctl > span:first-child { color: var(--dim); font-size: 11px; }
 .ctl output { color: var(--dim); font-size: 11px; text-align: right; font-variant-numeric: tabular-nums; }
@@ -108,6 +110,37 @@ footer a { color: var(--cyan); text-decoration: none; }
 #menu { position: fixed; z-index: 30; background: var(--card); border: 1.3px solid var(--line); border-radius: 12px; padding: 6px; display: none; min-width: 180px; box-shadow: 0 10px 30px rgba(0,0,0,.4); }
 #menu button { display: block; width: 100%; text-align: left; margin: 3px 0; padding: 9px 10px; font-size: 12px; }
 #menu .mt { color: var(--dim); font-size: 11px; padding: 4px 6px; }
+.stylebox { margin-top: 8px; padding-top: 6px; border-top: 1px dashed color-mix(in srgb, var(--pink) 35%, transparent); }
+.srow { display: grid; grid-template-columns: 1fr 40px minmax(0, 132px); gap: 8px; align-items: center; }
+.srow output { color: var(--dim); font-size: 11px; text-align: right; font-variant-numeric: tabular-nums; }
+.srow select { padding: 6px 4px; font-size: 11px; width: 100%; }
+#styleAmt { --tint: var(--gold); }
+.btns3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.btns3 .filebtn { padding: 9px 2px; font-size: 11px; text-align: center; }
+#libSearch { width: 100%; margin-top: 8px; padding: 8px 10px; }
+#libList { margin-top: 8px; max-height: 300px; overflow-y: auto; overscroll-behavior: contain; border-radius: 10px; border: 1px solid var(--line); }
+#libList:empty::before { content: 'Your library is empty. Add .mid files, a folder or a .zip; they stay on this device.'; display: block; color: var(--dim); font-size: 11px; padding: 12px; }
+.li { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+.li:last-child { border-bottom: 0; }
+.li button { padding: 6px 8px; font-size: 11px; }
+.li .lt { min-width: 0; display: flex; flex-direction: column; }
+.li .lt b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px; }
+.li .lt i { font-style: normal; color: var(--dim); font-size: 10.5px; }
+.li.arp .lt b { color: var(--cyan); }
+.li button.on { --tint: var(--green); }
+.profrow { margin-top: 8px; gap: 6px; flex-wrap: nowrap; }
+.profrow .hint { flex: 1; min-width: 0; margin: 0; }
+.profrow button { padding: 6px 8px; font-size: 11px; flex: none; }
+.scenes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.scenes button { padding: 8px 0; font-size: 11px; }
+.fxb { margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--line); }
+.fxb .fxh { display: flex; align-items: center; gap: 8px; }
+.fxb .fxh button { padding: 6px 10px; font-size: 11px; min-width: 104px; text-align: left; }
+.fxb .fxh small { color: var(--dim); font-size: 10.5px; font-weight: 600; }
+.fxb .seg button { padding: 6px 0; font-size: 10.5px; }
+.fxb.off .ctl, .fxb.off .seg { display: none; }
+.cols2 { display: grid; grid-template-columns: 1fr; gap: 0 10px; }
+@media (min-width: 900px) { .cols2 { grid-template-columns: 1fr 1fr; } }
 @media (min-width: 700px) {
   #logo { width: 104px; height: 104px; }
   #mood { width: 80px; height: 80px; } .moodbox { width: 90px; }
@@ -147,6 +180,10 @@ footer a { color: var(--cyan); text-decoration: none; }
         <div class="lbl"><span>simple</span><b>MASTER</b><span>wild</span></div>
         <input type="range" id="master" min="0" max="1" step="0.01" value="0.5" aria-label="Master: one slider changes everything">
         <div class="lbl"><span>sparse, close, straight</span><span>busy, wide, syncopated</span></div>
+        <div class="stylebox">
+          <div class="lbl"><span>classic</span><b id="styleLbl">STYLE: Professor B5</b><span>learned</span></div>
+          <div class="srow"><input type="range" id="styleAmt" min="0" max="1" step="0.01" value="0" aria-label="Style: how much GENERATE follows the chosen style profile"><output id="styleV">0%</output><select id="styleProf" aria-label="Style profile"></select></div>
+        </div>
       </div>
     </section>
 
@@ -197,6 +234,7 @@ footer a { color: var(--cyan); text-decoration: none; }
       <div class="seglbl">STYLE</div><select id="style" style="width:100%;margin-top:6px"></select>
       <div class="seglbl">OCTAVES</div><div class="seg" id="octSeg"></div>
       <div class="ctl"><span>GATE</span><input type="range" id="gate" min="0.1" max="1" step="0.01" style="--tint:var(--green)"><output id="gateV"></output></div>
+      <div class="ctl"><span>GROOVE</span><input type="range" id="groove" min="0" max="1" step="0.01" style="--tint:var(--green)" title="0 = perfectly even notes; higher = rests, ratchets, accents"><output></output></div>
       <div class="ctl"><span>SWING</span><input type="range" id="swing" min="0" max="0.8" step="0.01" style="--tint:var(--green)"><output id="swingV"></output></div>
       <div class="btns"><button id="newArp" style="--tint:var(--green)">NEW ARP</button><button id="regOct" style="--tint:var(--green)">REGISTER 0</button></div>
     </section>
@@ -224,13 +262,34 @@ footer a { color: var(--cyan); text-decoration: none; }
       <button id="reset" style="--tint:var(--red);margin-top:8px;width:100%">START OVER</button>
     </section>
   </div>
+  <div class="cols2">
+    <section class="card" style="--tint:var(--cyan)" id="libCard">
+      <h2>MIDI LIBRARY <small id="libInfo">empty</small></h2>
+      <div class="btns3">
+        <label class="filebtn">ADD FILES<input type="file" id="libFiles" multiple accept=".mid,.midi,.zip,audio/midi,audio/x-midi,application/zip"></label>
+        <label class="filebtn">ADD FOLDER<input type="file" id="libDir" webkitdirectory multiple></label>
+        <label class="filebtn">ADD ZIP<input type="file" id="libZip" accept=".zip,application/zip"></label>
+      </div>
+      <input type="text" id="libSearch" placeholder="search: name, key, arp, chords" autocomplete="off">
+      <div id="libList"></div>
+      <div class="btns"><button id="learn" style="--tint:var(--pink)">LEARN FROM MY MIDI</button><button id="libClear" style="--tint:var(--red)">CLEAR LIBRARY</button></div>
+      <div class="row profrow"><span class="hint" id="profInfo"></span><button id="profRename">RENAME</button><button id="profDel" style="--tint:var(--red)">DELETE</button></div>
+      <div class="hint">&#9654; = listen &middot; USE CHORDS loads a progression into the chord slots &middot; USE ARP loads an arp into the roll. Files are read on this device and kept only in this browser; nothing is uploaded. Drop many files, a folder or a .zip anywhere on the page.</div>
+    </section>
+    <section class="card" style="--tint:var(--purple)" id="fxCard">
+      <h2>FX <small id="fxScene">Clean</small></h2>
+      <div class="scenes" id="scenes"></div>
+      <div id="fxBlocks"></div>
+      <button id="fxChords" style="width:100%;margin-top:10px">FX ON CHORDS: OFF</button>
+    </section>
+  </div>
   <footer><a id="fbMail" href="#">Send feedback by email</a> &middot; <a id="fbSms" href="#">by text</a><br>ArpEZator web preview &middot; all sounds made live in your browser</footer>
 </div>
 <div id="menu"></div>
 <div id="toast"></div>
-<script src="theory.js?v=202610200132"></script>
-<script src="gfx.js?v=202610200132"></script>
-<script src="audio.js?v=202610200132"></script>
-<script src="app.js?v=202610200132"></script>
+<script src="theory.js?v=202610201200"></script>
+<script src="gfx.js?v=202610201200"></script>
+<script src="audio.js?v=202610201200"></script>
+<script src="app.js?v=202610201200"></script>
 </body>
 </html>

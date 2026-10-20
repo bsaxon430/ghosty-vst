@@ -21,6 +21,77 @@ function makeIR(ctx, secs) {
   return b;
 }
 
+// ---------------------------------------------------------------- FX rack (arp, optionally chords): DRIVE > FILTER SWEEP > TAPE ECHO > CRYSTAL >
+// SHIMMER > WIDE. Every block is plain Web Audio nodes (no worklets), off = dry path only. The offline WAV render builds the same rack.
+const ECHO_SYNC = { '1/8': 0.5, '1/8d': 0.75, '1/4': 1 }, LFO_SYNC = { '1/4': 1, '1/2': 2, '1 bar': 4, '2 bars': 8, '4 bars': 16 };
+const fx2Defaults = () => ({ chords: false, scene: 'Clean', drive: { on: 0, amt: 0.4, tone: 0.55 }, filt: { on: 0, type: 'lp', cut: 0.55, res: 0.35, rate: '2 bars', depth: 0.5 },
+  echo: { on: 0, time: '1/8d', fb: 0.4, wob: 0.3, mix: 0.3 }, crys: { on: 0, mix: 0.4 }, shim: { on: 0, size: 0.6, amt: 0.5, mix: 0.35 }, wide: { on: 0, amt: 0.7 } });
+const FX_SCENES = {
+  Clean: {},
+  Dreamy: { shim: { on: 1, size: 0.75, amt: 0.6, mix: 0.42 }, echo: { on: 1, time: '1/8d', fb: 0.45, wob: 0.25, mix: 0.28 } },
+  Tape: { echo: { on: 1, time: '1/4', fb: 0.5, wob: 0.65, mix: 0.34 }, drive: { on: 1, amt: 0.35, tone: 0.42 }, filt: { on: 1, type: 'lp', cut: 0.66, res: 0.2, rate: '4 bars', depth: 0.18 } },
+  Sweep: { filt: { on: 1, type: 'lp', cut: 0.48, res: 0.55, rate: '2 bars', depth: 0.75 } },
+  Crystal: { crys: { on: 1, mix: 0.45 }, shim: { on: 1, size: 0.5, amt: 0.3, mix: 0.2 } },
+  Wide: { wide: { on: 1, amt: 0.85 }, echo: { on: 1, time: '1/8', fb: 0.25, wob: 0.1, mix: 0.16 } },
+};
+function sceneFx(name, keepChords) { const d = fx2Defaults(), sc = FX_SCENES[name] || {}; for (const k in sc) d[k] = { ...d[k], ...sc[k] }; d.scene = name; d.chords = !!keepChords; return d; }
+// two crossfaded delay taps swept by sawtooth LFOs. sign -1 with sweep A = period P: an octave up; sign +1 with A = 2P: played backwards
+function grainShift(c, P, A, sign, t0) {
+  const inp = c.createGain(), out = c.createGain(), win = new Float32Array(257);
+  for (let i = 0; i < 257; i++) win[i] = Math.max(0, 1 - Math.abs(i / 128 - 1));
+  for (let k = 0; k < 2; k++) {
+    const d = c.createDelay(1), o = c.createOscillator(), og = c.createGain(), sh = c.createWaveShaper(), g = c.createGain();
+    o.type = 'sawtooth'; o.frequency.value = 1 / P; og.gain.value = sign * A / 2; d.delayTime.value = A / 2 + 0.004; o.connect(og); og.connect(d.delayTime);
+    sh.curve = win; o.connect(sh); g.gain.value = 0; sh.connect(g.gain);
+    inp.connect(d); d.connect(g); g.connect(out); o.start(t0 + k * P / 2);
+  }
+  return { inp, out };
+}
+function softCurve(k) { const n = 1024, a = new Float32Array(n), t = Math.tanh(k); for (let i = 0; i < n; i++) { const x = i / (n - 1) * 2 - 1; a[i] = Math.tanh(k * x) / t; } return a; }
+class FxRack {
+  constructor(c) {
+    const G = v => { const g = c.createGain(); g.gain.value = v; return g; }, t0 = c.currentTime;
+    this.c = c; this.inp = G(1); this.out = G(1);
+    const block = () => { const b = { i: G(1), o: G(1), dry: G(1), wet: G(0) }; b.i.connect(b.dry); b.dry.connect(b.o); b.wet.connect(b.o); return b; };
+    // drive
+    const dr = this.drive = block(); dr.sh = c.createWaveShaper(); dr.lp = c.createBiquadFilter(); dr.lp.type = 'lowpass'; dr.i.connect(dr.sh); dr.sh.connect(dr.lp); dr.lp.connect(dr.wet);
+    // filter sweep (LFO on detune, in cents)
+    const fl = this.filt = block(); fl.bq = c.createBiquadFilter(); fl.i.connect(fl.bq); fl.bq.connect(fl.wet);
+    fl.lfo = c.createOscillator(); fl.lfo.frequency.value = 0.5; fl.lg = G(0); fl.lfo.connect(fl.lg); fl.lg.connect(fl.bq.detune); fl.lfo.start(t0);
+    // tape echo: darkening, softly saturating feedback, wobbling delay time
+    const ec = this.echo = block(); ec.wet.gain.value = 1; ec.send = G(0); ec.d = c.createDelay(2); ec.lp = c.createBiquadFilter(); ec.lp.type = 'lowpass'; ec.lp.frequency.value = 2600; ec.hp = c.createBiquadFilter(); ec.hp.type = 'highpass'; ec.hp.frequency.value = 160;
+    ec.sat = c.createWaveShaper(); ec.sat.curve = softCurve(1.6); ec.fb = G(0);
+    ec.i.connect(ec.send); ec.send.connect(ec.d); ec.d.connect(ec.lp); ec.lp.connect(ec.hp); ec.hp.connect(ec.sat); ec.sat.connect(ec.fb); ec.fb.connect(ec.d); ec.sat.connect(ec.wet);
+    ec.lfo = c.createOscillator(); ec.lfo.frequency.value = 0.7; ec.lg = G(0); ec.lfo.connect(ec.lg); ec.lg.connect(ec.d.delayTime); ec.lfo.start(t0);
+    // crystal: reversed grains, bright, a short echo that drifts across the stereo field
+    const cr = this.crys = block(); cr.wet.gain.value = 1; cr.send = G(0); cr.gs = grainShift(c, 0.11, 0.22, 1, t0); cr.hp = c.createBiquadFilter(); cr.hp.type = 'highpass'; cr.hp.frequency.value = 700;
+    cr.d = c.createDelay(2); cr.fb = G(0.42); cr.pan = c.createStereoPanner(); cr.plfo = c.createOscillator(); cr.plfo.frequency.value = 0.23; cr.pg = G(0.7); cr.plfo.connect(cr.pg); cr.pg.connect(cr.pan.pan); cr.plfo.start(t0);
+    cr.i.connect(cr.send); cr.send.connect(cr.gs.inp); cr.gs.out.connect(cr.hp); cr.hp.connect(cr.d); cr.d.connect(cr.fb); cr.fb.connect(cr.d); cr.hp.connect(cr.pan); cr.d.connect(cr.pan); cr.pan.connect(cr.wet);
+    // shimmer reverb: convolver whose tail is fed back an octave up
+    const sm = this.shim = block(); sm.wet.gain.value = 1; sm.send = G(0); sm.sum = G(1); sm.conv = c.createConvolver(); sm.gs = grainShift(c, 0.06, 0.06, -1, t0);
+    sm.hp = c.createBiquadFilter(); sm.hp.type = 'highpass'; sm.hp.frequency.value = 500; sm.lp = c.createBiquadFilter(); sm.lp.type = 'lowpass'; sm.lp.frequency.value = 8000; sm.fb = G(0); sm.ret = G(0.9);
+    sm.i.connect(sm.send); sm.send.connect(sm.sum); sm.sum.connect(sm.conv); sm.conv.connect(sm.ret); sm.ret.connect(sm.wet); sm.conv.connect(sm.gs.inp); sm.gs.out.connect(sm.hp); sm.hp.connect(sm.lp); sm.lp.connect(sm.fb); sm.fb.connect(sm.sum);
+    // wide: two short opposite-panned taps (Haas)
+    const wd = this.wide = block(); wd.wet.gain.value = 1;
+    for (const [dt, pn] of [[0.011, 1], [0.017, -1]]) { const d = c.createDelay(0.05), p = c.createStereoPanner(), g = G(0); d.delayTime.value = dt; p.pan.value = pn; wd.i.connect(d); d.connect(g); g.connect(p); p.connect(wd.wet); (wd.taps = wd.taps || []).push(g); }
+    const chain = [dr, fl, ec, cr, sm, wd]; this.inp.connect(dr.i); for (let k = 0; k + 1 < chain.length; k++) chain[k].o.connect(chain[k + 1].i); wd.o.connect(this.out);
+    this.irSize = -1; this.drAmt = -1;
+  }
+  apply(F, bpm) {
+    const t = this.c.currentTime, set = (p, v) => p.setTargetAtTime(v, t, 0.03), beat = 60 / bpm, d = fx2Defaults();
+    const f = k => ({ ...d[k], ...((F || {})[k] || {}) }), dr = f('drive'), fl = f('filt'), ec = f('echo'), cr = f('crys'), sm = f('shim'), wd = f('wide');
+    const ins = (b, on) => { set(b.dry.gain, on ? 0 : 1); set(b.wet.gain, on ? 1 : 0); };
+    ins(this.drive, dr.on); set(this.drive.wet.gain, dr.on ? 1 / (1 + dr.amt * 0.9) : 0); if (Math.abs(dr.amt - this.drAmt) > 0.01) { this.drive.sh.curve = softCurve(1 + dr.amt * 7); this.drAmt = dr.amt; } set(this.drive.lp.frequency, 900 * Math.pow(2, dr.tone * 4.2));
+    ins(this.filt, fl.on); this.filt.bq.type = fl.type === 'hp' ? 'highpass' : 'lowpass'; set(this.filt.bq.frequency, 60 * Math.pow(2, fl.cut * 8.3)); set(this.filt.bq.Q, 0.7 + fl.res * 13);
+    set(this.filt.lfo.frequency, 1 / (beat * (LFO_SYNC[fl.rate] || 8))); set(this.filt.lg.gain, fl.on ? fl.depth * 2600 : 0);
+    const et = beat * (ECHO_SYNC[ec.time] || 0.75); set(this.echo.d.delayTime, et); set(this.echo.send.gain, ec.on ? ec.mix * 0.75 : 0); set(this.echo.fb.gain, ec.fb * 0.82); set(this.echo.lg.gain, ec.on ? ec.wob * 0.0035 : 0);
+    set(this.crys.send.gain, cr.on ? cr.mix * 1.1 : 0); set(this.crys.d.delayTime, beat * 0.375);
+    const sz = Math.round(sm.size * 10) / 10; if (sz !== this.irSize) { this.shim.conv.buffer = makeIR(this.c, 1.2 + sz * 3); this.irSize = sz; }
+    set(this.shim.send.gain, sm.on ? sm.mix * 0.9 : 0); set(this.shim.fb.gain, sm.on ? sm.amt * 0.5 : 0);
+    for (const g of this.wide.taps) set(g.gain, wd.on ? wd.amt * 0.55 : 0);
+  }
+}
+
 class Engine {
   constructor(ctx, out) {
     this.ctx = ctx; const c = ctx;
@@ -30,8 +101,10 @@ class Engine {
     this.pumpG = c.createGain(); this.pumpG.connect(this.master);
     this.arpBus = c.createGain();
     this.tone = c.createBiquadFilter(); this.tone.type = 'lowpass'; this.tone.Q.value = 0.6;
-    this.arpOut = c.createGain(); this.arpBus.connect(this.tone); this.tone.connect(this.arpOut); this.arpOut.connect(this.pumpG);
-    this.chordBus = c.createGain(); this.chordBus.connect(this.pumpG);
+    this.arpOut = c.createGain(); this.arpBus.connect(this.tone); this.tone.connect(this.arpOut);
+    this.fxr = new FxRack(c); this.arpOut.connect(this.fxr.inp); this.fxr.out.connect(this.pumpG);
+    this.chordBus = c.createGain(); this.chordDry = c.createGain(); this.chordFx = c.createGain(); this.chordFx.gain.value = 0;
+    this.chordBus.connect(this.chordDry); this.chordDry.connect(this.pumpG); this.chordBus.connect(this.chordFx); this.chordFx.connect(this.fxr.inp);
     this.bassBus = c.createGain(); this.bassBus.connect(this.pumpG);
     this.kickBus = c.createGain(); this.kickBus.connect(this.master);
     // ping-pong delay with a darkening feedback loop
@@ -53,6 +126,7 @@ class Engine {
     const beat = 60 / S.bpm; set(this.dL.delayTime, beat * 0.75); set(this.dR.delayTime, beat * 0.75);
     set(this.dSend.gain, fx.delay * 0.55); set(this.fb.gain, 0.25 + fx.delay * 0.3);
     set(this.rSend.gain, fx.reverb * 0.9); set(this.chordRev.gain, 0.6);
+    const F = S.fx2 || fx2Defaults(); this.fxr.apply(F, S.bpm); set(this.chordDry.gain, F.chords ? 0 : 1); set(this.chordFx.gain, F.chords ? 1 : 0);
   }
   // one lead voice through a chain of notes [{time, end, p, v, gs, cv}] (gs = when the glide into this note starts)
   lead(chain) {
