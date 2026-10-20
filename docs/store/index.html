@@ -25,6 +25,10 @@ h1 b { background: linear-gradient(90deg, var(--slime), var(--ecto), var(--pink)
 .btn { display: inline-block; background: var(--slime); color: #07120c; font-weight: 800; text-decoration: none; padding: 12px 20px; border-radius: 12px; border: 0; cursor: pointer; font-size: 16px; }
 .btn.alt { background: transparent; color: var(--ink); border: 1px solid var(--line); }
 .btn.soon { background: var(--card); color: var(--dim); border: 1px dashed var(--line); cursor: default; }
+.vids { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+.vids figure { margin: 0; background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.vids video { width: 100%; display: block; aspect-ratio: 16/9; background: #000; }
+.vids figcaption { padding: 8px 12px; color: var(--dim); font-size: 14px; }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; }
 .card video { width: 100%; display: block; aspect-ratio: 16/9; object-fit: cover; background: #000; border-bottom: 1px solid var(--line); }
@@ -133,6 +137,16 @@ a { color: var(--ecto); }
         <div class="row"><div class="price">$19</div><a class="btn" data-product="beatsSpectrum" href="#">Buy</a></div>
       </div>
     </div>
+  </div>
+
+  <h2 class="sec">See them in action</h2>
+  <div class="vids">
+    <figure><video src="../media/ghostypro-demo2.mp4" poster="../media/ghostypro-demo2.jpg" controls playsinline preload="none"></video><figcaption>Ghosty Pro: presets, ghosts, FX</figcaption></figure>
+    <figure><video src="../media/poltergeist-demo.mp4" poster="../media/poltergeist-demo.jpg" controls playsinline preload="none"></video><figcaption>Poltergeist: type a sound, SUMMON</figcaption></figure>
+    <figure><video src="../media/beats-demo.mp4" poster="../media/beats-demo.jpg" controls playsinline preload="none"></video><figcaption>Ghosty Beats: kits, pads, song mode</figcaption></figure>
+    <figure><video src="../media/mickens-demo2.mp4" poster="../media/mickens-demo2.jpg" controls playsinline preload="none"></video><figcaption>Mr. Mickens: bays, chops, stutter</figcaption></figure>
+    <figure><video src="../media/spectrum-demo2.mp4" poster="../media/spectrum-demo2.jpg" controls playsinline preload="none"></video><figcaption>Ghosty Spectrum in FL Studio</figcaption></figure>
+    <figure><video src="../media/ghosty-phone.mp4" poster="../media/ghosty-phone.jpg" controls playsinline preload="none"></video><figcaption>Free Ghosty</figcaption></figure>
   </div>
 
   <h2 class="sec">Free: Ghosty</h2>
