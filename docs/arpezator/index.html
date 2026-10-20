@@ -166,7 +166,7 @@ footer a { color: var(--cyan); text-decoration: none; }
 
   <div class="row transport">
     <button id="play">PLAY</button>
-    <button id="bpm" title="drag up/down, long-press or right-click to type">128 BPM</button>
+    <button id="bpm" title="tap to type a tempo, or drag up/down">128 BPM</button><button id="tap" title="tap in time to set the tempo">TAP</button>
     <button id="loop" class="on">LOOP</button>
     <button id="undo">UNDO</button>
     <button id="theme">LIGHT</button>
@@ -176,7 +176,7 @@ footer a { color: var(--cyan); text-decoration: none; }
     <div class="rolltools">
       <button id="zoomOut">&minus;</button><button id="zoomIn">+</button>
       <span class="grow" id="rollInfo"></span>
-      <button id="follow" class="on" style="--tint:var(--cyan)">FOLLOW</button>
+      <button id="snap" class="on" style="--tint:var(--green)" title="dragged/tapped notes stay in key">SNAP KEY</button><button id="follow" class="on" style="--tint:var(--cyan)">FOLLOW</button>
     </div>
     <canvas id="roll"></canvas>
     <canvas id="mini"></canvas>

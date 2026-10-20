@@ -104,6 +104,7 @@ function setBars(n) {
 }
 function syncUI() {
   sliders.forEach(f => f());
+  $('snap').classList.toggle('on', S.snapKey !== false);
   $('style').value = S.style; $('key').value = S.key; $('scale').value = S.scale;
   $('seed').value = S.seed; $('bpm').textContent = S.bpm + ' BPM'; $('loop').classList.toggle('on', S.loop);
   $('regOct').textContent = 'REGISTER ' + (S.reg > 0 ? '+' : '') + S.reg;
@@ -117,8 +118,16 @@ $('loop').onclick = () => { S.loop = !S.loop; syncUI(); save(); };
 (() => { const b = $('bpm'); let y0 = 0, v0 = 0, drag = false;
   b.addEventListener('pointerdown', e => { b.setPointerCapture(e.pointerId); y0 = e.clientY; v0 = S.bpm; drag = false; });
   b.addEventListener('pointermove', e => { if (!b.hasPointerCapture(e.pointerId)) return; const dy = y0 - e.clientY; if (Math.abs(dy) > 4) drag = true; if (drag) { S.bpm = clamp(Math.round(v0 + dy / 3), 60, 200); b.textContent = S.bpm + ' BPM'; if (eng) eng.apply(S); save(); } });
-  typeIn(b, 'Tempo (60 to 200 BPM)', () => S.bpm, v => { S.bpm = clamp(Math.round(v), 60, 200); syncUI(); if (eng) eng.apply(S); save(); });
+  const setBpm = v => { S.bpm = clamp(Math.round(v), 60, 200); syncUI(); if (eng) eng.apply(S); save(); };
+  typeIn(b, 'Tempo (60 to 200 BPM)', () => S.bpm, setBpm);
+  // a plain tap (no drag) opens the type box straight away
+  b.addEventListener('pointerup', () => { if (drag) return; const v = prompt('Tempo (60 to 200 BPM)', S.bpm); if (v !== null && isFinite(parseFloat(v))) setBpm(parseFloat(v)); });
+  // TAP TEMPO: average of the last taps; a 2 s pause starts over
+  let taps = []; $('tap').onclick = () => { const now = performance.now(); if (taps.length && now - taps[taps.length - 1] > 2000) taps = []; taps.push(now); if (taps.length > 8) taps.shift();
+    if (taps.length >= 2) { const avg = (taps[taps.length - 1] - taps[0]) / (taps.length - 1); let bpm = 60000 / avg; while (bpm < 60) bpm *= 2; while (bpm > 200) bpm /= 2; setBpm(bpm); }
+    $('tap').classList.add('on'); setTimeout(() => $('tap').classList.remove('on'), 90); };
 })();
+$('snap').onclick = () => { S.snapKey = S.snapKey === false; $('snap').classList.toggle('on', S.snapKey !== false); save(); };
 
 // ---------------------------------------------------------------- chord chips
 let playTick = -1;
@@ -312,6 +321,10 @@ function hitTest(G, x, y) {
 }
 const rel = e => { const r = roll.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
 roll.addEventListener('contextmenu', e => e.preventDefault());
+// SNAP TO KEY: notes you drag or tap land only on notes of the key (or the chord playing there); off = any note
+function okPitch(p, t) { if (S.snapKey === false) return true; const pc = A.mod12(p - S.key), ch = A.chordAt(chords, t);
+  return A.SCALES[S.scale].includes(pc) || (ch && ch.pcs.includes(A.mod12(p))); }
+function snapPitch(p, t, dir) { if (okPitch(p, t)) return p; for (let k = 1; k < 7; k++) { const a = p + (dir >= 0 ? k : -k), b = p - (dir >= 0 ? k : -k); if (okPitch(a, t)) return a; if (okPitch(b, t)) return b; } return p; }
 roll.addEventListener('pointerdown', e => {
   if (e.button === 2) { const [x, y] = rel(e), G = geom(), h = hitTest(G, x, y); if (h.kind === 'link') { selLink = h.i; drawRoll(); linkMenu(h.i, e.clientX, e.clientY); } else if (h.kind === 'note') noteMenu(h.i, e.clientX, e.clientY); return; }
   roll.setPointerCapture(e.pointerId); const [x, y] = rel(e); frozenRows = { ...rows }; const G = geom(); const h = hitTest(G, x, y);
@@ -327,7 +340,7 @@ roll.addEventListener('pointermove', e => {
   if (!pd.moved) { pd.moved = true; clearTimeout(pd.tm); if (pd.h.kind !== 'empty') { pushUndo(); } }
   const spb = A.RATES[S.rate], st = BAR / spb;
   if (pd.h.kind === 'note') {
-    const n = pd.note, t = clamp(Math.round((pd.n0.t + (G.t(x) - G.t(pd.x))) / st) * st, 0, totalTicks() - st), p = clamp(pd.n0.p + Math.round(-dy / G.rh), 24, 108);
+    const n = pd.note, t = clamp(Math.round((pd.n0.t + (G.t(x) - G.t(pd.x))) / st) * st, 0, totalTicks() - st), p = clamp(snapPitch(pd.n0.p + Math.round(-dy / G.rh), t, -dy), 24, 108);
     if (t !== n.t || p !== n.p) { n.t = t; n.p = p; S.notes.sort((a, b) => a.t - b.t); S.edited = true; drawRoll(); if (p !== pd.lastP) { preview(p); pd.lastP = p; } }
   } else if (pd.h.kind === 'link') {
     const i = S.notes.indexOf(S.notes[pd.h.i]), a = S.notes[i], b = S.notes[i + 1], l = a.l;
@@ -347,7 +360,7 @@ roll.addEventListener('pointerup', e => {
   if (h.kind === 'note') { pushUndo(); S.notes.splice(h.i, 1); S.edited = true; selLink = -1; }
   else if (h.kind === 'link') { selLink = h.i; }
   else if (p0.x > G.kx && p0.y > G.hy) {
-    const st = BAR / A.RATES[S.rate], t = Math.floor(G.t(p0.x) / st) * st, p = G.p(p0.y);
+    const st = BAR / A.RATES[S.rate], t = Math.floor(G.t(p0.x) / st) * st, p = snapPitch(G.p(p0.y), t, 1);
     if (t >= 0 && t < totalTicks()) { pushUndo(); S.notes = S.notes.filter(n => n.t !== t); S.notes.push({ t, d: Math.max(6, Math.round(st * S.gate)), p, v: 0.75, pass: false, l: { type: 'step', w: 0.55, f: 0.5, c: 0 } }); S.notes.sort((a, b) => a.t - b.t); S.edited = true; selLink = -1; preview(p); }
   } else if (p0.x <= G.kx && p0.y > G.hy) preview(G.p(p0.y));
   frozenRows = null; plan = buildPlan(S, chords, S.notes); drawRoll(); save();
