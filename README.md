@@ -96,3 +96,7 @@ cmake --build build --config Release
 ```
 Every push to `main` builds Windows + Mac in GitHub Actions and updates the **latest** release.
 </details>
+
+## License
+
+Ghosty is free and open source under the [GNU AGPL-3.0](LICENSE). It is built with [JUCE](https://juce.com) (used under its AGPLv3 option).

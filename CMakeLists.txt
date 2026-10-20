@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.24)
 set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "")
 set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "")
 
-project(GhostyVST VERSION 1.0.0)
+project(GhostyVST VERSION 1.1.0)
 
 if(APPLE)
   set(GHOSTY_FORMATS VST3 AU Standalone)   # FL Studio on Mac loads VST3 and AU
