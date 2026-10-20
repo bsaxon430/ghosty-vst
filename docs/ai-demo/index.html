@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Money Summary</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f5f3ee;--card:#fff;--line:#e6e1d6;--txt:#211e2b;--dim:#736c80;--acc:#5b47e0;--accsoft:#eeebff;--over:#c2364f;--oversoft:#fdecef;--ok:#0f8f6c}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#13111a;--card:#1c1926;--line:#2e2a3d;--txt:#ece9f6;--dim:#958fab;--acc:#9b8cff;--accsoft:#272143;--over:#ff7a93;--oversoft:#3a1d27;--ok:#4fd6ae}}
+:root[data-theme="dark"]{--bg:#13111a;--card:#1c1926;--line:#2e2a3d;--txt:#ece9f6;--dim:#958fab;--acc:#9b8cff;--accsoft:#272143;--over:#ff7a93;--oversoft:#3a1d27;--ok:#4fd6ae}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:Inter,system-ui,sans-serif;min-height:100vh;display:flex;align-items:center}
+.wrap{width:100%}
+.wrap{max-width:1280px;margin:0 auto;padding:26px 40px 28px}
+header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+h1{margin:0;font-size:26px;font-weight:800;letter-spacing:-.01em}
+.tag{font-size:12px;font-weight:600;color:var(--acc);background:var(--accsoft);padding:4px 9px;border-radius:99px}
+.by{margin-left:auto;color:var(--dim);font-size:13px}
+.sub{color:var(--dim);font-size:14px;margin:6px 0 18px}
+.grid{display:grid;grid-template-columns:1fr 32px 1.05fr;gap:14px;align-items:stretch}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 18px}
+.step{font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--dim);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.step i{font-style:normal;width:20px;height:20px;border-radius:50%;background:var(--acc);color:#fff;display:grid;place-items:center;font-size:11px;letter-spacing:0}
+table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+th{text-align:right;font-weight:600;color:var(--dim);font-size:11px;letter-spacing:.06em;padding:0 6px 6px;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+td{padding:5px 6px;text-align:right;border-bottom:1px solid var(--line)}
+tr.over td:nth-child(3){color:var(--over);font-weight:600}
+tr.tot td{font-weight:700;border-bottom:none;padding-top:7px}
+.pill{display:inline-block;font-size:10px;font-weight:700;color:var(--over);background:var(--oversoft);border-radius:6px;padding:1px 6px;margin-left:6px}
+.neg{color:var(--over)}
+.arrow{display:grid;place-items:center}
+.arrow div{width:32px;height:32px;border-radius:50%;background:var(--acc);display:grid;place-items:center}
+.ai{position:relative;overflow:hidden}
+.ai:before{content:"";position:absolute;inset:0 0 auto 0;height:4px;background:linear-gradient(90deg,var(--acc),#3fd0a8)}
+.head{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.mood{font-size:11px;font-weight:700;letter-spacing:.08em;color:#9a5a00;background:#fff1d6;border-radius:99px;padding:4px 10px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .mood{color:#ffc56b;background:#3a2c12}}
+.headline{font-size:22px;font-weight:700;line-height:1.25;margin:4px 0 10px}
+.summary{font-size:14.5px;line-height:1.55;color:var(--txt);margin:0 0 12px}
+.tips{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.tips li{display:flex;gap:10px;font-size:13.5px;line-height:1.45;background:var(--accsoft);border-radius:10px;padding:8px 10px}
+.tips li b{color:var(--acc);flex:none}
+.meta{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--dim);margin-top:12px}
+.how{margin-top:16px;display:flex;align-items:center;gap:10px}
+.how .lbl{font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--dim);margin-right:4px;white-space:nowrap}
+.node{flex:1;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;gap:10px;align-items:center;min-width:0}
+.node svg{flex:none}
+.node b{display:block;font-size:13.5px}
+.node span{font-size:12px;color:var(--dim)}
+.chev{color:var(--dim);font-size:18px;flex:none}
+.node.key{border-style:dashed}
+@media (max-width:760px){
+ body{display:block}
+ .wrap{padding:18px 16px 24px}
+ h1{font-size:22px}.by{margin-left:0;width:100%}
+ .grid{grid-template-columns:1fr;gap:10px}
+ .arrow div{transform:rotate(90deg)}
+ .how{flex-direction:column;align-items:stretch}
+ .chev{transform:rotate(90deg);text-align:center}
+ .headline{font-size:20px}
+}
+</style></head><body>
+<div class="wrap">
+<header><h1>AI money summary</h1><span class="tag">Claude API feature demo</span><span class="by">Brandon S. &middot; GhostBlock</span></header>
+<p class="sub">Your app already has the numbers. One small API call turns them into a plain-English summary your users actually read.</p>
+<div class="grid">
+  <div class="card">
+    <div class="step"><i>1</i>APP DATA &middot; OCTOBER (DEMO)</div>
+    <table id="tbl"><thead><tr><th>Line</th><th>Plan</th><th>So far</th></tr></thead><tbody></tbody></table>
+  </div>
+  <div class="arrow"><div><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></div></div>
+  <div class="card ai">
+    <div class="step"><i>2</i>AI SUMMARY &middot; WHAT YOUR USER SEES</div>
+    <div class="head"><span class="mood" id="mood"></span></div>
+    <div class="headline" id="headline"></div>
+    <p class="summary" id="summary"></p>
+    <ul class="tips" id="tips"></ul>
+    <div class="meta" id="meta"></div>
+  </div>
+</div>
+<div class="how">
+  <div class="lbl">HOW IT WORKS</div>
+  <div class="node"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8"/></svg><div><b>Your app</b><span>budget, orders, tickets&hellip;</span></div></div>
+  <div class="chev">&rsaquo;</div>
+  <div class="node"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2"><path d="M8 4c-2 0-3 1-3 3v2c0 1-1 2-2 2 1 0 2 1 2 2v2c0 2 1 3 3 3M16 4c2 0 3 1 3 3v2c0 1 1 2 2 2-1 0-2 1-2 2v2c0 2-1 3-3 3"/></svg><div><b>Small JSON</b><span>totals only, ~900 tokens</span></div></div>
+  <div class="chev">&rsaquo;</div>
+  <div class="node key"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><div><b>Your server &rarr; Claude API</b><span>API key never leaves the server</span></div></div>
+  <div class="chev">&rsaquo;</div>
+  <div class="node"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2"><path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg><div><b>Summary card</b><span>~5 s &middot; about 1 cent each</span></div></div>
+</div>
+</div>
+<script>
+// Data: the demo month fed to the API, and the real reply it produced (claude-sonnet-5).
+const LINES=[["Rent",1200,825],["Car payment",420,375],["Loan interest",60,105],["Citi",250,332],["Amex payoff",840,1083],
+ ["Food",450,435.5],["Gas / charging",120,198.2],["Car insurance",130,143],["Phone",85,101],["Subscriptions",55,37.47]];
+const PAY=[5106,1700], LEFT=[2336,-1020];
+const AI={
+ "headline":"Mid-month and already over on a few key lines.",
+ "summary":"You've received $1,700 of the $5,106 planned pay so far this month, so it's still early days. Loan interest, Citi, Amex payoff, Gas, and Phone are all running over plan, with Amex payoff the biggest gap at $243 over. Money left is at -$1,020 right now versus a planned $2,336, mostly because big debt payments landed before most of your pay did.",
+ "tips":["Check if the Amex payoff can be split closer to each paycheck instead of one lump sum.",
+  "Look at recent gas/charging charges to see if a few trips were avoidable or pricier than usual.",
+  "Review the Citi and phone bills for extra fees or usage charges you can trim next cycle."],
+ "mood":"tight","model":"claude-sonnet-5","ms":5373,"input_tokens":866,"output_tokens":407};
+const $=s=>document.querySelector(s), f=n=>(n<0?'-':'')+'$'+Math.abs(n).toLocaleString('en-US',{maximumFractionDigits:0});
+$('#tbl tbody').innerHTML=LINES.map(([n,p,a])=>{const o=a>p*1.1;return `<tr class="${o?'over':''}"><td>${n}${o?'<span class="pill">OVER</span>':''}</td><td>${f(p)}</td><td>${f(a)}</td></tr>`}).join('')
+ +`<tr><td>Pay received</td><td>${f(PAY[0])}</td><td>${f(PAY[1])}</td></tr><tr class="tot"><td>Money left</td><td>${f(LEFT[0])}</td><td class="neg">${f(LEFT[1])}</td></tr>`;
+$('#mood').textContent='MOOD: '+AI.mood.toUpperCase();
+$('#headline').textContent=AI.headline; $('#summary').textContent=AI.summary;
+$('#tips').innerHTML=AI.tips.map((t,i)=>`<li><b>${i+1}</b><span>${t}</span></li>`).join('');
+$('#meta').innerHTML=`<span>Model: ${AI.model}</span><span>${(AI.ms/1000).toFixed(1)} s</span><span>${AI.input_tokens} in / ${AI.output_tokens} out tokens</span><span>Real API reply, demo data</span>`;
+</script></body></html>

@@ -1,0 +1,138 @@
+// This Pine Script(TM) code is subject to the terms of the Mozilla Public License 2.0 https://mozilla.org/MPL/2.0/
+// (c) GhostBlock - Brandon S.
+//
+// GhostBlock Trend Ribbon
+//   1. Adaptive EMA ribbon: 5 moving averages whose speed follows trend efficiency
+//      (fast in clean trends, slow in chop).
+//   2. ATR trailing stop that only ratchets in the trade direction and flips on a close through it.
+//   3. BUY / SELL labels when the stop flips, optionally filtered by ribbon direction
+//      and by a higher-timeframe (HTF) trend.
+//   4. Alerts for long / short and a small info table.
+//
+// No repainting: signals need a confirmed (closed) bar, and the HTF values come from the
+// last CLOSED higher-timeframe bar.
+
+//@version=6
+indicator("GhostBlock Trend Ribbon", shorttitle = "GB Ribbon", overlay = true, max_labels_count = 500)
+
+// ---------- Inputs ----------
+grpR = "Ribbon"
+fastLen   = input.int(8,  "Fastest length", minval = 2, group = grpR)
+slowLen   = input.int(34, "Slowest length", minval = 3, group = grpR)
+src       = input.source(close, "Source", group = grpR)
+
+grpS = "ATR trailing stop"
+atrLen    = input.int(14, "ATR length", minval = 1, group = grpS)
+atrMult   = input.float(2.5, "ATR multiplier", minval = 0.1, step = 0.1, group = grpS)
+
+grpF = "Signal filters"
+useRibbon = input.bool(true, "Only signal in ribbon direction", group = grpF)
+useHTF    = input.bool(true, "Use higher-timeframe trend filter", group = grpF)
+htfTF     = input.timeframe("240", "Higher timeframe", group = grpF)
+htfLen    = input.int(50, "HTF EMA length", minval = 1, group = grpF)
+
+grpV = "Display"
+showLabels = input.bool(true, "Show BUY / SELL labels", group = grpV)
+showTable  = input.bool(true, "Show info table", group = grpV)
+bullCol    = input.color(#26a69a, "Bull color", group = grpV)
+bearCol    = input.color(#ef5350, "Bear color", group = grpV)
+
+// ---------- Adaptive EMA ----------
+// Efficiency ratio er = |net move over len| / sum of |bar-to-bar moves| over len  (0 = chop, 1 = straight line).
+// alpha = 2/(len+1) * (0.5 + er), capped at 1. Until er exists (first len bars) er = 0.5, i.e. a plain EMA.
+// Seeded with the first source value.
+ama(float s, int len) =>
+    float er    = math.abs(ta.change(s, len)) / math.sum(math.abs(ta.change(s)), len)
+    float alpha = math.min(1.0, 2.0 / (len + 1) * (0.5 + nz(er, 0.5)))
+    var float a = na
+    a := na(a) ? s : a + alpha * (s - a)
+    a
+
+// Five lengths evenly spaced from fastest to slowest (rounded half up).
+len1 = fastLen
+len2 = int(math.round(fastLen + (slowLen - fastLen) * 0.25))
+len3 = int(math.round(fastLen + (slowLen - fastLen) * 0.50))
+len4 = int(math.round(fastLen + (slowLen - fastLen) * 0.75))
+len5 = slowLen
+
+// Separate calls (not a loop) so each line keeps its own state.
+m1 = ama(src, len1)
+m2 = ama(src, len2)
+m3 = ama(src, len3)
+m4 = ama(src, len4)
+m5 = ama(src, len5)
+
+ribbonBull = m1 > m5
+
+// ---------- ATR trailing stop ----------
+atr = ta.atr(atrLen)            // Wilder RMA of true range, seeded with an SMA
+
+var int   dir   = 1             //  1 = long side, -1 = short side
+var float trail = na
+if not na(atr)
+    float up = close - atrMult * atr
+    float dn = close + atrMult * atr
+    if dir == 1
+        trail := na(trail) ? up : math.max(trail, up)   // only ratchets up
+        if close < trail
+            dir   := -1
+            trail := dn
+    else
+        trail := na(trail) ? dn : math.min(trail, dn)   // only ratchets down
+        if close > trail
+            dir   := 1
+            trail := up
+
+flipUp   = dir == 1  and dir[1] == -1
+flipDown = dir == -1 and dir[1] == 1
+
+// ---------- Higher-timeframe trend filter ----------
+// The [1] offset reads the last CLOSED HTF bar, so lookahead_on cannot leak future data;
+// it only makes the value line up with the moment that HTF bar closed. Nothing repaints.
+[htfClose, htfEma] = request.security(syminfo.tickerid, htfTF, [close[1], ta.ema(close, htfLen)[1]], lookahead = barmerge.lookahead_on)
+htfBull = htfClose > htfEma
+htfBear = htfClose < htfEma
+
+// ---------- Signals (closed bars only) ----------
+buySignal  = barstate.isconfirmed and flipUp   and (not useRibbon or ribbonBull)     and (not useHTF or htfBull)
+sellSignal = barstate.isconfirmed and flipDown and (not useRibbon or not ribbonBull) and (not useHTF or htfBear)
+
+// ---------- Plots ----------
+ribCol = ribbonBull ? bullCol : bearCol
+p1 = plot(m1, "Ribbon 1 (fast)", color.new(ribCol, 0),  2)
+plot(m2, "Ribbon 2", color.new(ribCol, 25), 1)
+plot(m3, "Ribbon 3", color.new(ribCol, 40), 1)
+plot(m4, "Ribbon 4", color.new(ribCol, 55), 1)
+p5 = plot(m5, "Ribbon 5 (slow)", color.new(ribCol, 70), 1)
+fill(p1, p5, color.new(ribCol, 85), "Ribbon fill")
+
+// Break the stop line on flip bars so the old side doesn't connect to the new side.
+plot(dir == dir[1] ? trail : na, "Trailing stop", dir == 1 ? bullCol : bearCol, 2, plot.style_linebr)
+
+if showLabels and buySignal
+    label.new(bar_index, low, "BUY", yloc = yloc.belowbar, style = label.style_label_up, color = bullCol, textcolor = color.white, size = size.small)
+if showLabels and sellSignal
+    label.new(bar_index, high, "SELL", yloc = yloc.abovebar, style = label.style_label_down, color = bearCol, textcolor = color.white, size = size.small)
+
+// ---------- Alerts ----------
+alertcondition(buySignal,  "GB Ribbon Long",  "GhostBlock Trend Ribbon: LONG on {{ticker}} at {{close}}")
+alertcondition(sellSignal, "GB Ribbon Short", "GhostBlock Trend Ribbon: SHORT on {{ticker}} at {{close}}")
+
+// ---------- Info table ----------
+var table info = table.new(position.top_right, 2, 5, bgcolor = color.new(#131722, 10), border_color = #2a2e39, border_width = 1, frame_color = #2a2e39, frame_width = 1)
+var int lastSignalBar = na
+if buySignal or sellSignal
+    lastSignalBar := bar_index
+
+if showTable and barstate.islast
+    cellTxt = color.new(color.white, 10)
+    table.cell(info, 0, 0, "Ribbon",      text_color = cellTxt, text_size = size.small)
+    table.cell(info, 1, 0, ribbonBull ? "Bull" : "Bear", text_color = ribbonBull ? bullCol : bearCol, text_size = size.small)
+    table.cell(info, 0, 1, "HTF " + htfTF, text_color = cellTxt, text_size = size.small)
+    table.cell(info, 1, 1, htfBull ? "Bull" : htfBear ? "Bear" : "-", text_color = htfBull ? bullCol : bearCol, text_size = size.small)
+    table.cell(info, 0, 2, "Stop side",   text_color = cellTxt, text_size = size.small)
+    table.cell(info, 1, 2, dir == 1 ? "Long" : "Short", text_color = dir == 1 ? bullCol : bearCol, text_size = size.small)
+    table.cell(info, 0, 3, "Stop dist",   text_color = cellTxt, text_size = size.small)
+    table.cell(info, 1, 3, str.tostring(math.abs(close - trail) / close * 100, "#.##") + "%", text_color = cellTxt, text_size = size.small)
+    table.cell(info, 0, 4, "Bars since signal", text_color = cellTxt, text_size = size.small)
+    table.cell(info, 1, 4, na(lastSignalBar) ? "-" : str.tostring(bar_index - lastSignalBar), text_color = cellTxt, text_size = size.small)
