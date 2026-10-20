@@ -53,15 +53,29 @@ a { color: var(--ecto); }
   <div class="chips"><span>VST3 · AU · Standalone</span><span>Mac + Windows</span><span>One-time price, no subscription</span><span>Use on up to 5 computers</span><span>Try before you buy</span></div>
 
   <div class="bundle" style="background:var(--card);border-color:var(--line)">
-    <div><h2>Try them all free</h2><p>One installer with all four plugins. They run in demo mode until you enter a license key.</p></div>
+    <div><h2>Try them all free</h2><p>One installer with all five plugins. They run in demo mode until you enter a license key.</p></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap"><a class="btn alt" href="../download/GhostBlock-Plugins-Mac.pkg">Download for Mac</a><a class="btn alt" href="../download/GhostBlock-Plugins-Windows-Setup.exe">Download for Windows</a></div>
   </div>
   <div class="bundle">
-    <div><h2>Everything bundle</h2><p>Mr. Mickens + Poltergeist + Ghosty Beats + Ghosty Spectrum, plus every update.</p></div>
-    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap"><div class="price">$49<s>$69</s></div><a class="btn" data-product="bundle" href="#">Get the bundle</a></div>
+    <div><h2>Everything bundle</h2><p>Ghosty Pro + Mr. Mickens + Poltergeist + Ghosty Beats + Ghosty Spectrum, plus every update.</p></div>
+    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap"><div class="price">$59<s>$98</s></div><a class="btn" data-product="bundle" href="#">Get the bundle</a></div>
   </div>
 
   <div class="grid">
+    <div class="card">
+      <img src="ghostypro.png" alt="Ghosty Pro synth">
+      <div class="body">
+        <div class="tag">WAVETABLE SYNTH + GHOST FX STUDIO</div>
+        <h3>👻 Ghosty Pro</h3>
+        <ul>
+          <li>245 polished presets, including about 60 basses</li>
+          <li>8-voice unison supersaws, 19 wavetables, drop any WAV in as a wavetable</li>
+          <li>8-slot mod matrix, 10 filters, FM / sync / ring</li>
+          <li>15 built-in FX: spectral EQ, pattern gate, stutter pads, analog saturation, tape echo, crystal, shimmer, OTT</li>
+        </ul>
+        <div class="row"><div class="price">$29</div><a class="btn" data-product="ghostypro" href="#">Buy</a></div>
+      </div>
+    </div>
     <div class="card">
       <img src="mickens.jpg" alt="Mr. Mickens drum and bass break machine">
       <div class="body">
@@ -128,7 +142,7 @@ a { color: var(--ecto); }
 </div>
 <script>
 // Gumroad product links: fill these in once the products exist on Gumroad (leave empty = "Coming soon")
-const GUMROAD = { bundle: 'https://brandonix06.gumroad.com/l/umszza', mickens: 'https://brandonix06.gumroad.com/l/aimjtm', poltergeist: 'https://brandonix06.gumroad.com/l/tqlba', beatsSpectrum: 'https://brandonix06.gumroad.com/l/yausj' };
+const GUMROAD = { ghostypro: 'https://brandonix06.gumroad.com/l/krerj', bundle: 'https://brandonix06.gumroad.com/l/umszza', mickens: 'https://brandonix06.gumroad.com/l/aimjtm', poltergeist: 'https://brandonix06.gumroad.com/l/tqlba', beatsSpectrum: 'https://brandonix06.gumroad.com/l/yausj' };
 document.querySelectorAll('[data-product]').forEach(a => {
   const url = GUMROAD[a.dataset.product];
   if (url) { a.href = url; a.target = '_blank'; a.rel = 'noopener'; }
