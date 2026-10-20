@@ -313,6 +313,7 @@ $('follow').onclick = () => $('follow').classList.toggle('on');
 // roll pointer handling: tap empty = add, tap note = delete, drag note = move, link dot = bend / fatten, long-press = menu
 let pd = null;
 function hitTest(G, x, y) {
+  if (y < G.hy && x > G.kx) { const t = G.t(x); const ci = chords.findIndex(c => t >= c.t && t < c.tEnd); if (ci >= 0) return { kind: 'chord', i: ci }; }
   let best = -1, bd = 16;
   for (let i = 0; i + 1 < S.notes.length; i++) { const L = linkGeom(G, i); if (!L || L.hx < G.kx - 4 || L.hx > G.W + 4) continue; const dd = Math.hypot(L.hx - x, L.hy - y); if (dd < bd && (i === selLink || dd < 11)) { bd = dd; best = i; } }
   if (best >= 0) return { kind: 'link', i: best };
@@ -326,12 +327,12 @@ function okPitch(p, t) { if (S.snapKey === false) return true; const pc = A.mod1
   return A.SCALES[S.scale].includes(pc) || (ch && ch.pcs.includes(A.mod12(p))); }
 function snapPitch(p, t, dir) { if (okPitch(p, t)) return p; for (let k = 1; k < 7; k++) { const a = p + (dir >= 0 ? k : -k), b = p - (dir >= 0 ? k : -k); if (okPitch(a, t)) return a; if (okPitch(b, t)) return b; } return p; }
 roll.addEventListener('pointerdown', e => {
-  if (e.button === 2) { const [x, y] = rel(e), G = geom(), h = hitTest(G, x, y); if (h.kind === 'link') { selLink = h.i; drawRoll(); linkMenu(h.i, e.clientX, e.clientY); } else if (h.kind === 'note') noteMenu(h.i, e.clientX, e.clientY); return; }
+  if (e.button === 2) { const [x, y] = rel(e), G = geom(), h = hitTest(G, x, y); if (h.kind === 'link') { selLink = h.i; drawRoll(); linkMenu(h.i, e.clientX, e.clientY); } else if (h.kind === 'note') noteMenu(h.i, e.clientX, e.clientY); else if (h.kind === 'chord') chordMenu(h.i, e.clientX, e.clientY); return; }
   roll.setPointerCapture(e.pointerId); const [x, y] = rel(e); frozenRows = { ...rows }; const G = geom(); const h = hitTest(G, x, y);
   pd = { x, y, cx: e.clientX, cy: e.clientY, h, moved: false, axis: null, start: view.start, undo: false };
   if (h.kind === 'link') { const n = S.notes[h.i]; pd.l0 = { ...n.l }; selLink = h.i; drawRoll(); }
   if (h.kind === 'note') { const n = S.notes[h.i]; pd.n0 = { t: n.t, p: n.p }; pd.note = n; }
-  clearTimeout(pd.tm); if (h.kind !== 'empty') pd.tm = setTimeout(() => { if (pd && !pd.moved) { pd.long = true; if (h.kind === 'link') linkMenu(h.i, e.clientX, e.clientY); else noteMenu(h.i, e.clientX, e.clientY); } }, 520);
+  clearTimeout(pd.tm); if (h.kind !== 'empty') pd.tm = setTimeout(() => { if (pd && !pd.moved) { pd.long = true; if (h.kind === 'link') linkMenu(h.i, e.clientX, e.clientY); else if (h.kind === 'chord') chordMenu(h.i, e.clientX, e.clientY); else noteMenu(h.i, e.clientX, e.clientY); } }, 520);
 });
 roll.addEventListener('pointermove', e => {
   if (!pd || !roll.hasPointerCapture(e.pointerId) || pd.long) return;
@@ -339,6 +340,7 @@ roll.addEventListener('pointermove', e => {
   if (!pd.moved && Math.hypot(dx, dy) < 7) return;
   if (!pd.moved) { pd.moved = true; clearTimeout(pd.tm); if (pd.h.kind !== 'empty') { pushUndo(); } }
   const spb = A.RATES[S.rate], st = BAR / spb;
+  if (pd.h.kind === 'chord') return;
   if (pd.h.kind === 'note') {
     const n = pd.note, t = clamp(Math.round((pd.n0.t + (G.t(x) - G.t(pd.x))) / st) * st, 0, totalTicks() - st), p = clamp(snapPitch(pd.n0.p + Math.round(-dy / G.rh), t, -dy), 24, 108);
     if (t !== n.t || p !== n.p) { n.t = t; n.p = p; S.notes.sort((a, b) => a.t - b.t); S.edited = true; drawRoll(); if (p !== pd.lastP) { preview(p); pd.lastP = p; } }
@@ -357,6 +359,7 @@ roll.addEventListener('pointerup', e => {
   if (p0.long) { frozenRows = null; return; }
   if (p0.moved) { if (p0.h.kind === 'note') { const n = p0.note; S.notes = S.notes.filter(m => m === n || m.t !== n.t); } if (p0.h.kind === 'empty') view.start = Math.round(view.start / BAR) * BAR; frozenRows = null; plan = buildPlan(S, chords, S.notes); drawRoll(); save(); return; }
   const G = geom(), h = p0.h;
+  if (h.kind === 'chord') { frozenRows = null; setAlt(h.i, (S.prog[h.i].alt || 0) + 1); return; }
   if (h.kind === 'note') { pushUndo(); S.notes.splice(h.i, 1); S.edited = true; selLink = -1; }
   else if (h.kind === 'link') { selLink = h.i; }
   else if (p0.x > G.kx && p0.y > G.hy) {
