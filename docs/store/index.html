@@ -27,6 +27,7 @@ h1 b { background: linear-gradient(90deg, var(--slime), var(--ecto), var(--pink)
 .btn.soon { background: var(--card); color: var(--dim); border: 1px dashed var(--line); cursor: default; }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; }
+.card video { width: 100%; display: block; aspect-ratio: 16/9; object-fit: cover; background: #000; border-bottom: 1px solid var(--line); }
 .card img { width: 100%; display: block; aspect-ratio: 16/10; object-fit: cover; object-position: top; border-bottom: 1px solid var(--line); }
 .card .body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
 .card h3 { margin: 0; font-size: 21px; }
@@ -121,7 +122,7 @@ a { color: var(--ecto); }
       </div>
     </div>
     <div class="card">
-      <img src="spectrum.jpg" alt="Ghosty Spectrum pad painter and Ghosty Beats">
+      <video src="../media/spectrum-demo.mp4" poster="../media/spectrum-demo.jpg" controls playsinline preload="none" aria-label="Ghosty Spectrum in a real FL Studio session"></video>
       <div class="body">
         <div class="tag">TWO PLUGINS, ONE PRICE</div>
         <h3>🥁🌈 Ghosty Beats + Spectrum</h3>
