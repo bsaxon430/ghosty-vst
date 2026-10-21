@@ -1,0 +1,242 @@
+[
+ {
+  "file": "arp-writes-for-you.mp4",
+  "product": "ArpEZator",
+  "hook": "This plugin writes arps for you",
+  "caption_suggestion": "Hit GENERATE, get an arp, drag the MIDI straight into FL. ArpEZator does the boring part. #flstudio #producer #midi #arpeggiator #beatmaking",
+  "seconds": 9.6,
+  "new": true
+ },
+ {
+  "file": "arp-glide-pov.mp4",
+  "product": "ArpEZator",
+  "hook": "POV: your melody needs a glide",
+  "caption_suggestion": "Pick two notes, hit GLIDE, done. Melody glides without drawing pitch bends. #flstudio #melody #producertips #synth #musicproducer",
+  "seconds": 9.3,
+  "new": true
+ },
+ {
+  "file": "arp-one-click-melody.mp4",
+  "product": "ArpEZator",
+  "hook": "One click. Whole melody.",
+  "caption_suggestion": "SUNRISE mode wrote this melody in one click, glides and all. #flstudio #melody #musicproducer #midi #beatmaker",
+  "seconds": 9.3,
+  "new": true
+ },
+ {
+  "file": "arp-two-moods.mp4",
+  "product": "ArpEZator",
+  "hook": "Same plugin. 2 moods.",
+  "caption_suggestion": "MIDNIGHT or SUNRISE? Same plugin, two moods, one click each. #flstudio #arpeggiator #producer #midi #darkvsbright",
+  "seconds": 10.4,
+  "new": true
+ },
+ {
+  "file": "ghostbox-dry-vs-wet.mp4",
+  "product": "Ghost Box",
+  "hook": "Dry vs Ghost Box",
+  "caption_suggestion": "Same drums, Ghost Box CRACKLE on. Hear the difference? #mixing #flstudio #drums #audioplugin #producer",
+  "seconds": 10.0,
+  "new": true
+ },
+ {
+  "file": "ghostbox-fatten-knob.mp4",
+  "product": "Ghost Box",
+  "hook": "Turn it. It gets FATTER.",
+  "caption_suggestion": "Turn FATTEN and the ghost (and your sound) gets bigger. #flstudio #mixingtips #audioplugin #producer #satisfying",
+  "seconds": 7.5,
+  "new": true
+ },
+ {
+  "file": "ghostbox-tube-glow.mp4",
+  "product": "Ghost Box",
+  "hook": "Warm it up in one click",
+  "caption_suggestion": "TUBE GLOW: instant analog warmth on anything in FL. #flstudio #mixing #analog #audioplugin #musicproducer",
+  "seconds": 9.4,
+  "new": true
+ },
+ {
+  "file": "ghostbox-crackle.mp4",
+  "product": "Ghost Box",
+  "hook": "Broken speaker in one click",
+  "caption_suggestion": "Broken-speaker vibe in one click with Ghost Box CRACKLE. #flstudio #lofi #distortion #audioplugin #producer",
+  "seconds": 9.4,
+  "new": true
+ },
+ {
+  "file": "poltergeist-drag-ghosts.mp4",
+  "product": "Poltergeist",
+  "hook": "Drag a ghost. Change the sound.",
+  "caption_suggestion": "Drag one ghost onto another and it haunts it. FM synthesis, but cute. #synth #flstudio #soundDesign #fmsynthesis #producer",
+  "seconds": 8.0,
+  "new": true
+ },
+ {
+  "file": "poltergeist-one-knob.mp4",
+  "product": "Poltergeist",
+  "hook": "One knob. New sound.",
+  "caption_suggestion": "One knob in Poltergeist's Sample Lab and the whole sound changes. #sounddesign #granular #flstudio #synth #producer",
+  "seconds": 10.0,
+  "new": true
+ },
+ {
+  "file": "poltergeist-3-sounds.mp4",
+  "product": "Poltergeist",
+  "hook": "3 sounds in 10 seconds",
+  "caption_suggestion": "Three sounds out of Poltergeist in ten seconds. Which one's your favorite? #sounddesign #synth #flstudio #samples #producer",
+  "seconds": 10.0,
+  "new": true
+ },
+ {
+  "file": "ghostypro-ghost-synth.mp4",
+  "product": "Ghosty Pro",
+  "hook": "This synth has ghosts in it",
+  "caption_suggestion": "Ghosty Pro: a wavetable synth with ghosts that play along. 245 presets. #synth #wavetable #flstudio #presets #musicproducer",
+  "seconds": 11.0,
+  "new": true
+ },
+ {
+  "file": "ghostypro-haunt-pads.mp4",
+  "product": "Ghosty Pro",
+  "hook": "Tap a pad. Haunt the beat.",
+  "caption_suggestion": "Tap a Ghost FX pad: stutter, gate, tape stop, live on your synth. #flstudio #fx #synth #beatmaking #producer",
+  "seconds": 10.3,
+  "new": true
+ },
+ {
+  "file": "mickens-jungle-breaks.mp4",
+  "product": "Mr. Mickens",
+  "hook": "Jungle breaks. One tap.",
+  "caption_suggestion": "Mr. Mickens: jungle and DnB breaks, chopped with one tap. #dnb #jungle #breakbeat #drumandbass #producer",
+  "seconds": 9.9,
+  "new": true
+ },
+ {
+  "file": "spectrum-paint-light.mp4",
+  "product": "Ghosty Spectrum",
+  "hook": "Paint notes on light",
+  "caption_suggestion": "Paint notes on the spectrum and they ring together like bells and piano. #ambient #synth #sounddesign #flstudio #musicproducer",
+  "seconds": 10.0,
+  "new": true
+ },
+ {
+  "file": "ghosty-free-synth.mp4",
+  "product": "Ghosty (free)",
+  "hook": "Free synth. No catch.",
+  "caption_suggestion": "Ghosty is a free wavetable synth. No catch, no email wall. #freeplugin #freevst #synth #flstudio #producer",
+  "seconds": 7.5,
+  "new": true
+ },
+ {
+  "file": "arpezator-in-fl.mp4",
+  "product": "ArpEZator",
+  "hook": "ArpEZator in FL - glide and fatten",
+  "caption_suggestion": "ArpEZator in FL Studio: melodies with glide and fatten, drawn for you. #flstudio #melody #midi #arpeggiator #producer",
+  "seconds": 24.0,
+  "new": false
+ },
+ {
+  "file": "arpezator-midnight.mp4",
+  "product": "ArpEZator",
+  "hook": "ArpEZator MIDNIGHT",
+  "caption_suggestion": "ArpEZator MIDNIGHT mode: dark arps on tap. #flstudio #arpeggiator #darkmusic #midi #producer",
+  "seconds": 16.9,
+  "new": false
+ },
+ {
+  "file": "arpezator-sunrise.mp4",
+  "product": "ArpEZator",
+  "hook": "ArpEZator SUNRISE",
+  "caption_suggestion": "ArpEZator SUNRISE mode: bright melodies in one click. #flstudio #melody #midi #musicproducer #beatmaker",
+  "seconds": 31.0,
+  "new": false
+ },
+ {
+  "file": "free-ghosty.mp4",
+  "product": "Ghosty (free)",
+  "hook": "GHOSTY - free wavetable synth",
+  "caption_suggestion": "Ghosty, our free wavetable synth, running on a phone. #freeplugin #freevst #synth #producer #wavetable",
+  "seconds": 8.0,
+  "new": false
+ },
+ {
+  "file": "ghost-box-in-fl.mp4",
+  "product": "Ghost Box",
+  "hook": "Ghost Box in FL Studio",
+  "caption_suggestion": "A tour of Ghost Box in FL: Ghost Grid, Tube Glow, Fatten, Crackle. #flstudio #mixing #audioplugin #fx #producer",
+  "seconds": 36.0,
+  "new": false
+ },
+ {
+  "file": "ghostbox.mp4",
+  "product": "Ghost Box",
+  "hook": "Ghost Box - effects tour",
+  "caption_suggestion": "Ghost Box: one box of cute effects for your mix. #audioplugin #mixing #fx #flstudio #producer",
+  "seconds": 28.7,
+  "new": false
+ },
+ {
+  "file": "ghosty-beats.mp4",
+  "product": "Ghosty Beats",
+  "hook": "Ghosty Beats - beat maker",
+  "caption_suggestion": "Ghosty Beats: make a beat with ghosts. #beatmaking #drummachine #producer #flstudio #beats",
+  "seconds": 25.1,
+  "new": false
+ },
+ {
+  "file": "ghosty-pro-in-fl.mp4",
+  "product": "Ghosty Pro",
+  "hook": "GHOSTY PRO - wavetable synth in FL Studio",
+  "caption_suggestion": "Ghosty Pro in FL Studio: wavetable synth, 245 presets, Ghost FX pads. #synth #flstudio #wavetable #presets #producer",
+  "seconds": 22.6,
+  "new": false
+ },
+ {
+  "file": "mr-mickens-in-fl.mp4",
+  "product": "Mr. Mickens",
+  "hook": "MR. MICKENS - drum and bass break machine",
+  "caption_suggestion": "Mr. Mickens in FL: 4 bays of DnB breaks, chops and sidechain. #dnb #jungle #breakbeat #flstudio #producer",
+  "seconds": 22.0,
+  "new": false
+ },
+ {
+  "file": "poltergeist-in-fl.mp4",
+  "product": "Poltergeist",
+  "hook": "Poltergeist in FL Studio",
+  "caption_suggestion": "Poltergeist in FL: a ghostly FM synth with a Sample Lab. #synth #sounddesign #flstudio #granular #producer",
+  "seconds": 32.0,
+  "new": false
+ },
+ {
+  "file": "poltergeist.mp4",
+  "product": "Poltergeist",
+  "hook": "Poltergeist - ghost FM synth",
+  "caption_suggestion": "Poltergeist: summon a sound, then haunt it. #synth #sounddesign #fmsynthesis #producer #audioplugin",
+  "seconds": 24.0,
+  "new": false
+ },
+ {
+  "file": "spectrum-demo.mp4",
+  "product": "Ghosty Spectrum",
+  "hook": "Ghosty Spectrum demo",
+  "caption_suggestion": "Ghosty Spectrum: paint sound on a spectrum. #ambient #synth #sounddesign #producer #audioplugin",
+  "seconds": 27.6,
+  "new": false
+ },
+ {
+  "file": "spectrum-in-fl.mp4",
+  "product": "Ghosty Spectrum",
+  "hook": "GHOSTY SPECTRUM - paint bells and piano",
+  "caption_suggestion": "Ghosty Spectrum in FL: bells, piano and loops you paint. #ambient #synth #flstudio #sounddesign #producer",
+  "seconds": 25.6,
+  "new": false
+ },
+ {
+  "file": "spectrum-pads-in-fl.mp4",
+  "product": "Ghosty Spectrum",
+  "hook": "Ghosty Spectrum - glowing pads",
+  "caption_suggestion": "Ghosty Spectrum pads: glowing ambient tones in FL. #ambient #pads #synth #flstudio #producer",
+  "seconds": 19.9,
+  "new": false
+ }
+]
