@@ -63,7 +63,7 @@ a { color: var(--ecto); }
   </div>
   <div class="bundle">
     <div><h2>Everything bundle</h2><p>ArpEZator + Ghost Box + Ghosty Pro + Mr. Mickens + Poltergeist + Ghosty Beats + Ghosty Spectrum, plus every update.</p></div>
-    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap"><div class="price">$69<s>$137</s></div><a class="btn" data-product="bundle" href="#">Get the bundle</a></div>
+    <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap"><div class="price">$69<s>$162</s></div><a class="btn" data-product="bundle" href="#">Get the bundle</a></div>
   </div>
 
   <div class="grid">
@@ -78,7 +78,7 @@ a { color: var(--ecto); }
           <li>HARVEST the best arp bits into a melody, tweak with VARY / simpler / busier, lock the bars you love</li>
           <li>Built-in Neon Pluck and piano sounds, and LISTEN learns tempo, key and chords from any track</li>
         </ul>
-        <div class="row"><div class="price" style="font-size:16px">In the Everything bundle</div><a class="btn" data-product="bundle" href="#">Get the bundle</a></div>
+        <div class="row"><div class="price">$25</div><a class="btn" data-product="arpezator" href="#">Buy</a></div>
       </div>
     </div>
     <div class="card">
@@ -186,7 +186,7 @@ a { color: var(--ecto); }
 </div>
 <script>
 // Gumroad product links: fill these in once the products exist on Gumroad (leave empty = "Coming soon")
-const GUMROAD = { ghostbox: 'https://brandonix06.gumroad.com/l/bgrir', ghostypro: 'https://brandonix06.gumroad.com/l/krerj', bundle: 'https://brandonix06.gumroad.com/l/umszza', mickens: 'https://brandonix06.gumroad.com/l/aimjtm', poltergeist: 'https://brandonix06.gumroad.com/l/tqlba', beatsSpectrum: 'https://brandonix06.gumroad.com/l/yausj' };
+const GUMROAD = { arpezator: 'https://brandonix06.gumroad.com/l/impynn', ghostbox: 'https://brandonix06.gumroad.com/l/bgrir', ghostypro: 'https://brandonix06.gumroad.com/l/krerj', bundle: 'https://brandonix06.gumroad.com/l/umszza', mickens: 'https://brandonix06.gumroad.com/l/aimjtm', poltergeist: 'https://brandonix06.gumroad.com/l/tqlba', beatsSpectrum: 'https://brandonix06.gumroad.com/l/yausj' };
 document.querySelectorAll('[data-product]').forEach(a => {
   const url = GUMROAD[a.dataset.product];
   if (url) { a.href = url; a.target = '_blank'; a.rel = 'noopener'; }
