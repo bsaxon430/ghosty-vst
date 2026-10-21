@@ -36,26 +36,14 @@ Double-click the installer and follow the steps. Each plugin runs in demo mode u
 
 | Your computer | Click to download |
 |---|---|
-| 🪟 **Windows 10 / 11** | [**Ghosty-Windows.zip**](https://github.com/bsaxon430/ghosty-vst/releases/download/latest/Ghosty-Windows.zip) |
 | 🍎 **Mac** (M1/M2/M3/M4 or Intel, macOS 11+) | [**Ghosty-Mac.zip**](https://github.com/bsaxon430/ghosty-vst/releases/download/latest/Ghosty-Mac.zip) |
+| 🪟 **Windows 10 / 11** | [**Ghosty-Windows.zip**](https://github.com/bsaxon430/ghosty-vst/releases/download/latest/Ghosty-Windows.zip) |
 
 Not sure? If your computer has a Start button, it's Windows. If it has an Apple logo in the top-left corner, it's a Mac.
 
 All versions: [Releases page](https://github.com/bsaxon430/ghosty-vst/releases/latest)
 
 ---
-
-## 🪟 Step 2 (Windows): Install
-
-1. Open your **Downloads** folder, **right-click** `Ghosty-Windows.zip` and choose **Extract All** > **Extract**.
-2. In the folder that opens, **double-click `Install Ghosty.bat`** and click **Yes**.
-   - If a blue box says *"Windows protected your PC"*, click **More info** > **Run anyway**.
-3. When it says **Done!**, press any key. Now go to Step 3 for your DAW.
-
-<details><summary>Rather do it by hand?</summary>
-
-Copy `Ghosty.vst3` from the `VST3` folder into `C:\Program Files\Common Files\VST3`.
-</details>
 
 ## 🍎 Step 2 (Mac): Install
 
@@ -72,6 +60,18 @@ Open the **Terminal** app, type `bash ` (with a space), drag `Install Ghosty.com
 </details>
 
 ---
+
+## 🪟 Step 2 (Windows): Install
+
+1. Open your **Downloads** folder, **right-click** `Ghosty-Windows.zip` and choose **Extract All** > **Extract**.
+2. In the folder that opens, **double-click `Install Ghosty.bat`** and click **Yes**.
+   - If a blue box says *"Windows protected your PC"*, click **More info** > **Run anyway**.
+3. When it says **Done!**, press any key. Now go to Step 3 for your DAW.
+
+<details><summary>Rather do it by hand?</summary>
+
+Copy `Ghosty.vst3` from the `VST3` folder into `C:\Program Files\Common Files\VST3`.
+</details>
 
 ## 🎛️ Step 3: Open it in your DAW
 
