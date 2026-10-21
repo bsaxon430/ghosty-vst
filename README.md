@@ -23,6 +23,17 @@ Like Ghosty? The rest of the family lives in the **[GhostBlock store](https://bs
 
 ## ⬇️ Step 1: Download
 
+### All 7 GhostBlock plugins (free trial: ArpEZator, Ghost Box, Ghosty Pro, Mr. Mickens, Poltergeist, Ghosty Beats, Ghosty Spectrum)
+
+| Your computer | Click to download |
+|---|---|
+| 🍎 **Mac** (M1/M2/M3/M4 or Intel, macOS 11+) | [**GhostBlock-Plugins-Mac.pkg**](https://bsaxon430.github.io/ghosty-vst/download/GhostBlock-Plugins-Mac.pkg) |
+| 🪟 **Windows 10 / 11** | [**GhostBlock-Plugins-Windows-Setup.exe**](https://bsaxon430.github.io/ghosty-vst/download/GhostBlock-Plugins-Windows-Setup.exe) |
+
+Double-click the installer and follow the steps. Each plugin runs in demo mode until you click **UNLOCK** and paste your license key from the [store](https://bsaxon430.github.io/ghosty-vst/store/).
+
+### Free Ghosty only (open source)
+
 | Your computer | Click to download |
 |---|---|
 | 🪟 **Windows 10 / 11** | [**Ghosty-Windows.zip**](https://github.com/bsaxon430/ghosty-vst/releases/download/latest/Ghosty-Windows.zip) |
