@@ -92,7 +92,7 @@ public:
                 for (int k = 0; k < count; ++k)
                 {
                     if (arpOn) addToPool (notes[k]);
-                    else if (refCount[(size_t) notes[k]]++ == 0) add (out, juce::MidiMessage::noteOn (m.getChannel(), notes[k], (juce::uint8) lastVelocity), pos);
+                    else if (refCount[(size_t) notes[k]]++ == 0) add (out, juce::MidiMessage::noteOn (1, notes[k], (juce::uint8) lastVelocity), pos);   // always channel 1: note-offs are sent on 1, and JUCE matches voices by channel (notes from other channels rang forever)
                 }
                 if (arpOn && poolCount > 0 && arpNote < 0) { arpPhase = std::floor (arpPhase) + 0.999999; }   // start right away
             }
