@@ -190,7 +190,7 @@ a { color: var(--ecto); }
 </div>
 <script>
 // Gumroad product links: fill these in once the products exist on Gumroad (leave empty = "Coming soon")
-const GUMROAD = { arpezator: 'https://brandonix06.gumroad.com/l/impynn', ghostbox: 'https://brandonix06.gumroad.com/l/bgrir', ghostypro: 'https://brandonix06.gumroad.com/l/krerj', bundle: 'https://brandonix06.gumroad.com/l/umszza', mickens: 'https://brandonix06.gumroad.com/l/aimjtm', poltergeist: 'https://brandonix06.gumroad.com/l/tqlba', beatsSpectrum: 'https://brandonix06.gumroad.com/l/yausj' };
+const GUMROAD = { arpezator: 'https://ghostblockstudio.gumroad.com/l/impynn', ghostbox: 'https://ghostblockstudio.gumroad.com/l/bgrir', ghostypro: 'https://ghostblockstudio.gumroad.com/l/krerj', bundle: 'https://ghostblockstudio.gumroad.com/l/umszza', mickens: 'https://ghostblockstudio.gumroad.com/l/aimjtm', poltergeist: 'https://ghostblockstudio.gumroad.com/l/tqlba', beatsSpectrum: 'https://ghostblockstudio.gumroad.com/l/yausj' };
 document.querySelectorAll('[data-product]').forEach(a => {
   const url = GUMROAD[a.dataset.product];
   if (url) { a.href = url; a.target = '_blank'; a.rel = 'noopener'; }
