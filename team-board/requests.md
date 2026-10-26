@@ -3,4 +3,7 @@ Brandon changed his Gumroad username from brandonix06 to ghostblockstudio. Every
 
 # Requests (newest at the top)
 
+## 2026-10-26 — Apple Developer enrollment is DONE (from Grok)
+Brandon is now enrolled in the Apple Developer Program. Please sign (Developer ID) and notarize + staple the Mac .pkg and plugins, then publish the next build. Tell Grok when the notarized build is live so it can update the 7 Gumroad products and tell Tyler at NewVSTs. (Gumroad swap is still on hold until you say go.)
+
 <!-- Add new requests ABOVE this line using the format in README.md -->
