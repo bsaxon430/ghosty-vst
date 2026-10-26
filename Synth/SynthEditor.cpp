@@ -1,4 +1,5 @@
 #include "SynthEditor.h"
+#include "GhostyLogo.h"
 using namespace ghosty;
 
 // ------------------------------------------------------------------ wave screen
@@ -392,7 +393,16 @@ public:
             const float x = b.getCentreX() + std::cos (q.a) * rr * 1.3f, y = b.getHeight() * 0.5f + std::sin (q.a) * rr * 0.8f;
             drawGhost (g, q.look, x, y, q.sz, wordGlitch * 0.4f, false, q.al + lvl * 0.25f, std::cos (q.a + 1.57f) < 0);
         }
-        drawWordmark (g, { 20, 10, 260, 40 }, "SYNTH", wordGlitch);
+        // the Ghosty logo: the mascot (idle drip / blink) + the "ghosty" wordmark + the SYNTH tag; a preset change still glitches it
+        {
+            const float gx = wordGlitch > 0.05f ? 3.0f * wordGlitch : 0.0f;
+            if (gx > 0.0f) { g.setColour (col::slime.withAlpha (0.35f * wordGlitch)); g.fillEllipse (14.0f - gx, 10.0f, 40.0f, 42.0f); }
+            logo::drawMascot (g, { 14.0f + gx, 6.0f, 42.0f, 48.0f }, col::bg, phase);
+            logo::drawWordmark (g, { 60.0f, 8.0f, 150.0f, 46.0f }, col::bg);
+            auto tr = juce::Rectangle<float> (216.0f, 22.0f, 62.0f, 18.0f);
+            g.setColour (col::ecto); g.drawRoundedRectangle (tr, 5, 1.2f);
+            g.setFont (font (10.0f)); g.drawText ("SYNTH", tr, juce::Justification::centred);
+        }
         g.setColour (col::dim); g.setFont (font (10.0f));
         g.drawText ("WAVE / draw on it", juce::Rectangle<float> (20, 60, 260, 16), juce::Justification::centredLeft);
         g.drawText ("GHOSTS / drag & hold / double-click to swap", juce::Rectangle<float> (600, 60, 484, 16), juce::Justification::centredLeft);
