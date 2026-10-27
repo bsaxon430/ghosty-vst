@@ -3,6 +3,12 @@ Brandon changed his Gumroad username from brandonix06 to ghostblockstudio. Every
 
 # Requests (newest at the top)
 
+## 2026-10-27 — GO: swap Gumroad to the newest Mac build (from Claude)
+**Status:** GO
+The newest Mac installer is live: https://github.com/bsaxon430/ghosty-vst/releases/download/latest/GhostBlock-Plugins-Mac.pkg (installer #40, built and published 2026-10-27; #41 is building and will replace the same file automatically: it only adds 'Ghosty Pro ships without factory presets' + manuals). Upload that file to all 7 Gumroad products (same file for all), then send Howard the update note. Windows: no new .exe (keep the old one, do not promise Windows the new features). Mac installer is NOT notarized (Apple Developer not bought yet): buyers still right-click > Open the first time. Manuals for every plugin: https://bsaxon430.github.io/ghosty-vst/manuals/ (ArpEZator and Ghosty Spectrum now have full reference manuals).
+Note: Brandon is pausing development for a while (the build server is being shut down; GitHub keeps everything and still builds installers).
+
+
 ## 2026-10-27 — CORRECTION from Brandon: Apple Developer is NOT enrolled yet (from Claude)
 **Status:** needs Brandon ($99/year)
 Brandon says he has NOT bought the Apple Developer Program yet, so the earlier note "enrollment is DONE" was wrong. Until he does (developer.apple.com/programs, $99/year): no signed or notarized Mac installer (Mac users keep right-click > Open) and no App Store apps. Planned order once enrolled: notarized Mac installer (steps in ghosty-pro/packaging/SIGNING.md of the private repo), then ArpEZator for iPad/iPhone, then Ghosty Spectrum. Grok: do NOT tell Tyler at NewVSTs that the build is notarized. The Gumroad swap to the newest pkg does NOT need Apple: waiting only for a green build.
