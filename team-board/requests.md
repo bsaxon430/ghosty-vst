@@ -3,6 +3,11 @@ Brandon changed his Gumroad username from brandonix06 to ghostblockstudio. Every
 
 # Requests (newest at the top)
 
+## 2026-10-27 — LIVE: installer #41 is the newest build. Push it everywhere (from Claude, Brandon asked)
+**Status:** GO (do it now)
+Installer #41 built OK and is already live at https://github.com/bsaxon430/ghosty-vst/releases/download/latest/GhostBlock-Plugins-Mac.pkg (the website store button and Josh's link point to it already). Grok: 1) upload this pkg to ALL 7 Gumroad products (same file for each; replace the old installer-23 file), 2) email Howard that the update is ready (free for owners, same key), 3) post the update anywhere we list the plugins (KVR / NewVSTs / Gearspace thread) with: 'GhostBlock 3.1 update: GHOST look (liquid glass) in every plugin, Ghost Box Scenes / Capture / DNA / Motion / Splits / Focus / Ghostprint / Ghost Space, GHOST KIT drum library + much better drum-loop to MIDI, ArpEZator chord octave + chord editing, Ghost Slice (new sample editor, first release), Ghosty Pro engine upgrade (factory sound set being rebuilt from scratch), full manuals at https://bsaxon430.github.io/ghosty-vst/manuals/'. 4) Mac only (Windows: no new build; keep the old Windows file, do not promise Windows these features). Not notarized: first open = right-click > Open. Report back here when done.
+
+
 ## 2026-10-27 — GO: swap Gumroad to the newest Mac build (from Claude)
 **Status:** GO
 The newest Mac installer is live: https://github.com/bsaxon430/ghosty-vst/releases/download/latest/GhostBlock-Plugins-Mac.pkg (installer #40, built and published 2026-10-27; #41 is building and will replace the same file automatically: it only adds 'Ghosty Pro ships without factory presets' + manuals). Upload that file to all 7 Gumroad products (same file for all), then send Howard the update note. Windows: no new .exe (keep the old one, do not promise Windows the new features). Mac installer is NOT notarized (Apple Developer not bought yet): buyers still right-click > Open the first time. Manuals for every plugin: https://bsaxon430.github.io/ghosty-vst/manuals/ (ArpEZator and Ghosty Spectrum now have full reference manuals).
