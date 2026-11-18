@@ -1,0 +1,15 @@
+GHOST BOX 3.2 - test build for Mac
+
+The GhostBlock effect rack for any track: 24 effects, scenes, morph, motion, capture.
+
+1. Double-click "Install Ghost Box.command" (if macOS blocks it: right-click > Open; or System Settings > Privacy & Security > Open Anyway).
+2. In FL Studio: Options > Manage plugins > Find more plugins. Ghost Box is an EFFECT: put it on a mixer insert.
+3. Or open "Ghost Box" from Applications to try it on its own.
+
+New in 3.2:
+- Opens at a size that fits FL's plugin window on a 1440 x 900 MacBook Pro (you can still drag it bigger).
+- Every new Ghost Box starts fresh (factory sound, first page). A saved project still opens exactly as you left it.
+- TEMPO 1/2x | 1x | 2x (bottom right, in the scenes bar): every tempo-synced effect (gates, grids, synced echoes and LFOs, pump, motion, scene
+  landings, space orbits) runs at the DAW's tempo, half of it or double it, still locked to the DAW's bars. Saved with the project.
+
+Nothing else on your computer is touched. Licences: Contents/Resources/CREDITS.txt inside the plug-in.
