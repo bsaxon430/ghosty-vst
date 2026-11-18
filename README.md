@@ -1,116 +1,75 @@
-# 👻 Ghosty
+# 👻 GhostBlock plugins · v1 beta
 
-A free ghost synth by **GhostBlock** for Windows and Mac (VST3 / AU / standalone).
+**22 free, open-source music plugins for Mac by GhostBlock**: synths, drum machines, MIDI generators and effects, each with its own hand-built interface. VST3 for FL Studio and Ableton Live, universal builds for Apple Silicon and Intel Macs (macOS 11 or newer).
 
-| | |
-|---|---|
-| 👻 **Ghosty** | Wavetable synth: 81 presets, 16 wave shapes + draw your own, LFO (synced, 5 targets), glide / mono / legato, 4 filter types + drive + its own envelope, mod wheel + velocity, scales, chords, arpeggiator, slide keyboard, ghost XY pad, **save your own sounds** |
+> **Version 1, in beta.** Everything here is v1 and still in beta, so expect a few rough edges. Bug reports are welcome in [Issues](https://github.com/bsaxon430/ghosty-vst/issues).
 
-## 🛒 The full GhostBlock collection
+🌐 **See them all:** [bsaxon430.github.io/ghosty-vst](https://bsaxon430.github.io/ghosty-vst/)
 
-Like Ghosty? The rest of the family lives in the **[GhostBlock store](https://bsaxon430.github.io/ghosty-vst/store/)**. Get all seven in the **Everything bundle**, or try them free first (demo mode):
+## ⬇️ Install
 
-| | |
-|---|---|
-| 🧪 **Professor Bernstein's ArpEZator** (new) | Arp, chord and melody generator: pick SUNRISE, DUSK or MIDNIGHT, hit GENERATE, then drag the CHORDS, ARP, MELODY or BASS lane straight into your DAW as MIDI. HARVEST the best arp bits into a melody, tweak with VARY / simpler / busier, built-in Neon Pluck sound, LISTEN learns from any track |
-| 📦 **Ghost Box** | An FX rack for any track: 19 effects you drag to reorder, 25 scenes, 180+ presets. FATTEN (one giant knob), HAUNTED HALLS reverb (11 modes, up to 60 s, freeze), CRACKLE multiband destroyer, RETRO vinyl/dust/tape colour, and ghosts that bounce with every echo |
-| 👻 **Ghosty Pro** | The big brother of Ghosty: 245 presets (about 60 basses), 8-voice unison supersaws, 19 wavetables + drop any WAV in as a wavetable, 8-slot mod matrix, 10 filters, and a built-in 15-unit Ghost FX studio (spectral EQ, pattern gate, stutter pads, analog saturation, tape echo, crystal, shimmer, OTT) |
-| 🦄 **Mr. Mickens** | Dark hardcore drum & bass break machine: 100 breaks, 4 bays, random starts and chops, drums with per-drum sidechain, every filter in parallel, stutter. **[Play it free in your browser](https://bsaxon430.github.io/ghosty-vst/mickens/)** |
-| 🔮 **Poltergeist** | FM spirit synth: drag ghosts onto each other to haunt them, drop any sample in, SAMPLE LAB, type-what-you-want SUMMON |
-| 🥁🌈 **Ghosty Beats + Spectrum** | A 16-track drum machine with MPC pads and drag-out stems, plus a paint-a-loop spectrum instrument |
+**One step:** open Terminal on your Mac and paste
 
----
+```
+curl -fsSL https://raw.githubusercontent.com/bsaxon430/ghosty-vst/builds/install-plugins.sh | bash
+```
 
-## ⬇️ Step 1: Download
+It downloads every plugin, puts them in `~/Library/Audio/Plug-Ins/VST3` and clears the macOS download block. Any older copy is moved to a backup folder, never deleted.
 
-### All 7 GhostBlock plugins (free trial: ArpEZator, Ghost Box, Ghosty Pro, Mr. Mickens, Poltergeist, Ghosty Beats, Ghosty Spectrum)
+**By hand:** download [all plugins](https://github.com/bsaxon430/ghosty-vst/releases/latest/download/GhostBlock-All-Plugins-mac-universal.zip) or one from the list below, unzip, and drag the `.vst3` into `~/Library/Audio/Plug-Ins/VST3`. If macOS blocks it, run `xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3`.
 
-| Your computer | Click to download |
-|---|---|
-| 🍎 **Mac** (M1/M2/M3/M4 or Intel, macOS 11+) | [**GhostBlock-Plugins-Mac.pkg**](https://bsaxon430.github.io/ghosty-vst/download/GhostBlock-Plugins-Mac.pkg) |
-| 🪟 **Windows 10 / 11** | [**GhostBlock-Plugins-Windows-Setup.exe**](https://bsaxon430.github.io/ghosty-vst/download/GhostBlock-Plugins-Windows-Setup.exe) |
+**Then rescan:** FL Studio: Options › Manage plugins › Find more plugins. Ableton Live: Settings › Plug-Ins › Rescan.
 
-Double-click the installer and follow the steps. Each plugin runs in demo mode until you click **UNLOCK** and paste your license key from the [store](https://bsaxon430.github.io/ghosty-vst/store/).
+## 🎛️ The plugins
 
-### Free Ghosty only (open source)
+### Synths & instruments
 
-| Your computer | Click to download |
-|---|---|
-| 🍎 **Mac** (M1/M2/M3/M4 or Intel, macOS 11+) | [**Ghosty-Mac.zip**](https://github.com/bsaxon430/ghosty-vst/releases/download/latest/Ghosty-Mac.zip) |
-| 🪟 **Windows 10 / 11** | [**Ghosty-Windows.zip**](https://github.com/bsaxon430/ghosty-vst/releases/download/latest/Ghosty-Windows.zip) |
-
-Not sure? If your computer has a Start button, it's Windows. If it has an Apple logo in the top-left corner, it's a Mac.
-
-All versions: [Releases page](https://github.com/bsaxon430/ghosty-vst/releases/latest)
-
----
-
-## 🍎 Step 2 (Mac): Install
-
-1. Open **Downloads** and double-click `Ghosty-Mac.zip` to unzip it.
-2. Open the **Ghosty for Mac** folder and **double-click `Install Ghosty.command`**.
-3. If the Mac says it *can't be opened* (this is normal for free plug-ins):
-   - Open **System Settings** > **Privacy & Security**, scroll down, click **Open Anyway**, then **Open**.
-   - Double-click `Install Ghosty.command` again.
-4. When the Terminal window says **Done!**, close it. Now go to Step 3.
-
-<details><summary>Still blocked?</summary>
-
-Open the **Terminal** app, type `bash ` (with a space), drag `Install Ghosty.command` into the window, and press Return.
-</details>
-
----
-
-## 🪟 Step 2 (Windows): Install
-
-1. Open your **Downloads** folder, **right-click** `Ghosty-Windows.zip` and choose **Extract All** > **Extract**.
-2. In the folder that opens, **double-click `Install Ghosty.bat`** and click **Yes**.
-   - If a blue box says *"Windows protected your PC"*, click **More info** > **Run anyway**.
-3. When it says **Done!**, press any key. Now go to Step 3 for your DAW.
-
-<details><summary>Rather do it by hand?</summary>
-
-Copy `Ghosty.vst3` from the `VST3` folder into `C:\Program Files\Common Files\VST3`.
-</details>
-
-## 🎛️ Step 3: Open it in your DAW
-
-| DAW | What to do | Where Ghosty shows up |
+| Plugin | What it is | Download |
 |---|---|---|
-| **Ableton Live** (Win/Mac) | Windows: **Options > Preferences > Plug-Ins**, turn on **Use VST3 Plug-in System Folders**, click **Rescan**. Mac: **Settings > Plug-Ins > Rescan** | Browser > **Plug-Ins > VST3 > GhostBlock** |
-| **FL Studio** (Win/Mac) | **Options > Manage plugins > Find more plugins** | Click **+** in the Channel Rack, or Plugin database > Generators |
-| **Logic Pro / GarageBand** (Mac) | Just open it (uses the AU version) | New Software Instrument track > **AU Instruments > GhostBlock** |
-| **Bitwig** | **Settings > Locations**, make sure VST3 is on, it rescans by itself | Browser > Instruments > GhostBlock |
-| **Reaper** | **Options > Preferences > Plug-ins > VST > Re-scan** | Add FX > **VST3i** > Ghosty |
-| **Studio One** | **Options > Locations > VST Plug-ins > Reset Blocklist**, restart | Browser > Instruments > GhostBlock |
-| **Cubase** | **Studio > VST Plug-in Manager > Rescan** | Instrument track > GhostBlock |
+| **SÉANCE** | *12-operator hybrid synth*: Twelve spirits sit around a table, and every thread you draw between them is an FM connection. It pulls the engines of Ghosty Pro 2, Ghost Bass and Poltergeist 2 into one synth, with a step sequencer and its own sub and FX. | [VST3](https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Seance-mac-universal.zip) |
+| **Poltergeist** | *FM spirit synth*: The original FM ghost synth. Drag ghosts into orbit to link them, pick a sound from the tag row, then turn the six macro knobs: Haunt, Spectre, Possess, Drift, Veil and Curse. | [VST3](https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Poltergeist-mac-universal.zip) |
+| **Poltergeist 2** | *FM synth on the Six Sines engine*: A flying ghost machine you play by connecting hoses. Behind it is a back room for the wiring, a MORPH board that blends four sounds, an FX page of spectral effects, a SUB layer and a studio view for when you want plain knobs. | [VST3](https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Poltergeist-2-mac-universal.zip) |
+| **Ghosty** | *Free synth*: The first GhostBlock plugin: a small, friendly synth with the smiling ghost that started everything. | [VST3](https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghosty-mac-universal.zip) |
+| **Ghosty Pro** | *Synth*: The original Ghosty Pro: two oscillators, envelopes, a mod matrix and macros across SYNTH, MOD, BEND, TRAP, MORPH and FX pages, with a stack browser for trap sounds. | [VST3](https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghosty-Pro-mac-universal.zip) |
+| **Ghosty Pro 2** | *Wavetable synth on the Vital engine*: Vital's wavetable engine in the Ghosty look. MORPH spirit boards blend four sounds with a puck that can orbit on its own, and twelve ready-made boards are built in. Three looks: Ghost, Black and a watercolor Light. | [VST3](https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghosty-Pro-2-mac-universal.zip) |
+| **Ghost Bass** | *Bass synth on the Surge XT engine*: Surge XT's sound engine turned into a bass machine, with a clean Bombaz sub underneath and a blend board for mixing bass sounds without them clashing. | [VST3](https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghost-Bass-mac-universal.zip) |
+| **Ghost Atlas** | *Sample instrument*: A sample-based instrument where every sound gets its own painted scene. Layer sounds, browse the library and run them through a full effects rack. | [VST3](https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghost-Atlas-mac-universal.zip) |
 
-Load **Ghosty** as an **instrument** on a MIDI track.
+### Drums & beats
 
-### No DAW? Use the apps
-The **Standalone** folder has apps that work on their own: double-click and play.
-(Mac, first time: right-click the app > **Open**.)
+| Plugin | What it is | Download |
+|---|---|---|
+| **Mr Mickens** | *Break machine*: A dark hardcore break machine: four break bays, 100 breaks, break DNA, fills, stutter, a deck and a drum machine underneath. | [VST3](https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Mr-Mickens-mac-universal.zip) |
+| **Ghosty Beats** | *Drum machine*: A drum machine and sequencer with its own Ghost Kit sounds, a tracker, rhythm lab, pads and song mode. Opens in a rainy neon city, with an ink-and-watercolor light look too. | [VST3](https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghosty-Beats-mac-universal.zip) |
+| **Block Step** | *Vertical drum tracker*: Sketch Aphex Twin, DnB and trap patterns step by step. GENERATE, LINEAR and WILD write beats for you, with piano and acid lines in the same key. Opens in Ghost City. | [VST3](https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Block-Step-mac-universal.zip) |
+| **Ghost House** | *House drum tracker*: Block Step's house-music twin, with its own GhostBlock drum packs, swing and a groove engine built for four-on-the-floor. | [VST3](https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghost-House-mac-universal.zip) |
+| **Ghost Break** | *Jungle and DnB break instrument*: Four bays of real breaks with RANDOM START and RANDOM BREAKS, a drum sequencer underneath, and Phantom FX effects on every bay. | [VST3](https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghost-Break-mac-universal.zip) |
 
----
+### MIDI & generators
 
-## 🆘 Help
+| Plugin | What it is | Download |
+|---|---|---|
+| **ArpEZator** | *Arp and melody writer*: Professor Bernstein picks a mood (Sunrise, Dusk, Midnight, Trap or Hip Hop) and writes chords, an arp, a melody and a bass line. Edit them in the piano roll and drag the MIDI or audio into your song. | [VST3](https://github.com/bsaxon430/ghosty-vst/releases/latest/download/ArpEZator-mac-universal.zip) |
+| **Ghost Hum** | *Sing or beatbox to MIDI*: Hum a melody or beatbox a groove and it comes out as MIDI notes you can drag straight into your DAW. | [VST3](https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghost-Hum-mac-universal.zip) |
+| **Ghost Slice** | *Sound-to-music generator*: Drop in a vocal or any sound and press GENERATE. It makes musical takes from it: instruments, pads and chops, all snapped to your key. | [VST3](https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghost-Slice-mac-universal.zip) |
 
-- **It doesn't show up:** do the rescan step again, then restart your DAW.
-- **Mac: "damaged" or "can't be opened":** run `Install Ghosty.command` again (it fixes this).
-- **Update:** download again and run the installer; it replaces the old version.
+### Effects & sound design
 
----
+| Plugin | What it is | Download |
+|---|---|---|
+| **Phantom FX** | *24-effect rack*: The open-source 24-effect rack: parallel lanes, modulation, a perform page and a 3D spatial page, in three hand-painted looks. | [VST3](https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Phantom-FX-mac-universal.zip) |
+| **Ghost Box** | *Effect box*: The original 24-effect fun box that Phantom FX grew out of: scenes, morph, a board and motion. | [VST3](https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghost-Box-mac-universal.zip) |
+| **Ghost Lab** | *Experimental sound organism*: Put a sound in the specimen tube and stretch it, freeze it, smear it or mutate it. Built on CDP8 and PaulXStretch, with an Under the Hood page for every engine. | [VST3](https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghost-Lab-mac-universal.zip) · [effect](https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghost-Lab-FX-mac-universal.zip) |
+| **Ghost Mosaic** | *Sample mosaic (instrument + effect)*: Samplebrain's engine with a GhostBlock face: it rebuilds one sound out of tiny pieces of other sounds. Comes as an instrument and an effect. | [VST3](https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghost-Mosaic-mac-universal.zip) · [effect](https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghost-Mosaic-FX-mac-universal.zip) |
+| **Ghosty Spectrum** | *Spectral sound lab*: Paint the sound itself. Draw on the spectrum, turn images into sound, and work through paint, ghost, chaos and DNA pages, then loop and arrange what you made. | [VST3](https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghosty-Spectrum-mac-universal.zip) |
+| **Ghost Voice** | *Voice creation suite*: Drag in a vocal, chop it, play it on the keys, and use the sing engine to make new voices from your own takes. | [VST3](https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghost-Voice-mac-universal.zip) |
 
-<details><summary>For coders: build from source</summary>
+## 🧩 Source
 
-JUCE 8 + CMake. Windows: run `INSTALL-GHOSTY.bat`. Anywhere:
-```
-cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build --config Release
-```
-Every push to `main` builds Windows + Mac in GitHub Actions and updates the **latest** release.
-</details>
+Every plugin is free software. Many are built on open-source projects (Surge XT, Vital, Six Sines, CDP, Samplebrain, Steam Audio, JUCE and more); each one's licence and credits ship inside its download.
 
-## License
+- `main`: the original Ghosty synth
+- `src/*` branches: the source snapshot of each plugin
+- `builds` branch: the universal Mac build that makes the [Releases](https://github.com/bsaxon430/ghosty-vst/releases)
 
-Ghosty is free and open source under the [GNU AGPL-3.0](LICENSE). It is built with [JUCE](https://juce.com) (used under its AGPLv3 option).
+Windows builds aren't part of v1 beta yet.

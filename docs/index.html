@@ -1,100 +1,331 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GhostBlock Studio</title>
-<meta name="description" content="GhostBlock builds audio plugins (VST3/AU) with one-of-a-kind interfaces, trading bots and web apps. See the work, try the plugins, or hire us to build yours.">
-<link rel="icon" type="image/png" href="media/favicon-64.png"><link rel="apple-touch-icon" href="media/apple-touch-icon.png">
+<title>GhostBlock Plugins</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root { --bg: #0b0c10; --card: #141621; --line: #262a3a; --ink: #f2f4f5; --dim: #9aa0b4; --slime: #3cff8f; --ecto: #a06bff; --pink: #ff4fd8; --gold: #ffc35a; }
-* { box-sizing: border-box; }
-body { margin: 0; background: radial-gradient(1100px 600px at 0% -10%, rgba(160,107,255,.25), transparent 60%), radial-gradient(900px 600px at 100% 0%, rgba(60,255,143,.12), transparent 60%), var(--bg); color: var(--ink); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-.wrap { max-width: 1080px; margin: 0 auto; padding: 36px 16px 70px; }
-.brand { font-weight: 900; letter-spacing: 2px; font-size: 14px; color: var(--dim); }
-h1 { font-size: clamp(34px, 7.5vw, 62px); line-height: 1.04; margin: 10px 0 14px; }
-h1 b { background: linear-gradient(90deg, var(--slime), var(--ecto), var(--pink)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.lead { color: var(--dim); font-size: 19px; max-width: 720px; margin: 0 0 24px; }
-.cta { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 40px; }
-.btn { display: inline-block; background: var(--slime); color: #07120c; font-weight: 800; text-decoration: none; padding: 12px 20px; border-radius: 12px; }
-.btn.alt { background: transparent; color: var(--ink); border: 1px solid var(--line); }
-h2 { font-size: 28px; margin: 48px 0 6px; }
-.sub { color: var(--dim); margin: 0 0 18px; }
-.gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; }
-.tile { background: var(--card); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
-.tile img { width: 100%; display: block; aspect-ratio: 16/10.5; object-fit: cover; object-position: top; border-bottom: 1px solid var(--line); }
-.tile .t { padding: 12px 16px 16px; }
-.tile h3 { margin: 0 0 4px; font-size: 18px; }
-.tile p { margin: 0; color: var(--dim); font-size: 14.5px; }
-.tile a { color: var(--ecto); font-weight: 700; font-size: 14px; }
-.wide { grid-column: 1 / -1; }
-.wide img { aspect-ratio: auto; }
-.skills { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
-.skill { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
-.skill h3 { margin: 0 0 6px; font-size: 17px; color: var(--slime); }
-.skill p { margin: 0; color: var(--dim); font-size: 15px; }
-.hire { margin-top: 48px; background: linear-gradient(135deg, rgba(60,255,143,.12), rgba(160,107,255,.2)); border: 1px solid rgba(160,107,255,.5); border-radius: 18px; padding: 26px; }
-.hire h2 { margin: 0 0 8px; }
-.hire ul { color: var(--dim); padding-left: 20px; }
-.foot { margin-top: 40px; color: var(--dim); font-size: 14px; border-top: 1px solid var(--line); padding-top: 16px; }
-a { color: var(--ecto); }
+:root{
+  /* a pro-audio catalog at night: near-black, one pale spectral violet accent, the plugins' own art carries the colour */
+  --bg:#0a0a0d; --surface:#121217; --line:#23232b; --ink:#ececf1; --dim:#9696a3; --accent:#bfa8ff;
+  --display:"Archivo", "Helvetica Neue", Arial, sans-serif;
+  --body:"IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+  /* layout: top bar, hero with a slow wall of plugin screens, spec strip, four catalogue sections of equal cards, install, credits */
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.6 var(--body);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+.wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+.bar{position:sticky;top:0;z-index:10;background:rgba(10,10,13,.82);backdrop-filter:saturate(140%) blur(12px);border-bottom:1px solid var(--line)}
+.bar .wrap{display:flex;align-items:center;gap:28px;height:60px}
+.mark{font:800 18px/1 var(--display);font-stretch:125%;letter-spacing:.02em;text-decoration:none}
+.mark span{color:var(--accent)}
+.bar nav{display:flex;gap:22px;margin-left:auto;flex-wrap:wrap}
+.bar nav a{font:500 14px/1 var(--body);color:var(--dim);text-decoration:none}
+.bar nav a:hover,.bar nav a:focus-visible{color:var(--ink);outline:none}
+.hero{padding:88px 24px 40px}
+.eyebrow{font:500 12px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+h1{font:900 clamp(46px,8.5vw,112px)/.9 var(--display);font-stretch:125%;letter-spacing:-.025em;margin:18px 0 26px;text-wrap:balance;max-width:14ch}
+.hero p{max-width:58ch;color:var(--dim);font-size:19px;margin:0}
+.hero p strong{color:var(--ink);font-weight:500}
+.wall{margin:56px 0 0;overflow:hidden;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:#07070a;padding:22px 0;
+  -webkit-mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.track{display:flex;gap:18px;width:max-content;animation:drift 140s linear infinite}
+.track img{height:210px;width:auto;border-radius:8px;border:1px solid var(--line);display:block}
+@keyframes drift{to{transform:translateX(-50%)}}
+.wall:hover .track{animation-play-state:paused}
+.specs{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}
+.specs div{padding:26px 24px;border-right:1px solid var(--line)}
+.specs div:last-child{border-right:0}
+.specs b{display:block;font:800 34px/1.05 var(--display);font-stretch:112%;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.specs span{font:400 12.5px/1.4 var(--mono);color:var(--dim);text-transform:uppercase;letter-spacing:.08em}
+section.cat{padding:84px 0 0;scroll-margin-top:70px}
+.cathead{display:flex;align-items:baseline;justify-content:space-between;gap:20px;border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:28px;flex-wrap:wrap}
+h2{font:800 clamp(28px,4vw,44px)/1 var(--display);font-stretch:118%;letter-spacing:-.015em;margin:0;text-wrap:balance}
+.cathead p{margin:0;color:var(--dim);max-width:52ch;font-size:15px}
+.count{font:500 13px var(--mono);color:var(--accent);margin-left:10px;vertical-align:super;letter-spacing:.05em}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:28px}
+.card{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;transition:border-color .25s ease, transform .25s ease}
+.card:hover{border-color:#3a3a47;transform:translateY(-2px)}
+.media{position:relative;display:block;width:100%;aspect-ratio:16/10;padding:0;border:0;background:#000;cursor:zoom-in;overflow:hidden}
+.media>.shot{width:100%;height:100%;object-fit:cover;object-position:top center;display:block;transition:transform .5s ease}
+.card:hover .media>.shot{transform:scale(1.025)}
+.media::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,10,13,0) 35%,rgba(10,10,13,.6) 64%,rgba(10,10,13,.97) 100%);pointer-events:none;z-index:1}
+.media .logo{position:absolute;left:18px;bottom:14px;z-index:2;max-width:74%;max-height:80px;width:auto;height:auto;object-fit:contain;filter:drop-shadow(0 2px 6px rgba(0,0,0,.5))}
+.media:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.info{padding:18px 20px 22px;display:flex;flex-direction:column;gap:10px;flex:1}
+.row{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+h3{font:700 20px/1.2 var(--display);font-stretch:110%;margin:0}
+.ver{font:500 12px var(--mono);color:var(--dim);white-space:nowrap;font-variant-numeric:tabular-nums}
+.kind{font:500 12px/1.3 var(--mono);color:var(--accent);text-transform:uppercase;letter-spacing:.08em}
+.info p{margin:0;color:var(--dim);font-size:15px}
+.dls{display:flex;gap:10px;flex-wrap:wrap;margin-top:auto;padding-top:14px}
+.dl{font:500 13px var(--body);color:var(--bg);background:var(--accent);border-radius:999px;padding:7px 14px;text-decoration:none}
+.dl.alt{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.dl:hover{filter:brightness(1.1)}
+.dl:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px}
+.cta .dl{font-size:15px;padding:11px 20px}
+pre.cmd{font:400 13.5px/1.5 var(--mono);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;color:var(--ink);white-space:pre-wrap;word-break:break-all;margin:10px 0 0}
+.install{margin-top:110px;padding:0 0 8px;scroll-margin-top:70px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin-top:8px}
+.step{border-top:2px solid var(--accent);padding-top:18px}
+.step b{display:block;font:700 18px/1.3 var(--display);font-stretch:110%;margin-bottom:6px}
+.step p{margin:0;color:var(--dim);font-size:15px}
+code{font:400 13.5px var(--mono);background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:1px 6px;color:var(--ink);word-break:break-word}
+footer{margin-top:96px;border-top:1px solid var(--line);padding:40px 0 64px;color:var(--dim);font-size:14px}
+footer .cols{display:grid;grid-template-columns:2fr 1fr;gap:40px}
+footer p{margin:0 0 10px;max-width:70ch}
+footer h4{font:600 12px var(--mono);text-transform:uppercase;letter-spacing:.12em;color:var(--ink);margin:0 0 12px}
+dialog{border:0;padding:0;background:transparent;max-width:96vw;max-height:94vh}
+dialog::backdrop{background:rgba(4,4,6,.92)}
+dialog img{max-width:96vw;max-height:86vh;display:block;border-radius:10px}
+dialog .dbar{display:flex;justify-content:space-between;align-items:center;margin-top:12px;color:var(--dim);font:500 14px var(--body)}
+dialog button{font:500 14px var(--body);background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:8px 16px;cursor:pointer}
+@media (max-width:820px){.specs{grid-template-columns:repeat(2,1fr)}.specs div:nth-child(2){border-right:0}.specs div:nth-child(-n+2){border-bottom:1px solid var(--line)}.steps{grid-template-columns:1fr}footer .cols{grid-template-columns:1fr}.bar nav{display:none}}
+@media (max-width:420px){.grid{grid-template-columns:1fr}.track img{height:150px}}
+@media (prefers-reduced-motion:reduce){.track{animation:none}.card,.media>.shot{transition:none}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="brand"><img src="media/ghostblock-icon.png" alt="" width="34" height="34" style="vertical-align:middle;border-radius:8px;margin-right:8px">GHOSTBLOCK STUDIO</div>
-  <h1>Plugins and software <b>nobody else makes</b>.</h1>
-  <p class="lead">We design and build audio plugins with one-of-a-kind interfaces, plus fast trading systems and web apps. Everything below was designed, coded and shipped by us, for Mac and Windows.</p>
-  <div class="cta"><a class="btn" href="store/">Shop the plugins</a><a class="btn alt" href="mickens/">Play Mr. Mickens in your browser</a><a class="btn alt" href="#hire">Hire us to build yours</a></div>
-
-  <h2>Audio plugins</h2>
-  <p class="sub">VST3 / AU / standalone, built with JUCE in C++. Real-time-safe audio, custom-drawn interfaces, drag-out audio and stems, save/load.</p>
-  <div class="gallery">
-    <div class="tile wide"><img src="store/mickens.jpg" alt="Mr. Mickens break machine"><div class="t"><h3>🦄 Mr. Mickens: drum &amp; bass break machine</h3><p>100 breaks across 4 chop bays, per-drum sidechain, every filter in parallel, stutter with its own filter envelope, animated unicorn UI with light and dark themes. <a href="mickens/">Try it in your browser</a> · <a href="store/">Get it</a></p></div></div>
-    <div class="tile"><img src="store/spectrum.jpg" alt="Ghosty Spectrum pad painter"><div class="t"><h3>🌈 Ghosty Spectrum: paint ambient pads</h3><p>Paint bells, piano strings and feedback tones in a glowing ghost world. Dissonance and harmony are drawn live; detects the key of your song.</p></div></div>
-    <div class="tile"><img src="store/poltergeist.jpg" alt="Poltergeist FM synth"><div class="t"><h3>🔮 Poltergeist: FM spirit synth</h3><p>Drag ghosts onto each other to FM them, drop in any sample, a full sample-editing lab, and type-what-you-want sound search.</p></div></div>
-    <div class="tile"><img src="store/beats.jpg" alt="Ghosty Beats drum machine"><div class="t"><h3>🥁 Ghosty Beats: drum machine</h3><p>16 tracks, 61 drums + your samples, rolls, triplets, song mode, MPC pads, drag out every stem.</p></div></div>
-    <div class="tile"><img src="showcase/spectrum-loop.jpg" alt="Ghosty Spectrum loop mode"><div class="t"><h3>Loop painting on the spectrum</h3><p>Draw melodies and drop drums on a live spectrogram, snap to key and quantize, then drag the loop out.</p></div></div>
-    <div class="tile"><img src="store/ghosty.jpg" alt="Ghosty wavetable synth"><div class="t"><h3>👻 Ghosty: wavetable synth (free)</h3><p>81 presets, draw your own waves, LFO, glide, filters, chords and arp. <a href="https://github.com/bsaxon430/ghosty-vst">Download free</a></p></div></div>
-    <div class="tile"><img src="showcase/mickens-dark.jpg" alt="Mr. Mickens dark theme"><div class="t"><h3>Theming</h3><p>Every UI here is drawn in code, so any look is possible: light/dark modes, animation, your brand.</p></div></div>
-  </div>
-
-  <h2>Trading systems &amp; apps</h2>
-  <p class="sub">Low-latency engineering and clean dashboards.</p>
-  <div class="gallery">
-    <div class="tile"><img src="ghostblock/green-day.png" alt="GhostBlock trading dashboard" style="object-fit:contain;background:#07080c"><div class="t"><h3>GhostBlock: live Solana copy-trading engine (Rust)</h3><p>Same-block copying, direct DEX swaps, Jito bundles, automatic exits and a live dashboard. Honest results included. <a href="ghostblock/">Read the case study</a></p></div></div>
-  </div>
-
-  <h2>AI features</h2>
-  <p class="sub">Large-language-model features built into real apps, with the Claude API.</p>
-  <div class="gallery">
-    <div class="tile"><img src="media/ghostmoney-ai-summary.jpg" alt="AI money summary card" style="object-fit:contain;background:#07080c"><div class="t"><h3>AI money summary (Ghost Money)</h3><p>Reads a month of budget data and writes a plain-English summary, a headline, a mood and three practical tips, using Anthropic's official SDK. Only the small budget numbers are sent, the key stays on the server, and each summary costs about a penny. (Demo data.)</p></div></div>
-    <div class="tile"><img src="media/ghostmoney-2-budget.jpg" alt="Ghost Money budget page" style="object-fit:cover;object-position:top"><div class="t"><h3>Ghost Money: personal finance dashboard</h3><p>Node.js + Plaid (read-only, encrypted tokens): net worth, monthly budget by line, bills calendar, goals, passkey login, mobile-first. (Demo data.)</p></div></div>
-  </div>
-
-  <h2>Client work samples</h2>
-  <p class="sub">The kind of work we do for clients: plugin interface redesigns, TradingView indicators and AI features for existing apps.</p>
-  <div class="gallery">
-    <div class="tile wide"><img src="samples/plugin-ui-gallery.jpg" alt="Plugin UI before and after" style="aspect-ratio:auto"><div class="t"><h3>Plugin UI redesign: before → after</h3><p>A stock-looking compressor turned into a polished product: arc knobs, transfer curve, live input/output and gain-reduction meters, presets with A/B, dark and light themes.</p></div></div>
-    <div class="tile"><img src="samples/pine-preview.jpg" alt="Pine Script trend ribbon indicator" style="object-fit:contain;background:#131722"><div class="t"><h3>TradingView indicator (Pine Script v6)</h3><p>Adaptive trend ribbon, ATR trailing stop, higher-timeframe filter, buy/sell labels, alerts and an info table. Non-repainting. <a href="samples/ghostblock_trend_ribbon.pine">Source</a> · <a href="samples/trend-ribbon-README.md">Notes</a> (chart: logic preview on synthetic data)</p></div></div>
-    <div class="tile"><img src="samples/ai-demo.jpg" alt="AI money summary demo" style="object-fit:cover;object-position:top"><div class="t"><h3>AI feature for an existing app</h3><p>One small API call turns an app's numbers into a plain-English summary with tips. The key stays on the server, about a penny per summary. <a href="ai-demo/">Open the demo</a></p></div></div>
-  </div>
-
-  <h2>What we build</h2>
-  <div class="skills">
-    <div class="skill"><h3>Custom VST3 / AU plugins</h3><p>Instruments, effects, samplers and MIDI tools in JUCE/C++, any UI you can imagine, Mac + Windows installers.</p></div>
-    <div class="skill"><h3>Plugin UI design</h3><p>Distinctive, animated, hand-drawn interfaces, or a clean redesign of a plugin you already have.</p></div>
-    <div class="skill"><h3>Trading bots</h3><p>Solana bots and speed-ups (landing, Jito, pool math), TradingView Pine Script indicators and alerts.</p></div>
-    <div class="skill"><h3>Web &amp; browser audio</h3><p>Browser versions of plugins (Web Audio), dashboards and API integrations.</p></div>
-  </div>
-
-  <div class="hire" id="hire">
-    <h2>Hire us</h2>
-    <p style="color:var(--dim);margin:0 0 8px">Have an idea for a plugin, a custom UI, or a trading tool? We work in clear fixed-price milestones with a working first version early, and you get the source code.</p>
-    <ul><li>Find us on <b>Upwork</b> or <b>Fiverr</b> as <b>Brandon S. · GhostBlock</b></li><li>Plugin companies: we also license finished plugins for your brand</li></ul>
-  </div>
-
-  <div class="foot">© GhostBlock · <a href="store/">Store</a> · <a href="mickens/">Mr. Mickens web</a> · <a href="ghostblock/">Case study</a> · <a href="https://github.com/bsaxon430/ghosty-vst">GitHub</a></div>
+<header class="bar"><div class="wrap">
+  <a class="mark" href="#top">GHOST<span>BLOCK</span></a>
+  <nav aria-label="Sections"><a href="#g0">Instruments</a><a href="#g1">Drums</a><a href="#g2">MIDI</a><a href="#g3">Effects</a><a href="#install">Install</a></nav>
+</div></header>
+<main id="top">
+<div class="wrap hero">
+  <div class="eyebrow">GhostBlock Studio · Plugin catalogue · Version 1 (beta)</div>
+  <h1>Instruments with a ghost in the machine.</h1>
+  <p><strong>22 plugins</strong>: synths, drum machines, MIDI generators and effects, each with its own hand-built interface. Every one runs as a <strong>VST3 on macOS</strong> in FL Studio and Ableton Live. Every plugin is <strong>version 1, in beta</strong>, so expect a few rough edges.</p>
+  <div class="cta"><a class="dl" href="https://github.com/bsaxon430/ghosty-vst/releases/latest/download/GhostBlock-All-Plugins-mac-universal.zip">Download all plugins</a><a class="dl alt" href="#install">How to install</a><a class="dl alt" href="https://github.com/bsaxon430/ghosty-vst">Source on GitHub</a></div>
 </div>
+<div class="wall" aria-hidden="true"><div class="track"><img src="img/poltergeist2.jpg" alt=""><img src="img/ghostlab.jpg" alt=""><img src="img/ghostbreak.jpg" alt=""><img src="img/seance.jpg" alt=""><img src="img/ghostatlas.jpg" alt=""><img src="img/blockstep.jpg" alt=""><img src="img/ghostypro2.jpg" alt=""><img src="img/phantomfx.jpg" alt=""><img src="img/mrmickens.jpg" alt=""><img src="img/ghostbass.jpg" alt=""><img src="img/arpezator.jpg" alt=""><img src="img/ghostvoice.jpg" alt=""><img src="img/poltergeist2.jpg" alt=""><img src="img/ghostlab.jpg" alt=""><img src="img/ghostbreak.jpg" alt=""><img src="img/seance.jpg" alt=""><img src="img/ghostatlas.jpg" alt=""><img src="img/blockstep.jpg" alt=""><img src="img/ghostypro2.jpg" alt=""><img src="img/phantomfx.jpg" alt=""><img src="img/mrmickens.jpg" alt=""><img src="img/ghostbass.jpg" alt=""><img src="img/arpezator.jpg" alt=""><img src="img/ghostvoice.jpg" alt=""></div></div>
+<div class="wrap">
+  <div class="specs">
+    <div><b>22</b><span>Plugins</span></div>
+    <div><b>4</b><span>Categories</span></div>
+    <div><b>v1</b><span>Beta release</span></div>
+    <div><b>macOS</b><span>FL Studio · Ableton Live</span></div>
+  </div>
+<section class="cat" id="g0"><div class="cathead"><h2>Synths &amp; instruments<span class="count">08</span></h2><p>FM, wavetable, hybrid and sample-based instruments.</p></div><div class="grid"><article class="card" id="seance">
+  <button class="media" data-full="img/seance.jpg" data-name="SÉANCE" aria-label="Open the SÉANCE screenshot"><img class="shot" src="img/seance.jpg" alt="" loading="lazy"><img class="logo" src="logo/seance.png" alt="SÉANCE logo"></button>
+  <div class="info">
+    <div class="kind">12-operator hybrid synth</div>
+    <div class="row"><h3>SÉANCE</h3><span class="ver">v1 · Beta</span></div>
+    <p>Twelve spirits sit around a table, and every thread you draw between them is an FM connection. It pulls the engines of Ghosty Pro 2, Ghost Bass and Poltergeist 2 into one synth, with a step sequencer and its own sub and FX.</p>
+    <div class="dls"><a class="dl" href="https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Seance-mac-universal.zip">Download VST3</a></div>
+  </div>
+</article><article class="card" id="poltergeist">
+  <button class="media" data-full="img/poltergeist.jpg" data-name="Poltergeist" aria-label="Open the Poltergeist screenshot"><img class="shot" src="img/poltergeist.jpg" alt="" loading="lazy"><img class="logo" src="logo/poltergeist.png" alt="Poltergeist logo"></button>
+  <div class="info">
+    <div class="kind">FM spirit synth</div>
+    <div class="row"><h3>Poltergeist</h3><span class="ver">v1 · Beta</span></div>
+    <p>The original FM ghost synth. Drag ghosts into orbit to link them, pick a sound from the tag row, then turn the six macro knobs: Haunt, Spectre, Possess, Drift, Veil and Curse.</p>
+    <div class="dls"><a class="dl" href="https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Poltergeist-mac-universal.zip">Download VST3</a></div>
+  </div>
+</article><article class="card" id="poltergeist2">
+  <button class="media" data-full="img/poltergeist2.jpg" data-name="Poltergeist 2" aria-label="Open the Poltergeist 2 screenshot"><img class="shot" src="img/poltergeist2.jpg" alt="" loading="lazy"><img class="logo" src="logo/poltergeist2.png" alt="Poltergeist 2 logo"></button>
+  <div class="info">
+    <div class="kind">FM synth on the Six Sines engine</div>
+    <div class="row"><h3>Poltergeist 2</h3><span class="ver">v1 · Beta</span></div>
+    <p>A flying ghost machine you play by connecting hoses. Behind it is a back room for the wiring, a MORPH board that blends four sounds, an FX page of spectral effects, a SUB layer and a studio view for when you want plain knobs.</p>
+    <div class="dls"><a class="dl" href="https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Poltergeist-2-mac-universal.zip">Download VST3</a></div>
+  </div>
+</article><article class="card" id="ghosty">
+  <button class="media" data-full="img/ghosty.jpg" data-name="Ghosty" aria-label="Open the Ghosty screenshot"><img class="shot" src="img/ghosty.jpg" alt="" loading="lazy"><img class="logo" src="logo/ghosty.png" alt="Ghosty logo"></button>
+  <div class="info">
+    <div class="kind">Free synth</div>
+    <div class="row"><h3>Ghosty</h3><span class="ver">v1 · Beta</span></div>
+    <p>The first GhostBlock plugin: a small, friendly synth with the smiling ghost that started everything.</p>
+    <div class="dls"><a class="dl" href="https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghosty-mac-universal.zip">Download VST3</a></div>
+  </div>
+</article><article class="card" id="ghostypro">
+  <button class="media" data-full="img/ghostypro.jpg" data-name="Ghosty Pro" aria-label="Open the Ghosty Pro screenshot"><img class="shot" src="img/ghostypro.jpg" alt="" loading="lazy"><img class="logo" src="logo/ghostypro.png" alt="Ghosty Pro logo"></button>
+  <div class="info">
+    <div class="kind">Synth</div>
+    <div class="row"><h3>Ghosty Pro</h3><span class="ver">v1 · Beta</span></div>
+    <p>The original Ghosty Pro: two oscillators, envelopes, a mod matrix and macros across SYNTH, MOD, BEND, TRAP, MORPH and FX pages, with a stack browser for trap sounds.</p>
+    <div class="dls"><a class="dl" href="https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghosty-Pro-mac-universal.zip">Download VST3</a></div>
+  </div>
+</article><article class="card" id="ghostypro2">
+  <button class="media" data-full="img/ghostypro2.jpg" data-name="Ghosty Pro 2" aria-label="Open the Ghosty Pro 2 screenshot"><img class="shot" src="img/ghostypro2.jpg" alt="" loading="lazy"><img class="logo" src="logo/ghostypro2.png" alt="Ghosty Pro 2 logo"></button>
+  <div class="info">
+    <div class="kind">Wavetable synth on the Vital engine</div>
+    <div class="row"><h3>Ghosty Pro 2</h3><span class="ver">v1 · Beta</span></div>
+    <p>Vital&#x27;s wavetable engine in the Ghosty look. MORPH spirit boards blend four sounds with a puck that can orbit on its own, and twelve ready-made boards are built in. Three looks: Ghost, Black and a watercolor Light.</p>
+    <div class="dls"><a class="dl" href="https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghosty-Pro-2-mac-universal.zip">Download VST3</a></div>
+  </div>
+</article><article class="card" id="ghostbass">
+  <button class="media" data-full="img/ghostbass.jpg" data-name="Ghost Bass" aria-label="Open the Ghost Bass screenshot"><img class="shot" src="img/ghostbass.jpg" alt="" loading="lazy"><img class="logo" src="logo/ghostbass.png" alt="Ghost Bass logo"></button>
+  <div class="info">
+    <div class="kind">Bass synth on the Surge XT engine</div>
+    <div class="row"><h3>Ghost Bass</h3><span class="ver">v1 · Beta</span></div>
+    <p>Surge XT&#x27;s sound engine turned into a bass machine, with a clean Bombaz sub underneath and a blend board for mixing bass sounds without them clashing.</p>
+    <div class="dls"><a class="dl" href="https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghost-Bass-mac-universal.zip">Download VST3</a></div>
+  </div>
+</article><article class="card" id="ghostatlas">
+  <button class="media" data-full="img/ghostatlas.jpg" data-name="Ghost Atlas" aria-label="Open the Ghost Atlas screenshot"><img class="shot" src="img/ghostatlas.jpg" alt="" loading="lazy"><img class="logo" src="logo/ghostatlas.png" alt="Ghost Atlas logo"></button>
+  <div class="info">
+    <div class="kind">Sample instrument</div>
+    <div class="row"><h3>Ghost Atlas</h3><span class="ver">v1 · Beta</span></div>
+    <p>A sample-based instrument where every sound gets its own painted scene. Layer sounds, browse the library and run them through a full effects rack.</p>
+    <div class="dls"><a class="dl" href="https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghost-Atlas-mac-universal.zip">Download VST3</a></div>
+  </div>
+</article></div></section>
+<section class="cat" id="g1"><div class="cathead"><h2>Drums &amp; beats<span class="count">05</span></h2><p>Break machines, drum sequencers and trackers for writing beats fast.</p></div><div class="grid"><article class="card" id="mrmickens">
+  <button class="media" data-full="img/mrmickens.jpg" data-name="Mr Mickens" aria-label="Open the Mr Mickens screenshot"><img class="shot" src="img/mrmickens.jpg" alt="" loading="lazy"><img class="logo" src="logo/mrmickens.png" alt="Mr Mickens logo"></button>
+  <div class="info">
+    <div class="kind">Break machine</div>
+    <div class="row"><h3>Mr Mickens</h3><span class="ver">v1 · Beta</span></div>
+    <p>A dark hardcore break machine: four break bays, 100 breaks, break DNA, fills, stutter, a deck and a drum machine underneath.</p>
+    <div class="dls"><a class="dl" href="https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Mr-Mickens-mac-universal.zip">Download VST3</a></div>
+  </div>
+</article><article class="card" id="ghostybeats">
+  <button class="media" data-full="img/ghostybeats.jpg" data-name="Ghosty Beats" aria-label="Open the Ghosty Beats screenshot"><img class="shot" src="img/ghostybeats.jpg" alt="" loading="lazy"><img class="logo" src="logo/ghostybeats.png" alt="Ghosty Beats logo"></button>
+  <div class="info">
+    <div class="kind">Drum machine</div>
+    <div class="row"><h3>Ghosty Beats</h3><span class="ver">v1 · Beta</span></div>
+    <p>A drum machine and sequencer with its own Ghost Kit sounds, a tracker, rhythm lab, pads and song mode. Opens in a rainy neon city, with an ink-and-watercolor light look too.</p>
+    <div class="dls"><a class="dl" href="https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghosty-Beats-mac-universal.zip">Download VST3</a></div>
+  </div>
+</article><article class="card" id="blockstep">
+  <button class="media" data-full="img/blockstep.jpg" data-name="Block Step" aria-label="Open the Block Step screenshot"><img class="shot" src="img/blockstep.jpg" alt="" loading="lazy"><img class="logo" src="logo/blockstep.png" alt="Block Step logo"></button>
+  <div class="info">
+    <div class="kind">Vertical drum tracker</div>
+    <div class="row"><h3>Block Step</h3><span class="ver">v1 · Beta</span></div>
+    <p>Sketch Aphex Twin, DnB and trap patterns step by step. GENERATE, LINEAR and WILD write beats for you, with piano and acid lines in the same key. Opens in Ghost City.</p>
+    <div class="dls"><a class="dl" href="https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Block-Step-mac-universal.zip">Download VST3</a></div>
+  </div>
+</article><article class="card" id="ghosthouse">
+  <button class="media" data-full="img/ghosthouse.jpg" data-name="Ghost House" aria-label="Open the Ghost House screenshot"><img class="shot" src="img/ghosthouse.jpg" alt="" loading="lazy"><img class="logo" src="logo/ghosthouse.png" alt="Ghost House logo"></button>
+  <div class="info">
+    <div class="kind">House drum tracker</div>
+    <div class="row"><h3>Ghost House</h3><span class="ver">v1 · Beta</span></div>
+    <p>Block Step&#x27;s house-music twin, with its own GhostBlock drum packs, swing and a groove engine built for four-on-the-floor.</p>
+    <div class="dls"><a class="dl" href="https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghost-House-mac-universal.zip">Download VST3</a></div>
+  </div>
+</article><article class="card" id="ghostbreak">
+  <button class="media" data-full="img/ghostbreak.jpg" data-name="Ghost Break" aria-label="Open the Ghost Break screenshot"><img class="shot" src="img/ghostbreak.jpg" alt="" loading="lazy"><img class="logo" src="logo/ghostbreak.png" alt="Ghost Break logo"></button>
+  <div class="info">
+    <div class="kind">Jungle and DnB break instrument</div>
+    <div class="row"><h3>Ghost Break</h3><span class="ver">v1 · Beta</span></div>
+    <p>Four bays of real breaks with RANDOM START and RANDOM BREAKS, a drum sequencer underneath, and Phantom FX effects on every bay.</p>
+    <div class="dls"><a class="dl" href="https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghost-Break-mac-universal.zip">Download VST3</a></div>
+  </div>
+</article></div></section>
+<section class="cat" id="g2"><div class="cathead"><h2>MIDI &amp; generators<span class="count">03</span></h2><p>Tools that write chords, melodies and MIDI for you.</p></div><div class="grid"><article class="card" id="arpezator">
+  <button class="media" data-full="img/arpezator.jpg" data-name="ArpEZator" aria-label="Open the ArpEZator screenshot"><img class="shot" src="img/arpezator.jpg" alt="" loading="lazy"><img class="logo" src="logo/arpezator.png" alt="ArpEZator logo"></button>
+  <div class="info">
+    <div class="kind">Arp and melody writer</div>
+    <div class="row"><h3>ArpEZator</h3><span class="ver">v1 · Beta</span></div>
+    <p>Professor Bernstein picks a mood (Sunrise, Dusk, Midnight, Trap or Hip Hop) and writes chords, an arp, a melody and a bass line. Edit them in the piano roll and drag the MIDI or audio into your song.</p>
+    <div class="dls"><a class="dl" href="https://github.com/bsaxon430/ghosty-vst/releases/latest/download/ArpEZator-mac-universal.zip">Download VST3</a></div>
+  </div>
+</article><article class="card" id="ghosthum">
+  <button class="media" data-full="img/ghosthum.jpg" data-name="Ghost Hum" aria-label="Open the Ghost Hum screenshot"><img class="shot" src="img/ghosthum.jpg" alt="" loading="lazy"><img class="logo" src="logo/ghosthum.png" alt="Ghost Hum logo"></button>
+  <div class="info">
+    <div class="kind">Sing or beatbox to MIDI</div>
+    <div class="row"><h3>Ghost Hum</h3><span class="ver">v1 · Beta</span></div>
+    <p>Hum a melody or beatbox a groove and it comes out as MIDI notes you can drag straight into your DAW.</p>
+    <div class="dls"><a class="dl" href="https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghost-Hum-mac-universal.zip">Download VST3</a></div>
+  </div>
+</article><article class="card" id="ghostslice">
+  <button class="media" data-full="img/ghostslice.jpg" data-name="Ghost Slice" aria-label="Open the Ghost Slice screenshot"><img class="shot" src="img/ghostslice.jpg" alt="" loading="lazy"><img class="logo" src="logo/ghostslice.png" alt="Ghost Slice logo"></button>
+  <div class="info">
+    <div class="kind">Sound-to-music generator</div>
+    <div class="row"><h3>Ghost Slice</h3><span class="ver">v1 · Beta</span></div>
+    <p>Drop in a vocal or any sound and press GENERATE. It makes musical takes from it: instruments, pads and chops, all snapped to your key.</p>
+    <div class="dls"><a class="dl" href="https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghost-Slice-mac-universal.zip">Download VST3</a></div>
+  </div>
+</article></div></section>
+<section class="cat" id="g3"><div class="cathead"><h2>Effects &amp; sound design<span class="count">06</span></h2><p>Racks, spectral tools and experimental processors.</p></div><div class="grid"><article class="card" id="phantomfx">
+  <button class="media" data-full="img/phantomfx.jpg" data-name="Phantom FX" aria-label="Open the Phantom FX screenshot"><img class="shot" src="img/phantomfx.jpg" alt="" loading="lazy"><img class="logo" src="logo/phantomfx.png" alt="Phantom FX logo"></button>
+  <div class="info">
+    <div class="kind">24-effect rack</div>
+    <div class="row"><h3>Phantom FX</h3><span class="ver">v1 · Beta</span></div>
+    <p>The open-source 24-effect rack: parallel lanes, modulation, a perform page and a 3D spatial page, in three hand-painted looks.</p>
+    <div class="dls"><a class="dl" href="https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Phantom-FX-mac-universal.zip">Download VST3</a></div>
+  </div>
+</article><article class="card" id="ghostbox">
+  <button class="media" data-full="img/ghostbox.jpg" data-name="Ghost Box" aria-label="Open the Ghost Box screenshot"><img class="shot" src="img/ghostbox.jpg" alt="" loading="lazy"><img class="logo" src="logo/ghostbox.png" alt="Ghost Box logo"></button>
+  <div class="info">
+    <div class="kind">Effect box</div>
+    <div class="row"><h3>Ghost Box</h3><span class="ver">v1 · Beta</span></div>
+    <p>The original 24-effect fun box that Phantom FX grew out of: scenes, morph, a board and motion.</p>
+    <div class="dls"><a class="dl" href="https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghost-Box-mac-universal.zip">Download VST3</a></div>
+  </div>
+</article><article class="card" id="ghostlab">
+  <button class="media" data-full="img/ghostlab.jpg" data-name="Ghost Lab" aria-label="Open the Ghost Lab screenshot"><img class="shot" src="img/ghostlab.jpg" alt="" loading="lazy"><img class="logo" src="logo/ghostlab.png" alt="Ghost Lab logo"></button>
+  <div class="info">
+    <div class="kind">Experimental sound organism</div>
+    <div class="row"><h3>Ghost Lab</h3><span class="ver">v1 · Beta</span></div>
+    <p>Put a sound in the specimen tube and stretch it, freeze it, smear it or mutate it. Built on CDP8 and PaulXStretch, with an Under the Hood page for every engine.</p>
+    <div class="dls"><a class="dl" href="https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghost-Lab-mac-universal.zip">Download VST3</a><a class="dl alt" href="https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghost-Lab-FX-mac-universal.zip">Effect version</a></div>
+  </div>
+</article><article class="card" id="ghostmosaic">
+  <button class="media" data-full="img/ghostmosaic.jpg" data-name="Ghost Mosaic" aria-label="Open the Ghost Mosaic screenshot"><img class="shot" src="img/ghostmosaic.jpg" alt="" loading="lazy"><img class="logo" src="logo/ghostmosaic.png" alt="Ghost Mosaic logo"></button>
+  <div class="info">
+    <div class="kind">Sample mosaic (instrument + effect)</div>
+    <div class="row"><h3>Ghost Mosaic</h3><span class="ver">v1 · Beta</span></div>
+    <p>Samplebrain&#x27;s engine with a GhostBlock face: it rebuilds one sound out of tiny pieces of other sounds. Comes as an instrument and an effect.</p>
+    <div class="dls"><a class="dl" href="https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghost-Mosaic-mac-universal.zip">Download VST3</a><a class="dl alt" href="https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghost-Mosaic-FX-mac-universal.zip">Effect version</a></div>
+  </div>
+</article><article class="card" id="ghostyspectrum">
+  <button class="media" data-full="img/ghostyspectrum.jpg" data-name="Ghosty Spectrum" aria-label="Open the Ghosty Spectrum screenshot"><img class="shot" src="img/ghostyspectrum.jpg" alt="" loading="lazy"><img class="logo" src="logo/ghostyspectrum.png" alt="Ghosty Spectrum logo"></button>
+  <div class="info">
+    <div class="kind">Spectral sound lab</div>
+    <div class="row"><h3>Ghosty Spectrum</h3><span class="ver">v1 · Beta</span></div>
+    <p>Paint the sound itself. Draw on the spectrum, turn images into sound, and work through paint, ghost, chaos and DNA pages, then loop and arrange what you made.</p>
+    <div class="dls"><a class="dl" href="https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghosty-Spectrum-mac-universal.zip">Download VST3</a></div>
+  </div>
+</article><article class="card" id="ghostvoice">
+  <button class="media" data-full="img/ghostvoice.jpg" data-name="Ghost Voice" aria-label="Open the Ghost Voice screenshot"><img class="shot" src="img/ghostvoice.jpg" alt="" loading="lazy"><img class="logo" src="logo/ghostvoice.png" alt="Ghost Voice logo"></button>
+  <div class="info">
+    <div class="kind">Voice creation suite</div>
+    <div class="row"><h3>Ghost Voice</h3><span class="ver">v1 · Beta</span></div>
+    <p>Drag in a vocal, chop it, play it on the keys, and use the sing engine to make new voices from your own takes.</p>
+    <div class="dls"><a class="dl" href="https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghost-Voice-mac-universal.zip">Download VST3</a></div>
+  </div>
+</article></div></section>
+  <section class="install" id="install">
+    <div class="cathead"><h2>Install</h2><p>Universal builds: Apple Silicon and Intel Macs, macOS 11 or newer.</p></div>
+    <div class="steps">
+      <div class="step"><b>1 · Paste one line</b><p>Open Terminal and paste this. It downloads every plugin, puts them in your VST3 folder and clears the macOS download block.</p>
+        <pre class="cmd">curl -fsSL https://raw.githubusercontent.com/bsaxon430/ghosty-vst/builds/install-plugins.sh | bash</pre></div>
+      <div class="step"><b>2 · Or install by hand</b><p>Download one plugin from its card (or all of them), unzip, and drag the <code>.vst3</code> into <code>~/Library/Audio/Plug-Ins/VST3</code>. In Finder, press Cmd + Shift + G and paste that path. If macOS blocks it, run <code>xattr -dr com.apple.quarantine ~/Library/Audio/Plug-Ins/VST3</code>.</p></div>
+      <div class="step"><b>3 · Rescan</b><p>FL Studio: Options › Manage plugins › Find more plugins. Ableton Live: Settings › Plug-Ins › Rescan.</p></div>
+    </div>
+  </section>
+</div>
+</main>
+<footer><div class="wrap cols">
+  <div>
+    <h4>Credits</h4>
+    <p>Several plugins are built on open-source engines, including Vital, Surge XT, Six Sines, CDP8, PaulXStretch and Samplebrain. Each engine keeps its own licence, and full credits are on each plugin's About page.</p>
+    <p>Made for personal use and for fun.</p>
+  </div>
+  <div>
+    <h4>GhostBlock Studio</h4>
+    <p>Phoenix, Arizona · 2026</p>
+    <p><a href="https://github.com/bsaxon430">github.com/bsaxon430</a></p>
+  </div>
+</div></footer>
+<dialog id="big" aria-label="Screenshot"><img id="bigimg" alt=""><div class="dbar"><span id="bigcap"></span><button id="close" type="button">Close</button></div></dialog>
+<script>
+(function(){
+  var d=document.getElementById('big'), im=document.getElementById('bigimg'), cap=document.getElementById('bigcap');
+  document.querySelectorAll('button.media').forEach(function(b){
+    b.addEventListener('click',function(){ im.src=b.getAttribute('data-full'); im.alt=b.getAttribute('data-name')+' screenshot'; cap.textContent=b.getAttribute('data-name'); try{d.showModal()}catch(e){} });
+  });
+  document.getElementById('close').addEventListener('click',function(){d.close()});
+  d.addEventListener('click',function(e){ if(e.target===d) d.close(); });
+})();
+</script>
 </body>
 </html>
