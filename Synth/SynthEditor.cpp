@@ -285,7 +285,7 @@ struct ProPanel : public juce::Component
         g.drawText ("Everything bundle: all six plugins for $69", box.reduced (14, 8).withTrimmedTop (38).removeFromTop (18), juce::Justification::centredLeft);
 
         g.setColour (col::dim.withAlpha (0.8f)); g.setFont (font (10.0f, false));
-        g.drawText ("You're on Ghosty " JucePlugin_VersionString " - free and open source (AGPL-3.0), nothing locked.",
+        g.drawText ("You're on Ghosty v1 beta - free and open source (AGPL-3.0), nothing locked.",
                     juce::Rectangle<float> (c.getX(), c.getBottom() - 18, c.getWidth(), 14), juce::Justification::centred);
     }
 };
