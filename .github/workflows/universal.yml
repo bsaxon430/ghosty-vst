@@ -111,3 +111,6 @@ jobs:
           { echo "Universal macOS VST3 builds (Apple Silicon + Intel) of every GhostBlock plugin."; echo; echo "One-step install on a Mac: open Terminal and paste"; echo; echo '    curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/builds/install-plugins.sh | bash'; echo; echo "Or by hand: unzip, copy the .vst3 files to ~/Library/Audio/Plug-Ins/VST3, then rescan in FL Studio or Ableton Live."; echo; echo '```'; cat BUILT.txt; echo '```'; } > notes.md
           PRE=""; [ "${{ needs.build.result }}" = success ] || PRE="--prerelease"   # a build with a failed plugin never becomes "latest"
           gh release create "$T" rel/*.zip --repo "${{ github.repository }}" $PRE --title "GhostBlock plugins (universal Mac) $(date -u +%Y-%m-%d)" --notes-file notes.md
+          if [ -z "$PRE" ]; then   # a complete build replaces the older plugin releases
+            gh api "repos/${{ github.repository }}/releases" --paginate -q '.[].tag_name' | grep '^plugins-' | grep -vx "$T" | while read -r t; do gh release delete "$t" --repo "${{ github.repository }}" --yes --cleanup-tag; done
+          fi
