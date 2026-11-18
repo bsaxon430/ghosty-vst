@@ -1,0 +1,91 @@
+# GhostBlock plugins: universal macOS VST3 builds (Apple Silicon + Intel) of every plugin, from the src/* branches,
+# on GitHub's Macs (free for public repos). Every build is published as one GitHub Release with a zip per plugin
+# and one zip with all of them.
+name: GhostBlock universal plugins
+on:
+  push:
+    branches: [ builds ]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: { group: universal, cancel-in-progress: true }
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { key: mainplugins, ref: src/mainplugins, src: ghosty-pro, flags: "-DGHOSTY_CLAP_IN_ALL=OFF", targets: "Poltergeist_VST3 MrMickens_VST3 GhostyPro_VST3 GhostBox_VST3 GhostyBeats_VST3 GhostSlice_VST3 GhostHum_VST3 ArpEZator_VST3", names: "Poltergeist.vst3|Mr Mickens.vst3|Ghosty Pro.vst3|Ghost Box.vst3|Ghosty Beats.vst3|Ghost Slice.vst3|Ghost Hum.vst3|ArpEZator.vst3" }
+          - { key: spectrum,    ref: src/spectrum,    src: ghosty-pro, flags: "-DGHOSTY_CLAP_IN_ALL=OFF", targets: "GhostySpectrum_VST3", names: "Ghosty Spectrum.vst3" }
+          - { key: blockstep,   ref: src/blockstep,   src: ghosty-pro, flags: "-DGHOSTY_BLOCKSTEP=ON -DGHOSTY_BUILD_CLAP=OFF -DGHOSTY_CLAP_IN_ALL=OFF", targets: "BlockStep_VST3", names: "Block Step.vst3" }
+          - { key: ghosthouse,  ref: src/ghosthouse,  src: ghosty-pro, flags: "-DGHOSTY_GHOSTHOUSE=ON -DGHOSTY_BUILD_CLAP=OFF -DGHOSTY_CLAP_IN_ALL=OFF", targets: "GhostHouse_VST3", names: "Ghost House.vst3" }
+          - { key: phantomfx,   ref: src/phantomfx,   src: phantom-fx, flags: "-DPHANTOM_BUILD_AU=OFF -DPHANTOM_LIMITER_ENGINE=ZL -DPHANTOM_WARP_ENGINE=SIGNALSMITH", targets: "PhantomFX_VST3", names: "Phantom FX.vst3" }
+          - { key: ghostbreak,  ref: src/ghostbreak,  src: phantom-fx, flags: "-DPHANTOM_BUILD_AU=OFF -DPHANTOM_WITH_GHOST_BREAK=ON -DPHANTOM_LIMITER_ENGINE=ZL -DPHANTOM_WARP_ENGINE=SIGNALSMITH", targets: "GhostBreak_VST3", names: "Ghost Break.vst3" }
+          - { key: ghostatlas,  ref: src/ghostatlas,  src: phantom-fx, flags: "-DPHANTOM_BUILD_AU=OFF -DPHANTOM_WITH_GHOST_ATLAS=ON -DPHANTOM_LIMITER_ENGINE=ZL -DPHANTOM_WARP_ENGINE=SIGNALSMITH -DGHOSTATLAS_FFTW_DIR=FFTWDIR", targets: "GhostAtlas_VST3", names: "Ghost Atlas.vst3", fftw: ghost-atlas }
+          - { key: ghostmosaic, ref: src/ghostmosaic, src: ghost-mosaic, flags: "-DGHOSTMOSAIC_FFTW_DIR=FFTWDIR", targets: "GhostMosaic_VST3 GhostMosaicFX_VST3", names: "Ghost Mosaic.vst3|Ghost Mosaic FX.vst3", fftw: ghost-mosaic }
+          - { key: ghostlab,    ref: src/ghostlab,    src: ghost-lab, flags: "-DGHOSTLAB_CDP_DEV_DIR=CDPDIR -DGHOSTLAB_DDSP=OFF", targets: "GhostLab_VST3 GhostLabFX_VST3", names: "Ghost Lab.vst3|Ghost Lab FX.vst3", prep: ghostlab }
+          - { key: ghostvoice,  ref: src/ghostvoice,  src: ghost-voice, flags: "", targets: "GhostVoice_VST3", names: "Ghost Voice.vst3" }
+          - { key: ghostypro2,  ref: src/ghostypro2,  src: ".", flags: "", targets: "GhostyPro_VST3", names: "Ghosty Pro 2.vst3" }
+          - { key: ghostbass,   ref: src/ghostbass,   src: ".", flags: "-DSURGE_BUILD_CLAP=OFF -DSURGE_SKIP_LUA=FALSE", targets: "surge-xt_VST3", names: "Ghost Bass.vst3", subs: recursive }
+          - { key: poltergeist2, ref: src/poltergeist2, src: ".", flags: "-DCOPY_AFTER_BUILD=FALSE -DBUILD_SINGLE_ONLY=TRUE", targets: "six-sines_vst3", names: "Poltergeist 2.vst3", subs: recursive }
+          - { key: seance,      ref: src/seance,      src: ".", flags: "-DCOPY_AFTER_BUILD=FALSE -DBUILD_SINGLE_ONLY=TRUE BEASTOBJ", targets: "six-sines_vst3", names: "Seance.vst3", subs: recursive, prep: seance }
+          - { key: ghosty,      ref: main,            src: ".", flags: "", targets: "GhostySynth_VST3", names: "Ghosty.vst3" }
+    name: "${{ matrix.key }}"
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: "${{ matrix.ref }}", submodules: "${{ matrix.subs || 'false' }}" }
+      - name: Build universal
+        run: |
+          set -u
+          SRC="${{ matrix.src }}"; J=$(sysctl -n hw.ncpu); export BEAST_JOBS=$J
+          FL="${{ matrix.flags }}"
+          if [ -n "${{ matrix.fftw }}" ]; then
+            F="$RUNNER_TEMP/fftw"; bash "${{ matrix.fftw }}/cmake/build-fftw.sh" "$RUNNER_TEMP/fftw-work" "$F" > fftw.log 2>&1 || { tail -n 40 fftw.log; exit 1; }
+            lipo -info "$F/lib/libfftw3.a" || true; FL="${FL//FFTWDIR/$F}"
+          fi
+          if [ "${{ matrix.prep }}" = ghostlab ]; then
+            rustup toolchain install stable --profile minimal > /dev/null 2>&1 || true; rustup target add aarch64-apple-darwin x86_64-apple-darwin
+            bash ghost-lab/cdp/build-cdp.sh "$PWD/cdp-bin" "$PWD/cdp8-src" > cdp.log 2>&1 || { tail -n 40 cdp.log; exit 1; }
+            lipo -info cdp-bin/pvoc; FL="${FL//CDPDIR/$PWD/cdp-bin}"
+          fi
+          if [ "${{ matrix.prep }}" = seance ]; then
+            SB="$RUNNER_TEMP/beast"; src/ghostblock/beast/fetch-surge.sh "$SB/surge" > /dev/null
+            src/ghostblock/beast/build-beast.sh "$SB/surge" "$SB/x86" -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 > beast-x86.log 2>&1 || { tail -n 30 beast-x86.log; exit 1; }
+            src/ghostblock/beast/build-beast.sh "$SB/surge" "$SB/arm" -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 > beast-arm.log 2>&1 || { tail -n 30 beast-arm.log; exit 1; }
+            lipo -create "$SB/x86/seance-beast.o" "$SB/arm/seance-beast.o" -output "$SB/seance-beast.o"; FL="${FL//BEASTOBJ/-DSEANCE_BEAST_OBJ=$SB/seance-beast.o}"
+          fi
+          B="$RUNNER_TEMP/build"
+          cmake -S "$SRC" -B "$B" -DCMAKE_BUILD_TYPE=Release "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 $FL > cfg.log 2>&1 || { tail -n 60 cfg.log; exit 1; }
+          set +e
+          cmake --build "$B" --config Release --parallel $J --target ${{ matrix.targets }} > build.log 2>&1; rb=$?
+          set -e
+          [ $rb = 0 ] || { grep -a -E "error:|ld: " build.log | head -40; tail -n 30 build.log; exit 1; }
+          mkdir -p out
+          IFS='|' read -r -a NAMES <<< "${{ matrix.names }}"
+          for N in "${NAMES[@]}"; do
+            b=$(find "$B" -maxdepth 7 -type d -name "$N" -prune | while read -r x; do m=$(find "$x/Contents/MacOS" -type f 2>/dev/null | head -1); [ -s "$m" ] && echo "$(stat -f %m "$m") $x"; done | sort -rn | head -1 | cut -d' ' -f2-)
+            [ -n "$b" ] || { echo "MISSING $N"; exit 1; }
+            ditto "$b" "out/$N"; codesign --force --deep --sign - "out/$N"
+            echo "$N: $(lipo -archs "out/$N/Contents/MacOS/"* | head -1)  v$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "out/$N/Contents/Info.plist")" | tee -a out/BUILT.txt
+          done
+      - uses: actions/upload-artifact@v4
+        with: { name: "${{ matrix.key }}", path: out, retention-days: 30 }
+  release:
+    needs: build
+    if: always()
+    runs-on: macos-15
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { path: arts }
+      - name: Zip and publish
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: |
+          mkdir -p rel all; cat arts/*/BUILT.txt | tee BUILT.txt
+          for d in arts/*/; do for v in "$d"*.vst3; do [ -d "$v" ] || continue; n=$(basename "$v" .vst3); ditto -c -k --keepParent "$v" "rel/${n// /-}-mac-universal.zip"; ditto "$v" "all/$(basename "$v")"; done; done
+          ditto -c -k --keepParent all "rel/GhostBlock-All-Plugins-mac-universal.zip"; mv rel/GhostBlock-All-Plugins-mac-universal.zip rel/GhostBlock-All-Plugins-mac-universal.zip
+          ls -la rel
+          T="plugins-$(date -u +%Y%m%d-%H%M)"
+          { echo "Universal macOS VST3 builds (Apple Silicon + Intel) of every GhostBlock plugin."; echo; echo "Install: unzip, copy the .vst3 files to ~/Library/Audio/Plug-Ins/VST3, then rescan in FL Studio or Ableton Live."; echo; echo '```'; cat BUILT.txt; echo '```'; } > notes.md
+          gh release create "$T" rel/*.zip --repo "${{ github.repository }}" --title "GhostBlock plugins (universal Mac) $(date -u +%Y-%m-%d)" --notes-file notes.md
