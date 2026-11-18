@@ -1,0 +1,13 @@
+GHOST HUM 1.0 - test build for Mac
+
+Sing it. Beatbox it. Make music.
+
+1. Double-click "Install Ghost Hum.command" (if macOS blocks it: right-click > Open; or System Settings > Privacy & Security > Open Anyway).
+2. Easiest way to try it: open "Ghost Hum" from Applications. The first time, macOS asks to use the microphone - say yes.
+   Tap the big button, sing or hum a melody, tap again. Ghost turns it into notes and plays them back on a piano.
+3. In FL Studio: Options > Manage plugins > Find more plugins. Ghost Hum is an EFFECT that listens: put it on the mixer insert your
+   microphone comes in on (or any track). Record, then DRAG MIDI into the piano roll of any instrument.
+   In Logic / GarageBand it is an Audio Unit "music effect": add it to an audio track.
+
+Nothing else on your computer is touched. Your takes are saved with your project; the MIDI and WAV files you drag out are also kept in
+Documents/Ghosty/Ghost Hum.

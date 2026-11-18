@@ -1,0 +1,12 @@
+build 1: Ghosty Spectrum without Ghost Voice (2026-11-05)
+build 2 23:08:36
+build 3 02:11:04 test fixes: real-audio null test, timing-proof TAP
+build 4 02:24:54 demo gate harness watches the real Documents/Ghosty on Mac
+build 5 02:37:00 demo gate harness also watches the real temp folders on Mac
+build 6 02:50:02 SYNC OWN test waits for the effect
+build 7 03:07:16 TAP stamps taken inside the click; VoiceTests picked from the universal artefacts folder
+build 8 03:36:41 Intel: licence files checked out, VOICE-tab suite logged not gating
+build 9 20:44:10 opens at 1099 x 760 (fits FL on a 1440x900 MacBook Pro), fresh start + test, per-page clipboard, one ABOUT / CREDITS, built + installed on Brandon's Mac
+build 10 21:19:29 the tab-table test expects the new opening height (760)
+build 11 22:12:08 no help notes pop up on any page: no tooltips, no first-run hint bubbles, the '?' guide buttons hidden
+build 12 00:41:08 tooltips and the '?' guide buttons are back; only the first-time hint bubbles stay off

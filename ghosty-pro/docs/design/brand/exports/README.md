@@ -1,0 +1,2 @@
+# Brand exports (2026-10-27)
+Icons (16-1024 px), heroes, splashes, contact sheets and the look mockups for GHOST KIT, Ghosty (free), Ghosty Pro and the GHOST look. tools/ holds the JUCE renderer sources (render.cpp: icons/heroes/sheets from Shared/GhostKitArt.h, GhostyLogo.h, GhostyProLogo.h; mock.cpp / mock2.cpp: the GHOST look mockups). GhostyProLogo-angry-variant.h is the sleek angry-ghost-only version kept for reference. The logo art itself is code (Shared/*.h): these PNGs are just renders.
