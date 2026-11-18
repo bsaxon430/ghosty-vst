@@ -1,0 +1,475 @@
+/*
+ * Surge XT - a free and open source hybrid synthesizer,
+ * built by Surge Synth Team
+ *
+ * Learn more at https://surge-synthesizer.github.io/
+ *
+ * Copyright 2018-2024, various authors, as described in the GitHub
+ * transaction log.
+ *
+ * Surge XT is released under the GNU General Public Licence v3
+ * or later (GPL-3.0-or-later). The license is found in the "LICENSE"
+ * file in the root of this repository, or at
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * Surge was a commercial product from 2004-2018, copyright and ownership
+ * held by Claes Johanson at Vember Audio during that period.
+ * Claes made Surge open source in September 2018.
+ *
+ * All source for Surge XT is available at
+ * https://github.com/surge-synthesizer/surge
+ */
+
+#include "ModulatorPresetManager.h"
+#include <iostream>
+#include "DebugHelpers.h"
+#include "SurgeStorage.h"
+#include "tinyxml/tinyxml.h"
+#include "sst/plugininfra/strnatcmp.h"
+
+namespace Surge
+{
+namespace Storage
+{
+
+const static std::string PresetDir = "Modulator Presets";
+const static std::string PresetExt = ".modpreset";
+
+void ModulatorPreset::savePresetToUser(const fs::path &location, SurgeStorage *s, int scene,
+                                       int lfoid)
+{
+    try
+    {
+        auto lfo = &(s->getPatch().scene[scene].lfo[lfoid]);
+        int lfotype = lfo->shape.val.i;
+
+        auto containingPath = s->userDataPath / fs::path{PresetDir};
+        std::string what;
+
+        if (lfotype == lt_mseg)
+            what = "MSEG";
+        else if (lfotype == lt_stepseq)
+            what = "Step Seq";
+        else if (lfotype == lt_envelope)
+            what = "Envelope";
+        else if (lfotype == lt_formula)
+            what = "Formula";
+        else
+            what = "LFO";
+
+        containingPath /= fs::path{what};
+
+        // validate location before using
+        if (!location.is_relative())
+        {
+            s->reportError(
+                "Please use relative paths when saving presets. Referring to drive names directly "
+                "and using absolute paths is not allowed!",
+                "Relative Path Required");
+            return;
+        }
+
+        auto comppath = containingPath;
+        auto fullLocation =
+            (containingPath / location).lexically_normal().replace_extension(PresetExt);
+
+        // make sure your category isnt "../../../etc/config"
+        auto [_, compIt] = std::mismatch(fullLocation.begin(), fullLocation.end(), comppath.begin(),
+                                         comppath.end());
+        if (compIt != comppath.end())
+        {
+            s->reportError("Your save path is not a directory inside the user presets directory. "
+                           "This usually means you are doing something like trying to use ../"
+                           " in your preset name.",
+                           "Invalid Save Path");
+            return;
+        }
+
+        fs::create_directories(fullLocation.parent_path());
+
+        auto doSave = [this, fullLocation, s, lfo, lfotype, lfoid, scene]() {
+            TiXmlDeclaration decl("1.0", "UTF-8", "yes");
+
+            TiXmlDocument doc;
+            doc.InsertEndChild(decl);
+
+            TiXmlElement lfox("lfo");
+            lfox.SetAttribute("shape", lfotype);
+
+            const char *lfoName = s->getPatch().LFOBankLabel[scene][lfoid][0];
+            lfox.SetAttribute("name", lfoName[0] != 0 ? lfoName : "");
+
+            TiXmlElement params("params");
+            for (auto curr = &(lfo->rate); curr <= &(lfo->release); ++curr)
+            {
+                // shape is odd
+                if (curr == &(lfo->shape))
+                {
+                    continue;
+                }
+
+                // OK the internal name has "lfo7_" at the top or what not. We need this
+                // loadable into any LFO so...
+                std::string in(curr->get_internal_name());
+                auto p = in.find('_');
+                in = in.substr(p + 1);
+                TiXmlElement pn(in);
+
+                if (curr->valtype == vt_float)
+                    pn.SetDoubleAttribute("v", curr->val.f);
+                else
+                    pn.SetAttribute("i", curr->val.i);
+                pn.SetAttribute("temposync", curr->temposync);
+                pn.SetAttribute("deform_type", curr->deform_type);
+                pn.SetAttribute("extend_range", curr->extend_range);
+                pn.SetAttribute("deactivated", curr->deactivated);
+
+                params.InsertEndChild(pn);
+            }
+            lfox.InsertEndChild(params);
+
+            if (lfotype == lt_mseg)
+            {
+                TiXmlElement ms("mseg");
+                s->getPatch().msegToXMLElement(&(s->getPatch().msegs[scene][lfoid]), ms);
+                lfox.InsertEndChild(ms);
+            }
+            if (lfotype == lt_stepseq)
+            {
+                TiXmlElement ss("sequence");
+                s->getPatch().stepSeqToXmlElement(&(s->getPatch().stepsequences[scene][lfoid]), ss,
+                                                  true);
+                lfox.InsertEndChild(ss);
+            }
+            if (lfotype == lt_formula)
+            {
+                TiXmlElement fm("formula");
+                s->getPatch().formulaToXMLElement(&(s->getPatch().formulamods[scene][lfoid]), fm);
+                lfox.InsertEndChild(fm);
+
+                TiXmlElement xtraName("indexNames");
+                bool hasAny{false};
+                for (int i = 0; i < max_lfo_indices; ++i)
+                {
+                    if (s->getPatch().LFOBankLabel[scene][lfoid][i][0] != 0)
+                    {
+                        hasAny = true;
+                        TiXmlElement xn("name");
+                        xn.SetAttribute("index", i);
+                        xn.SetAttribute("name", s->getPatch().LFOBankLabel[scene][lfoid][i]);
+                        xtraName.InsertEndChild(xn);
+                    }
+                }
+                if (hasAny)
+                {
+                    lfox.InsertEndChild(xtraName);
+                }
+            }
+            doc.InsertEndChild(lfox);
+
+            if (!doc.SaveFile(fullLocation))
+            {
+                // uhh ... do something I guess?
+                std::cout << "Could not save preset" << std::endl;
+            }
+
+            forcePresetRescan();
+        };
+
+        if (fs::exists(fullLocation))
+        {
+            s->okCancelProvider("The " + what + " preset '" + location.string() +
+                                    "' already exists. Are you sure you want to overwrite it?",
+                                "Overwrite " + what + " Preset", SurgeStorage::OK,
+                                [doSave](SurgeStorage::OkCancel okc) {
+                                    if (okc == SurgeStorage::OK)
+                                    {
+                                        doSave();
+                                    }
+                                });
+        }
+        else
+        {
+            doSave();
+        }
+    }
+    catch (const fs::filesystem_error &e)
+    {
+        std::ostringstream oss;
+        oss << "Exception occurred while attempting to write the LFO preset! Most likely, "
+               "invalid characters or a reserved name was used to name the preset. "
+               "Please try again with a different name!\n"
+            << e.what();
+        s->reportError(oss.str(), "Write Error");
+    }
+}
+
+/*
+ * Given a completed path, load the preset into our storage
+ */
+void ModulatorPreset::loadPresetFrom(const fs::path &location, SurgeStorage *s, int scene,
+                                     int lfoid)
+{
+    auto lfo = &(s->getPatch().scene[scene].lfo[lfoid]);
+    TiXmlDocument doc;
+    doc.LoadFile(location);
+    auto lfox = TINYXML_SAFE_TO_ELEMENT(doc.FirstChildElement("lfo"));
+    if (!lfox)
+    {
+        std::cout << "Unable to find LFO node in document" << std::endl;
+        return;
+    }
+
+    int lfotype = 0;
+    if (lfox->QueryIntAttribute("shape", &lfotype) != TIXML_SUCCESS)
+    {
+        std::cout << "Bad shape" << std::endl;
+        return;
+    }
+    lfo->shape.val.i = lfotype;
+
+    const char *savedName = lfox->Attribute("name");
+
+    // An empty string means the preset was saved with the default name,
+    // so we clear the label and let the engine show its own default.
+    memset(s->getPatch().LFOBankLabel[scene][lfoid][0], 0,
+           CUSTOM_CONTROLLER_LABEL_SIZE * sizeof(char));
+
+    if (savedName)
+    {
+        if (savedName[0] != '\0')
+        {
+            strncpy(s->getPatch().LFOBankLabel[scene][lfoid][0], savedName,
+                    CUSTOM_CONTROLLER_LABEL_SIZE - 1);
+        }
+    }
+
+    auto params = TINYXML_SAFE_TO_ELEMENT(lfox->FirstChildElement("params"));
+    if (!params)
+    {
+        std::cout << "NO PARAMS" << std::endl;
+        return;
+    }
+    for (auto curr = &(lfo->rate); curr <= &(lfo->release); ++curr)
+    {
+        // shape is odd
+        if (curr == &(lfo->shape))
+        {
+            continue;
+        }
+
+        // OK the internal name has "lfo7_" at the top or what not. We need this
+        // loadable into any LFO so...
+        std::string in(curr->get_internal_name());
+        auto p = in.find('_');
+        in = in.substr(p + 1);
+        auto valNode = params->FirstChildElement(in.c_str());
+        if (valNode)
+        {
+            double v;
+            int q;
+            if (curr->valtype == vt_float)
+            {
+                if (valNode->QueryDoubleAttribute("v", &v) == TIXML_SUCCESS)
+                {
+                    curr->val.f = v;
+                }
+            }
+            else
+            {
+                if (valNode->QueryIntAttribute("i", &q) == TIXML_SUCCESS)
+                {
+                    curr->val.i = q;
+                }
+            }
+
+            if (valNode->QueryIntAttribute("temposync", &q) == TIXML_SUCCESS)
+                curr->temposync = q;
+            else
+                curr->temposync = false;
+            if (valNode->QueryIntAttribute("deform_type", &q) == TIXML_SUCCESS)
+                curr->deform_type = q;
+            else
+                curr->deform_type = 0;
+            if (valNode->QueryIntAttribute("extend_range", &q) == TIXML_SUCCESS)
+                curr->set_extend_range(q);
+            else
+                curr->set_extend_range(false);
+            if (valNode->QueryIntAttribute("deactivated", &q) == TIXML_SUCCESS &&
+                curr->can_deactivate())
+                curr->deactivated = q;
+        }
+    }
+
+    if (lfotype == lt_mseg)
+    {
+        auto msn = lfox->FirstChildElement("mseg");
+        bool msegSnapMem =
+            Surge::Storage::getUserDefaultValue(s, Surge::Storage::RestoreMSEGSnapFromPatch, true);
+
+        if (msn)
+            s->getPatch().msegFromXMLElement(&(s->getPatch().msegs[scene][lfoid]), msn,
+                                             msegSnapMem);
+    }
+
+    if (lfotype == lt_stepseq)
+    {
+        auto msn = lfox->FirstChildElement("sequence");
+        if (msn)
+            s->getPatch().stepSeqFromXmlElement(&(s->getPatch().stepsequences[scene][lfoid]), msn);
+    }
+
+    if (lfotype == lt_formula)
+    {
+        auto frm = lfox->FirstChildElement("formula");
+        if (frm)
+            s->getPatch().formulaFromXMLElement(&(s->getPatch().formulamods[scene][lfoid]), frm);
+    }
+
+    auto xn = lfox->FirstChildElement("indexNames");
+    if (xn)
+    {
+        auto nn = xn->FirstChildElement("name");
+        while (nn)
+        {
+            auto na = nn->Attribute("name");
+            int ni{0};
+            auto res = nn->QueryIntAttribute("index", &ni);
+            if (na && res == TIXML_SUCCESS && ni >= 0 && ni < max_lfo_indices)
+            {
+                memset(s->getPatch().LFOBankLabel[scene][lfoid][ni], 0,
+                       CUSTOM_CONTROLLER_LABEL_SIZE * sizeof(char));
+                strncpy(s->getPatch().LFOBankLabel[scene][lfoid][ni], na,
+                        CUSTOM_CONTROLLER_LABEL_SIZE - 1);
+            }
+            nn = nn->NextSiblingElement("name");
+        }
+    }
+}
+
+/*
+ * Note: Clients rely on this being sorted by category path if you change it
+ */
+std::vector<ModulatorPreset::Category> ModulatorPreset::getPresets(SurgeStorage *s,
+                                                                   PresetScanMode mode)
+{
+    if (mode == PresetScanMode::UserOnly && haveScannedUser)
+        return scannedUserPresets;
+    if (mode == PresetScanMode::FactoryOnly && haveScannedFactory)
+        return scannedFactoryPresets;
+
+    std::vector<fs::path> scanTargets;
+    if (mode == PresetScanMode::UserOnly)
+        scanTargets.push_back(s->userDataPath / fs::path{PresetDir});
+    if (mode == PresetScanMode::FactoryOnly)
+        scanTargets.push_back(s->datapath / fs::path{"modulator_presets"});
+
+    std::map<std::string, Category> resMap; // handy it is sorted!
+
+    for (const auto &p : scanTargets)
+    {
+        try
+        {
+            for (auto &d : fs::recursive_directory_iterator(p))
+            {
+                auto dp = fs::path(d);
+                auto base = dp.stem();
+                auto ext = dp.extension();
+                if (path_to_string(ext) != PresetExt)
+                {
+                    continue;
+                }
+                auto rd = path_to_string(dp.replace_filename(fs::path()));
+                rd = rd.substr(path_to_string(p).length() + 1);
+                rd = rd.substr(0, rd.length() - 1);
+
+                auto catName = rd;
+                auto ppos = rd.rfind(fs::path::preferred_separator);
+                auto pd = std::string();
+                if (ppos != std::string::npos)
+                {
+                    pd = rd.substr(0, ppos);
+                    catName = rd.substr(ppos + 1);
+                }
+                if (resMap.find(rd) == resMap.end())
+                {
+                    resMap[rd] = Category();
+                    resMap[rd].name = catName;
+                    resMap[rd].parentPath = pd;
+                    resMap[rd].path = rd;
+
+                    /*
+                     * We only create categories if we find a preset. So that means parent
+                     * directories with just subdirs need categories made. This recurses up as far
+                     * as we need to go
+                     */
+                    while (pd != "" && resMap.find(pd) == resMap.end())
+                    {
+                        auto cd = pd;
+                        catName = cd;
+                        ppos = cd.rfind(fs::path::preferred_separator);
+
+                        if (ppos != std::string::npos)
+                        {
+                            pd = cd.substr(0, ppos);
+                            catName = cd.substr(ppos + 1);
+                        }
+                        else
+                        {
+                            pd = "";
+                        }
+
+                        resMap[cd] = Category();
+                        resMap[cd].name = catName;
+                        resMap[cd].parentPath = pd;
+                        resMap[cd].path = cd;
+                    }
+                }
+
+                Preset prs;
+                prs.name = path_to_string(base);
+                prs.path = fs::path(d);
+                resMap[rd].presets.push_back(prs);
+            }
+        }
+        catch (const fs::filesystem_error &e)
+        {
+            // That's OK!
+        }
+    }
+
+    std::vector<Category> res;
+    for (auto &m : resMap)
+    {
+        std::sort(m.second.presets.begin(), m.second.presets.end(),
+                  [](const Preset &a, const Preset &b) {
+                      return strnatcasecmp(a.name.c_str(), b.name.c_str()) < 0;
+                  });
+
+        res.push_back(m.second);
+    }
+
+    if (mode == PresetScanMode::UserOnly)
+    {
+        scannedUserPresets = res;
+        haveScannedUser = true;
+    }
+    if (mode == PresetScanMode::FactoryOnly)
+    {
+        scannedFactoryPresets = res;
+        haveScannedFactory = true;
+    }
+
+    return res;
+}
+
+void ModulatorPreset::forcePresetRescan()
+{
+    haveScannedUser = false;
+    scannedUserPresets.clear();
+
+    haveScannedFactory = false;
+    scannedFactoryPresets.clear();
+}
+} // namespace Storage
+} // namespace Surge

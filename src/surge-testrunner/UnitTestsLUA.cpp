@@ -1,0 +1,1503 @@
+/*
+ * Surge XT - a free and open source hybrid synthesizer,
+ * built by Surge Synth Team
+ *
+ * Learn more at https://surge-synthesizer.github.io/
+ *
+ * Copyright 2018-2024, various authors, as described in the GitHub
+ * transaction log.
+ *
+ * Surge XT is released under the GNU General Public Licence v3
+ * or later (GPL-3.0-or-later). The license is found in the "LICENSE"
+ * file in the root of this repository, or at
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * Surge was a commercial product from 2004-2018, copyright and ownership
+ * held by Claes Johanson at Vember Audio during that period.
+ * Claes made Surge open source in September 2018.
+ *
+ * All source for Surge XT is available at
+ * https://github.com/surge-synthesizer/surge
+ */
+#include <iostream>
+#include <iomanip>
+#include <sstream>
+#include <algorithm>
+#include <memory>
+
+#include "HeadlessUtils.h"
+#include "Player.h"
+
+#include "catch2/catch_amalgamated.hpp"
+
+#include "UnitTestUtilities.h"
+
+#include "FormulaModulationHelper.h"
+#include "WavetableScriptEvaluator.h"
+#include "WtGenService.h"
+#include "LuaSupport.h"
+
+#include "lua/LuaSources.h"
+
+#if HAS_LUA
+
+TEST_CASE("Lua Hello World", "[lua]")
+{
+    SECTION("Hello World")
+    {
+        lua_State *L = luaL_newstate();
+        REQUIRE(L);
+        luaL_openlibs(L);
+
+        const char lua_script[] = "print('Hello World from LuaJIT!')";
+        int load_stat = luaL_loadbuffer(L, lua_script, strlen(lua_script), lua_script);
+        lua_pcall(L, 0, 0, 0);
+
+        lua_close(L);
+    }
+}
+
+TEST_CASE("Lua Sample Operations", "[lua]")
+{
+    SECTION("Math")
+    {
+        lua_State *L = luaL_newstate();
+        REQUIRE(L);
+        luaL_openlibs(L);
+
+        // execute script
+        const char lua_script[] = "function addThings(a, b) return a+b; end";
+        int load_stat = luaL_loadbuffer(L, lua_script, strlen(lua_script), lua_script);
+        lua_pcall(L, 0, 0, 0);
+
+        // load the function from global
+        lua_getglobal(L, "addThings");
+        if (lua_isfunction(L, -1))
+        {
+            // push function arguments into stack
+            lua_pushnumber(L, 5.0);
+            lua_pushnumber(L, 6.0);
+            lua_pcall(L, 2, 1, 0);
+            double sumval = 0.0;
+            if (!lua_isnil(L, -1))
+            {
+                sumval = lua_tonumber(L, -1);
+                lua_pop(L, 1);
+            }
+            REQUIRE(sumval == 5 + 6);
+        }
+
+        // cleanup
+        lua_close(L);
+    }
+
+    SECTION("Sample Mod Function")
+    {
+        std::string fn = R"FN(
+function modfunc(phase)
+   if phase < 0.5 then
+      return math.sin( phase * 2.0 * 3.14159 )
+   else
+      return -1
+   end
+end
+)FN";
+
+        auto cEquiv = [](float p) {
+            if (p < 0.5)
+                return sin(p * 2.0 * 3.14159);
+            else
+                return -1.0;
+        };
+
+        lua_State *L = luaL_newstate();
+        REQUIRE(L);
+        luaL_openlibs(L);
+
+        // execute script
+        const char *lua_script = fn.c_str();
+        int load_stat = luaL_loadbuffer(L, lua_script, strlen(lua_script), lua_script);
+        lua_pcall(L, 0, 0, 0);
+
+        // load the function from global
+        int ntests = 174;
+        for (int i = 0; i < ntests; ++i)
+        {
+            INFO("evaluating iteration " << i);
+            lua_getglobal(L, "modfunc");
+            if (lua_isfunction(L, -1))
+            {
+                float p = 1.f * i / ntests;
+                // push function arguments into stack
+                lua_pushnumber(L, p);
+                lua_pcall(L, 1, 1, 0);
+                double sumval = 0.0;
+                if (!lua_isnil(L, -1))
+                {
+                    sumval = lua_tonumber(L, -1);
+                    lua_pop(L, 1);
+                }
+                else
+                {
+                    REQUIRE(0);
+                }
+                INFO("Evaluating at " << p);
+                REQUIRE(sumval == Approx(cEquiv(p)).margin(1e-5));
+            }
+        }
+
+        // cleanup
+        lua_close(L);
+    }
+}
+
+TEST_CASE("Surge Prelude", "[lua]")
+{
+    SECTION("Test The Prelude")
+    {
+        lua_State *L = luaL_newstate();
+        REQUIRE(L);
+        luaL_openlibs(L);
+
+        REQUIRE(Surge::LuaSupport::loadSurgePrelude(L, Surge::LuaSources::formula_prelude));
+
+        std::string emsg;
+        REQUIRE(Surge::LuaSupport::parseStringDefiningFunction(
+            L, Surge::LuaSources::formula_prelude_test, "test", emsg));
+
+        static constexpr uint64_t formulafeatures = Surge::LuaSupport::EnvironmentFeatures::BASE;
+        Surge::LuaSupport::setSurgeFunctionEnvironment(L, formulafeatures);
+
+        auto pcall = lua_pcall(L, 0, 1, 0);
+        if (pcall != 0)
+        {
+            std::cout << "Lua error [" << pcall << "] " << lua_tostring(L, -1) << std::endl;
+            INFO("Lua error " << pcall << " " << lua_tostring(L, -1));
+        }
+
+        REQUIRE(lua_isnumber(L, -1));
+        REQUIRE(lua_tonumber(L, -1) == 1);
+
+        lua_close(L);
+    }
+}
+
+TEST_CASE("Lua Table API", "[lua]")
+{
+    SECTION("Push And Get Element")
+    {
+        lua_State *L = luaL_newstate();
+        REQUIRE(L);
+        luaL_openlibs(L);
+
+        std::string fn = R"FN(
+function modfunc(record)
+   return record["a"] + record["b"]
+end
+)FN";
+        const char *lua_script = fn.c_str();
+        int load_stat = luaL_loadbuffer(L, lua_script, strlen(lua_script), lua_script);
+        lua_pcall(L, 0, 0, 0);
+
+        lua_getglobal(L, "modfunc");
+        if (lua_isfunction(L, -1))
+        {
+            lua_createtable(L, 0, 4);
+
+            lua_pushnumber(L, 13);
+            lua_setfield(L, -2, "a"); /* 2nd element from the stack top */
+
+            lua_pushnumber(L, 27);
+            lua_setfield(L, -2, "b");
+
+            // So now the table is the top of the stack so
+            lua_pcall(L, 1, 1, 0);
+
+            if (!lua_isnil(L, -1))
+            {
+                auto sumval = lua_tonumber(L, -1);
+                lua_pop(L, 1);
+                REQUIRE(sumval == 40);
+            }
+            else
+            {
+                REQUIRE(0);
+            }
+        }
+        else
+        {
+            bool luaIsFunc = false;
+            REQUIRE(luaIsFunc);
+        }
+    }
+}
+
+TEST_CASE("Parse to Function", "[lua]")
+{
+    SECTION("Simple Success")
+    {
+        auto fn = R"FN(
+function plus_one(x)
+    return x + 1
+end
+)FN";
+        lua_State *L = luaL_newstate();
+        REQUIRE(L);
+        REQUIRE(lua_gettop(L) == 0);
+        luaL_openlibs(L);
+
+        std::string err;
+        bool res = Surge::LuaSupport::parseStringDefiningFunction(L, fn, "plus_one", err);
+        REQUIRE(res);
+        REQUIRE(lua_gettop(L) == 1);
+
+        // OK so the top of the stack should be my function. Lets call it
+        lua_pushnumber(L, 13);
+        lua_pcall(L, 1, 1, 0);
+        REQUIRE(lua_isnumber(L, -1));
+        REQUIRE(lua_tonumber(L, -1) == 14);
+        REQUIRE(lua_gettop(L) == 1);
+        lua_pop(L, 1);
+        REQUIRE(lua_gettop(L) == 0);
+        lua_close(L);
+    }
+    SECTION("Isn't a Function")
+    {
+        auto fn = R"FN(
+shazbot = 13
+)FN";
+        lua_State *L = luaL_newstate();
+        REQUIRE(L);
+        REQUIRE(lua_gettop(L) == 0);
+        luaL_openlibs(L);
+
+        std::string err;
+        bool res = Surge::LuaSupport::parseStringDefiningFunction(L, fn, "shazbot", err);
+        REQUIRE(!res);
+        REQUIRE(lua_gettop(L) == 1);
+        REQUIRE(lua_isnil(L, -1));
+        lua_pop(L, 1);
+        lua_close(L);
+    }
+
+    SECTION("Isn't Found")
+    {
+        auto fn = R"FN(
+function double(x)
+    return x * 2
+end
+)FN";
+        lua_State *L = luaL_newstate();
+        REQUIRE(L);
+        REQUIRE(lua_gettop(L) == 0);
+        luaL_openlibs(L);
+
+        std::string err;
+        bool res = Surge::LuaSupport::parseStringDefiningFunction(L, fn, "triple", err);
+        REQUIRE(!res);
+        REQUIRE(lua_gettop(L) == 1);
+        REQUIRE(lua_isnil(L, -1));
+        lua_pop(L, 1);
+        lua_close(L);
+    }
+
+    SECTION("Doesn't Parse")
+    {
+        auto fn = R"FN(
+function double(x)
+    if x > 0 then
+        return 2
+    else
+end
+)FN";
+        lua_State *L = luaL_newstate();
+        REQUIRE(L);
+        REQUIRE(lua_gettop(L) == 0);
+        luaL_openlibs(L);
+
+        std::string err;
+        bool res = Surge::LuaSupport::parseStringDefiningFunction(L, fn, "triple", err);
+        REQUIRE(!res);
+        REQUIRE(lua_gettop(L) == 1);
+        REQUIRE(lua_isnil(L, -1));
+        // clang-format off
+        REQUIRE(err == 
+            "Lua syntax error: [string \"lua-script\"]:7: 'end' expected (to close 'function' at line 2) near '<eof>'");
+        // clang-format on
+        lua_pop(L, 1);
+        lua_close(L);
+    }
+
+    SECTION("Doesn't Evaluate")
+    {
+        auto fn = R"FN(
+-- A bit of a contrived case but that's OK
+error("I will parse but will not run")
+)FN";
+        lua_State *L = luaL_newstate();
+        REQUIRE(L);
+        REQUIRE(lua_gettop(L) == 0);
+        luaL_openlibs(L);
+
+        std::string err;
+        bool res = Surge::LuaSupport::parseStringDefiningFunction(L, fn, "triple", err);
+        REQUIRE(!res);
+        REQUIRE(lua_gettop(L) == 1);
+        REQUIRE(lua_isnil(L, -1));
+        REQUIRE(err ==
+                "Lua evaluation error: [string \"lua-script\"]:3: I will parse but will not run");
+        lua_pop(L, 1);
+        lua_close(L);
+    }
+}
+
+TEST_CASE("Parse Multiple Functions", "[lua]")
+{
+    SECTION("A Pair")
+    {
+        auto fn = R"FN(
+function plus_one(x)
+    return x + 1
+end
+
+function plus_two(x)
+    return x + 2
+end
+)FN";
+        lua_State *L = luaL_newstate();
+        REQUIRE(L);
+        REQUIRE(lua_gettop(L) == 0);
+        luaL_openlibs(L);
+
+        std::string err;
+        auto res = Surge::LuaSupport::parseStringDefiningMultipleFunctions(
+            L, fn, {"plus_one", "plus_two"}, err);
+        REQUIRE(res == 2);
+        REQUIRE(lua_gettop(L) == 2);
+
+        // OK so the first function should be +1 so
+        lua_pushnumber(L, 4);
+        lua_pcall(L, 1, 1, 0);
+        REQUIRE(lua_isnumber(L, -1));
+        REQUIRE(lua_tonumber(L, -1) == 5);
+        lua_pop(L, 1);
+
+        // And the second one is +2 so
+        lua_pushnumber(L, 17);
+        lua_pcall(L, 1, 1, 0);
+        REQUIRE(lua_isnumber(L, -1));
+        REQUIRE(lua_tonumber(L, -1) == 19);
+    }
+
+    SECTION("Just Two of Three There")
+    {
+        auto fn = R"FN(
+function plus_one(x)
+    return x + 1
+end
+
+function plus_two(x)
+    return x + 2
+end
+)FN";
+        lua_State *L = luaL_newstate();
+        REQUIRE(L);
+        REQUIRE(lua_gettop(L) == 0);
+        luaL_openlibs(L);
+
+        std::string err;
+        auto res = Surge::LuaSupport::parseStringDefiningMultipleFunctions(
+            L, fn, {"plus_one", "plus_sventeen", "plus_two"}, err);
+        REQUIRE(res == 2);
+        REQUIRE(lua_gettop(L) == 3);
+
+        REQUIRE(lua_isfunction(L, -1));
+        REQUIRE(lua_isnil(L, -2));
+        REQUIRE(lua_isfunction(L, -3));
+    }
+}
+
+struct formulaObservation
+{
+    formulaObservation(int ip, float fp, float va)
+    {
+        iPhase = ip;
+        fPhase = fp;
+        phase = ip + fp;
+        v = va;
+    }
+    int iPhase;
+    float fPhase;
+    float v;
+    float vVec[Surge::Formula::max_formula_outputs];
+    float phase;
+};
+
+std::vector<formulaObservation> runFormula(SurgeStorage *storage, FormulaModulatorStorage *fs,
+                                           float dPhase, float phaseMax, float deform = 0,
+                                           float releaseAfter = -1)
+{
+    auto res = std::vector<formulaObservation>();
+    double phase = 0.0;
+    int iphase = 0;
+    Surge::Formula::EvaluatorState es;
+    Surge::Formula::prepareForEvaluation(storage, fs, es, true);
+    es.deform = deform;
+    while (phase + iphase < phaseMax)
+    {
+        bool release = false;
+        if (releaseAfter >= 0 && phase + iphase >= releaseAfter)
+            release = true;
+        es.released = release;
+
+        float r[Surge::Formula::max_formula_outputs];
+        Surge::Formula::valueAt(iphase, phase, storage, fs, &es, r);
+        res.emplace_back(formulaObservation(iphase, phase, r[0]));
+        for (int i = 0; i < Surge::Formula::max_formula_outputs; ++i)
+            res.back().vVec[i] = r[i];
+
+        phase += dPhase;
+        if (phase > 1)
+        {
+            phase -= 1;
+            iphase += 1;
+        }
+    }
+    return res;
+}
+
+TEST_CASE("Basic Formula Evaluation", "[formula]")
+{
+    SECTION("Identity Modulator")
+    {
+        auto storage = std::make_unique<SurgeStorage>();
+        auto &fs = storage->getPatch().formulamods[0][0];
+        fs.setFormula(R"FN(
+function process(state)
+    -- a bipolar saw
+    state.output = state.phase
+    return state
+end)FN");
+        auto runIt = runFormula(storage.get(), &fs, 0.0321, 5);
+        for (auto c : runIt)
+        {
+            REQUIRE(c.fPhase == Approx(c.v));
+        }
+    }
+
+    SECTION("Sawtooth Modulator")
+    {
+        auto storage = std::make_unique<SurgeStorage>();
+        auto &fs = storage->getPatch().formulamods[0][0];
+        fs.setFormula(R"FN(
+function process(state)
+    -- a bipolar saw
+    state.output = 2 * state.phase - 1
+    return state
+end)FN");
+        auto runIt = runFormula(storage.get(), &fs, 0.0321, 5);
+        for (auto c : runIt)
+        {
+            REQUIRE(2 * c.fPhase - 1 == Approx(c.v));
+        }
+    }
+
+    SECTION("Sine Modulator")
+    {
+        auto storage = std::make_unique<SurgeStorage>();
+        auto &fs = storage->getPatch().formulamods[0][0];
+        fs.setFormula(R"FN(
+function process(state)
+    -- a bipolar saw
+    state.output = math.sin( state.phase * 3.14159 * 2 )
+    return state
+end)FN");
+        auto runIt = runFormula(storage.get(), &fs, 0.0321, 5);
+        for (auto c : runIt)
+        {
+            REQUIRE(std::sin(c.fPhase * 3.14159 * 2) == Approx(c.v));
+        }
+    }
+
+    SECTION("Test Deform")
+    {
+        auto storage = std::make_unique<SurgeStorage>();
+        auto &fs = storage->getPatch().formulamods[0][0];
+        fs.setFormula(R"FN(
+function process(state)
+    -- a bipolar saw
+    p = state.phase
+    d = state.deform
+    r = math.pow( p, 3 * d + 1) * 2 - 1
+    state.output = r
+    return state
+end)FN");
+
+        for (int id = 0; id <= 10; id++)
+        {
+            float def = id / 10.0;
+            float pe = 3 * def + 1;
+            auto runIt = runFormula(storage.get(), &fs, 0.0321, 5, def);
+            for (auto c : runIt)
+            {
+                auto q = pow(c.fPhase, pe) * 2 - 1;
+                REQUIRE(q == Approx(c.v));
+            }
+        }
+    }
+
+    SECTION("Vector Output")
+    {
+        auto storage = std::make_unique<SurgeStorage>();
+        auto &fs = storage->getPatch().formulamods[0][0];
+        fs.setFormula(R"FN(
+function process(state)
+    -- a bipolar saw
+    p = state.phase
+    r = { }
+    r[1] = p < 0.5 and 1 or -1
+    r[2] = p < 0.5 and -1 or 1
+    r[3] = 0.72;
+
+    state.output = r
+    return state
+end)FN");
+
+        for (int id = 0; id <= 10; id++)
+        {
+            float pe = 0;
+            auto runIt = runFormula(storage.get(), &fs, 0.0321, 5, 0.f);
+            for (auto c : runIt)
+            {
+                auto p = c.fPhase;
+                auto s1 = p < 0.5 ? 1.f : -1.f;
+                auto s2 = p < 0.5 ? -1.f : 1.f;
+                REQUIRE(c.vVec[0] == Approx(s1));
+                REQUIRE(c.vVec[1] == Approx(s2));
+                REQUIRE(c.vVec[2] == Approx(0.72));
+            }
+        }
+    }
+}
+
+TEST_CASE("Init Functions", "[formula]")
+{
+    SECTION("Test Init Function")
+    {
+        auto storage = std::make_unique<SurgeStorage>();
+        auto &fs = storage->getPatch().formulamods[0][0];
+        fs.setFormula(R"FN(
+function init(state)
+   state.av = 0.762
+   return state
+end
+
+function process(state)
+    state.output = state.av
+    return state
+end)FN");
+
+        for (int id = 0; id <= 10; id++)
+        {
+            auto runIt = runFormula(storage.get(), &fs, 0.0321, 5, 0);
+            REQUIRE(!runIt.empty());
+            for (auto c : runIt)
+            {
+                REQUIRE(0.762 == Approx(c.v));
+            }
+        }
+    }
+}
+
+TEST_CASE("Clamping", "[formula]")
+{
+    SECTION("Test Clamped Function")
+    {
+        auto storage = std::make_unique<SurgeStorage>();
+        auto &fs = storage->getPatch().formulamods[0][0];
+        fs.setFormula(R"FN(
+function process(state)
+    state.output = state.phase * 3 - 1.5
+    return state
+end)FN");
+
+        for (int id = 0; id <= 10; id++)
+        {
+            auto runIt = runFormula(storage.get(), &fs, 0.0321, 5, 0);
+            REQUIRE(!runIt.empty());
+            for (auto c : runIt)
+            {
+                REQUIRE(c.v <= 1.0);
+                REQUIRE(c.v >= -1.0);
+            }
+        }
+    }
+    SECTION("Test Clamped Function")
+    {
+        auto storage = std::make_unique<SurgeStorage>();
+        auto &fs = storage->getPatch().formulamods[0][0];
+        fs.setFormula(R"FN(
+function init(state)
+    state.clamp_output = false
+    return state
+end
+
+function process(state)
+    state.output = state.phase * 3 - 1.5
+    return state
+end)FN");
+
+        int outOfBounds = 0;
+        for (int id = 0; id <= 10; id++)
+        {
+            auto runIt = runFormula(storage.get(), &fs, 0.0321, 5, 0);
+            REQUIRE(!runIt.empty());
+            for (auto c : runIt)
+            {
+                if (c.v > 1 || c.v < -1)
+                    outOfBounds++;
+                REQUIRE(c.v <= 1.5);
+                REQUIRE(c.v >= -1.5);
+            }
+        }
+        REQUIRE(outOfBounds > 0);
+    }
+}
+
+TEST_CASE("Simple Used Formula Modulator", "[formula]")
+{
+    SECTION("Run Formula on Voice And Scene")
+    {
+        auto surge = Surge::Test::surgeOnSine();
+        surge->storage.getPatch().scene[0].lfo[0].shape.val.i = lt_formula;
+        auto pitchId = surge->storage.getPatch().scene[0].osc[0].pitch.id;
+        surge->setModDepth01(pitchId, ms_lfo1, 0, 0, 0.1);
+
+        surge->storage.getPatch().formulamods[0][0].setFormula(R"FN(
+function init(state)
+   state.depth = 0.2
+   state.count = -1   -- There is an initial attack which will also run process once
+   return state
+end
+
+function process(state)
+    state.output = (state.phase * 2 - 1) * state.depth
+    state.count = state.count + 1
+    return state
+end)FN");
+        for (int i = 0; i < 10; ++i)
+            surge->process();
+
+        surge->playNote(0, 60, 100, 0);
+        for (int i = 0; i < 10; ++i)
+            surge->process();
+
+        REQUIRE(!surge->voices[0].empty());
+        auto ms = surge->voices[0].front()->modsources[ms_lfo1];
+        REQUIRE(ms);
+        auto lms = dynamic_cast<LFOModulationSource *>(ms);
+        REQUIRE(lms);
+
+        auto c = Surge::Formula::extractModStateKeyForTesting("count", lms->formulastate);
+        auto ival = std::get_if<float>(&c);
+        REQUIRE(ival);
+        REQUIRE(*ival == 10);
+    }
+}
+
+TEST_CASE("Voice Features And Flags", "[formula]")
+{
+    SECTION("is_voice Is Set Correctly")
+    {
+        auto surge = Surge::Test::surgeOnSine();
+        surge->storage.getPatch().scene[0].lfo[0].shape.val.i = lt_formula;
+        surge->storage.getPatch().scene[0].lfo[6].shape.val.i = lt_formula;
+        auto pitchId = surge->storage.getPatch().scene[0].osc[0].pitch.id;
+        surge->setModDepth01(pitchId, ms_lfo1, 0, 0, 0.1);
+        surge->setModDepth01(pitchId, ms_slfo1, 0, 0, 0.1);
+
+        surge->storage.getPatch().formulamods[0][0].setFormula(R"FN(
+function process(state)
+    state.output = (state.phase * 2 - 1)
+    return state
+end)FN");
+        for (int i = 0; i < 10; ++i)
+            surge->process();
+
+        surge->playNote(0, 60, 100, 0);
+        for (int i = 0; i < 10; ++i)
+            surge->process();
+
+        REQUIRE(!surge->voices[0].empty());
+        auto ms = surge->voices[0].front()->modsources[ms_lfo1];
+        REQUIRE(ms);
+        auto lms = dynamic_cast<LFOModulationSource *>(ms);
+        REQUIRE(lms);
+
+        auto c = Surge::Formula::extractModStateKeyForTesting("is_voice", lms->formulastate);
+        auto ival = std::get_if<float>(&c);
+        REQUIRE(ival);
+        REQUIRE(*ival == 1);
+
+        auto sms = dynamic_cast<LFOModulationSource *>(
+            surge->storage.getPatch().scene[0].modsources[ms_slfo1]);
+        REQUIRE(sms);
+
+        auto cs = Surge::Formula::extractModStateKeyForTesting("is_voice", sms->formulastate);
+        auto sval = std::get_if<float>(&cs);
+        REQUIRE(sval); // Since 1.3.0 we no longer need to subscribe for is_voice to be set
+        REQUIRE((bool)(*sval) == false);
+    }
+
+    SECTION("Gate And Channel")
+    {
+        auto surge = Surge::Test::surgeOnSine();
+        surge->storage.getPatch().scene[0].lfo[0].shape.val.i = lt_formula;
+        surge->storage.getPatch().scene[0].lfo[6].shape.val.i = lt_formula;
+        surge->storage.getPatch().scene[0].adsr[0].r.val.f = 2;
+        auto pitchId = surge->storage.getPatch().scene[0].osc[0].pitch.id;
+        surge->setModDepth01(pitchId, ms_lfo1, 0, 0, 0.1);
+        surge->setModDepth01(pitchId, ms_slfo1, 0, 0, 0.1);
+
+        surge->storage.getPatch().formulamods[0][0].setFormula(R"FN(
+function process(state)
+    state.output = (state.phase * 2 - 1)
+    return state
+end)FN");
+
+        for (int i = 0; i < 10; ++i)
+            surge->process();
+
+        surge->playNote(0, 87, 92, 0);
+        for (int i = 0; i < 20; ++i)
+            surge->process();
+
+        REQUIRE(!surge->voices[0].empty());
+        auto ms = surge->voices[0].front()->modsources[ms_lfo1];
+        REQUIRE(ms);
+        auto lms = dynamic_cast<LFOModulationSource *>(ms);
+        REQUIRE(lms);
+        auto sms = dynamic_cast<LFOModulationSource *>(
+            surge->storage.getPatch().scene[0].modsources[ms_slfo1]);
+        REQUIRE(sms);
+
+        auto check = [](const std::string &key, float val, LFOModulationSource *ms) {
+            auto c = Surge::Formula::extractModStateKeyForTesting(key, ms->formulastate);
+            auto ival = std::get_if<float>(&c);
+            INFO("Confirming that " << key << " is " << val);
+            REQUIRE(ival);
+            REQUIRE(*ival == val);
+        };
+        auto checkMissing = [](const std::string &key, LFOModulationSource *ms) {
+            auto c = Surge::Formula::extractModStateKeyForTesting(key, ms->formulastate);
+            auto ival = std::get_if<float>(&c);
+            INFO("Confirming that " << key << " is missing");
+            REQUIRE(!ival);
+        };
+        check("is_voice", 1, lms);
+        check("is_voice", 0, sms);
+        check("released", 0, lms);
+        check("key", 87, lms);
+        checkMissing("key", sms);
+        check("channel", 0, lms);
+        checkMissing("channel", sms);
+        check("velocity", 92, lms);
+        checkMissing("velocity", sms);
+
+        surge->releaseNote(0, 87, 100);
+        for (int i = 0; i < 20; ++i)
+            surge->process();
+
+        check("is_voice", 1, lms);
+        check("is_voice", 0, sms);
+        check("released", 1, lms);
+        check("key", 87, lms);
+    }
+}
+
+TEST_CASE("Macros Are Available", "[formula]")
+{
+    auto surge = Surge::Test::surgeOnSine();
+    surge->storage.getPatch().scene[0].lfo[0].shape.val.i = lt_formula;
+    surge->storage.getPatch().scene[0].adsr[0].r.val.f = 2;
+    auto pitchId = surge->storage.getPatch().scene[0].osc[0].pitch.id;
+    surge->setModDepth01(pitchId, ms_lfo1, 0, 0, 0.1);
+    REQUIRE(1);
+}
+
+TEST_CASE("NaN Clamper", "[formula]")
+{
+    SECTION("NaN Formula")
+    {
+        auto surge = Surge::Test::surgeOnSine();
+        surge->storage.getPatch().scene[0].lfo[0].shape.val.i = lt_formula;
+        auto pitchId = surge->storage.getPatch().scene[0].osc[0].pitch.id;
+        surge->setModDepth01(pitchId, ms_lfo1, 0, 0, 0.1);
+
+        surge->storage.getPatch().formulamods[0][0].setFormula(R"FN(
+function init(state)
+   state.depth = 0
+   return state
+end
+
+function process(state)
+    state.output = (state.phase * 2 - 1) / state.depth
+    return state
+end)FN");
+        for (int i = 0; i < 10; ++i)
+            surge->process();
+
+        surge->playNote(0, 60, 100, 0);
+        for (int i = 0; i < 10; ++i)
+            surge->process();
+
+        REQUIRE(!surge->voices[0].empty());
+        auto ms = surge->voices[0].front()->modsources[ms_lfo1];
+        REQUIRE(ms);
+        auto lms = dynamic_cast<LFOModulationSource *>(ms);
+        REQUIRE(lms);
+
+        REQUIRE(lms->get_output(0) == 0.f);
+        REQUIRE(!lms->formulastate.isFinite);
+    }
+
+    SECTION("Not A NaN Formula")
+    {
+        auto surge = Surge::Test::surgeOnSine();
+        surge->storage.getPatch().scene[0].lfo[0].shape.val.i = lt_formula;
+        auto pitchId = surge->storage.getPatch().scene[0].osc[0].pitch.id;
+        surge->setModDepth01(pitchId, ms_lfo1, 0, 0, 0.1);
+
+        surge->storage.getPatch().formulamods[0][0].setFormula(R"FN(
+function init(state)
+   state.depth = 1
+   return state
+end
+
+function process(state)
+    state.output = (state.phase * 2 - 1) / state.depth
+    return state
+end)FN");
+        for (int i = 0; i < 10; ++i)
+            surge->process();
+
+        surge->playNote(0, 60, 100, 0);
+        for (int i = 0; i < 10; ++i)
+            surge->process();
+
+        REQUIRE(!surge->voices[0].empty());
+        auto ms = surge->voices[0].front()->modsources[ms_lfo1];
+        REQUIRE(ms);
+        auto lms = dynamic_cast<LFOModulationSource *>(ms);
+        REQUIRE(lms);
+
+        REQUIRE(lms->formulastate.isFinite);
+    }
+}
+
+TEST_CASE("Two Surge XTs", "[formula]")
+{
+    // this attempts but fails to reproduce 5753 but i left it here anyway
+    SECTION("Two Surge XTs, Tutorial 3")
+    {
+        auto s1 = Surge::Test::surgeOnSine();
+        auto s2 = Surge::Test::surgeOnSine();
+
+        REQUIRE(s1->loadPatchByPath("resources/data/patches_factory/Tutorials/Formula Modulator/03 "
+                                    "The Init Function And State.fxp",
+                                    -1, "Tutorials"));
+        REQUIRE(s2->loadPatchByPath("resources/data/patches_factory/Tutorials/Formula Modulator/03 "
+                                    "The Init Function And State.fxp",
+                                    -1, "Tutorials"));
+
+        for (int i = 0; i < 10; ++i)
+        {
+            s1->process();
+            s2->process();
+        }
+        s1->playNote(0, 60, 127, 0);
+        for (int i = 0; i < 50; ++i)
+        {
+            s1->process();
+            s2->process();
+        }
+        s2->playNote(0, 60, 127, 0);
+        for (int i = 0; i < 50; ++i)
+        {
+            s1->process();
+            s2->process();
+        }
+        s1->releaseNote(0, 60, 127);
+        for (int i = 0; i < 50; ++i)
+        {
+            s1->process();
+            s2->process();
+        }
+    }
+}
+
+TEST_CASE("Bitops Module", "[formula]")
+{
+    SECTION("Bit Operation")
+    {
+        auto storage = std::make_unique<SurgeStorage>();
+        auto &fs = storage->getPatch().formulamods[0][0];
+        fs.setFormula(R"FN(
+function process(state)
+    state.output = bit.tobit(0xffffffff)
+    return state
+end)FN");
+        auto runIt = runFormula(storage.get(), &fs, 0.0321, 5);
+        for (auto c : runIt)
+        {
+            REQUIRE(c.v == -1);
+        }
+    }
+}
+
+TEST_CASE("Shared Table", "[formula]")
+{
+    SECTION("Shared Table Persists Across Multiple Runs")
+    {
+        auto storage = std::make_unique<SurgeStorage>();
+        auto &fs = storage->getPatch().formulamods[0][0];
+
+        fs.setFormula(R"FN(
+function init(state)
+    state.clamp_output = false
+    if shared.count == nil then
+        shared.count = 0
+    end
+    return state
+end
+
+function process(state)
+    state.output = shared.count
+    shared.count = shared.count + 1
+    return state
+end)FN");
+
+        auto firstRun = runFormula(storage.get(), &fs, 0.0321, 5);
+        REQUIRE(!firstRun.empty());
+        auto secondRun = runFormula(storage.get(), &fs, 0.0321, 5);
+        REQUIRE(!secondRun.empty());
+
+        for (size_t i = 0; i < secondRun.size(); ++i)
+        {
+            REQUIRE(secondRun[i].v == firstRun.size() + i);
+        }
+    }
+
+    SECTION("Namespaced Shared Tables Do Not Collide")
+    {
+        auto storage = std::make_unique<SurgeStorage>();
+        auto &fs0 = storage->getPatch().formulamods[0][0];
+        auto &fs1 = storage->getPatch().formulamods[0][1];
+
+        fs0.setFormula(R"FN(
+function init(state)
+    shared[state.lfo_id] = shared[state.lfo_id] or {}
+    shared[state.lfo_id].val = 0.25
+    return state
+end
+
+function process(state)
+    state.output = shared[state.lfo_id].val
+    return state
+end)FN");
+        fs1.setFormula(R"FN(
+function init(state)
+    shared[state.lfo_id] = shared[state.lfo_id] or {}
+    if shared[state.lfo_id].val == nil then
+        shared[state.lfo_id].val = 0.75
+    end
+    return state
+end
+
+function process(state)
+    state.output = shared[state.lfo_id].val
+    return state
+end)FN");
+        auto firstRun = runFormula(storage.get(), &fs0, 0.0321, 5);
+        REQUIRE(!firstRun.empty());
+        for (auto c : firstRun)
+        {
+            REQUIRE(c.v == 0.25);
+        }
+        auto secondRun = runFormula(storage.get(), &fs1, 0.0321, 5);
+        REQUIRE(!secondRun.empty());
+        for (auto c : secondRun)
+        {
+            REQUIRE(c.v == 0.75);
+        }
+    }
+
+    SECTION("Shared Table Is Wiped By requestSharedDataWipe")
+    {
+        auto storage = std::make_unique<SurgeStorage>();
+        auto &fs = storage->getPatch().formulamods[0][0];
+
+        auto scriptA = R"FN(
+-- Script A
+function init(state)
+    shared.val = 0.25
+    return state
+end
+
+function process(state)
+    state.output = shared.val
+    return state
+end)FN";
+        auto scriptB = R"FN(
+-- Script B (different hash from A)
+function init(state)
+    if shared.val == nil then
+        shared.val = 0.75
+    end
+    return state
+end
+
+function process(state)
+    state.output = shared.val
+    return state
+end)FN";
+        fs.setFormula(scriptA);
+        auto firstRun = runFormula(storage.get(), &fs, 0.0321, 5);
+        REQUIRE(!firstRun.empty());
+        for (auto c : firstRun)
+        {
+            REQUIRE(c.v == 0.25);
+        }
+        fs.setFormula(scriptB);
+        Surge::Formula::requestSharedDataWipe(storage.get());
+        auto secondRun = runFormula(storage.get(), &fs, 0.0321, 5);
+        REQUIRE(!secondRun.empty());
+        for (auto c : secondRun)
+        {
+            REQUIRE(c.v == 0.75);
+        }
+    }
+}
+
+TEST_CASE("Wavetable Script", "[wts]")
+{
+    SECTION("Just the Sines")
+    {
+        const std::string s = R"FN(
+
+function init(wt)
+    -- wt will have frame_count and sample_count defined
+    wt.name = "Sine Series"
+    wt.phase = math.linspace(0.0, 1.0, wt.sample_count)
+    return wt
+end
+
+function generate(wt)
+    local res = {}
+
+    for i,x in ipairs(wt.phase) do
+        local lv = 0
+        lv = sin(2 * pi * wt.frame * x)
+        res[i] = lv
+    end
+    return res
+end
+        )FN";
+        auto la = std::make_unique<Surge::WavetableScript::LuaWTEvaluator>();
+        la->setResolution(512);
+        la->setStorage(nullptr);
+        la->setFrameCount(4);
+        la->setScript(s);
+
+        for (int fno = 0; fno < 4; ++fno)
+        {
+            auto fr = la->getFrame(fno);
+            REQUIRE(fr.has_value());
+            REQUIRE(fr->size() == 512);
+            auto dp = 1.0 / (512 - 1);
+            for (int i = 0; i < 512; ++i)
+            {
+                auto x = i * dp;
+                auto r = sin(2 * M_PI * x * (fno + 1));
+                REQUIRE(r == Approx((*fr)[i]));
+            }
+        }
+    }
+}
+
+TEST_CASE("Wavetable Script Snapshots", "[wts]")
+{
+    SECTION("Script Can Read Snapshot Data")
+    {
+        auto storage = std::make_unique<SurgeStorage>();
+        auto &osc = storage->getPatch().scene[0].osc[0];
+
+        // Populate snapshot slot 0 with a known 2-frame, 64-sample ramp
+        osc.wtSnapshots[0] = std::make_unique<Wavetable>();
+        auto &snap = *osc.wtSnapshots[0];
+
+        constexpr int nframes = 2;
+        constexpr int nsamples = 64;
+        std::vector<float> flat(nframes * nsamples);
+        for (int t = 0; t < nframes; ++t)
+        {
+            for (int i = 0; i < nsamples; ++i)
+            {
+                flat[t * nsamples + i] = (float)(t + 1) * (float)i / 63.0f;
+            }
+        }
+
+        wt_header wh{};
+        wh.n_samples = nsamples;
+        wh.n_tables = nframes;
+        wh.flags = 0;
+        snap.BuildWT(flat.data(), wh, false);
+
+        // Script that copies snapshot slot 1 (Lua 1-indexed), frame matching wt.frame
+        const std::string s = R"FN(
+function init(wt)
+    wt.name = "Snapshot Test"
+    return wt
+end
+
+function generate(wt)
+    local res = {}
+    local slot = wt.snapshot[1]
+    if slot and slot[wt.frame] then
+        for i = 1, wt.sample_count do
+            if slot[wt.frame][i] then
+                res[i] = slot[wt.frame][i]
+            else
+                res[i] = 0
+            end
+        end
+    else
+        for i = 1, wt.sample_count do
+            res[i] = 0
+        end
+    end
+    return res
+end
+        )FN";
+
+        auto la = std::make_unique<Surge::WavetableScript::LuaWTEvaluator>();
+        la->setResolution(64);
+        la->setStorage(nullptr);
+        la->setSnapshotBundle(Surge::WavetableScript::SnapshotBundle::build(osc));
+        la->setFrameCount(2);
+        la->setScript(s);
+
+        auto fr0 = la->getFrame(0);
+        REQUIRE(fr0.has_value());
+        REQUIRE(fr0->size() == 64);
+        for (int i = 0; i < 64; ++i)
+        {
+            float expected = 1.0f * (float)i / 63.0f;
+            REQUIRE((*fr0)[i] == Approx(expected).margin(1e-6));
+        }
+
+        auto fr1 = la->getFrame(1);
+        REQUIRE(fr1.has_value());
+        REQUIRE(fr1->size() == 64);
+        for (int i = 0; i < 64; ++i)
+        {
+            float expected = 2.0f * (float)i / 63.0f;
+            REQUIRE((*fr1)[i] == Approx(expected).margin(1e-6));
+        }
+    }
+
+    SECTION("Empty Snapshot Slot Returns Empty Table")
+    {
+        auto storage = std::make_unique<SurgeStorage>();
+
+        // All snapshots disabled by default, script should still run
+        const std::string s = R"FN(
+function init(wt)
+    wt.name = "Empty Snapshot Test"
+    return wt
+end
+
+function generate(wt)
+    local res = {}
+    local slot = wt.snapshot[1]
+    local hasData = false
+    if slot then
+        for k, v in pairs(slot) do
+            hasData = true
+            break
+        end
+    end
+    for i = 1, wt.sample_count do
+        res[i] = hasData and 1.0 or 0.0
+    end
+    return res
+end
+        )FN";
+
+        auto la = std::make_unique<Surge::WavetableScript::LuaWTEvaluator>();
+        la->setResolution(64);
+        la->setStorage(nullptr);
+        la->setSnapshotBundle(
+            Surge::WavetableScript::SnapshotBundle::build(storage->getPatch().scene[0].osc[0]));
+        la->setFrameCount(1);
+        la->setScript(s);
+
+        auto fr = la->getFrame(0);
+        REQUIRE(fr.has_value());
+        REQUIRE(fr->size() == 64);
+        for (int i = 0; i < 64; ++i)
+        {
+            REQUIRE((*fr)[i] == Approx(0.0).margin(1e-6));
+        }
+    }
+}
+
+TEST_CASE("PFFFT Wrapper", "[wts]")
+{
+    SECTION("Round-Trip FFT")
+    {
+        const std::string s = R"FN(
+
+function init(wt)
+    -- wt will have frame_count and sample_count defined
+    wt.name = "Sine"
+    wt.phase = math.linspace(0.0, 1.0, wt.sample_count)
+    return wt
+end
+
+function generate(wt)
+    local res = {}
+    local fft = {}
+
+    for i,x in ipairs(wt.phase) do
+        local lv = 0
+        lv = sin(2 * pi * x)
+        res[i] = lv
+    end
+    fft = real_fft(res)
+    fft = real_ifft(fft)
+    fft = scale_real(fft)
+    return fft
+end
+        )FN";
+        auto la = std::make_unique<Surge::WavetableScript::LuaWTEvaluator>();
+        la->setResolution(512);
+        la->setStorage(nullptr);
+        la->setFrameCount(1);
+        la->setScript(s);
+
+        auto fr = la->getFrame(0);
+        REQUIRE(fr.has_value());
+        REQUIRE(fr->size() == 512);
+        auto dp = 1.0 / (512 - 1);
+        for (int i = 0; i < 512; ++i)
+        {
+            auto x = i * dp;
+            auto r = sin(2 * M_PI * x);
+            REQUIRE(r == Approx((*fr)[i]).margin(1e-6));
+        }
+    }
+}
+
+TEST_CASE("WtGenService", "[wts]")
+{
+    namespace WS = Surge::WavetableScript;
+
+    auto storage = std::make_unique<SurgeStorage>();
+    auto &osc = storage->getPatch().scene[0].osc[0];
+
+    const std::string script = R"FN(
+function init(wt)
+    wt.name = "RoundTrip"
+    return wt
+end
+
+function generate(wt)
+    local res = {}
+    for i = 1, wt.sample_count do
+        res[i] = sin(2 * pi * wt.frame * (i - 1) / (wt.sample_count - 1))
+    end
+    return res
+end
+    )FN";
+
+    osc.wavetable_script = script;
+    osc.wavetable_script_res_base = 5; // 512 samples
+    osc.wavetable_script_nframes = 4;
+
+    const int resolution = WS::resolutionForResBase(osc.wavetable_script_res_base);
+    const int nframes = osc.wavetable_script_nframes;
+
+    // Direct reference: the same evaluator code the worker drives, run inline.
+    auto computeDirectFrames = [&]() {
+        std::vector<std::vector<float>> directFrames;
+        auto la = std::make_unique<WS::LuaWTEvaluator>();
+        la->setStorage(nullptr);
+        la->setScript(script);
+        la->setResolution(resolution);
+        la->setFrameCount(nframes);
+        la->setSnapshotBundle(WS::SnapshotBundle::build(osc));
+        la->forceInvalidate();
+        for (int f = 0; f < nframes; ++f)
+        {
+            auto fr = la->getFrame(f);
+            REQUIRE(fr.has_value());
+            directFrames.push_back(*fr);
+        }
+        return directFrames;
+    };
+
+    // The frames the worker carries back equal the direct run (same code, same inputs).
+    auto requireFramesMatch = [](const std::vector<std::vector<float>> &frames,
+                                 const std::vector<std::vector<float>> &ref) {
+        REQUIRE(frames.size() == ref.size());
+        for (size_t f = 0; f < ref.size(); ++f)
+        {
+            REQUIRE(frames[f].size() == ref[f].size());
+            for (size_t i = 0; i < ref[f].size(); ++i)
+            {
+                REQUIRE(frames[f][i] == Approx(ref[f][i]));
+            }
+        }
+    };
+
+    SECTION("Preview matches the direct evaluator and leaves the oscillator untouched")
+    {
+        auto directFrames = computeDirectFrames();
+
+        const bool builtBefore = osc.wt.everBuilt;
+        const int nTablesBefore = osc.wt.n_tables;
+
+        WS::WtGenJobRequest preq;
+        preq.mode = WS::WtGenMode::Preview;
+        preq.scene = 0;
+        preq.osc = 0;
+        preq.script = script;
+        preq.resolution = resolution;
+        preq.frameCount = nframes;
+        preq.snapshot = WS::SnapshotBundle::current(storage.get(), osc);
+
+        auto r = storage->wtGenService->submitBlocking(std::move(preq));
+
+        REQUIRE(r.ok);
+        REQUIRE_FALSE(r.published);
+        REQUIRE_FALSE(r.exportOut);
+        requireFramesMatch(r.frames, directFrames);
+        REQUIRE(osc.wt.everBuilt == builtBefore);
+        REQUIRE(osc.wt.n_tables == nTablesBefore);
+    }
+
+    SECTION("Live Generate matches the direct evaluator and publishes")
+    {
+        auto directFrames = computeDirectFrames();
+
+        auto r =
+            storage->wtGenService->submitBlocking(WS::makeLiveGenerateRequest(storage.get(), 0, 0));
+
+        REQUIRE(r.ok);
+        REQUIRE(r.published);
+        REQUIRE(r.wtName == "RoundTrip");
+        requireFramesMatch(r.frames, directFrames);
+
+        REQUIRE(osc.wt.everBuilt);
+        REQUIRE(osc.wt.n_tables == nframes);
+    }
+
+    SECTION("Export builds exportOut")
+    {
+        const bool builtBefore = osc.wt.everBuilt;
+        const int nTablesBefore = osc.wt.n_tables;
+
+        WS::WtGenJobRequest req;
+        req.scene = 0;
+        req.osc = 0;
+        req.mode = WS::WtGenMode::Generate;
+        req.generateTarget = nullptr; // nullptr target == export
+        req.script = script;
+        req.resolution = resolution;
+        req.frameCount = nframes;
+        req.snapshot = WS::SnapshotBundle::current(storage.get(), osc);
+
+        auto r = storage->wtGenService->submitBlocking(std::move(req));
+
+        REQUIRE(r.ok);
+        REQUIRE_FALSE(r.published); // export never publishes
+        REQUIRE(r.exportOut);
+        REQUIRE(r.exportOut->everBuilt); // built into the response-owned wavetable
+        REQUIRE(r.exportOut->n_tables == nframes);
+
+        // Export should not mutate the live oscillator.
+        REQUIRE(osc.wt.everBuilt == builtBefore);
+        REQUIRE(osc.wt.n_tables == nTablesBefore);
+    }
+
+    SECTION("A stale publish token skips the live publish")
+    {
+        const bool builtBefore = osc.wt.everBuilt;
+        const int nTablesBefore = osc.wt.n_tables;
+
+        // Force a token mismatch: the worker must skip BuildWT and leave the oscillator untouched.
+        auto staleReq = WS::makeLiveGenerateRequest(storage.get(), 0, 0);
+        {
+            std::lock_guard<std::mutex> g(storage->waveTableDataMutex);
+            staleReq.publishToken = storage->wtGenPublishToken[0] + 1;
+        }
+        auto rStale = storage->wtGenService->submitBlocking(std::move(staleReq));
+
+        REQUIRE(rStale.ok);
+        REQUIRE_FALSE(rStale.published);
+        REQUIRE(osc.wt.everBuilt == builtBefore);
+        REQUIRE(osc.wt.n_tables == nTablesBefore);
+
+        // A matching token (the default capture) publishes normally.
+        auto rGood =
+            storage->wtGenService->submitBlocking(WS::makeLiveGenerateRequest(storage.get(), 0, 0));
+
+        REQUIRE(rGood.ok);
+        REQUIRE(rGood.published);
+        REQUIRE(osc.wt.everBuilt);
+        REQUIRE(osc.wt.n_tables == nframes);
+    }
+
+    SECTION("A queued wavetable load invalidates an in-flight Generate")
+    {
+        // A queued wavetable load replaces this osc's wt (perform_queued_wtloads
+        // bumps the token under the mutex before loading), so a Generate captured before the
+        // load must skip its publish - the user's selection wins.
+        auto capturedReq = WS::makeLiveGenerateRequest(storage.get(), 0, 0);
+
+        osc.wt.queue_id = 0;
+        storage->perform_queued_wtloads();
+        REQUIRE(osc.wt.everBuilt);
+        const int loadedTables = osc.wt.n_tables;
+
+        auto rCaptured = storage->wtGenService->submitBlocking(std::move(capturedReq));
+
+        REQUIRE(rCaptured.ok);
+        REQUIRE_FALSE(rCaptured.published);
+        REQUIRE(osc.wt.n_tables == loadedTables);
+    }
+
+    SECTION("A failing generate() fails the job and leaves the oscillator untouched")
+    {
+        const bool builtBefore = osc.wt.everBuilt;
+        const int nTablesBefore = osc.wt.n_tables;
+
+        osc.wavetable_script = R"FN(
+function generate(wt)
+    error("boom")
+end
+        )FN";
+
+        auto r =
+            storage->wtGenService->submitBlocking(WS::makeLiveGenerateRequest(storage.get(), 0, 0));
+
+        REQUIRE_FALSE(r.ok);
+        REQUIRE_FALSE(r.published);
+        REQUIRE_FALSE(r.error.empty());
+        REQUIRE(osc.wt.everBuilt == builtBefore);
+        REQUIRE(osc.wt.n_tables == nTablesBefore);
+    }
+}
+
+#endif

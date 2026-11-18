@@ -1,0 +1,134 @@
+GHOST BASS - Phase 1 report (repository inspection, before any change)
+=====================================================================
+
+Upstream inspected: https://github.com/surge-synthesizer/surge, branch main,
+commit 72a602284b7a599ee3a93d7a830236776e0abb2b (2026-11-03, "Stop all sound on reset() (#8633)"),
+Surge XT version 1.4.0, licence GPL-3.0. 27 git submodules (JUCE, sst-*, LuaJIT, pffft, r8brain ...).
+
+1. ARCHITECTURE MAP
+-------------------
+src/common/               "surge-common" static library: the whole synth engine, no GUI
+  SurgeSynthesizer.*      the engine. process() renders one 32-sample block:
+                          processControl -> scene voices -> scene FX -> sends -> global FX ->
+                          master volume -> hard clip. Notes, voice allocation, play modes
+                          (poly / mono / mono ST / legato / porta), patch loading.
+  SurgeStorage.*          shared state: patch, wavetables, sinc tables, tuning, data folders.
+  SurgePatch.cpp          every Parameter, XML (de)serialisation into .fxp, <extraoscdata>,
+                          <customcontroller> (macros), mod routings, MSEGs.
+  Parameter.*             one parameter: type, range, display, smoothing, deform.
+  ModulationSource.*      8 macros, LFOs, envelopes, MIDI sources.
+  PatchDB.*               SQLite patch database (browser search, favourites, categories).
+  dsp/SurgeVoice.*        one voice: 3 oscillators -> ring/noise mix -> QuadFilterChain
+                          (2 filters, routing, waveshaper, feedback) -> amp env -> pan.
+  dsp/oscillators/        12 types: Classic (BLIT saw/pulse/sync), Sine, Wavetable, Window, FM2,
+                          FM3, Modern (DPW), String (Karplus), Twist, Alias, S&H Noise, Audio In.
+  dsp/QuadFilterChain.*   SIMD voice filter chain; models live in libs/sst/sst-filters.
+  dsp/modulators/         ADSR, LFO (incl. step sequencer, MSEG, Formula/Lua).
+  dsp/effects/            Surge FX + adapters for sst-effects, Airwindows, Chow.
+src/surge-xt/             JUCE plugin (VST3 / AU / CLAP / LV2 / Standalone)
+  SurgeSynthProcessor.*   juce::AudioProcessor: host params, MIDI, state, block adapter.
+  SurgeSynthEditor.*      juce::AudioProcessorEditor: hosts SurgeGUIEditor + virtual keyboard.
+  gui/                    SurgeGUIEditor (7900 lines), skin engine, widgets, overlays.
+src/surge-python/         surgepy: Python bindings (headless render) - used for all our tests.
+src/surge-testrunner/     Catch2 unit tests.
+libs/sst/*                sst-filters, sst-waveshapers, sst-effects, sst-basic-blocks, sst-plugininfra.
+resources/data/           factory data: patches, wavetables, skins, FX presets, IRs, tuning.
+
+Voice signal flow (oscillators run 2x oversampled inside the scene, then half-band down):
+osc1/2/3 (+ring, noise) -> filter 1 / filter 2 (serial/parallel/stereo/wide) -> waveshaper ->
+feedback -> amp EG -> scene out -> insert FX -> sends -> global FX -> master.
+
+Data folders (SurgeStorage.cpp): macOS uses ~/Library/Application Support/Surge XT if present,
+else /Library/Application Support/Surge XT; user data ~/Documents/Surge XT. The plugin bundle has no
+factory patches/wavetables inside. Ghost Bass therefore needs its own folder names.
+
+2. BUILD INSTRUCTIONS
+---------------------
+Linux (this container, for objective tests):
+  git submodule update --init --recursive
+  cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DENABLE_LTO=OFF -DSURGE_BUILD_PYTHON_BINDINGS=ON
+  cmake --build build --target surgepy               (headless engine)
+  cmake --build build --target surge-xt_Standalone   (GUI; needs ALSA/X11/Xrandr/Xinerama/Xcursor dev)
+macOS (GitHub Actions macos-15, Xcode):
+  cmake -B build -G Xcode -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET=11
+  cmake --build build --config Release --target surge-xt_VST3 surge-xt_AU surge-xt_Standalone
+Brandon never has to build: the ghostbass-mac workflow makes the Mac zip.
+
+3. EXISTING DSP WE REUSE (UNCHANGED)
+------------------------------------
+01 ANALOG      Classic osc (BLIT saw/pulse, hard sync, PWM, unison), Modern osc, Sine osc
+02 WAVETABLE   Wavetable + Window osc (mip-mapped, morphing), import, Lua wavetable scripts
+03 FM/DIGITAL  FM2, FM3, Sine-osc FM, Twist, Alias, ring mod, osc-to-osc FM
+04 GRANULAR    Nimbus FX (granular processor) for now; no granular oscillator exists
+05 SAMPLE      nothing suitable (see 4)
+06 HYBRID      two scenes x three oscillators, layer/split/dual
+Filters        sst-filters: vintage ladders, OB-Xd, K35, diode ladder, Cytomic SVF, tripole, comb,
+               cutoff/resonance warp
+Drive          sst-waveshapers (45 shapes incl. OJD, fuzzes, West Coast fold, harmonics, ADAA),
+               Distortion FX (oversampled), Waveshaper FX, Chow Tape, Neuron, Airwindows, Bonsai
+Crush/comb/shift  Bonsai, "Digital" shaper, comb filters, Combulator, Frequency Shifter, Ring Mod
+Imaging/space  Mid-Side tool, Conditioner, Reverb 1/2, Spring, Delay, Convolution, Chorus, Ensemble
+Helpers        Linkwitz-Riley LR4 crossover, half-band filters, DC blockers, lag/smoothing
+
+4. MISSING FOR GHOST BASS
+-------------------------
+1. A real SAMPLE engine (one-shot WAV, root note, chromatic, start/end, loop + crossfade, reverse,
+   load + analysis off the audio thread). Surge's Wavetable "sample" mode chops a WAV into
+   single-cycle frames; it is not a one-shot player and cannot hold a root note to 1 cent.
+2. Product identity: name, bundle IDs, plugin codes, data folders that do not collide with Surge XT.
+3. EASY mode (SCULPT shape, DNA, MUTATION, TERRITORY, browser, six macros, keyboard, sequencer).
+4. Gesture layer: per-preset, smoothed, bounded, non-destructive mappings onto real parameters.
+5. Output guard: mono below 120 Hz, DC block, true-peak ceiling -1 dBTP.
+6. Bass FX gaps: multiband distortion/compression, subharmonic generator, transient shaper,
+   dedicated formant filter (Phase 6).
+7. Granular oscillator (Phase 6), MIDI drag-out and full sequencer/arp (Phase 4).
+8. Preset library (20 first) + the 17 Block Step Bank 1 basses.
+
+5. PLAN
+-------
+- Repo: a GitHub fork could not be created from this session (proxy refuses POST /forks and
+  POST /user/repos). Fallback: branch "ghost-bass" in bsaxon430/fbot-backup. First commit = the exact
+  upstream tree at 72a6022 minus 430 MB of third-party patches/wavetables/IRs; every Ghost change
+  is a commit on top. ghost/docs/FORK.txt explains how to merge newer Surge.
+- New code in src/ghost/ (engine) and src/ghost/ui/ (editor). Upstream files only get small hooks
+  marked "GHOST BASS".
+- SAMPLE engine = a new Surge oscillator type appended at the end of the list, so it lives inside
+  Surge's voice (glide, bend, legato, envelopes, filters, FX, macros all apply).
+- Presets are made and measured with the engine itself through surgepy.
+- CI: one macOS workflow on the ghost-bass branch; upstream's workflows removed on this branch.
+
+6. RISKS
+--------
+Editing Surge DSP .............. avoided: no oscillator/filter/FX source changed; additions only.
+Patch format ................... new osc type appended; old patches still load.
+Osc object size limit .......... sample osc keeps small state; Surge's size check runs at start.
+Audio-thread safety ............ loading/analysis on a worker thread; atomic publish; deferred free.
+Collision with Surge XT ........ new product name, bundle id, AU/VST3/CLAP codes, data folders.
+GPL ............................ Ghost Bass is GPL-3 (owner's decision); attribution kept; no code
+                                 from here may go into the closed GhostBlock plugins.
+Upstream merges ................ few, marked hooks.
+Gesture zipper/loudness ........ smoothed bounded offsets + output guard + tests.
+UI scope ....................... EASY = one overlay component; DEEP = Surge's own editor unchanged.
+
+
+TERRAIN (build 4)
+-----------------
+A sixth EASY-mode tab. The landscape is GhostBlock's shared TERRAIN component, copied into this fork as
+src/ghost/terrain (our own code; the engine side made JUCE-free with TerrainStd.h because surge-common does
+not link JUCE). GhostTerrain.h is the stage on the master, after the synth and before the output guard:
+  across (x)  frequency, 120 Hz .. 12 kHz (log)        height   a resonant band, +12 dB and its ring; a valley cuts
+  width       the band's Q (0.5 .. 30)                 rough    per-band harmonic drive, GRIT everywhere
+  depth (z)   time across each note: 0 -> 1 over two beats from every note-on (SurgeSynthesizer::playNote
+              tells the stage); FREEZE holds one moment; EVOLVE drifts on the audio thread (40 s a cycle) so it
+              runs with the window closed and the page draws the audio thread's phase.
+The sub is left alone: a 4th-order Linkwitz-Riley lowpass at 120 Hz splits the signal, the bank only ever sees
+(input - low) and the low part goes back as it was; with no band active nothing is written, so a flat
+landscape (every preset from before) is bit for bit what it was. Coefficients ramp per 32-sample block (no
+zipper noise; block edges measured no rougher than the inside while a landscape changes every block). The
+guard after it keeps mono below 120 Hz and the -1 dBTP ceiling whatever the landscape does. The landscape and
+the page's A / B state are saved in <ghostbass><terrain land=".." page=".."/>; a sound without one loads flat.
+Presets: TERRAIN RISING FORMANT, TWIN PEAKS, DRIFTING RIDGE, GRIT SPIRE, FALLING VALLEY (all pass the gate).
+Renamed to plain names (sound identical, renders compared bit for bit): ACID 303 SAW -> ACID SQUELCH SAW,
+ACID HOUSE 303 -> ACID HOUSE SQUELCH, ARP 2600 GROWL -> PATCH CABLE GROWL, JUNO BOUNCE -> CHORUS BOUNCE,
+KICK SUB 909 -> KICK SUB DRUM, MOOG DRIVE -> LADDER DRIVE, OBX BRASS BASS -> BIG BRASS BASS, PROPHET SYNC ->
+HARD SYNC BASS, ROLAND PULSE -> PULSE WIDTH BASS; brand words also taken out of comments and tags.

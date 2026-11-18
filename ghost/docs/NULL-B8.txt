@@ -1,0 +1,42 @@
+Ghost Bass build 8 - null test against upstream Surge XT 72a6022 (ghostbass-null run 42081088616): every factory + third-party patch,
+each in a fresh process, Surge's clock / random_device seeds made repeatable (ghost/tools/nullseed), upstream rendered twice.
+
+RESULT: 3543 of 3561 bit-identical.
+8 are not repeatable in upstream Surge XT itself (its two runs differ) - set apart.
+10 differ. Re-checked locally, each patch in a fresh process, upstream three times:
+   upstream repeatable     Ghost Bass differs    patches_3rdparty/Aleksey Zhehanov/Basses/Double Bass.fxp
+   UPSTREAM NOT REPEATABLE Ghost Bass differs    patches_3rdparty/Black-Sided Sun/Pads/Dark Envelope.fxp
+   UPSTREAM NOT REPEATABLE Ghost Bass differs    patches_3rdparty/Cybersoda/FX/Evening On Pluto.fxp
+   upstream repeatable     Ghost Bass differs    patches_3rdparty/Cybersoda/Leads/Music Box Lead.fxp
+   upstream repeatable     Ghost Bass identical patches_3rdparty/Kinsey Dulcet/Plucks/Wooden Block Pluck.fxp
+   upstream repeatable     Ghost Bass identical patches_3rdparty/LinnStrument MPE/Strings/Cello.fxp
+   upstream repeatable     Ghost Bass identical patches_3rdparty/Lopyt/Keys/Studio Grand 2.fxp
+   UPSTREAM NOT REPEATABLE Ghost Bass differs    patches_3rdparty/Lopyt/Polysynths/Granular Supersaw.fxp
+   upstream repeatable     Ghost Bass identical patches_3rdparty/Slowboat/Basses/Gigantic Bass 1.fxp
+   upstream repeatable     Ghost Bass identical patches_3rdparty/Vincent Zauhar/Pads/Magic Madness.fxp
+
+The 2 that differ every time (Double Bass, Music Box Lead): Double Bass differs in exactly the same way with NO GhostEngine
+created at all and with upstream's own std::list voice list - its output depends on the compiled binary (a build of the same
+Surge sources with a different layout gives a different result), not on any Ghost Bass feature.
+
+== CI summary
+DIFF     patches_3rdparty/Aleksey Zhehanov/Basses/Double Bass.fxp: peak 0.920521 vs 0.920499
+UPSTREAM-NONDETERMINISTIC patches_3rdparty/Aleksey Zhehanov/Basses/Electric Bass.fxp (Ghost Bass differs from both)
+UPSTREAM-NONDETERMINISTIC patches_3rdparty/Aleksey Zhehanov/Drums/Brush Snare.fxp (Ghost Bass differs from both)
+UPSTREAM-NONDETERMINISTIC patches_3rdparty/Aleksey Zhehanov/Drums/Crash.fxp (Ghost Bass differs from both)
+UPSTREAM-NONDETERMINISTIC patches_3rdparty/Aleksey Zhehanov/Drums/Hi-Hat.fxp (Ghost Bass differs from both)
+UPSTREAM-NONDETERMINISTIC patches_3rdparty/Aleksey Zhehanov/Drums/Reverse Cymbal.fxp (Ghost Bass differs from both)
+UPSTREAM-NONDETERMINISTIC patches_3rdparty/Aleksey Zhehanov/Drums/Ride.fxp (Ghost Bass differs from both)
+UPSTREAM-NONDETERMINISTIC patches_3rdparty/Aleksey Zhehanov/Keys/Upright Piano.fxp (Ghost Bass differs from both)
+UPSTREAM-NONDETERMINISTIC patches_3rdparty/Altenberg/Basses/Orbit.fxp (Ghost Bass differs from both)
+DIFF     patches_3rdparty/Black-Sided Sun/Pads/Dark Envelope.fxp: peak 0.034579 vs 0.035009
+DIFF     patches_3rdparty/Cybersoda/FX/Evening On Pluto.fxp: peak 1.372034 vs 0.681878
+DIFF     patches_3rdparty/Cybersoda/Leads/Music Box Lead.fxp: peak 0.498907 vs 0.498896
+DIFF     patches_3rdparty/Kinsey Dulcet/Plucks/Wooden Block Pluck.fxp: peak 0.391044 vs 0.392033
+DIFF     patches_3rdparty/LinnStrument MPE/Strings/Cello.fxp: peak 0.127667 vs 0.127667
+DIFF     patches_3rdparty/Lopyt/Keys/Studio Grand 2.fxp: peak 0.124385 vs 0.124385
+DIFF     patches_3rdparty/Lopyt/Polysynths/Granular Supersaw.fxp: peak 0.370676 vs 0.353030
+DIFF     patches_3rdparty/Slowboat/Basses/Gigantic Bass 1.fxp: peak 0.324811 vs 0.324811
+DIFF     patches_3rdparty/Vincent Zauhar/Pads/Magic Madness.fxp: peak 0.310889 vs 0.310744
+patches: 3561  bit-identical: 3543  different: 10  missing/errors: 0  (upstream itself not repeatable: 8)
+RESULT FAIL

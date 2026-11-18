@@ -1,0 +1,60 @@
+Basses             Attacky                  POP  10.7 dB  STEP  17.5 dB  PRE -240.0 dBFS  FAIL POP
+Basses             Bass 1                   POP  48.3 dB  STEP -11.4 dB  PRE -240.0 dBFS  FAIL POP
+Basses             Bass 2                   POP   4.5 dB  STEP  -2.7 dB  PRE -161.2 dBFS  PASS
+Basses             Bass 3                   POP   8.2 dB  STEP   0.8 dB  PRE -240.0 dBFS  FAIL POP
+Basses             Bass 4                   POP  47.1 dB  STEP   1.9 dB  PRE -240.0 dBFS  FAIL POP
+Basses             Bass 5                   POP   3.2 dB  STEP  -4.0 dB  PRE -240.0 dBFS  PASS
+Basses             Behemoth                 POP   0.0 dB  STEP -202.8 dB  PRE -240.0 dBFS  PASS
+Basses             Crush Bass               POP  12.4 dB  STEP   1.8 dB  PRE -240.0 dBFS  FAIL POP
+Basses             Deep End                 POP   4.3 dB  STEP  -3.0 dB  PRE -240.0 dBFS  PASS
+Basses             Digibass                 POP   2.7 dB  STEP -202.4 dB  PRE -240.0 dBFS  PASS
+Basses             Dist Bass 1              POP   1.6 dB  STEP   0.1 dB  PRE -240.0 dBFS  PASS
+Basses             Dist Bass 2              POP   5.7 dB  STEP -17.5 dB  PRE -240.0 dBFS  PASS
+Basses             Distorted Bass           POP   0.0 dB  STEP -39.5 dB  PRE -240.0 dBFS  PASS
+Basses             Distorted FM             POP   4.3 dB  STEP  -5.9 dB  PRE -240.0 dBFS  PASS
+Basses             Distorted MW             POP   9.6 dB  STEP  -7.7 dB  PRE -240.0 dBFS  FAIL POP
+Basses             Doomsday                 POP  -0.0 dB  STEP -205.9 dB  PRE -240.0 dBFS  PASS
+Basses             E-Bass                   POP   0.0 dB  STEP -198.8 dB  PRE -240.0 dBFS  PASS
+Basses             Eighties Drone           POP  12.8 dB  STEP  -7.0 dB  PRE -240.0 dBFS  FAIL POP
+Basses             Evilous                  POP   3.5 dB  STEP  -2.1 dB  PRE -240.0 dBFS  PASS
+Basses             FM Bass 1                POP   0.0 dB  STEP  -1.4 dB  PRE -240.0 dBFS  PASS
+Basses             FM Bass 2                POP  12.4 dB  STEP   1.2 dB  PRE -240.0 dBFS  FAIL POP
+Basses             FM Bass 3                POP   3.3 dB  STEP  -9.6 dB  PRE -240.0 dBFS  PASS
+Basses             FM Bass 4                POP   4.8 dB  STEP   0.9 dB  PRE -240.0 dBFS  PASS
+Basses             FM Bass 5                POP  37.7 dB  STEP   4.2 dB  PRE -240.0 dBFS  FAIL POP
+Basses             FM Bass 6                POP  30.7 dB  STEP   5.9 dB  PRE -240.0 dBFS  FAIL POP
+Basses             FM Combo                 POP   3.8 dB  STEP  -3.4 dB  PRE -240.0 dBFS  PASS
+Basses             FM Slap                  POP   2.2 dB  STEP   2.0 dB  PRE -240.0 dBFS  PASS
+Basses             Fingered                 POP  29.8 dB  STEP   6.9 dB  PRE -240.0 dBFS  FAIL POP
+Basses             Helmeto                  POP   3.3 dB  STEP   4.1 dB  PRE -240.0 dBFS  PASS
+Basses             Lord Sawtooth            POP   5.1 dB  STEP   5.1 dB  PRE -240.0 dBFS  PASS
+Basses             Mellow                   POP   0.0 dB  STEP -186.9 dB  PRE -240.0 dBFS  PASS
+Basses             Metal Square             POP   0.1 dB  STEP   2.9 dB  PRE -240.0 dBFS  PASS
+Basses             Mmm... Pointy!           POP  50.8 dB  STEP  -4.3 dB  PRE -240.0 dBFS  FAIL POP
+Basses             Piano Bass               POP   1.6 dB  STEP  -4.2 dB  PRE -240.0 dBFS  PASS
+Basses             Plain                    POP  -0.0 dB  STEP -16.4 dB  PRE -240.0 dBFS  PASS
+Basses             Ring Mayhem              POP   0.0 dB  STEP -16.8 dB  PRE -240.0 dBFS  PASS
+Basses             Rubber Bass              POP  31.2 dB  STEP -22.7 dB  PRE -240.0 dBFS  FAIL POP
+Basses             Rumble                   POP   0.0 dB  STEP -197.0 dB  PRE -240.0 dBFS  PASS
+Basses             Saw Lo-Fi                POP  12.0 dB  STEP  -4.6 dB  PRE -240.0 dBFS  FAIL POP
+Basses             Schnell                  POP  45.4 dB  STEP   0.0 dB  PRE -240.0 dBFS  FAIL POP
+Basses             Slow                     POP  20.9 dB  STEP  -5.8 dB  PRE -240.0 dBFS  FAIL POP
+Basses             Smoothie                 POP  -3.1 dB  STEP  -6.1 dB  PRE -240.0 dBFS  PASS
+Basses             Square Bass              POP   7.4 dB  STEP  -5.3 dB  PRE -240.0 dBFS  FAIL POP
+Basses             Squared                  POP   3.7 dB  STEP -10.1 dB  PRE -240.0 dBFS  PASS
+Basses             Stable                   POP   0.0 dB  STEP -13.2 dB  PRE -240.0 dBFS  PASS
+Basses             Static 1                 POP   6.1 dB  STEP   1.6 dB  PRE -240.0 dBFS  FAIL POP
+Basses             Static 2                 POP   1.2 dB  STEP  -3.8 dB  PRE -240.0 dBFS  PASS
+Basses             Stone                    POP  16.0 dB  STEP  10.8 dB  PRE -240.0 dBFS  FAIL POP
+Basses             Sub 1                    POP  17.6 dB  STEP   0.6 dB  PRE -240.0 dBFS  FAIL POP
+Basses             Sub 2                    POP   7.2 dB  STEP  -6.2 dB  PRE -240.0 dBFS  FAIL POP
+Basses             Sub 3                    POP  31.7 dB  STEP   8.7 dB  PRE -240.0 dBFS  FAIL POP
+Basses             Sub 4                    POP   0.3 dB  STEP -22.1 dB  PRE -240.0 dBFS  PASS
+Basses             Sub Square               POP  23.3 dB  STEP  -4.8 dB  PRE -240.0 dBFS  FAIL POP
+Basses             Tacky 1                  POP  18.0 dB  STEP  10.6 dB  PRE -240.0 dBFS  FAIL POP
+Basses             Tacky 2                  POP  15.9 dB  STEP  10.4 dB  PRE -240.0 dBFS  FAIL POP
+Basses             Theme                    POP   3.7 dB  STEP   4.9 dB  PRE -240.0 dBFS  PASS
+Basses             WT Bass                  POP   0.9 dB  STEP -193.9 dB  PRE -240.0 dBFS  PASS
+Basses             Wide Bassline            POP  16.6 dB  STEP  -8.8 dB  PRE -240.0 dBFS  FAIL POP
+Basses             Width                    POP   9.0 dB  STEP   2.6 dB  PRE -240.0 dBFS  FAIL POP
+onset: 59 presets, 27 fail

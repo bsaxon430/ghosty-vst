@@ -1,0 +1,55 @@
+GHOST BASS - how this fork is organised
+=======================================
+
+Where it lives
+  Branch "ghost-bass" of bsaxon430/fbot-backup (a GitHub fork bsaxon430/ghost-bass could not be
+  created from the build session: the session's GitHub access only allows the configured
+  repository). The branch root IS the fork: it builds exactly like Surge XT.
+
+Upstream
+  Upstream repository : https://github.com/surge-synthesizer/surge (GPL-3.0)
+  Imported commit     : 72a602284b7a599ee3a93d7a830236776e0abb2b (main, 2026-11-03)
+  The first commit of this branch is that upstream tree (minus resources/data/patches_3rdparty,
+  wavetables_3rdparty, impulses_3rdparty, ~430 MB Ghost Bass does not ship), marked with
+  "git-subtree-split: 72a6022...". Every later commit is Ghost Bass work.
+
+Merging a newer Surge XT
+  git remote add upstream https://github.com/surge-synthesizer/surge
+  git fetch upstream
+  # make our import commit a child of the real upstream commit (local graft, nothing rewritten)
+  git replace --graft $(git rev-list --max-parents=0 HEAD) 72a602284b7a599ee3a93d7a830236776e0abb2b
+  git merge upstream/main          # conflicts only where "GHOST BASS" hooks touch upstream files
+  git submodule update --init --recursive
+
+What is ours (all new files) - build 8, "PURE SURGE"
+  The sound is Surge XT's engine exactly. Nothing of ours processes audio; with our features at rest every
+  Surge patch renders bit-identically to upstream Surge XT 72a6022 (ghost/tools/null_test.py, the
+  ghostbass-null workflow).
+  src/ghost/                 GhostEngine (SCULPT gestures / SHAKE / TERRITORY, TERRAIN reading, <ghostbass>
+                             patch data; moves Surge parameters only, writes nothing at rest), MORPH
+                             (GhostMorph: Surge's scenes / parameters, Surge's MSEG engine), DNA / MUTATION
+                             tools, bass sequencer and arpeggiator (MIDI), PIXEL TRAIL
+  src/ghost/terrain/         a copy of GhostBlock's own TERRAIN component (landscape model, mapping, view).
+                             Its TerrainDsp.cpp still holds the shared component's DSP classes, but Ghost
+                             Bass never runs them (only TerrainShare, the lock-free hand-over, is used)
+  src/ghost/ui/              EASY mode screen
+  resources/ghostbass/       fonts, icon
+  ghost/                     docs, packaging, tools (null test, click test, demos), extras (our old presets,
+                             hidden, not installed)
+  .github/workflows/ghostbass-mac.yml    Mac build (ships Surge XT's own factory + third-party library)
+  .github/workflows/ghostbass-null.yml   null test against upstream Surge XT, every patch
+
+Where upstream files are touched (search for "GHOST BASS")
+  src/common/SurgeStorage.h/.cpp      data folder names; the patch-data hook
+  src/common/SurgePatch.cpp           <ghostbass> patch data hook (load / save)
+  src/common/SurgeSynthesizer.h/.cpp  GhostEngine member; pre-block hook (parameter moves) and a read-only
+                                      output tap (the PIXEL TRAIL picture); note-on hook (TERRAIN's time
+                                      axis); pooled voice list nodes (no allocation on note-on)
+  src/common/CMakeLists.txt           ghost sources
+  src/surge-xt/*                      product identity, EASY view, ghost host params, sequencer
+  src/surge-python/surgepy.cpp        ghost* test functions
+
+Licence rule
+  Ghost Bass is GPL-3. Nothing from this branch (Surge code, sst-* code, or Ghost Bass code
+  written here) may be copied into the closed GhostBlock plugins (Block Step, Ghost House,
+  Ghosty Pro, Ghost Slice, ...).

@@ -1,0 +1,577 @@
+/*
+ * Surge XT - a free and open source hybrid synthesizer,
+ * built by Surge Synth Team
+ *
+ * Learn more at https://surge-synthesizer.github.io/
+ *
+ * Copyright 2018-2024, various authors, as described in the GitHub
+ * transaction log.
+ *
+ * Surge XT is released under the GNU General Public Licence v3
+ * or later (GPL-3.0-or-later). The license is found in the "LICENSE"
+ * file in the root of this repository, or at
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * Surge was a commercial product from 2004-2018, copyright and ownership
+ * held by Claes Johanson at Vember Audio during that period.
+ * Claes made Surge open source in September 2018.
+ *
+ * All source for Surge XT is available at
+ * https://github.com/surge-synthesizer/surge
+ */
+#include "Wavetable.h"
+#include <assert.h>
+#include "DSPUtils.h"
+#include <vembertech/basic_dsp.h>
+#include "SurgeStorage.h"
+
+#include "sst/basic-blocks/mechanics/endian-ops.h"
+
+#include <bit>
+#include <algorithm>
+#include <cstring>
+
+namespace mech = sst::basic_blocks::mechanics;
+
+using namespace std;
+
+const float hrfilter[63] = {
+    -9.637663112e-008f, -2.216513622e-006f, -1.200509132e-006f, 1.79627641e-005f,
+    1.773084477e-005f,  -5.898886593e-005f, -8.980041457e-005f, 0.0001233910152f,
+    0.0002964516752f,   -0.0001573183545f,  -0.0007465034723f,  1.204636671e-018f,
+    0.001525280299f,    0.0006605535164f,   -0.002588451374f,   -0.002282966627f,
+    0.003618633142f,    0.005384810269f,    -0.003885820275f,   -0.01036664937f,
+    0.002154163085f,    0.0172905419f,      0.003383208299f,    -0.02569983155f,
+    -0.01536878385f,    0.03457865119f,     0.0387589559f,      -0.04251147807f,
+    -0.0895993337f,     0.04802387953f,     0.3125254214f,      0.4499996006f,
+    0.3125254214f,      0.04802387953f,     -0.0895993337f,     -0.04251147807f,
+    0.0387589559f,      0.03457865119f,     -0.01536878385f,    -0.02569983155f,
+    0.003383208299f,    0.0172905419f,      0.002154163085f,    -0.01036664937f,
+    -0.003885820275f,   0.005384810269f,    0.003618633142f,    -0.002282966627f,
+    -0.002588451374f,   0.0006605535164f,   0.001525280299f,    1.204636671e-018f,
+    -0.0007465034723f,  -0.0001573183545f,  0.0002964516752f,   0.0001233910152f,
+    -8.980041457e-005f, -5.898886593e-005f, 1.773084477e-005f,  1.79627641e-005f,
+    -1.200509132e-006f, -2.216513622e-006f, -9.637663112e-008};
+
+const int HRFilterI16[64] = {
+    1,   33,   -8,    -48,   31,   72,    -74,   -92,  143,   95,    -240, -66, 364,
+    -14, -505, 168,   642,   -416, -748,  779,   782,  -1279, -687,  1951, 375, -2874,
+    331, 4293, -1957, -7315, 7773, 31275, 31275, 7773, -7315, -1957, 4293, 331, -2874,
+    375, 1951, -687,  -1279, 782,  779,   -748,  -416, 642,   168,   -505, -14, 364,
+    -66, -240, 95,    143,   -92,  -74,   72,    31,   -48,   -8,    33,   1};
+
+int min_F32_tables = 3;
+
+//! Calculate the worst-case scenario of the needed samples for a specific wavetable and see if it
+//! fits
+size_t RequiredWTSize(int TableSize, int TableCount)
+{
+    int Size = 0;
+
+    TableCount += 3; // for sample padding. Should match the "3" in the AppendSilence block below.
+    while (TableSize > 0)
+    {
+        Size += TableCount * (TableSize + FIRoffsetI16 + FIRipolI16_N);
+
+        TableSize = TableSize >> 1;
+    }
+    return Size;
+}
+
+int GetWTIndex(int WaveIdx, int WaveSize, int NumWaves, int MipMap, int Padding = 0)
+{
+    int Index = WaveIdx * ((WaveSize >> MipMap) + Padding);
+    int Offset = NumWaves * WaveSize;
+    for (int i = 0; i < MipMap; i++)
+    {
+        Index += Offset >> i;
+        Index += Padding * NumWaves;
+    }
+    return Index;
+}
+
+Wavetable::Wavetable()
+{
+    dataSizes = 35000;
+    TableF32Data = (float *)malloc(dataSizes * sizeof(float));
+    TableI16Data = (short *)malloc(dataSizes * sizeof(short));
+    memset(TableF32Data, 0, dataSizes * sizeof(float));
+    memset(TableI16Data, 0, dataSizes * sizeof(short));
+    memset(TableF32WeakPointers, 0, sizeof(TableF32WeakPointers));
+    memset(TableI16WeakPointers, 0, sizeof(TableI16WeakPointers));
+    current_id = -1;
+    queue_id = -1;
+    everBuilt = false;
+    refresh_display = true; // I have never been drawn so assume I need refresh if asked
+}
+
+Wavetable::~Wavetable()
+{
+    free(TableF32Data);
+    free(TableI16Data);
+}
+
+void Wavetable::allocPointers(size_t newSize)
+{
+    free(TableF32Data);
+    free(TableI16Data);
+    dataSizes = newSize;
+    TableF32Data = (float *)malloc(dataSizes * sizeof(float));
+    TableI16Data = (short *)malloc(dataSizes * sizeof(short));
+    memset(TableF32Data, 0, dataSizes * sizeof(float));
+    memset(TableI16Data, 0, dataSizes * sizeof(short));
+}
+
+void Wavetable::Copy(Wavetable *wt)
+{
+    size = wt->size;
+    size_po2 = wt->size_po2;
+    flags = wt->flags;
+    data_n_tables = wt->data_n_tables;
+    source_n_tables = wt->source_n_tables;
+    dt = wt->dt;
+    n_tables = wt->n_tables;
+
+    current_id = -1;
+    queue_id = -1;
+    everBuilt = wt->everBuilt;
+
+    if (dataSizes < wt->dataSizes)
+    {
+        allocPointers(wt->dataSizes);
+    }
+
+    memcpy(TableF32Data, wt->TableF32Data, wt->dataSizes * sizeof(float));
+    memcpy(TableI16Data, wt->TableI16Data, wt->dataSizes * sizeof(short));
+
+    for (int i = 0; i < max_mipmap_levels; i++)
+    {
+        for (int j = 0; j < max_subtables; j++)
+        {
+            if (wt->TableF32WeakPointers[i][j])
+            {
+                size_t Offset = wt->TableF32WeakPointers[i][j] - wt->TableF32Data;
+                TableF32WeakPointers[i][j] = TableF32Data + Offset;
+            }
+            else
+                TableF32WeakPointers[i][j] = NULL;
+
+            if (wt->TableI16WeakPointers[i][j])
+            {
+                size_t Offset = wt->TableI16WeakPointers[i][j] - wt->TableI16Data;
+                TableI16WeakPointers[i][j] = TableI16Data + Offset;
+            }
+            else
+                TableI16WeakPointers[i][j] = NULL;
+        }
+    }
+
+    current_id = wt->current_id;
+}
+
+bool Wavetable::BuildWT(void *wdata, wt_header &wh, bool AppendSilence)
+{
+    assert(wdata);
+
+    const auto newFlags = mech::endian_read_int16LE(wh.flags);
+    const auto newTables = mech::endian_read_int16LE(wh.n_tables);
+    const int newSize = mech::endian_read_int32LE(wh.n_samples);
+
+    // Reject malformed/oversized headers before writing into the fixed-size
+    // TableF32WeakPointers[max_mipmap_levels][max_subtables] arrays; otherwise a
+    // bogus frame or sample count is an out-of-bounds write. The false return is
+    // surfaced as a load error by load_wt_wt / load_wt_wt_mem.
+    //
+    // Validate before assigning any of it: a rejected header must leave an
+    // already-built wavetable alone, rather than leaving it describing itself with
+    // counts its buffers do not have.
+    if (newSize <= 0 || newSize > max_wtable_size || (unsigned)newTables > (unsigned)max_subtables)
+    {
+        return false;
+    }
+
+    int padding = 0;
+
+    if (AppendSilence)
+    {
+        padding = 3;
+    }
+    else if (newFlags & wtf_is_sample)
+    {
+        // Sample tables need three trailing silent frames.
+        // Existing padding is preserved; only missing frames are appended.
+        int trailing = 0;
+        const auto *bytes = static_cast<const char *>(wdata);
+
+        // Inspect at most 3 trailing frames
+        while (trailing < 3 && trailing < newTables)
+        {
+            const int frameIndex = newTables - 1 - trailing;
+
+            // Index of the first sample in this frame.
+            const size_t firstSample = static_cast<size_t>(frameIndex) * newSize;
+            bool silent = true;
+
+            // If at least one sample is not silent, then the frame is not silent.
+            for (int i = 0; i < newSize && silent; ++i)
+            {
+                const size_t sampleIndex = firstSample + i;
+
+                if (newFlags & wtf_int16)
+                {
+                    int16_t sample;
+                    memcpy(&sample, bytes + sampleIndex * sizeof(sample), sizeof(sample));
+                    silent = sample == 0;
+                }
+                else
+                {
+                    int32_t bits;
+                    memcpy(&bits, bytes + sampleIndex * sizeof(bits), sizeof(bits));
+                    const float sample = std::bit_cast<float>(mech::endian_read_int32LE(bits));
+                    silent = sample == 0.f;
+                }
+            }
+
+            // Stops at the first non-silent frame
+            if (!silent)
+                break;
+
+            // Found new silent frame
+            ++trailing;
+        }
+
+        padding = 3 - trailing;
+    }
+
+    if ((unsigned)newTables + (unsigned)padding > (unsigned)max_subtables)
+    {
+        return false;
+    }
+
+    flags = newFlags;
+    n_tables = newTables;
+    size = newSize;
+
+    size_t req_size = RequiredWTSize(size, n_tables);
+
+    if (req_size > dataSizes)
+    {
+        allocPointers(req_size);
+    }
+
+    int wdata_tables = n_tables;
+    data_n_tables = wdata_tables;
+
+    n_tables += padding;
+
+    size_po2 = std::bit_width(static_cast<unsigned int>(size)) - 1;
+
+    dt = 1.0f / size;
+
+    for (int i = 0; i < max_mipmap_levels; i++)
+    {
+        for (int j = 0; j < max_subtables; j++)
+        {
+            // TODO WARNING: Crashes here with patchbyte!
+            /*free(wt->TableF32WeakPointers[i][j]);
+            free(wt->TableI16WeakPointers[i][j]);
+            wt->TableF32WeakPointers[i][j] = 0;
+            wt->TableI16WeakPointers[i][j] = 0;*/
+        }
+    }
+    for (int j = 0; j < this->n_tables; j++)
+    {
+        TableF32WeakPointers[0][j] = TableF32Data + GetWTIndex(j, size, n_tables, 0);
+        // + padding for a non-wrapping interpolator
+        TableI16WeakPointers[0][j] = TableI16Data + GetWTIndex(j, size, n_tables, 0, FIRipolI16_N);
+    }
+    for (int j = this->n_tables; j < min_F32_tables; j++)
+    {
+        unsigned int s = this->size;
+        int l = 0;
+
+        while (s && (l < max_mipmap_levels))
+        {
+            TableF32WeakPointers[l][j] = TableF32Data + GetWTIndex(j, size, n_tables, l);
+            memset(TableF32WeakPointers[l][j], 0, s * sizeof(float));
+            s = s >> 1;
+            l++;
+        }
+    }
+
+    if (this->flags & wtf_int16)
+    {
+        for (int j = 0; j < wdata_tables; j++)
+        {
+            mech::endian_copyblock16LE(&this->TableI16WeakPointers[0][j][FIRoffsetI16],
+                                       &((short *)wdata)[this->size * j], this->size);
+            if (this->flags & wtf_int16_is_16)
+            {
+                i162float_block(&this->TableI16WeakPointers[0][j][FIRoffsetI16],
+                                this->TableF32WeakPointers[0][j], this->size);
+            }
+            else
+            {
+                i152float_block(&this->TableI16WeakPointers[0][j][FIRoffsetI16],
+                                this->TableF32WeakPointers[0][j], this->size);
+            }
+        }
+    }
+    else
+    {
+        for (int j = 0; j < wdata_tables; j++)
+        {
+            mech::endian_copyblock32LE((int32_t *)this->TableF32WeakPointers[0][j],
+                                       &((int32_t *)wdata)[this->size * j], this->size);
+            float2i15_block(this->TableF32WeakPointers[0][j],
+                            &this->TableI16WeakPointers[0][j][FIRoffsetI16], this->size);
+        }
+    }
+
+    // clear any appended tables (not read, but included in table for post-silence)
+    for (int j = wdata_tables; j < this->n_tables; j++)
+    {
+        memset(this->TableF32WeakPointers[0][j], 0, this->size * sizeof(float));
+        memset(this->TableI16WeakPointers[0][j], 0, (this->size + FIRoffsetI16) * sizeof(short));
+    }
+
+    for (int j = 0; j < wdata_tables; j++)
+    {
+        memcpy(&this->TableI16WeakPointers[0][j][this->size + FIRoffsetI16],
+               &this->TableI16WeakPointers[0][j][FIRoffsetI16], FIRoffsetI16 * sizeof(short));
+        memcpy(&this->TableI16WeakPointers[0][j][0], &this->TableI16WeakPointers[0][j][this->size],
+               FIRoffsetI16 * sizeof(short));
+    }
+
+    MipMapWT();
+
+    // Scan for trailing silence once here, so that reading the count later is free
+    ComputeSourceFrameCount();
+
+    everBuilt = true;
+    return true;
+}
+
+void Wavetable::ComputeSourceFrameCount()
+{
+    source_n_tables = 0;
+
+    if (size <= 0 || n_tables == 0)
+    {
+        return;
+    }
+
+    int nf = (data_n_tables > 0) ? data_n_tables : (int)n_tables;
+    nf = std::min(nf, (int)n_tables);
+
+    if (flags & wtf_is_sample)
+    {
+        // On a sample, trailing silence is padding: either the three frames BuildWT
+        // appends, or however many of those survived a patch round-trip (which rebuilds
+        // with AppendSilence false, so they arrive as ordinary data). Dropping them here
+        // is what keeps a re-slice from growing the table by three frames every time.
+        while (nf > 1)
+        {
+            const float *f = TableF32WeakPointers[0][nf - 1];
+
+            if (!f)
+            {
+                break;
+            }
+
+            bool silent = true;
+
+            for (int i = 0; i < size && silent; ++i)
+            {
+                silent = (f[i] == 0.f);
+            }
+
+            if (!silent)
+            {
+                break;
+            }
+
+            nf--;
+        }
+    }
+
+    source_n_tables = nf;
+}
+
+std::vector<float> Wavetable::FlattenSource() const
+{
+    const int nf = SourceFrameCount();
+
+    if (nf < 1)
+    {
+        return {};
+    }
+
+    std::vector<float> out((size_t)nf * (size_t)size, 0.f);
+
+    for (int j = 0; j < nf; ++j)
+    {
+        if (const float *f = TableF32WeakPointers[0][j])
+        {
+            memcpy(out.data() + (size_t)j * (size_t)size, f, size * sizeof(float));
+        }
+    }
+
+    return out;
+}
+
+bool Wavetable::Reslice(int newSize, int newFrames, int newFlags)
+{
+    if (!everBuilt)
+    {
+        return false;
+    }
+
+    const auto src = FlattenSource();
+
+    if (src.empty())
+    {
+        return false;
+    }
+
+    const bool asSample = (newFlags & wtf_is_sample) != 0;
+    // BuildWT appends three silent frames for a sample, and they have to fit too
+    const int cap = asSample ? (max_subtables - 3) : max_subtables;
+
+    int sz = (newSize > 0) ? newSize : size;
+
+    sz = std::clamp(sz, min_reslice_size, max_wtable_size);
+    // BuildWT derives size_po2 with bit_width and both oscillators mask with size - 1,
+    // so a non-power-of-two frame size is not representable. Round down to one.
+    sz = 1 << (std::bit_width((unsigned int)sz) - 1);
+
+    if (newFrames > 0)
+    {
+        // Frame count is the free variable: shrink the frame size until the requested
+        // count fits in the samples we have, rather than refusing the request.
+        while ((size_t)newFrames * (size_t)sz > src.size() && sz > min_reslice_size)
+        {
+            sz >>= 1;
+        }
+    }
+
+    const int fit = (int)(src.size() / (size_t)sz);
+
+    if (fit < 1)
+    {
+        return false;
+    }
+
+    int frames = (newFrames > 0) ? newFrames : fit;
+
+    // Samples past the last whole frame are truncated, which is the whole point
+    frames = std::min({frames, fit, cap});
+
+    if (frames < 1)
+    {
+        return false;
+    }
+
+    wt_header wh;
+
+    memset(&wh, 0, sizeof(wt_header));
+    wh.n_samples = sz;
+    wh.n_tables = (unsigned short)frames;
+    // We hand BuildWT float data, so the encoding bits from the original load do not
+    // describe it any more. Metadata belongs to the file, not to this table.
+    wh.flags = (unsigned short)(newFlags & ~(wtf_int16 | wtf_int16_is_16 | wtf_has_metadata));
+
+    return BuildWT((void *)src.data(), wh, asSample);
+}
+
+void Wavetable::MipMapWT()
+{
+    int levels = 1;
+    while (((1 << levels) < size) & (levels < max_mipmap_levels))
+        levels++;
+    int ns = this->n_tables;
+
+    const int filter_size = 63;
+    const int filter_id_of = (filter_size - 1) >> 1;
+
+    for (int l = 1; l < levels; l++)
+    {
+        int psize = size >> (l - 1);
+        int lsize = size >> l;
+
+        for (int s = 0; s < ns; s++)
+        {
+            this->TableF32WeakPointers[l][s] = TableF32Data + GetWTIndex(s, size, n_tables, l);
+            this->TableI16WeakPointers[l][s] =
+                TableI16Data + GetWTIndex(s, size, n_tables, l, FIRipolI16_N);
+
+            if (this->flags & wtf_is_sample)
+            {
+                for (int i = 0; i < lsize; i++)
+                {
+                    this->TableF32WeakPointers[l][s][i] = 0;
+                    int64_t ival = 0;
+
+                    for (int a = 0; a < filter_size; a++)
+                    {
+                        int srcindex = (i << 1) + a - filter_id_of;
+                        int srctable = max(0, s + (srcindex / psize));
+                        srcindex = srcindex & (psize - 1);
+                        if (srctable < ns)
+                        {
+                            this->TableF32WeakPointers[l][s][i] +=
+                                hrfilter[a] * this->TableF32WeakPointers[l - 1][srctable][srcindex];
+                            ival += static_cast<int64_t>(HRFilterI16[a]) *
+                                    this->TableI16WeakPointers[l - 1][srctable]
+                                                              [srcindex + FIRoffsetI16];
+                        }
+                    }
+
+                    // These used to be left at zero, which was harmless while only the
+                    // wavetable oscillator played samples: it reads the float tables. The
+                    // window oscillator reads the int16 ones, and picks a mipmap level from
+                    // the read rate, so without these a sample went silent above whatever
+                    // pitch first selected a level other than zero.
+                    this->TableI16WeakPointers[l][s][i + FIRoffsetI16] =
+                        static_cast<short>(std::clamp<int64_t>(ival >> 16, -32768, 32767));
+                }
+            }
+            else
+            {
+                for (int i = 0; i < lsize; i++)
+                {
+                    this->TableF32WeakPointers[l][s][i] = 0;
+                    for (int a = 0; a < filter_size; a++)
+                    {
+                        this->TableF32WeakPointers[l][s][i] +=
+                            hrfilter[a] * this->TableF32WeakPointers[l - 1][s][(
+                                              ((i << 1) + a - filter_id_of) & (psize - 1))];
+                    }
+                    int64_t ival = 0;
+                    for (int a = 0; a < filter_size; a++)
+                    {
+                        ival += static_cast<int64_t>(HRFilterI16[a]) *
+                                this->TableI16WeakPointers[l - 1][s]
+                                                          [(((i << 1) + a - 31) & (psize - 1)) +
+                                                           FIRoffsetI16];
+                    }
+                    this->TableI16WeakPointers[l][s][i + FIRoffsetI16] =
+                        static_cast<short>(std::clamp<int64_t>(ival >> 16, -32768, 32767));
+                }
+            }
+            // float2i16_block(this->TableF32WeakPointers[l][s],this->TableI16WeakPointers[l][s],lsize);
+            auto toCopy = std::min(FIRoffsetI16, lsize);
+            memcpy(&this->TableI16WeakPointers[l][s][lsize + FIRoffsetI16],
+                   &this->TableI16WeakPointers[l][s][FIRoffsetI16], toCopy * sizeof(short));
+            memcpy(&this->TableI16WeakPointers[l][s][0], &this->TableI16WeakPointers[l][s][lsize],
+                   toCopy * sizeof(short));
+        }
+        // fwrite(this->TableI16WeakPointers[l][0],lsize*sizeof(short),1,F);
+    }
+    // fclose(F);
+
+    // TODO I16 mipmaps end up out of phase
+    // The click/knot/bug probably results from the fact that there is no padding in the beginning,
+    // so it becomes out of phase at mipmap switch - makes sense because as they were off by a whole
+    // sample at the mipmap switch, which cannot be explained by the half rate filter
+}

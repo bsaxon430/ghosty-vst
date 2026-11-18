@@ -1,0 +1,589 @@
+/*
+ * Surge XT - a free and open source hybrid synthesizer,
+ * built by Surge Synth Team
+ *
+ * Learn more at https://surge-synthesizer.github.io/
+ *
+ * Copyright 2018-2024, various authors, as described in the GitHub
+ * transaction log.
+ *
+ * Surge XT is released under the GNU General Public Licence v3
+ * or later (GPL-3.0-or-later). The license is found in the "LICENSE"
+ * file in the root of this repository, or at
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * Surge was a commercial product from 2004-2018, copyright and ownership
+ * held by Claes Johanson at Vember Audio during that period.
+ * Claes made Surge open source in September 2018.
+ *
+ * All source for Surge XT is available at
+ * https://github.com/surge-synthesizer/surge
+ */
+
+#ifndef SURGE_SRC_SURGE_FX_SURGEFXPROCESSOR_H
+#define SURGE_SRC_SURGE_FX_SURGEFXPROCESSOR_H
+
+// Header ordering ARM
+#include <juce_gui_extra/juce_gui_extra.h>
+
+#include "SurgeStorage.h"
+#include "Effect.h"
+#include "FXOpenSoundControl.h"
+#include "FxPresetAndClipboardManager.h"
+#include <atomic>
+#include "sst/filters/HalfRateFilter.h"
+
+#include "juce_audio_processors/juce_audio_processors.h"
+
+#if MAC
+#include <execinfo.h>
+#endif
+
+namespace SurgeFX
+{
+enum ParamKind
+{
+    Knob,
+    TempoSync,
+    Extended,
+    Absolute,
+    Deactivated
+};
+}
+
+//==============================================================================
+/**
+ */
+class SurgefxAudioProcessor : public juce::AudioProcessor,
+                              public juce::AudioProcessorParameter::Listener,
+                              public juce::AsyncUpdater
+{
+  public:
+    //==============================================================================
+    SurgefxAudioProcessor();
+    ~SurgefxAudioProcessor();
+
+    float input_buffer alignas(16)[2][BLOCK_SIZE];
+    float sidechain_buffer alignas(16)[2][BLOCK_SIZE];
+    float output_buffer alignas(16)[2][BLOCK_SIZE];
+    int input_position{0};
+    int output_position{-1};
+
+    bool nonLatentBlockMode{true};
+
+    //==============================================================================
+    void prepareToPlay(double sampleRate, int samplesPerBlock) override;
+    void releaseResources() override;
+
+    bool isBusesLayoutSupported(const BusesLayout &layouts) const override;
+
+    void processBlock(juce::AudioBuffer<float> &, juce::MidiBuffer &) override;
+    void processBlockOSC();
+
+    //==============================================================================
+    juce::AudioProcessorEditor *createEditor() override;
+    bool hasEditor() const override;
+
+    //==============================================================================
+    // Open Sound Control
+    enum oscToAudio_type
+    {
+        FX_PARAM
+    };
+
+    enum ParamFeatureFlags
+    {
+        kTempoSync = 1U << 0U,
+        kExtended = 1U << 1U,
+        kAbsolute = 1U << 2U,
+        kDeactivated = 1U << 3U
+    };
+
+    // Message from OSC input to the audio thread
+    struct oscToAudio
+    {
+        oscToAudio_type type;
+        int p_index{0};
+        float fval{0.0};
+
+        oscToAudio() {}
+        explicit oscToAudio(oscToAudio_type omtype, float f, int pidx)
+            : type(omtype), fval(f), p_index(pidx)
+        {
+        }
+    };
+
+    sst::cpputils::SimpleRingBuffer<oscToAudio, 4096> oscRingBuf;
+
+    SurgeFX::FxOSC::FXOpenSoundControl oscHandler;
+    std::atomic<bool> oscCheckStartup{false};
+    void tryLazyOscStartupFromStreamedState();
+
+    bool initOSCIn(int port);
+    bool changeOSCInPort(int newport);
+    void initOSCError(int port, std::string outIP = "");
+    std::atomic<bool> oscReceiving{false};
+
+    //==============================================================================
+    const juce::String getName() const override;
+
+    bool acceptsMidi() const override;
+    bool producesMidi() const override;
+    bool isMidiEffect() const override;
+    double getTailLengthSeconds() const override;
+    void reset() override;
+
+    //==============================================================================
+    int getNumPrograms() override;
+    int getCurrentProgram() override;
+    void setCurrentProgram(int index) override;
+    const juce::String getProgramName(int index) override;
+    void changeProgramName(int index, const juce::String &newName) override;
+
+    //==============================================================================
+    void getStateInformation(juce::MemoryBlock &destData) override;
+    void setStateInformation(const void *data, int sizeInBytes) override;
+
+    // The name of the preset the current settings came from, empty if there is none
+    void setCurrentPresetName(const std::string &name)
+    {
+        currentPresetName = name;
+        fxTypeChangedByHost = false;
+    }
+
+    // Once the host has changed the effect type, the settings no longer come from that preset
+    std::string getCurrentPresetName() const
+    {
+        return fxTypeChangedByHost ? std::string() : currentPresetName;
+    }
+
+    std::string consumePendingPresetName()
+    {
+        auto r = pendingPresetName;
+        pendingPresetName.clear();
+        return r;
+    }
+
+    int getEffectType() { return effectNum; }
+    float getFXStorageValue01(int i) { return fxstorage->p[fx_param_remap[i]].get_value_f01(); }
+    float getFXDefaultValue01(int i)
+    {
+        return fxstorage->p[fx_param_remap[i]].get_default_value_f01();
+    }
+    float getFXParamValue01(int i) { return *(fxParams[i]); }
+    void setFXParamValue01(int i, float f, bool forceInteger = false)
+    {
+        fxstorage->p[fx_param_remap[i]].set_value_f01(f, forceInteger);
+        *(fxParams[i]) = fxstorage->p[fx_param_remap[i]].get_value_f01();
+    }
+
+    void setFXParamTempoSync(int i, bool b)
+    {
+        int v = paramFeatures[i];
+        if (b)
+            v = v | kTempoSync;
+        else
+            v = v & ~kTempoSync;
+        paramFeatures[i] = v;
+        if (fxTempoSyncParams[i])
+            *(fxTempoSyncParams[i]) = b;
+    }
+
+    bool getFXParamTempoSync(int i) { return (paramFeatures[i]) & kTempoSync; }
+    void setFXStorageTempoSync(int i, bool b) { fxstorage->p[fx_param_remap[i]].temposync = b; }
+    bool getFXStorageTempoSync(int i) { return fxstorage->p[fx_param_remap[i]].temposync; }
+    bool canTempoSync(int i) { return fxstorage->p[fx_param_remap[i]].can_temposync(); }
+
+    void setFXParamExtended(int i, bool b)
+    {
+        int v = (paramFeatures[i]);
+        if (b)
+            v = v | kExtended;
+        else
+            v = v & ~kExtended;
+        paramFeatures[i] = v;
+        if (fxExtendedParams[i])
+            *(fxExtendedParams[i]) = b;
+    }
+    bool getFXParamExtended(int i) { return paramFeatures[i] & kExtended; }
+    void setFXStorageExtended(int i, bool b)
+    {
+        fxstorage->p[fx_param_remap[i]].set_extend_range(b);
+    }
+    bool getFXStorageExtended(int i) { return fxstorage->p[fx_param_remap[i]].extend_range; }
+    bool canExtend(int i) { return fxstorage->p[fx_param_remap[i]].can_extend_range(); }
+
+    void setFXParamAbsolute(int i, bool b)
+    {
+        int v = paramFeatures[i];
+        if (b)
+            v = v | kAbsolute;
+        else
+            v = v & ~kAbsolute;
+        paramFeatures[i] = v;
+        if (fxAbsolutedParams[i])
+            *(fxAbsolutedParams[i]) = b;
+    }
+    bool getFXParamAbsolute(int i) { return paramFeatures[i] & kAbsolute; }
+    void setFXStorageAbsolute(int i, bool b) { fxstorage->p[fx_param_remap[i]].absolute = b; }
+    bool getFXStorageAbsolute(int i) { return fxstorage->p[fx_param_remap[i]].absolute; }
+    bool canAbsolute(int i) { return fxstorage->p[fx_param_remap[i]].can_be_absolute(); }
+
+    void setFXParamDeactivated(int i, bool b)
+    {
+        int v = paramFeatures[i];
+        if (b)
+            v = v | kDeactivated;
+        else
+            v = v & ~kDeactivated;
+        paramFeatures[i] = v;
+        if (fxDeactivatedParams[i])
+            *(fxDeactivatedParams[i]) = b;
+    }
+    bool getFXParamDeactivated(int i) { return paramFeatures[i] & kDeactivated; }
+    void setFXStorageDeactivated(int i, bool b) { fxstorage->p[fx_param_remap[i]].deactivated = b; }
+    bool getFXStorageDeactivated(int i) { return fxstorage->p[fx_param_remap[i]].deactivated; }
+    bool getFXStorageAppearsDeactivated(int i)
+    {
+        return fxstorage->p[fx_param_remap[i]].appears_deactivated();
+    }
+    bool canDeactitvate(int i) { return fxstorage->p[fx_param_remap[i]].can_deactivate(); }
+
+    virtual void parameterValueChanged(int parameterIndex, float newValue) override
+    {
+        if (supressParameterUpdates)
+        {
+            return;
+        }
+
+        const auto kind = paramKindForIndex[parameterIndex];
+        const auto slot = paramSlotForIndex[parameterIndex];
+
+        if (kind == SurgeFX::ParamKind::Knob)
+        {
+            if (!isUserEditing[slot])
+            {
+                // this order does matter
+                changedParamsValue[slot] = newValue;
+                changedParams[slot] = true;
+                triggerAsyncUpdate();
+            }
+
+            return;
+        }
+
+        bool b = newValue > 0.5f;
+
+        switch (kind)
+        {
+        case SurgeFX::ParamKind::TempoSync:
+            setFXParamTempoSync(slot, b);
+            setFXStorageTempoSync(slot, b);
+            break;
+        case SurgeFX::ParamKind::Extended:
+            setFXParamExtended(slot, b);
+            setFXStorageExtended(slot, b);
+            break;
+        case SurgeFX::ParamKind::Absolute:
+            setFXParamAbsolute(slot, b);
+            setFXStorageAbsolute(slot, b);
+            break;
+        case SurgeFX::ParamKind::Deactivated:
+            setFXParamDeactivated(slot, b);
+            setFXStorageDeactivated(slot, b);
+            break;
+        default:
+            break;
+        }
+
+        triggerAsyncUpdate();
+    }
+
+    virtual void parameterGestureChanged(int parameterIndex, bool gestureStarting) override {}
+
+    virtual void handleAsyncUpdate() override
+    {
+        paramChangeListener();
+        for (int i = 0; i < n_fx_params; ++i)
+            if (wasParamFeatureChanged[i])
+            {
+                wasParamFeatureChanged[i] = false;
+            }
+    }
+
+    void setParameterChangeListener(std::function<void()> l) { paramChangeListener = l; }
+
+    // Call this from the UI thread
+    void copyChangeValues(bool *c, float *f)
+    {
+        for (int i = 0; i < n_fx_params + 1; ++i)
+        {
+            c[i] = changedParams[i];
+            changedParams[i] = false;
+            f[i] = changedParamsValue[i];
+        }
+    }
+
+    virtual void setUserEditingFXParam(int i, bool isEd)
+    {
+        isUserEditing[i] = isEd;
+        if (isEd)
+        {
+            fxBaseParams[i]->beginChangeGesture();
+        }
+        else
+        {
+            fxBaseParams[i]->endChangeGesture();
+        }
+    }
+
+    virtual void setUserEditingParamFeature(int i, bool b)
+    {
+        if (b)
+        {
+            // Used to send a start change here but we don't have params any more
+        }
+        else
+        {
+            wasParamFeatureChanged[i] = true;
+            triggerAsyncUpdate();
+        }
+    }
+
+    int32_t paramFeatureFromParam(Parameter *p)
+    {
+        return (p->temposync ? kTempoSync : 0) + (p->extend_range ? kExtended : 0) +
+               (p->absolute ? kAbsolute : 0) + (p->appears_deactivated() ? kDeactivated : 0);
+    };
+
+    void paramFeatureOntoParam(Parameter *p, int32_t features)
+    {
+        p->temposync = features & kTempoSync;
+        p->set_extend_range(features & kExtended);
+        p->absolute = features & kAbsolute;
+        p->deactivated = features & kDeactivated;
+    }
+
+    // Information about parameter strings
+    bool getParamEnabled(int i) { return fxstorage->p[fx_param_remap[i]].ctrltype != ct_none; }
+
+    std::string getParamGroup(int i) { return group_names[i]; }
+
+    std::string getParamName(int i)
+    {
+        if (fxstorage->p[fx_param_remap[i]].ctrltype == ct_none)
+            return "-";
+
+        return fxstorage->p[fx_param_remap[i]].get_name();
+    }
+
+    std::string getParamValue(int i)
+    {
+        if (fxstorage->p[fx_param_remap[i]].ctrltype == ct_none)
+        {
+            return "-";
+        }
+
+        return fxstorage->p[fx_param_remap[i]].get_display(false, 0);
+    }
+
+    std::string getParamValueFor(int idx, float f)
+    {
+        if (fxstorage->p[fx_param_remap[idx]].ctrltype == ct_none)
+        {
+            return "-";
+        }
+
+        return fxstorage->p[fx_param_remap[idx]].get_display(true, f);
+    }
+
+    std::string getParamValueFromFloat(int i, float f)
+    {
+        if (fxstorage->p[fx_param_remap[i]].ctrltype == ct_none)
+        {
+            return "-";
+        }
+
+        fxstorage->p[fx_param_remap[i]].set_value_f01(f);
+
+        return fxstorage->p[fx_param_remap[i]].get_display(false, 0);
+    }
+
+    void updateJuceParamsFromStorage();
+
+    void resetFxType(int t, bool updateJuceParams = true);
+    void resetFxParams(bool updateJuceParams = true);
+
+    // Loads a scanned FX preset's parameter values onto the currently loaded
+    // effect. This does NOT change the effect type and does NOT respawn the
+    // effect - it only writes parameter values into fxstorage, exactly like
+    // setFXParamValue01() does for a single parameter. Callers must only
+    // pass a preset whose type matches the currently loaded effect type
+    // (getEffectType()); the FX type picker is solely responsible for
+    // changing the effect type, via resetFxType(). Violating this is a bug
+    // at the call site, asserted via jassert rather than handled here.
+    void loadFxPreset(const Surge::Storage::FxUserPreset::Preset &p);
+
+    // Saves the current effect's parameter values as a user FX preset. The given
+    // preset manager is the one rescanned once the file has been written.
+    void saveFxPreset(Surge::Storage::FxUserPreset &presetManager, const std::string &name);
+
+    // Members for the FX. If this looks a lot like surge-rack/SurgeFX.hpp that's not a coincidence
+    std::unique_ptr<SurgeStorage> storage;
+
+    std::atomic<bool> m_audioValid{true};
+    std::string m_audioValidMessage{};
+
+    sst::filters::HalfRate::HalfRateFilter halfbandIN{6, true};
+
+    juce::AudioProcessorParameter *
+    getHostParameterFor(int i, SurgeFX::ParamKind kind = SurgeFX::ParamKind::Knob)
+    {
+        if (i < 0 || i >= n_fx_params)
+        {
+            return nullptr;
+        }
+
+        switch (kind)
+        {
+        case SurgeFX::ParamKind::Knob:
+            return getParamEnabled(i) ? fxParams[i] : nullptr;
+        case SurgeFX::ParamKind::TempoSync:
+            return canTempoSync(i) ? fxTempoSyncParams[i] : nullptr;
+        case SurgeFX::ParamKind::Extended:
+            return canExtend(i) ? fxExtendedParams[i] : nullptr;
+        case SurgeFX::ParamKind::Absolute:
+            return canAbsolute(i) ? fxAbsolutedParams[i] : nullptr;
+        case SurgeFX::ParamKind::Deactivated:
+            return canDeactitvate(i) ? fxDeactivatedParams[i] : nullptr;
+        default:
+            return nullptr;
+        }
+    }
+
+    std::string getMutableName(SurgeFX::ParamKind kind, int idx) const
+    {
+        switch (kind)
+        {
+        case SurgeFX::ParamKind::Knob:
+            return fxParams[idx]->mutableName.toStdString();
+        case SurgeFX::ParamKind::TempoSync:
+            return fxTempoSyncParams[idx]->mutableName.toStdString();
+        case SurgeFX::ParamKind::Extended:
+            return fxExtendedParams[idx]->mutableName.toStdString();
+        case SurgeFX::ParamKind::Absolute:
+            return fxAbsolutedParams[idx]->mutableName.toStdString();
+        case SurgeFX::ParamKind::Deactivated:
+            return fxDeactivatedParams[idx]->mutableName.toStdString();
+        default:
+            return "";
+        }
+    }
+
+  private:
+    template <typename T, typename F> struct FXAudioParameter : public T
+    {
+        juce::String mutableName;
+        template <typename... Args>
+        FXAudioParameter(Args &&...args) : T(std::forward<Args>(args)...)
+        {
+            mutableName = T::getName(64);
+        }
+
+        FXAudioParameter<T, F> &operator=(F newValue)
+        {
+            T::operator=(newValue);
+            return *this;
+        }
+
+        juce::String getName(int end) const override { return mutableName.substring(0, end); }
+
+        std::function<juce::String(float, int)> getTextHandler;
+        std::function<float(const juce::String &)> getTextToValue;
+        juce::String getText(float f, int i) const override { return getTextHandler(f, i); }
+
+        float getValueForText(const juce::String &text) const override
+        {
+            return getTextToValue(text);
+        }
+    };
+
+    //==============================================================================
+    // 1 knob + 4 toggles per slot, + fxType
+    static constexpr int totalHostParams = 5 * n_fx_params + 1;
+
+    juce::AudioProcessorParameter *fxBaseParams[totalHostParams];
+
+    // These are just copies of the pointer above with the cast done for nicer looking code
+    typedef FXAudioParameter<juce::AudioParameterFloat, float> float_param_t;
+    typedef FXAudioParameter<juce::AudioParameterInt, int> int_param_t;
+    typedef FXAudioParameter<juce::AudioParameterBool, bool> bool_param_t;
+
+    float_param_t *fxParams[n_fx_params];
+    bool_param_t *fxTempoSyncParams[n_fx_params];
+    bool_param_t *fxExtendedParams[n_fx_params];
+    bool_param_t *fxAbsolutedParams[n_fx_params];
+    bool_param_t *fxDeactivatedParams[n_fx_params];
+    int_param_t *fxType;
+
+    std::atomic<int> paramFeatures[n_fx_params];
+    std::atomic<bool> changedParams[n_fx_params + 1];
+    std::atomic<float> changedParamsValue[n_fx_params + 1];
+    std::atomic<bool> isUserEditing[n_fx_params + 1];
+    std::atomic<bool> wasParamFeatureChanged[n_fx_params];
+    std::function<void()> paramChangeListener;
+
+    float lastBPM = -1;
+    bool supressParameterUpdates = false;
+    struct SupressGuard
+    {
+        bool *s;
+        SupressGuard(bool *sg)
+        {
+            s = sg;
+            *s = true;
+        }
+        ~SupressGuard() { *s = false; }
+    };
+
+    std::shared_ptr<Effect> surge_effect;
+    std::shared_ptr<Effect> audio_thread_surge_effect;
+    std::atomic<bool> resettingFx;
+    FxStorage *fxstorage;
+    int storage_id_start, storage_id_end;
+
+    int effectNum;
+    std::atomic<bool> hasLoadedFxType{false};
+
+    int fx_param_remap[n_fx_params];
+    std::string group_names[n_fx_params];
+
+    void reorderSurgeParams();
+    void copyGlobaldataSubset(int start, int end);
+    void setupStorageRanges(Parameter *start, Parameter *endIncluding);
+
+    std::atomic<bool> audioRunning{false};
+
+  public:
+    bool oscStartIn = false;
+    int oscPortIn = 53290;
+
+    std::string currentPresetName;
+    std::string pendingPresetName;
+
+    // Set on the audio thread, where the name itself can't be touched
+    std::atomic<bool> fxTypeChangedByHost{false};
+
+    void prepareParametersAbsentAudio();
+    void setParameterByString(int i, const std::string &s);
+    float getParameterValueForString(int i, const std::string &s);
+    bool canSetParameterByString(int i);
+
+    SurgeFX::ParamKind paramKindForIndex[totalHostParams];
+    int paramSlotForIndex[totalHostParams]; // meaningless for fxType's own entry
+
+  private:
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SurgefxAudioProcessor)
+};
+
+#endif // SURGE_SRC_SURGE_FX_SURGEFXPROCESSOR_H

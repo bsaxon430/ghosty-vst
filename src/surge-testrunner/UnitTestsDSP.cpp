@@ -1,0 +1,1709 @@
+/*
+ * Surge XT - a free and open source hybrid synthesizer,
+ * built by Surge Synth Team
+ *
+ * Learn more at https://surge-synthesizer.github.io/
+ *
+ * Copyright 2018-2024, various authors, as described in the GitHub
+ * transaction log.
+ *
+ * Surge XT is released under the GNU General Public Licence v3
+ * or later (GPL-3.0-or-later). The license is found in the "LICENSE"
+ * file in the root of this repository, or at
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * Surge was a commercial product from 2004-2018, copyright and ownership
+ * held by Claes Johanson at Vember Audio during that period.
+ * Claes made Surge open source in September 2018.
+ *
+ * All source for Surge XT is available at
+ * https://github.com/surge-synthesizer/surge
+ */
+
+#include <iostream>
+#include <algorithm>
+#include <cmath>
+#include <functional>
+#include <limits>
+#include <vector>
+
+#include "HeadlessUtils.h"
+#include "Player.h"
+#include "Oscillator.h"
+#include "ModernOscillator.h"
+#include "ClassicOscillator.h"
+#include "WavetableOscillator.h"
+#include "SampleAndHoldOscillator.h"
+
+#include "catch2/catch_amalgamated.hpp"
+
+#include "UnitTestUtilities.h"
+
+#include "SSEComplex.h"
+#include <complex>
+#include "sst/basic-blocks/mechanics/simd-ops.h"
+
+#include "sst/plugininfra/cpufeatures.h"
+#include "dsp/effects/chowdsp/shared/chowdsp_DelayLine.h"
+
+using namespace Surge::Test;
+
+TEST_CASE("Simple Single Oscillator is Constant", "[osc]")
+{
+    auto surge = Surge::Headless::createSurge(44100);
+    REQUIRE(surge);
+    // surge->storage.getPatch().scene[0].osc[0].type.val.i = ot_sine;
+
+    int len = 4410 * 5;
+    // int len = BLOCK_SIZE * 20;
+    Surge::Headless::playerEvents_t heldC = Surge::Headless::makeHoldMiddleC(len);
+    REQUIRE(heldC.size() == 2);
+
+    float *data = nullptr;
+    int nSamples, nChannels;
+
+    Surge::Headless::playAsConfigured(surge, heldC, &data, &nSamples, &nChannels);
+    REQUIRE(data);
+    REQUIRE(std::abs(nSamples - len) <= BLOCK_SIZE);
+    REQUIRE(nChannels == 2);
+
+    float rms = 0;
+    for (int i = 0; i < nSamples * nChannels; ++i)
+    {
+        rms += data[i] * data[i];
+    }
+    rms /= (float)(nSamples * nChannels);
+    rms = sqrt(rms);
+    REQUIRE(rms > 0.1);
+    REQUIRE(rms < 0.101);
+
+    int zeroCrossings = 0;
+    for (int i = 0; i < nSamples * nChannels - 2; i += 2)
+    {
+        if (data[i] > 0 && data[i + 2] < 0)
+            zeroCrossings++;
+    }
+    // Somewhere in here
+    REQUIRE(zeroCrossings > 130);
+    REQUIRE(zeroCrossings < 160);
+
+    delete[] data;
+}
+TEST_CASE("Unison Absolute and Relative", "[osc]")
+{
+    auto surge = Surge::Headless::createSurge(44100, true);
+    REQUIRE(surge);
+
+    auto assertRelative = [surge](const char *pn) {
+        REQUIRE(surge->loadPatchByPath(pn, -1, "Test"));
+        auto f60_0 = frequencyForNote(surge, 60, 5, 0);
+        auto f60_1 = frequencyForNote(surge, 60, 5, 1);
+
+        auto f60_avg = 0.5 * (f60_0 + f60_1);
+
+        auto f72_0 = frequencyForNote(surge, 72, 5, 0);
+        auto f72_1 = frequencyForNote(surge, 72, 5, 1);
+        auto f72_avg = 0.5 * (f72_0 + f72_1);
+
+        // In relative mode, the average frequencies should double, as should the individual
+        // outliers
+        REQUIRE(f72_avg / f60_avg == Approx(2).margin(0.01));
+        REQUIRE(f72_0 / f60_0 == Approx(2).margin(0.01));
+        REQUIRE(f72_1 / f60_1 == Approx(2).margin(0.01));
+
+        // test extended mode
+        surge->storage.getPatch().scene[0].osc[0].p[5].set_extend_range(true);
+        auto f60_0e = frequencyForNote(surge, 60, 5, 0);
+        auto f60_1e = frequencyForNote(surge, 60, 5, 1);
+        REQUIRE(f60_0e / f60_avg == Approx(pow(f60_0 / f60_avg, 12.f)).margin(0.05));
+        REQUIRE(f60_1e / f60_avg == Approx(pow(f60_1 / f60_avg, 12.f)).margin(0.05));
+    };
+
+    auto assertAbsolute = [surge](const char *pn, bool print = false) {
+        REQUIRE(surge->loadPatchByPath(pn, -1, "Test"));
+        auto f60_0 = frequencyForNote(surge, 60, 5, 0);
+        auto f60_1 = frequencyForNote(surge, 60, 5, 1);
+
+        auto f60_avg = 0.5 * (f60_0 + f60_1);
+
+        auto f72_0 = frequencyForNote(surge, 72, 5, 0);
+        auto f72_1 = frequencyForNote(surge, 72, 5, 1);
+        auto f72_avg = 0.5 * (f72_0 + f72_1);
+
+        // In absolute mode, the average frequencies should double, but the channels should have
+        // constant difference
+        REQUIRE(f72_avg / f60_avg == Approx(2).margin(0.01));
+        REQUIRE((f72_0 - f72_1) / (f60_0 - f60_1) == Approx(1).margin(0.01));
+        if (print)
+        {
+            std::cout << "F60 " << f60_avg << " " << f60_0 << " " << f60_1 << " " << f60_0 - f60_1
+                      << std::endl;
+            std::cout << "F72 " << f72_avg << " " << f72_0 << " " << f72_1 << " " << f60_0 - f60_1
+                      << std::endl;
+        }
+    };
+
+    SECTION("Wavetable Oscillator")
+    {
+        assertRelative("resources/test-data/patches/Wavetable-Sin-Uni2-Relative.fxp");
+        assertAbsolute("resources/test-data/patches/Wavetable-Sin-Uni2-Absolute.fxp");
+    }
+
+    SECTION("Window Oscillator")
+    {
+        assertRelative("resources/test-data/patches/Window-Sin-Uni2-Relative.fxp");
+        assertAbsolute("resources/test-data/patches/Window-Sin-Uni2-Absolute.fxp");
+    }
+
+    SECTION("Classic Oscillator")
+    {
+        assertRelative("resources/test-data/patches/Classic-Uni2-Relative.fxp");
+        assertAbsolute("resources/test-data/patches/Classic-Uni2-Absolute.fxp");
+    }
+
+    SECTION("S&H Noise Oscillator")
+    {
+        assertRelative("resources/test-data/patches/SH-Uni2-Relative.fxp");
+        assertAbsolute("resources/test-data/patches/SH-Uni2-Absolute.fxp");
+    }
+}
+
+TEST_CASE("Unison at Different Sample Rates", "[osc]")
+{
+    auto assertRelative = [](const std::shared_ptr<SurgeSynthesizer> &surge, const char *pn) {
+        REQUIRE(surge->loadPatchByPath(pn, -1, "Test"));
+        auto f60_0 = frequencyForNote(surge, 60, 5, 0);
+        auto f60_1 = frequencyForNote(surge, 60, 5, 1);
+        auto f60_avg = 0.5 * (f60_0 + f60_1);
+        REQUIRE(f60_avg == Approx(261.6).margin(1));
+
+        auto f72_0 = frequencyForNote(surge, 72, 5, 0);
+        auto f72_1 = frequencyForNote(surge, 72, 5, 1);
+        auto f72_avg = 0.5 * (f72_0 + f72_1);
+        REQUIRE(f72_avg == Approx(2 * 261.6).margin(1));
+
+        // In relative mode, the average frequencies should double, as should the individual
+        // outliers
+        REQUIRE(f72_avg / f60_avg == Approx(2).margin(0.01));
+        REQUIRE(f72_0 / f60_0 == Approx(2).margin(0.01));
+        REQUIRE(f72_1 / f60_1 == Approx(2).margin(0.01));
+    };
+
+    auto assertAbsolute = [](const std::shared_ptr<SurgeSynthesizer> &surge, const char *pn,
+                             bool print = false) {
+        REQUIRE(surge->loadPatchByPath(pn, -1, "Test"));
+        auto f60_0 = frequencyForNote(surge, 60, 5, 0);
+        auto f60_1 = frequencyForNote(surge, 60, 5, 1);
+
+        auto f60_avg = 0.5 * (f60_0 + f60_1);
+        REQUIRE(f60_avg == Approx(261.6).margin(2));
+
+        auto f72_0 = frequencyForNote(surge, 72, 5, 0);
+        auto f72_1 = frequencyForNote(surge, 72, 5, 1);
+        auto f72_avg = 0.5 * (f72_0 + f72_1);
+        REQUIRE(f72_avg == Approx(2 * 261.6).margin(2));
+
+        // In absolute mode, the average frequencies should double, but the channels should have
+        // constant difference
+        REQUIRE(f72_avg / f60_avg == Approx(2).margin(0.01));
+        REQUIRE((f72_0 - f72_1) / (f60_0 - f60_1) == Approx(1).margin(0.01));
+
+        // While this test is correct, the differences depend on samplerate in 1.6.5. That should
+        // not be the case here.
+        auto ap = &(surge->storage.getPatch().scene[0].osc[0].p[n_osc_params - 2]);
+
+        char txt[TXT_SIZE];
+        ap->get_display(txt);
+        float spreadWhichMatchesDisplay = ap->val.f * 16.f;
+        INFO("Comparing absolute with " << txt << " " << spreadWhichMatchesDisplay);
+        REQUIRE(spreadWhichMatchesDisplay == Approx(f60_0 - f60_1).margin(0.05));
+
+        if (print)
+        {
+            std::cout << "F60 " << f60_avg << " " << f60_0 << " " << f60_1 << " " << f60_0 - f60_1
+                      << std::endl;
+            std::cout << "F72 " << f72_avg << " " << f72_0 << " " << f72_1 << " " << f60_0 - f60_1
+                      << std::endl;
+        }
+    };
+
+    auto randomAbsolute = [](const std::shared_ptr<SurgeSynthesizer> &surge, const char *pn,
+                             bool print = false) {
+        for (int i = 0; i < 10; ++i)
+        {
+            REQUIRE(surge->loadPatchByPath(pn, -1, "Test"));
+            int note = rand() % 70 + 22;
+            float abss = rand() * 1.f / (float)RAND_MAX * 0.8 + 0.15;
+            auto ap = &(surge->storage.getPatch().scene[0].osc[0].p[n_osc_params - 2]);
+            ap->set_value_f01(abss);
+            char txt[TXT_SIZE];
+            ap->get_display(txt);
+
+            INFO("Test[" << i << "] note=" << note << " at absolute spread " << abss << " = "
+                         << txt);
+            for (int j = 0; j < 200; ++j)
+                surge->process();
+
+            auto fn_0 = frequencyForNote(surge, note, 5, 0);
+            auto fn_1 = frequencyForNote(surge, note, 5, 1);
+            REQUIRE(16.f * abss == Approx(fn_0 - fn_1).margin(0.3));
+        }
+    };
+
+    static constexpr std::initializer_list<int> srs{44100, 48000};
+
+    SECTION("Wavetable Oscillator")
+    {
+        for (auto sr : srs)
+        {
+            INFO("Wavetable test at " << sr);
+            auto surge = Surge::Headless::createSurge(sr, true);
+
+            assertRelative(surge, "resources/test-data/patches/Wavetable-Sin-Uni2-Relative.fxp");
+            assertAbsolute(surge, "resources/test-data/patches/Wavetable-Sin-Uni2-Absolute.fxp");
+            // HF noise in the wavetable makes my detector unreliable at zero crossings in this case
+            // It passes 99% of the time but leave this test out for now.
+            // randomAbsolute(surge, "resources/test-data/patches/Wavetable-Sin-Uni2-Absolute.fxp");
+        }
+    }
+
+    SECTION("Test Each Oscillator")
+    {
+        for (auto sr : srs)
+        {
+            INFO("Window Oscillator test at " << sr);
+            auto surge = Surge::Headless::createSurge(sr, true);
+
+            assertRelative(surge, "resources/test-data/patches/Window-Sin-Uni2-Relative.fxp");
+            assertAbsolute(surge, "resources/test-data/patches/Window-Sin-Uni2-Absolute.fxp");
+            randomAbsolute(surge, "resources/test-data/patches/Window-Sin-Uni2-Absolute.fxp");
+        }
+
+        for (auto sr : srs)
+        {
+            INFO("Classic Oscillator test at " << sr);
+            auto surge = Surge::Headless::createSurge(sr, true);
+
+            assertRelative(surge, "resources/test-data/patches/Classic-Uni2-Relative.fxp");
+            assertAbsolute(surge, "resources/test-data/patches/Classic-Uni2-Absolute.fxp");
+            randomAbsolute(surge, "resources/test-data/patches/Classic-Uni2-Absolute.fxp");
+        }
+
+        for (auto sr : srs)
+        {
+            INFO("S&H Noise Oscillator test at " << sr);
+            auto surge = Surge::Headless::createSurge(sr, true);
+
+            assertRelative(surge, "resources/test-data/patches/SH-Uni2-Relative.fxp");
+            assertAbsolute(surge, "resources/test-data/patches/SH-Uni2-Absolute.fxp");
+            // randomAbsolute(surge, "resources/test-data/patches/SH-Uni2-Absolute.fxp");
+        }
+    }
+}
+
+TEST_CASE("Every Oscillator Plays", "[dsp]")
+{
+    for (int i = 0; i < n_osc_types; ++i)
+    {
+        DYNAMIC_SECTION("Oscillator type " << osc_type_names[i])
+        {
+            auto surge = Surge::Headless::createSurge(44100, true);
+            REQUIRE(surge->storage.wt_list.size() > 0);
+
+            for (int q = 0; q < BLOCK_SIZE; q++)
+            {
+                surge->input[0][q] = 0.f;
+                surge->input[1][q] = 0.f;
+            }
+
+            surge->storage.getPatch().scene[0].osc[0].queue_type = i;
+
+            for (int q = 0; q < 10; ++q)
+                surge->process();
+
+            int idx = 0;
+            bool got = false;
+            for (auto q : surge->storage.wt_list)
+            {
+                if (q.name == "Sine Power HQ")
+                {
+                    got = true;
+                    surge->storage.getPatch().scene[0].osc[0].wt.queue_id = idx;
+                }
+                idx++;
+            }
+            REQUIRE(got);
+            for (int q = 0; q < 10; ++q)
+                surge->process();
+
+            REQUIRE(std::string(surge->storage.getPatch().scene[0].osc[0].wavetable_display_name) ==
+                    "Sine Power HQ");
+
+            float sumAbsOut = 0;
+            surge->playNote(0, 60, 127, 0);
+            for (int q = 0; q < 100; ++q)
+            {
+                surge->process();
+                for (int s = 0; s < BLOCK_SIZE; ++s)
+                    sumAbsOut += fabs(surge->output[0][s]);
+            }
+            if (i == ot_audioinput)
+                REQUIRE(sumAbsOut < 1e-4);
+            else
+                REQUIRE(sumAbsOut > 1);
+        }
+    }
+}
+
+TEST_CASE("Untuned is 2^x", "[dsp]")
+{
+    auto surge = Surge::Headless::createSurge(44100);
+    for (int i = 0; i < 6000; ++i)
+    {
+        float n = i * 1.0 / 6000.0 * 200;
+        INFO("Note is " << n);
+        float p = surge->storage.note_to_pitch(n);
+        float pinv = surge->storage.note_to_pitch_inv(n);
+        REQUIRE(fabs(p - (float)pow(2.0, n / 12.0)) < p * 1e-5);
+        REQUIRE(fabs(pinv - (float)pow(2.0, -n / 12.0)) < p * 1e-5);
+    }
+}
+
+TEST_CASE("SSE std::complex", "[dsp]")
+{
+    SECTION("Can Make std::complex on m128")
+    {
+        auto a = SSEComplex();
+        // The atIndex operation is expensive. Stay vectorized as long as possible.
+        REQUIRE(a.atIndex(0) == std::complex<float>{0, 0});
+        auto b = a + a;
+
+        for (int i = 0; i < 4; ++i)
+            REQUIRE(a.atIndex(i) == b.atIndex(i));
+
+        auto q = SSEComplex({0.f, 1.f, 2.f, 3.f}, {1.f, 0.f, -1.f, -2.f});
+        auto r = SSEComplex({12.f, 1.2f, 2.4f, 3.7f}, {1.2f, 0.4f, -1.2f, -2.7f});
+        REQUIRE(q.atIndex(0) == std::complex<float>(0.f, 1.f));
+        REQUIRE(q.atIndex(1) == std::complex<float>(1.f, 0.f));
+        REQUIRE(q.atIndex(2) == std::complex<float>(2.f, -1.f));
+        REQUIRE(q.atIndex(3) == std::complex<float>(3.f, -2.f));
+
+        auto qpr = q + r;
+        for (int i = 0; i < 4; ++i)
+            REQUIRE(qpr.atIndex(i) == q.atIndex(i) + r.atIndex(i));
+
+        auto qtr = q * r;
+        for (int i = 0; i < 4; ++i)
+            REQUIRE(qtr.atIndex(i) == q.atIndex(i) * r.atIndex(i));
+
+        float sum = 0.f;
+        for (int i = 0; i < 4; ++i)
+            sum += qtr.atIndex(i).real();
+
+        float sumSSE alignas(16)[4];
+        SIMD_MM(store1_ps)(sumSSE, sst::basic_blocks::mechanics::sum_ps_to_ss(qtr.real()));
+        REQUIRE(sum == Approx(sumSSE[0]).margin(1e-5));
+
+        float angles alignas(16)[4];
+        angles[0] = 0;
+        angles[1] = M_PI / 2;
+        angles[2] = 3 * M_PI / 4;
+        angles[3] = M_PI;
+        auto asse = SIMD_MM(load_ps)(angles);
+        auto c = SSEComplex::fastExp(asse);
+
+        auto c0 = c.atIndex(0);
+        REQUIRE(c0.real() == Approx(1).margin(1e-5));
+        REQUIRE(c0.imag() == Approx(0).margin(1e-5));
+
+        auto c1 = c.atIndex(1);
+        REQUIRE(c1.real() == Approx(0).margin(1e-5));
+        REQUIRE(c1.imag() == Approx(1).margin(1e-5));
+
+        auto c2 = c.atIndex(2);
+        REQUIRE(c2.real() == Approx(-sqrt(2.0) / 2).margin(1e-5));
+        REQUIRE(c2.imag() == Approx(sqrt(2.0) / 2).margin(1e-5));
+
+        // At this extrema we are a touch less accurate
+        auto c3 = c.atIndex(3);
+        REQUIRE(c3.real() == Approx(-1).margin(1e-4));
+        REQUIRE(c3.imag() == Approx(0).margin(1e-4));
+
+        auto powV = q.map([](const std::complex<float> &f) { return std::pow(f, 2.1f); });
+        for (int i = 0; i < 4; ++i)
+            REQUIRE(powV.atIndex(i) == pow(q.atIndex(i), 2.1f));
+    }
+}
+
+// When we return to #1514 this is a good starting point
+#if 0
+TEST_CASE( "NaN Patch From Issue #1514", "[dsp]" )
+{
+   auto surge = Surge::Headless::createSurge(44100);
+   REQUIRE( surge );
+   REQUIRE( surge->loadPatchByPath( "resources/test-data/patches/VinceyCrash1514.fxp", -1, "Test" ) );
+
+   for( int d=0; d<10; d++ )
+   {
+      auto events = Surge::Headless::makeHoldNoteFor( 60 + 24, 4410, 100, 0 );
+      for( auto &e : events )
+         e.atSample += 1000;
+
+      surge->stopSound();
+      for( int i=0; i<100; ++i )
+         surge->process();
+      
+      float *res;
+      int nS, nC;
+      playAsConfigured(surge, events, &res, &nS, &nC );
+      surge->storage.getPatch().scene[0].lfo[0].decay.set_value_f01( .325 + d/1000.f );
+      char txt[512];
+      surge->storage.getPatch().scene[0].lfo[0].decay.get_display( txt, false, 0.f );
+      const auto minmaxres = std::minmax_element(res, res + nS * nC);
+      auto mind = minmaxres.first;
+      auto maxd = minmaxres.second;
+
+      // std::cout << "minMax at " << d << " / " << txt << " is " << *mind << " / " << *maxd << std::endl;
+      std::string title = "delay = " + std::string( txt );
+      std::string fname = "/tmp/nanPatch_" + std::to_string( d ) + ".png";
+      makePlotPNGFromData( fname, title, res, nS, nC );
+
+      delete[] res;
+   }
+   
+}
+#endif
+
+TEST_CASE("Basic DSP", "[dsp]")
+{
+    SECTION("limit_range()")
+    {
+        REQUIRE(limit_range(0.1, 0.2, 0.5) == 0.2);
+        REQUIRE(limit_range(0.2, 0.2, 0.5) == 0.2);
+        REQUIRE(limit_range(0.3, 0.2, 0.5) == 0.3);
+        REQUIRE(limit_range(0.4, 0.2, 0.5) == 0.4);
+        REQUIRE(limit_range(0.5, 0.2, 0.5) == 0.5);
+        REQUIRE(limit_range(0.6, 0.2, 0.5) == 0.5);
+
+        REQUIRE(limit_range(0.1f, 0.2f, 0.5f) == 0.2f);
+        REQUIRE(limit_range(0.2f, 0.2f, 0.5f) == 0.2f);
+        REQUIRE(limit_range(0.3f, 0.2f, 0.5f) == 0.3f);
+        REQUIRE(limit_range(0.4f, 0.2f, 0.5f) == 0.4f);
+        REQUIRE(limit_range(0.5f, 0.2f, 0.5f) == 0.5f);
+        REQUIRE(limit_range(0.6f, 0.2f, 0.5f) == 0.5f);
+
+        REQUIRE(limit_range(1, 2, 5) == 2);
+        REQUIRE(limit_range(2, 2, 5) == 2);
+        REQUIRE(limit_range(3, 2, 5) == 3);
+        REQUIRE(limit_range(4, 2, 5) == 4);
+        REQUIRE(limit_range(5, 2, 5) == 5);
+        REQUIRE(limit_range(6, 2, 5) == 5);
+    }
+}
+
+TEST_CASE("Wavehaper Lookup Table", "[dsp]")
+{
+    SECTION("ASYM SSE2")
+    {
+        // need to do this to init tables only
+        auto surge = Surge::Headless::createSurge(44100);
+
+        auto wst = sst::waveshapers::GetQuadWaveshaper(sst::waveshapers::WaveshaperType::wst_asym);
+        auto shafted_tanh = [](double x) { return (exp(x) - exp(-x * 1.2)) / (exp(x) + exp(-x)); };
+        sst::waveshapers::QuadWaveshaperState qss{};
+        for (int i = 0; i < sst::waveshapers::n_waveshaper_registers; ++i)
+            qss.R[i] = SIMD_MM(setzero_ps)();
+
+        /*
+         * asym:
+         * for (int i = 0; i < 1024; i++)
+         *  {
+         *    double x = ((double)i - 512.0) * mult; // mult = 1/32
+         *    waveshapers[wst_asym][i] = (float)shafted_tanh(x + 0.5) - shafted_tanh(0.5);
+         *
+         * output is i = x * 32 + 512 then interp
+         */
+        for (float x = -8; x < 8; x += 0.07)
+        {
+            auto d = SIMD_MM(set1_ps)(1.0);
+            float out alignas(16)[4], inv alignas(16)[4];
+            auto in = SIMD_MM(set_ps)(x, x + 0.01, x + 0.03, x + 0.05);
+            SIMD_MM(store_ps)(inv, in);
+
+            auto r = wst(&qss, in, d);
+            SIMD_MM(store_ps)(out, r);
+
+            // sinus has functional form sin((i-512) * PI/512)
+            // or i = 256 x + 512
+            for (int q = 0; q < 4; ++q)
+            {
+                float i = (inv[q] * 32 + 512);
+                float v = shafted_tanh(x + 0.5) - shafted_tanh(0.5);
+                INFO(inv[q] << " " << i << " " << v);
+                REQUIRE(out[q] == Approx(v).margin(0.1));
+            }
+        }
+    }
+}
+
+TEST_CASE("Don't Fear The Reaper", "[dsp]")
+{
+    // Reaper added cool per-plugin oversampling. Will we do OK with that?
+    for (auto base : {44100, 48000})
+    {
+        // A few like string and noise won't pass this test so be explicit about our choices
+        for (auto t : {ot_sine, ot_FM2, ot_wavetable, ot_window, ot_alias})
+        {
+            DYNAMIC_SECTION("Oversample Test " << base << " on " << osc_type_names[t])
+            {
+                std::vector surges = {Surge::Headless::createSurge(base),
+                                      Surge::Headless::createSurge(base * 2)};
+                // Surge::Headless::createSurge(base * 4)};
+
+                constexpr static int nsurge = 2;
+                REQUIRE(nsurge == surges.size());
+
+                static constexpr int nsamples = 1024;
+                float samples[3][nsamples];
+
+                for (int s = 0; s < nsurge; ++s)
+                {
+                    // std::cout << "SampleRate at " << s << " = " << surges[s]->storage.samplerate
+                    // << std::endl;
+                    surges[s]->storage.getPatch().scene[0].osc[0].queue_type = t;
+                    surges[s]->storage.getPatch().scene[0].osc[0].retrigger.val.b = true;
+
+                    for (int q = 0; q < 10; ++q)
+                        surges[s]->process();
+
+                    surges[s]->playNote(0, 60, 127, 0);
+                }
+
+                for (int i = 0; i < nsurge; ++i)
+                {
+                    int mul = 1 << i;
+                    int wp = 0;
+                    while (wp < nsamples)
+                    {
+                        surges[i]->process();
+
+                        int q = 0;
+                        while (q < BLOCK_SIZE && wp < nsamples)
+                        {
+                            samples[i][wp] = surges[i]->output[0][q];
+                            wp++;
+                            q += mul;
+                        }
+                    }
+                }
+
+                for (int i = 0; i < nsamples; i++)
+                {
+                    // std::cout << base << " " << osc_type_names[t] << " " << i << " "
+                    //     << samples[0][i] << " " << samples[1][i] << " " << samples[2][i] <<
+                    //     std::endl;
+
+                    // So we don't line up perfectly but if we stay in phase the
+                    // per sample values won't matter that much since we have a long time
+                    for (int q = 1; q < nsurge; ++q)
+                    {
+                        INFO("Checking at " << i << " " << q);
+                        REQUIRE(fabs(samples[0][i] - samples[q][i]) < 0.05);
+                    }
+                    // REQUIRE(fabs(samples[0][i] - samples[2][i]) < 0.05);
+                }
+            }
+        }
+    }
+}
+
+TEST_CASE("Reverb1 White Noise Blast", "[dsp]")
+{
+    auto surge = Surge::Headless::createSurge(44100, true);
+    int idxT = 1, idxF = -1;
+    const auto &pl = surge->storage.patch_list;
+    for (int i = 0; i < pl.size(); ++i)
+    {
+        if (pl[i].name == "Tolk")
+        {
+            idxT = i;
+        }
+        if (pl[i].name == "Monster Feedback")
+        {
+            idxF = i;
+        }
+    }
+    REQUIRE(idxF >= 0);
+    REQUIRE(idxT >= 0);
+
+    int swapEvery = 127;
+    int t = idxF;
+    int n = idxT;
+    int since = 0;
+    int swaps = 0;
+    for (int r = 0; r < swapEvery * 101; r++)
+    {
+        if (r % swapEvery == 0)
+        {
+            std::swap(t, n);
+            surge->loadPatch(t);
+            since = 0;
+            swaps++;
+        }
+        surge->process();
+        INFO("Running " << r << " " << since << " " << swaps << " " << pl[t].name);
+        for (int s = 0; s < BLOCK_SIZE; ++s)
+        {
+            REQUIRE(std::fabs(surge->output[0][s]) < 1e-6);
+            REQUIRE(std::fabs(surge->output[1][s]) < 1e-6);
+        }
+        since++;
+    }
+}
+
+namespace
+{
+/*
+** Wavetable and Window read oscdata->wt, and loading the factory patches only leaves
+** something there incidentally. What that something is depends on how the patch directory
+** enumerates, so it varies by platform: the onset test passed everywhere for months and then
+** had Window emit silence on one CI runner and nowhere else. Build an explicit table instead,
+** so what a test measures is a property of the oscillator rather than of whatever the patch
+** loader happened to leave behind.
+*/
+void buildSineWavetable(OscillatorStorage *oscstorage)
+{
+    constexpr int frames{8}, frameSize{1024};
+
+    std::vector<float> data((size_t)frames * frameSize);
+
+    for (int f = 0; f < frames; ++f)
+    {
+        for (int k = 0; k < frameSize; ++k)
+        {
+            data[(size_t)f * frameSize + k] = std::sin(2.0 * M_PI * k / (double)frameSize);
+        }
+    }
+
+    wt_header wh;
+
+    memset(&wh, 0, sizeof(wt_header));
+    wh.n_samples = frameSize;
+    wh.n_tables = frames;
+    wh.flags = 0;
+
+    REQUIRE(oscstorage->wt.BuildWT(data.data(), wh, false));
+}
+
+/*
+** init_default_values only fills oscdata. The oscillators read their parameters from
+** localcopy, which is scenedata in these tests, so values have to be pushed across or the
+** oscillator runs on zeros (a zero Width 2, for one, degenerates two of the four Classic
+** segments to nothing).
+*/
+void pushOscParamsToScene(SurgeStorage *storage, OscillatorStorage *oscstorage)
+{
+    for (int q = 0; q < n_osc_params; ++q)
+    {
+        storage->getPatch().scenedata[0][oscstorage->p[q].param_id_in_scene].f =
+            oscstorage->p[q].val.f;
+    }
+}
+
+void setOscParam(SurgeStorage *storage, OscillatorStorage *oscstorage, int idx, float v)
+{
+    oscstorage->p[idx].val.f = v;
+    storage->getPatch().scenedata[0][oscstorage->p[idx].param_id_in_scene].f = v;
+}
+} // namespace
+
+TEST_CASE("Oscillator Onset", "[dsp]") // See issue 7570
+{
+    /*
+    ** An oscillator should start making sound immediately, whether or not retrigger is on.
+    **
+    ** The BLIT oscillators used to seed oscstate with a positive random value when
+    ** retrigger was off, which leaves the buffers empty and the voice silent until the
+    ** first convolute fires. That is a delay of up to a full cycle rather than a random
+    ** start phase: at MIDI 60 it reached 169 oversampled samples for Classic and 337 for
+    ** Wavetable, and it scales with the period, so a bass note could lose several
+    ** milliseconds off the front of its attack.
+    */
+    constexpr int maxOnset{16};
+    constexpr int nTrials{50};
+    constexpr int nBlocks{32}; // enough to cover the old worst case even at MIDI 24
+
+    auto surge = Surge::Headless::createSurge(44100);
+    auto storage = &surge->storage;
+    auto oscstorage = &(storage->getPatch().scene[0].osc[0]);
+
+    storage->rngGen.g.seed(7570);
+    buildSineWavetable(oscstorage);
+
+    for (const auto &rt : {true, false})
+    {
+        for (const auto &ot :
+             {ot_classic, ot_wavetable, ot_window, ot_sine, ot_twist, ot_shnoise, ot_FM2, ot_FM3})
+        {
+            for (const auto &note : {24, 60, 96})
+            {
+                unsigned char oscbuffer alignas(16)[oscillator_buffer_size];
+
+                oscstorage->retrigger.val.b = rt;
+
+                auto o = spawn_osc(ot, storage, oscstorage, storage->getPatch().scenedata[0],
+                                   storage->getPatch().scenedataOrig[0], oscbuffer);
+                o->init_ctrltypes();
+                o->init_default_values();
+                o->init_extra_config();
+
+                int worstOnset{0};
+
+                for (int trial = 0; trial < nTrials; ++trial)
+                {
+                    o->init(note);
+
+                    int onset{nBlocks * BLOCK_SIZE_OS}, n{0};
+                    bool found{false};
+
+                    for (int j = 0; j < nBlocks && !found; ++j)
+                    {
+                        o->process_block(note, 0, true, false, 0);
+
+                        for (int i = 0; i < BLOCK_SIZE_OS; ++i, ++n)
+                        {
+                            if (std::fabs(o->output[i]) > 1e-6)
+                            {
+                                onset = n;
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    worstOnset = std::max(worstOnset, onset);
+                }
+
+                o->~Oscillator();
+
+                INFO("Oscillator " << osc_type_names[ot] << " at note " << note
+                                   << " with retrigger " << (rt ? "on" : "off")
+                                   << " has a worst case onset of " << worstOnset
+                                   << " oversampled samples");
+                REQUIRE(worstOnset <= maxOnset);
+            }
+        }
+    }
+}
+
+TEST_CASE("S&H Noise Economy Mode", "[dsp]") // See issue 2387
+{
+    // Renders the S&H Noise oscillator from a fixed random sequence, with Economy Mode on or off
+    auto render = [](int voices, float sync, float pitch, bool economy, int blocks,
+                     std::vector<float> &out) {
+        auto surge = Surge::Headless::createSurge(44100);
+        auto storage = &surge->storage;
+        auto oscstorage = &(storage->getPatch().scene[0].osc[0]);
+        auto sd = storage->getPatch().scenedata[0];
+        unsigned char oscbuffer alignas(16)[oscillator_buffer_size];
+
+        storage->rngGen.g.seed(2387);
+
+        auto o = spawn_osc(ot_shnoise, storage, oscstorage, sd,
+                           storage->getPatch().scenedataOrig[0], oscbuffer);
+        o->init_ctrltypes();
+        o->init_default_values();
+        o->init_extra_config();
+
+        using S = SampleAndHoldOscillator;
+        auto set = [&](int idx, float v) {
+            oscstorage->p[idx].val.f = v;
+            sd[oscstorage->p[idx].param_id_in_scene].f = v;
+        };
+        set(S::shn_sync, sync);
+        set(S::shn_unison_detune, 1.f);
+        oscstorage->p[S::shn_unison_voices].val.i = voices;
+        oscstorage->p[S::shn_sync].deform_type = economy ? 1 : 0;
+
+        o->init(pitch);
+
+        out.resize(blocks * BLOCK_SIZE_OS);
+        for (int b = 0; b < blocks; ++b)
+        {
+            o->process_block(pitch, 0, false, false, 0);
+            std::copy(o->output, o->output + BLOCK_SIZE_OS, out.begin() + b * BLOCK_SIZE_OS);
+        }
+        o->~Oscillator();
+    };
+
+    auto rmsdb = [](const std::vector<float> &v) {
+        double s = 0;
+        for (auto x : v)
+            s += (double)x * x;
+        return 10 * std::log10(s / v.size() + 1e-30);
+    };
+
+    SECTION("Identical below the cap")
+    {
+        // pitch 60 with sync 24 is far below the step rate where the cap engages
+        std::vector<float> off, on;
+        render(4, 24.f, 60.f, false, 40, off);
+        render(4, 24.f, 60.f, true, 40, on);
+        REQUIRE(off == on);
+    }
+
+    SECTION("Finite and level-matched above the cap")
+    {
+        // the scenario from the issue: pitch clamped at 148, 16 unison voices, maximum sync
+        std::vector<float> off, on;
+        render(16, 60.f, 148.f, false, 300, off);
+        render(16, 60.f, 148.f, true, 300, on);
+        for (auto x : on)
+            REQUIRE(std::isfinite(x));
+        auto dOff = rmsdb(off), dOn = rmsdb(on);
+        INFO("Economy off " << dOff << " dB, on " << dOn << " dB");
+        REQUIRE(std::fabs(dOff - dOn) < 1.5);
+    }
+}
+
+TEST_CASE("Chow DSP Delay", "[dsp]")
+{
+    chowdsp::DelayLine<float> floatDelay(1024);
+    floatDelay.prepare({48000, 16, 2});
+    floatDelay.setDelay(128);
+    for (int i = 0; i < 1024; ++i)
+    {
+        auto dL = floatDelay.popSample(0);
+        auto dR = floatDelay.popSample(1);
+        floatDelay.pushSample(0, i / 1024.);
+        floatDelay.pushSample(1, 1 - i / 1024.);
+        if (i >= 128)
+        {
+            INFO("I = " << i);
+            auto ni = i - 128;
+            REQUIRE(dL == ni / 1024.);
+            REQUIRE(dR == 1 - ni / 1024.);
+        }
+        else
+        {
+            INFO("i = " << i);
+            REQUIRE(dL == 0.f);
+            REQUIRE(dR == 0.f);
+        }
+    }
+}
+
+/*
+ * Modern oscillator pitch tracking, covering both halves of #7224.
+ *
+ * Modern's saw component is a direct linear readout of the oscillator phase:
+ * with saw mix at 1.0 the mono output is exactly (phase - dphase - 0.5), so
+ * differencing the output recovers the per-sample phase increment - the
+ * quantity the pitch smoothing actually acts on. Both properties under test are
+ * therefore measurable from output[] alone: how quickly a pitch step is
+ * tracked, and whether the increment stays continuous across block boundaries
+ * when pitch moves a long way every single block.
+ */
+namespace
+{
+std::vector<float> renderModernSaw(int nBlocks, const std::function<float(int)> &pitchAt)
+{
+    auto surge = Surge::Headless::createSurge(48000);
+    REQUIRE(surge);
+
+    auto storage = &surge->storage;
+    auto oscdata = &(storage->getPatch().scene[0].osc[0]);
+
+    unsigned char oscbuffer alignas(16)[oscillator_buffer_size];
+
+    auto o = spawn_osc(ot_modern, storage, oscdata, storage->getPatch().scenedata[0],
+                       storage->getPatch().scenedataOrig[0], oscbuffer);
+    o->init_ctrltypes();
+    o->init_default_values();
+    o->init_extra_config();
+
+    oscdata->p[ModernOscillator::mo_saw_mix].val.f = 1.f;
+    oscdata->p[ModernOscillator::mo_pulse_mix].val.f = 0.f;
+    oscdata->p[ModernOscillator::mo_tri_mix].val.f = 0.f;
+    oscdata->p[ModernOscillator::mo_tri_mix].deform_type = 0;
+    oscdata->p[ModernOscillator::mo_sync].val.f = 0.f;
+    oscdata->p[ModernOscillator::mo_unison_voices].val.i = 1;
+    oscdata->retrigger.val.b = true;
+    storage->getPatch().character.val.i = 1; // neutral, so the character filter is a passthrough
+
+    storage->getPatch().copy_scenedata(storage->getPatch().scenedata[0],
+                                       storage->getPatch().scenedataOrig[0], 0);
+
+    o->init(pitchAt(0), false, false);
+
+    std::vector<float> res;
+    res.reserve((size_t)nBlocks * BLOCK_SIZE_OS);
+
+    for (int b = 0; b < nBlocks; ++b)
+    {
+        o->process_block(pitchAt(b), 0.f, false, false, 0.f);
+
+        for (int i = 0; i < BLOCK_SIZE_OS; ++i)
+        {
+            res.push_back(o->output[i]);
+        }
+    }
+
+    o->~Oscillator();
+
+    return res;
+}
+
+/*
+ * Per-sample phase increment recovered from that saw readout. Samples within
+ * three of a phase wrap are marked invalid - that is where the DPW correction
+ * shapes the step, so the output is not a plain phase ramp there.
+ */
+struct RecoveredPhase
+{
+    std::vector<double> dphase;
+    std::vector<char> valid;
+};
+
+RecoveredPhase recoverPhase(const std::vector<float> &o)
+{
+    RecoveredPhase r;
+    auto n = (int)o.size() - 1;
+
+    r.dphase.resize(n);
+    r.valid.assign(n, 1);
+
+    for (int i = 0; i < n; ++i)
+    {
+        auto d = (double)o[i + 1] - (double)o[i];
+
+        if (d < -0.25)
+        {
+            d += 1.0;
+
+            for (int k = std::max(0, i - 3); k < std::min(n, i + 4); ++k)
+            {
+                r.valid[k] = 0;
+            }
+        }
+
+        r.dphase[i] = d;
+    }
+
+    return r;
+}
+} // namespace
+
+TEST_CASE("Modern Oscillator Tracks Pitch Steps", "[osc]")
+{
+    constexpr int stepBlock = 20;
+    constexpr int totalBlocks = 80;
+
+    auto data = renderModernSaw(totalBlocks, [](int b) { return b < stepBlock ? 60.f : 72.f; });
+    auto rec = recoverPhase(data);
+
+    // Steady state a long way after the step is the target increment.
+    double target = 0;
+    int targetN = 0;
+
+    for (int i = 70 * BLOCK_SIZE_OS; i < (int)rec.dphase.size(); ++i)
+    {
+        if (rec.valid[i])
+        {
+            target += rec.dphase[i];
+            targetN++;
+        }
+    }
+
+    REQUIRE(targetN > 0);
+    target /= targetN;
+
+    const int stepAt = stepBlock * BLOCK_SIZE_OS;
+    int settledAt = stepAt;
+
+    for (int i = stepAt; i < (int)rec.dphase.size(); ++i)
+    {
+        if (rec.valid[i] && std::fabs(rec.dphase[i] - target) > 0.02 * target)
+        {
+            settledAt = i + 1;
+        }
+    }
+
+    /*
+     * The increment is interpolated across exactly the block in which the new
+     * pitch arrives, so it is on target by the end of that block. Before #7224
+     * this took some 800 samples, which is the audible portamento the issue
+     * reports at a portamento time of zero.
+     */
+    INFO("settled after " << (settledAt - stepAt) << " samples of " << BLOCK_SIZE_OS);
+    REQUIRE(settledAt - stepAt <= BLOCK_SIZE_OS);
+}
+
+TEST_CASE("Modern Oscillator Phase Increment Is Block Continuous", "[osc]")
+{
+    // An audio-rate modulator on oscillator pitch arrives as a large pitch
+    // change every single block, so alternate an octave up and down per block.
+    constexpr int totalBlocks = 200;
+
+    auto data = renderModernSaw(totalBlocks, [](int b) { return (b % 2) ? 60.f : 48.f; });
+    auto rec = recoverPhase(data);
+
+    double worst = 0;
+    int worstAt = -1;
+    double smallest = 1e9, largest = 0;
+
+    for (int i = 4 * BLOCK_SIZE_OS; i < (int)rec.dphase.size(); ++i)
+    {
+        if (!rec.valid[i] || !rec.valid[i - 1])
+        {
+            continue;
+        }
+
+        smallest = std::min(smallest, rec.dphase[i]);
+        largest = std::max(largest, rec.dphase[i]);
+
+        auto j = std::fabs(rec.dphase[i] - rec.dphase[i - 1]);
+
+        if (j > worst)
+        {
+            worst = j;
+            worstAt = i;
+        }
+    }
+
+    const auto dphaseFor = [](double pitch) {
+        return Tunings::MIDI_0_FREQ * std::pow(2.0, pitch / 12.0) / (48000.0 * OSC_OVERSAMPLING);
+    };
+    const auto span = dphaseFor(60.0) - dphaseFor(48.0);
+
+    // The modulation has to actually arrive. A smoother slow enough to swallow a
+    // per-block octave would pass the continuity check below trivially.
+    INFO("increment range " << smallest << " .. " << largest << ", expected span " << span);
+    REQUIRE(largest - smallest >= 0.85 * span);
+
+    /*
+     * Within a block the increment moves by span / BLOCK_SIZE_OS per sample, and
+     * at a boundary that slope can reverse, so a few multiples of it is the
+     * honest ceiling. An interpolator sized for the wrong block length overshoots
+     * and snaps back by the whole span instead, which is what made the first
+     * attempt at #7224 pop on patches modulating pitch at audio rate.
+     */
+    INFO("worst increment step " << worst << " at " << worstAt << ", block offset "
+                                 << (worstAt % BLOCK_SIZE_OS));
+    REQUIRE(worst < 8.0 * span / BLOCK_SIZE_OS);
+}
+
+TEST_CASE("Invalid Sample Rates Are Ignored", "[dsp]") // See issue 8240
+{
+    SECTION("Nonsensical Rates Leave The Previous Rate In Place")
+    {
+        const float badRates[] = {0.f,
+                                  -48000.f,
+                                  1.f,
+                                  1e9f,
+                                  std::numeric_limits<float>::infinity(),
+                                  std::numeric_limits<float>::quiet_NaN()};
+
+        for (auto sr : badRates)
+        {
+            auto surge = Surge::Headless::createSurge(48000);
+            REQUIRE(surge);
+
+            INFO("Sample rate " << sr);
+            surge->setSamplerate(sr);
+
+            REQUIRE(surge->storage.samplerate == 48000);
+            REQUIRE(surge->storage.dsamplerate_os_inv == Approx(1.0 / 96000.0).margin(1e-12));
+
+            surge->playNote(0, 60, 100, 0);
+            for (int i = 0; i < 200; ++i)
+            {
+                surge->process();
+                for (int s = 0; s < BLOCK_SIZE; ++s)
+                {
+                    REQUIRE(std::isfinite(surge->output[0][s]));
+                    REQUIRE(std::isfinite(surge->output[1][s]));
+                }
+            }
+        }
+    }
+
+    SECTION("Valid Rates Are Still Applied")
+    {
+        auto surge = Surge::Headless::createSurge(48000);
+        REQUIRE(surge);
+
+        surge->setSamplerate(96000);
+        REQUIRE(surge->storage.samplerate == 96000);
+    }
+}
+
+TEST_CASE("Audio Input Is Cleared When Not Processing Input", "[dsp]") // See issue 8240
+{
+    auto surge = Surge::Headless::createSurge(48000);
+    REQUIRE(surge);
+
+    for (int c = 0; c < 2; ++c)
+    {
+        std::fill(surge->storage.audio_in[c], surge->storage.audio_in[c] + BLOCK_SIZE_OS, 1.f);
+        std::fill(surge->storage.audio_in_nonOS[c], surge->storage.audio_in_nonOS[c] + BLOCK_SIZE,
+                  1.f);
+    }
+
+    surge->process_input = false;
+    surge->process();
+
+    for (int c = 0; c < 2; ++c)
+    {
+        INFO("Channel " << c);
+        for (int s = 0; s < BLOCK_SIZE_OS; ++s)
+            REQUIRE(surge->storage.audio_in[c][s] == 0.f);
+        for (int s = 0; s < BLOCK_SIZE; ++s)
+            REQUIRE(surge->storage.audio_in_nonOS[c][s] == 0.f);
+    }
+}
+
+TEST_CASE("Oscillator Onset Across Parameters", "[dsp]") // See issue 7570
+{
+    /*
+    ** The onset bound is a property of the seeding, so it has to hold across the parameter
+    ** space rather than only at the defaults. The Classic segment durations depend on both
+    ** pulse widths and its levels on Shape and Sub Mix, so an error in the replay can hide
+    ** at 0.5 and show up at the edges.
+    */
+    constexpr int maxOnset{16};
+    constexpr int nTrials{8};
+    constexpr int nBlocks{32};
+
+    using C = ClassicOscillator;
+
+    auto surge = Surge::Headless::createSurge(44100);
+    auto storage = &surge->storage;
+    auto oscstorage = &(storage->getPatch().scene[0].osc[0]);
+
+    storage->rngGen.g.seed(7570);
+    oscstorage->retrigger.val.b = false;
+
+    for (float shape : {-1.f, 0.f, 1.f})
+    {
+        for (float w1 : {0.01f, 0.5f, 0.99f})
+        {
+            for (float w2 : {0.01f, 0.5f, 0.99f})
+            {
+                for (float sub : {0.f, 1.f})
+                {
+                    for (int uni : {1, 7})
+                    {
+                        unsigned char oscbuffer alignas(16)[oscillator_buffer_size];
+
+                        auto o = spawn_osc(ot_classic, storage, oscstorage,
+                                           storage->getPatch().scenedata[0],
+                                           storage->getPatch().scenedataOrig[0], oscbuffer);
+                        o->init_ctrltypes();
+                        o->init_default_values();
+                        o->init_extra_config();
+
+                        setOscParam(storage, oscstorage, C::co_shape, shape);
+                        setOscParam(storage, oscstorage, C::co_width1, w1);
+                        setOscParam(storage, oscstorage, C::co_width2, w2);
+                        setOscParam(storage, oscstorage, C::co_mainsubmix, sub);
+                        oscstorage->p[C::co_unison_voices].val.i = uni;
+
+                        int worstOnset{0};
+
+                        for (int trial = 0; trial < nTrials; ++trial)
+                        {
+                            o->init(60);
+
+                            int onset{nBlocks * BLOCK_SIZE_OS}, n{0};
+                            bool found{false};
+
+                            for (int j = 0; j < nBlocks && !found; ++j)
+                            {
+                                o->process_block(60, 0, true, false, 0);
+
+                                for (int i = 0; i < BLOCK_SIZE_OS; ++i, ++n)
+                                {
+                                    if (std::fabs(o->output[i]) > 1e-6)
+                                    {
+                                        onset = n;
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            worstOnset = std::max(worstOnset, onset);
+                        }
+
+                        o->~Oscillator();
+
+                        INFO("Classic with shape " << shape << " width1 " << w1 << " width2 " << w2
+                                                   << " sub " << sub << " unison " << uni
+                                                   << " has a worst case onset of " << worstOnset
+                                                   << " oversampled samples");
+                        REQUIRE(worstOnset <= maxOnset);
+                    }
+                }
+            }
+        }
+    }
+}
+
+namespace
+{
+constexpr int phaseShiftBlocks{64};
+constexpr int phaseShiftSettle{1024}; // oversampled samples, past the integrator transient
+constexpr int phaseShiftWindow{512};
+
+/*
+** Classic walks a four segment cycle lasting 2 * t, so the shift can be up to
+** two periods rather than one. At MIDI 60 a period is about 337 oversampled
+** samples, so this covers two full cycles.
+*/
+constexpr int phaseShiftMaxLag{1400};
+
+static_assert(phaseShiftSettle + phaseShiftWindow + phaseShiftMaxLag <
+                  phaseShiftBlocks * BLOCK_SIZE_OS,
+              "render is too short");
+
+// Renders one note-on of a single voice at MIDI 60, with no drift, so that two renders
+// differ only in their start phase
+void renderPhaseShiftNote(SurgeStorage *storage, int type, bool retrigger, float sync,
+                          std::vector<float> &out)
+{
+    auto oscstorage = &(storage->getPatch().scene[0].osc[0]);
+
+    unsigned char oscbuffer alignas(16)[oscillator_buffer_size];
+
+    oscstorage->retrigger.val.b = retrigger;
+
+    auto o = spawn_osc(type, storage, oscstorage, storage->getPatch().scenedata[0],
+                       storage->getPatch().scenedataOrig[0], oscbuffer);
+    o->init_ctrltypes();
+    o->init_default_values();
+    o->init_extra_config();
+
+    pushOscParamsToScene(storage, oscstorage);
+
+    if (type == ot_classic)
+    {
+        setOscParam(storage, oscstorage, ClassicOscillator::co_sync, sync);
+    }
+
+    o->init(60, false, false);
+
+    out.clear();
+
+    for (int j = 0; j < phaseShiftBlocks; ++j)
+    {
+        o->process_block(60, 0, false, false, 0);
+
+        for (int i = 0; i < BLOCK_SIZE_OS; ++i)
+        {
+            out.push_back(o->output[i]);
+        }
+    }
+
+    o->~Oscillator();
+}
+
+// Normalized cross correlation of a window of a against the same window of b at lag
+double correlateAtLag(const std::vector<float> &a, const std::vector<float> &b, int lag)
+{
+    double ma{0}, mb{0};
+
+    for (int i = 0; i < phaseShiftWindow; ++i)
+    {
+        ma += a[phaseShiftSettle + i];
+        mb += b[phaseShiftSettle + lag + i];
+    }
+
+    ma /= phaseShiftWindow;
+    mb /= phaseShiftWindow;
+
+    double num{0}, da{0}, db{0};
+
+    for (int i = 0; i < phaseShiftWindow; ++i)
+    {
+        double x = a[phaseShiftSettle + i] - ma;
+        double y = b[phaseShiftSettle + lag + i] - mb;
+
+        num += x * y;
+        da += x * x;
+        db += y * y;
+    }
+
+    return (da > 0 && db > 0) ? num / std::sqrt(da * db) : 0.0;
+}
+
+// The lag at which b best matches a, and how well it matches there
+std::pair<int, double> bestPhaseShift(const std::vector<float> &a, const std::vector<float> &b)
+{
+    int bestLag{0};
+    double best{-1.0};
+
+    for (int lag = 0; lag < phaseShiftMaxLag; ++lag)
+    {
+        auto c = correlateAtLag(a, b, lag);
+
+        if (c > best)
+        {
+            best = c;
+            bestLag = lag;
+        }
+    }
+
+    return {bestLag, best};
+}
+} // namespace
+
+TEST_CASE("Retrigger Off Is A Phase Shift", "[dsp]") // See issue 7570
+{
+    /*
+    ** Turning retrigger off should change where in the cycle a voice starts and nothing
+    ** else, so the retrigger-off output has to be the retrigger-on output shifted in time.
+    **
+    ** This is the invariant the mid-cycle seeding exists to satisfy, and the one that
+    ** breaks if ::init and ::convolute stop agreeing about the cycle: a voice seeded with
+    ** the wrong period still makes sound and still starts promptly, but it is no longer the
+    ** same waveform.
+    */
+    constexpr int nTrials{8};
+
+    struct Case
+    {
+        int type;
+        float sync;
+    };
+
+    for (const auto &c : {Case{ot_classic, 0.f}, Case{ot_classic, 12.f}, Case{ot_wavetable, 0.f}})
+    {
+        auto surge = Surge::Headless::createSurge(44100);
+        auto storage = &surge->storage;
+
+        storage->rngGen.g.seed(7570);
+        buildSineWavetable(&(storage->getPatch().scene[0].osc[0]));
+
+        std::vector<float> on, off;
+
+        renderPhaseShiftNote(storage, c.type, true, c.sync, on);
+
+        double worst{1.0};
+
+        for (int trial = 0; trial < nTrials; ++trial)
+        {
+            renderPhaseShiftNote(storage, c.type, false, c.sync, off);
+            worst = std::min(worst, bestPhaseShift(on, off).second);
+        }
+
+        INFO("Oscillator " << osc_type_names[c.type] << " with sync " << c.sync
+                           << " retrigger off correlates with retrigger on at " << worst);
+        REQUIRE(worst > 0.98);
+    }
+}
+
+TEST_CASE("Synced Start Phase Covers The Whole Cycle", "[dsp]") // See issue 7570
+{
+    /*
+    ** With sync on, the waveform repeats at the leader period, so a retrigger-off voice
+    ** should be able to start anywhere in that period. Seeding syncstate from the follower
+    ** segment fires a sync reset almost at once, which throws the drawn phase away and
+    ** confines the start to the first follower segment: about 1/8 of the cycle at Sync +12.
+    ** Unison voices then start almost phase locked.
+    **
+    ** Measure each note-on's shift against a retrigger-on render, fold it into the leader
+    ** period, and require every quarter of the period to be hit.
+    */
+    constexpr int nTrials{32};
+    constexpr float sync{12.f};
+
+    auto surge = Surge::Headless::createSurge(44100);
+    auto storage = &surge->storage;
+
+    storage->rngGen.g.seed(7570);
+
+    // MIDI 60 in oversampled samples; the leader runs at the unsynced pitch
+    const double period = storage->dsamplerate_os / (8.175798915 * std::pow(2.0, 60.0 / 12.0));
+
+    std::vector<float> on, off;
+
+    renderPhaseShiftNote(storage, ot_classic, true, sync, on);
+
+    bool hit[4]{false, false, false, false};
+
+    for (int trial = 0; trial < nTrials; ++trial)
+    {
+        renderPhaseShiftNote(storage, ot_classic, false, sync, off);
+
+        auto lag = bestPhaseShift(on, off).first;
+        auto inPeriod = std::fmod((double)lag, period);
+
+        hit[std::min(3, (int)(4.0 * inPeriod / period))] = true;
+    }
+
+    for (int q = 0; q < 4; ++q)
+    {
+        INFO("No retrigger-off start landed in quarter " << q << " of the leader period over "
+                                                         << nTrials << " note ons");
+        REQUIRE(hit[q]);
+    }
+}
+
+/*
+** The tests around this one cover different failure modes of the mid-cycle seeding, and
+** none of them subsumes another. That is worth stating, because it is not obvious and it
+** cost a few rounds of mutation testing to establish:
+**
+** - Retrigger Off Is A Phase Shift compares steady state, so it catches a voice
+**   that settles into the wrong waveform. It cannot catch anything about the onset:
+**   Classic resets its level absolutely at state 0 and recomputes rate on every
+**   convolute, so seeding errors wash out within a cycle or two, and a correlation
+**   that searches over lag is blind to a phase offset by construction.
+**
+** - Synced Start Phase Covers The Whole Cycle looks at the spread of those offsets, so
+**   it catches a start phase that collapses under sync.
+**
+** - Onset Step Stays Within The Waveform looks at the level of sample 0, so it
+**   catches a wrongly seeded level. It is blind to an error in WHEN the next
+**   impulse fires.
+**
+** - First Block Runs At The Steady Rate looks at how fast the first block is
+**   running, so it catches a wrongly seeded period, which is the bug that reached
+**   review.
+**
+** One gap is known and not covered: seeding the voice into the wrong segment of the
+** cycle is not reliably caught by any of them.
+*/
+
+TEST_CASE("Onset Step Stays Within The Waveform", "[dsp]") // See issue 7570
+{
+    /*
+    ** Starting mid-cycle means starting at an arbitrary level, so there is a step at note
+    ** on. It should stay within what the waveform does anyway rather than exceeding it.
+    **
+    ** For Classic the reference is the oscillator's own largest step and the bound is 1.5
+    ** times that. Measured at 1.10 at MIDI 60 with sync off and 1.38 with Sync 60. The sync
+    ** case is no worse than the same pitch unsynced: MIDI 120 with sync off also measures
+    ** 1.38, because at about ten samples a cycle the band limited edge spreads over more
+    ** than one sample, so the largest running step shrinks against the level range.
+    ** Seeding the integrator with a level 50% too large takes the sync off case to 1.65,
+    ** so the bound sits in the gap rather than near either end.
+    **
+    ** This is a default parameter bound. At extreme Width and Shape settings the ratio
+    ** legitimately reaches about 3.7, since the waveform is far more asymmetric there.
+    **
+    ** S&H is band limited noise, whose running steps are much smaller than its held levels,
+    ** so its reference is the largest running level instead. Measured at 0.78 at MIDI 60
+    ** and 1.15 at MIDI 148 with Sync 60, which runs deep in Economy Mode, where every held
+    ** level is scaled down by levelComp. A seeded level that skips that scaling takes the
+    ** Economy Mode case to 3.19.
+    */
+    constexpr int nTrials{200};
+    constexpr int warmup{8};
+    constexpr int steadyBlocks{40};
+
+    struct Case
+    {
+        int type;
+        int note;
+        float sync;
+        bool againstPeak;
+        float maxRatio;
+    };
+
+    for (const auto &c :
+         {Case{ot_classic, 36, 0.f, false, 1.5f}, Case{ot_classic, 36, 60.f, false, 1.5f},
+          Case{ot_classic, 60, 0.f, false, 1.5f}, Case{ot_classic, 60, 60.f, false, 1.5f},
+          Case{ot_shnoise, 60, 0.f, true, 1.4f}, Case{ot_shnoise, 148, 60.f, true, 1.4f}})
+    {
+        auto surge = Surge::Headless::createSurge(44100);
+        auto storage = &surge->storage;
+        auto oscstorage = &(storage->getPatch().scene[0].osc[0]);
+
+        unsigned char oscbuffer alignas(16)[oscillator_buffer_size];
+
+        storage->rngGen.g.seed(7570);
+        oscstorage->retrigger.val.b = false;
+
+        auto o = spawn_osc(c.type, storage, oscstorage, storage->getPatch().scenedata[0],
+                           storage->getPatch().scenedataOrig[0], oscbuffer);
+        o->init_ctrltypes();
+        o->init_default_values();
+        o->init_extra_config();
+
+        pushOscParamsToScene(storage, oscstorage);
+        setOscParam(storage, oscstorage,
+                    c.type == ot_classic ? (int)ClassicOscillator::co_sync
+                                         : (int)SampleAndHoldOscillator::shn_sync,
+                    c.sync);
+
+        float worst{0.f}, worstJump{0.f}, worstRef{0.f};
+
+        for (int trial = 0; trial < nTrials; ++trial)
+        {
+            o->init(c.note, false, false);
+
+            o->process_block(c.note, 0, false, false, 0);
+
+            // the buffers start empty, so the step at sample 0 is measured from silence
+            float jump = std::fabs(o->output[0]);
+            float prev = o->output[BLOCK_SIZE_OS - 1];
+
+            for (int j = 0; j < warmup; ++j)
+            {
+                o->process_block(c.note, 0, false, false, 0);
+                prev = o->output[BLOCK_SIZE_OS - 1];
+            }
+
+            float step{0.f}, peak{0.f};
+
+            for (int j = 0; j < steadyBlocks; ++j)
+            {
+                o->process_block(c.note, 0, false, false, 0);
+
+                for (int i = 0; i < BLOCK_SIZE_OS; ++i)
+                {
+                    step = std::max(step, std::fabs(o->output[i] - prev));
+                    peak = std::max(peak, std::fabs(o->output[i]));
+                    prev = o->output[i];
+                }
+            }
+
+            float ref = c.againstPeak ? peak : step;
+            float ratio = jump / std::max(ref, 1e-6f);
+
+            if (ratio > worst)
+            {
+                worst = ratio;
+                worstJump = jump;
+                worstRef = ref;
+            }
+        }
+
+        o->~Oscillator();
+
+        INFO("Oscillator " << osc_type_names[c.type] << " at note " << c.note << " with sync "
+                           << c.sync << " opens with a step of " << worstJump
+                           << " against a largest running " << (c.againstPeak ? "level" : "step")
+                           << " of " << worstRef << ", a ratio of " << worst);
+        REQUIRE(worst < c.maxRatio);
+    }
+}
+
+TEST_CASE("First Block Runs At The Steady Rate", "[dsp]") // See issue 7570
+{
+    /*
+    ** A voice seeded mid-cycle has to be seeded from the period it will actually run at.
+    ** Computing that period from detune alone, while convolute computes it from detune plus
+    ** sync, leaves a synced voice running its first block at the wrong rate before it
+    ** settles. That is the bug this guards, and it reached review unnoticed because the
+    ** voice still starts promptly and still settles correctly.
+    **
+    ** The proxy for rate is the mean absolute first difference of a block. A voice emitting
+    ** half as many impulses roughly halves it. It needs no amplitude threshold and, unlike
+    ** counting edges, cannot merge two impulses that land a couple of samples apart, which
+    ** they do at this pitch.
+    **
+    ** Assert on the mean across trials rather than on any single trial. With sync active a
+    ** voice is reset often, so depending on its random start phase an individual trial can
+    ** recover before the block ends: seeding the period without sync still produced single
+    ** trials up to 0.997 even though its mean was 0.365, against a baseline mean of 0.937
+    ** that stayed inside 0.90 to 1.03. The bug is statistical and the test has to be too.
+    **
+    ** Wavetable at a high note with Formant up covers the same failure from another side:
+    ** if the first step reads its state before masking it to the mipmapped table, it gets
+    ** the end-of-cycle Formant padding and holds its first level for an extra half cycle.
+    ** Measured at 1.02 with the mask in place and 0.65 without it.
+    */
+    constexpr double minMeanRatio{0.8};
+    constexpr int nTrials{100};
+    constexpr int warmup{8};
+    constexpr int steadyBlocks{40};
+
+    auto meanAbsDiff = [](const float *b, float prev) {
+        double s{0};
+
+        for (int i = 0; i < BLOCK_SIZE_OS; ++i)
+        {
+            s += std::fabs(b[i] - prev);
+            prev = b[i];
+        }
+
+        return s / BLOCK_SIZE_OS;
+    };
+
+    struct Case
+    {
+        int type;
+        int note;
+        int param;
+        float value;
+    };
+
+    for (const auto &c : {Case{ot_classic, 72, ClassicOscillator::co_sync, 60.f},
+                          Case{ot_shnoise, 72, SampleAndHoldOscillator::shn_sync, 60.f},
+                          Case{ot_wavetable, 96, WavetableOscillator::wt_formant, 12.f}})
+    {
+        auto surge = Surge::Headless::createSurge(44100);
+        auto storage = &surge->storage;
+        auto oscstorage = &(storage->getPatch().scene[0].osc[0]);
+
+        unsigned char oscbuffer alignas(16)[oscillator_buffer_size];
+
+        storage->rngGen.g.seed(7570);
+        buildSineWavetable(oscstorage);
+        oscstorage->retrigger.val.b = false;
+
+        auto o = spawn_osc(c.type, storage, oscstorage, storage->getPatch().scenedata[0],
+                           storage->getPatch().scenedataOrig[0], oscbuffer);
+        o->init_ctrltypes();
+        o->init_default_values();
+        o->init_extra_config();
+
+        pushOscParamsToScene(storage, oscstorage);
+        setOscParam(storage, oscstorage, c.param, c.value);
+
+        double sumRatio{0};
+
+        for (int trial = 0; trial < nTrials; ++trial)
+        {
+            o->init(c.note, false, false);
+
+            o->process_block(c.note, 0, false, false, 0);
+
+            // the first block starts from silence, so the previous sample is zero
+            double first = meanAbsDiff(o->output, 0.f);
+            float prev = o->output[BLOCK_SIZE_OS - 1];
+
+            for (int j = 0; j < warmup; ++j)
+            {
+                o->process_block(c.note, 0, false, false, 0);
+                prev = o->output[BLOCK_SIZE_OS - 1];
+            }
+
+            double steady{0};
+
+            for (int j = 0; j < steadyBlocks; ++j)
+            {
+                o->process_block(c.note, 0, false, false, 0);
+                steady += meanAbsDiff(o->output, prev);
+                prev = o->output[BLOCK_SIZE_OS - 1];
+            }
+
+            steady /= steadyBlocks;
+
+            sumRatio += first / std::max(steady, 1e-9);
+        }
+
+        o->~Oscillator();
+
+        double meanRatio = sumRatio / nTrials;
+
+        INFO("Oscillator " << osc_type_names[c.type] << " at note " << c.note
+                           << " runs its first block at " << meanRatio
+                           << " of the steady state rate, averaged over " << nTrials
+                           << " note ons");
+        REQUIRE(meanRatio > minMeanRatio);
+    }
+}

@@ -1,0 +1,554 @@
+Ghost Bass build 7 - quality gate (gb_quality.py) on the whole library (171 presets), on a quiet Mac (GitHub macos-15),
+Mac gate run 42006791387, commit 8d791ef (the build 7 code and presets).
+
+What is measured now (build 7):
+- SAFETY LIMITER (our output guard) OFF, as it ships: Surge's output is measured untouched.
+- LEVEL MATCH on: each preset's measured per-gesture level (ghost/tools/levelcomp.py: every axis, all eight
+  corners, three SHAKE seeds, to -2 dBTP) is taken back with Surge's own master volume while a sculpt gesture,
+  SHAKE or a TERRAIN land moves the sound.
+- TERRAIN: every shape preset applied to every preset - true peak, DC, mono, a click when the land arrives
+  mid-note, and the sub (30-120 Hz) within 3 dB of the patch alone.
+- The six macros at 100 % are reported on their own line: they are the sound's own Surge controls and play as
+  Surge plays them (with the limiter off, a macro at full can go over -1 dBTP, as in Surge itself).
+- PHYSICAL aliasing n/a (Flues: fixed 48 kHz and random excitation; the median difference is printed).
+
+Result: 122 of 171 pass. Failures by kind (a preset can have several):
+     15 TERRAIN-SUB
+     11 SCULPT-MONO
+      9 TERRAIN-DC
+      6 DC
+      4 DEAD-MACRO:SPACE
+      3 SCULPT-CLICK
+      2 TERRAIN-MONO
+      2 DEAD-MACRO:MOTION/WIDTH
+      1 MONO
+      1 DEAD-MACRO:WIDTH
+      1 DEAD-MACRO:MOTION
+      1 DEAD-MACRO:BITE
+      1 ALIAS
+
+Why they fail (honest):
+- TERRAIN-SUB: on the strongest lands, the sculpt the land pulls plus LEVEL MATCH turn the whole bass down by
+  more than 3 dB, the sub with it.
+- SCULPT-MONO: the sculpt's extreme gestures widen these sounds below 120 Hz; the old output guard used to make
+  the lows mono, and it is now off by default (switch the SAFETY LIMITER on to get mono lows back).
+- DC / TERRAIN-DC: DC from a drive / waveshaper effect after Surge's scene highpass (the old guard's DC
+  blocker hid it); Surge's own scene highpass cannot reach it.
+- DEAD-MACRO: SPACE / WIDTH / BITE now measure as too small on a few sounds without the guard.
+- SCULPT-CLICK: on three plucked Block Step sounds, LEVEL MATCH's level move during a sudden flick is heard.
+- ALIAS / MONO: one preset each, measured without the guard.
+
+Every preset, per line (then the macros' 100 % line and the TERRAIN line):
+ANALOG             BIG BRASS BASS         TP  -3.99  DC -102.3  MONO 0.04  ALIAS  -88.9  CLICK  -0.6  RATES ok  SCULPT TP  -5.31 MONO 0.17 CLICK  -0.1  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 2.93 dBTP, mono loss 0.21 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -4.50 dBTP (CANYON), mono 0.11 dB, DC -86.3 dB, sub vs body -0.7 dB (absolute -2.1 dB), click -0.1 dB
+ANALOG             LADDER SQUELCH         TP  -4.59  DC  -96.6  MONO 0.33  ALIAS  -91.1  CLICK  -1.8  RATES ok  SCULPT TP  -3.19 MONO 1.93 CLICK  -0.2  GR  0.0 FAIL SCULPT-MONO
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -0.19 dBTP, mono loss 0.96 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -3.19 dBTP (CANYON), mono 0.57 dB, DC -83.6 dB, sub vs body -0.6 dB (absolute -2.1 dB), click -2.5 dB
+ANALOG             RUBBER BAND            TP -12.79  DC -101.3  MONO 0.01  ALIAS -100.9  CLICK -99.0  RATES ok  SCULPT TP  -6.93 MONO 0.81 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -4.99 dBTP, mono loss 0.11 dB
+      TERRAIN shapes: worst TP -12.78 dBTP (BADLANDS), mono 0.04 dB, DC -92.4 dB, sub vs body -1.0 dB (absolute -1.5 dB), click -99.0 dB
+ANALOG             VINTAGE FINGER         TP  -7.02  DC  -91.9  MONO 0.01  ALIAS -103.1  CLICK  -0.1  RATES ok  SCULPT TP  -4.90 MONO 0.10 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 2.38 dBTP, mono loss 1.90 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -6.88 dBTP (CANYON), mono 0.03 dB, DC -85.7 dB, sub vs body -6.3 dB (absolute -1.2 dB), click -99.0 dB
+BLOCK STEP BASSES  BS BASS 02 SHORT       TP -48.62  DC -136.2  MONO 0.00  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP -44.39 MONO 0.00 CLICK -99.0  GR  0.0 FAIL TERRAIN-SUB
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 2.18 dBTP, mono loss 0.21 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -47.86 dBTP (CANYON), mono 0.00 dB, DC -120.7 dB, sub vs body -1.0 dB (absolute -3.7 dB), click -99.0 dB
+BLOCK STEP BASSES  BS BASS 05             TP  -6.29  DC -100.3  MONO 0.00  ALIAS    n/a  CLICK   0.0  RATES ok  SCULPT TP  -7.59 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 8.18 dBTP, mono loss 0.15 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -5.96 dBTP (CANYON), mono 0.00 dB, DC -93.3 dB, sub vs body -0.2 dB (absolute -2.6 dB), click -99.0 dB
+BLOCK STEP BASSES  BS BASS 08 GLIDE       TP  -9.46  DC -108.5  MONO 0.00  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP  -7.07 MONO 0.01 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 6.45 dBTP, mono loss 0.17 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -7.45 dBTP (CANYON), mono 0.00 dB, DC -84.4 dB, sub vs body -0.1 dB (absolute -2.9 dB), click -99.0 dB
+BLOCK STEP BASSES  BS BASS 10             TP -37.74  DC -136.1  MONO 0.00  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP -34.51 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 3.02 dBTP, mono loss 0.11 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -36.81 dBTP (VOLCANO), mono 0.00 dB, DC -127.5 dB, sub vs body -0.2 dB (absolute -2.6 dB), click -99.0 dB
+BLOCK STEP BASSES  BS BASS 14 SLIDE       TP -19.96  DC -150.8  MONO 0.00  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP -17.15 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 3.10 dBTP, mono loss 0.09 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -18.90 dBTP (VOLCANO), mono 0.00 dB, DC -132.0 dB, sub vs body -0.2 dB (absolute -2.6 dB), click -99.0 dB
+BLOCK STEP BASSES  BS BASS 17             TP -23.33  DC -104.0  MONO 0.00  ALIAS    n/a  CLICK   0.0  RATES ok  SCULPT TP  -9.32 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 1.86 dBTP, mono loss 0.04 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -12.71 dBTP (RIDGE), mono 0.00 dB, DC -98.2 dB, sub vs body -0.4 dB (absolute -1.6 dB), click -99.0 dB
+CINEMATIC & HYBRID DOOM BRASS             TP  -5.96  DC -107.7  MONO 0.01  ALIAS  -71.9  CLICK  -3.8  RATES ok  SCULPT TP  -4.84 MONO 0.01 CLICK  -5.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 1.34 dBTP, mono loss 0.04 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -5.60 dBTP (BADLANDS), mono 0.01 dB, DC -98.8 dB, sub vs body -1.5 dB (absolute -1.8 dB), click -99.0 dB
+CINEMATIC & HYBRID HYBRID TITAN           TP  -9.01  DC  -98.4  MONO 0.00  ALIAS -108.0  CLICK  -6.8  RATES ok  SCULPT TP  -7.44 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 6.96 dBTP, mono loss 1.91 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -9.26 dBTP (CANYON), mono 0.00 dB, DC -87.8 dB, sub vs body -1.4 dB (absolute -1.6 dB), click -99.0 dB
+CINEMATIC & HYBRID TRAILER BOOM           TP  -9.99  DC  -92.1  MONO 0.00  ALIAS  -47.9  CLICK  -0.4  RATES ok  SCULPT TP  -8.99 MONO 0.00 CLICK -99.0  GR  0.0 FAIL TERRAIN-SUB
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -5.27 dBTP, mono loss 0.03 dB
+      TERRAIN shapes: worst TP -9.96 dBTP (CANYON), mono 0.00 dB, DC -85.6 dB, sub vs body -3.4 dB (absolute -4.0 dB), click -99.0 dB
+DUBSTEP & GROWL    COLOR BASS CHORD       TP  -7.29  DC  -94.6  MONO 0.01  ALIAS  -91.5  CLICK -99.0  RATES ok  SCULPT TP  -5.02 MONO 0.01 CLICK   2.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 10.94 dBTP, mono loss 1.87 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -6.93 dBTP (CANYON), mono 0.01 dB, DC -85.0 dB, sub vs body -2.7 dB (absolute -1.7 dB), click -99.0 dB
+DUBSTEP & GROWL    GRIME SQUARE           TP  -3.80  DC  -93.7  MONO 0.03  ALIAS  -72.1  CLICK -99.0  RATES ok  SCULPT TP  -2.34 MONO 0.29 CLICK  -0.9  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 2.32 dBTP, mono loss 0.29 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -4.03 dBTP (RIDGE), mono 0.06 dB, DC -84.9 dB, sub vs body -0.9 dB (absolute -1.4 dB), click -99.0 dB
+DUBSTEP & GROWL    TEAROUT SCREECH        TP  -5.71  DC  -31.3  MONO 0.00  ALIAS  -97.6  CLICK -99.0  RATES ok  SCULPT TP  -3.47 MONO 0.00 CLICK -99.0  GR  0.0 FAIL DC,TERRAIN-DC
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 11.49 dBTP, mono loss 0.04 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -4.79 dBTP (CANYON), mono 0.00 dB, DC -26.9 dB, sub vs body -2.7 dB (absolute -1.9 dB), click -99.0 dB
+DUBSTEP & GROWL    WOBBLE MONSTER         TP  -7.14  DC  -74.6  MONO 0.13  ALIAS  -41.3  CLICK -99.0  RATES ok  SCULPT TP  -7.36 MONO 0.23 CLICK -99.0  GR  0.0 FAIL TERRAIN-DC
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -6.42 dBTP, mono loss 0.31 dB
+      TERRAIN shapes: worst TP -7.97 dBTP (CANYON), mono 0.17 dB, DC -55.8 dB, sub vs body -1.2 dB (absolute -1.8 dB), click -99.0 dB
+EXPERIMENTAL       FEEDBACK GHOST         TP  -6.98  DC  -87.0  MONO 0.00  ALIAS    n/a  CLICK  -0.9  RATES ok  SCULPT TP  -6.16 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -0.45 dBTP, mono loss 0.93 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -7.24 dBTP (CANYON), mono 0.00 dB, DC -81.2 dB, sub vs body -6.8 dB (absolute -1.3 dB), click -99.0 dB
+EXPERIMENTAL       GRAIN CLOUD BASS       TP  -6.98  DC -114.1  MONO 0.01  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP  -7.11 MONO 0.06 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 3.05 dBTP, mono loss 0.91 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -7.92 dBTP (BADLANDS), mono 0.03 dB, DC -93.1 dB, sub vs body -2.5 dB (absolute -1.9 dB), click -99.0 dB
+EXPERIMENTAL       NIMBUS SMEAR           TP  -7.49  DC  -85.3  MONO 0.04  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP  -4.62 MONO 0.04 CLICK  -0.4  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -0.88 dBTP, mono loss 0.12 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -6.58 dBTP (BADLANDS), mono 0.05 dB, DC -78.8 dB, sub vs body -4.5 dB (absolute -2.2 dB), click -99.0 dB
+EXPERIMENTAL       WAVEFOLD MORPH         TP  -6.53  DC  -97.7  MONO 0.00  ALIAS    n/a  CLICK  -6.5  RATES ok  SCULPT TP  -4.75 MONO 0.00 CLICK  -1.5  GR  0.0 FAIL TERRAIN-SUB
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 3.83 dBTP, mono loss 0.07 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -6.35 dBTP (CANYON), mono 0.00 dB, DC -90.0 dB, sub vs body -1.1 dB (absolute -4.0 dB), click -4.2 dB
+HOUSE              DEEP ORGAN             TP  -6.56  DC -193.4  MONO 0.00  ALIAS -113.8  CLICK -99.0  RATES ok  SCULPT TP  -5.06 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 10.03 dBTP, mono loss 1.73 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -6.50 dBTP (CANYON), mono 0.00 dB, DC -85.4 dB, sub vs body -1.3 dB (absolute -0.6 dB), click -99.0 dB
+HOUSE              OFFBEAT PLUCK          TP  -3.00  DC -218.8  MONO 0.00  ALIAS  -47.4  CLICK   0.0  RATES ok  SCULPT TP  -6.09 MONO 0.12 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 8.36 dBTP, mono loss 0.09 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -3.06 dBTP (BADLANDS), mono 0.01 dB, DC -79.4 dB, sub vs body -0.4 dB (absolute -0.9 dB), click -99.0 dB
+HOUSE              ROLLING PLUCK          TP  -3.00  DC -203.2  MONO 0.01  ALIAS  -67.2  CLICK   0.0  RATES ok  SCULPT TP  -2.79 MONO 1.25 CLICK -99.0  GR  0.0 FAIL SCULPT-MONO
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 5.79 dBTP, mono loss 0.24 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -3.55 dBTP (CANYON), mono 0.02 dB, DC -95.4 dB, sub vs body -1.1 dB (absolute -2.5 dB), click -99.0 dB
+HOUSE              UK GARAGE WOB          TP  -4.52  DC -211.3  MONO 0.06  ALIAS  -82.9  CLICK -99.0  RATES ok  SCULPT TP  -4.90 MONO 0.63 CLICK  -2.6  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 0.84 dBTP, mono loss 0.75 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -5.13 dBTP (CANYON), mono 0.06 dB, DC -85.8 dB, sub vs body -0.4 dB (absolute -1.8 dB), click -99.0 dB
+MORPH              DRAWN STEPS            TP  -7.44  DC -104.4  MONO 0.30  ALIAS  -45.5  CLICK -99.0  RATES ok  SCULPT TP  -4.93 MONO 3.42 CLICK -99.0  GR  0.0 FAIL SCULPT-MONO
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 0.09 dBTP, mono loss 3.30 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -7.64 dBTP (VOLCANO), mono 0.57 dB, DC -98.6 dB, sub vs body -2.4 dB (absolute -2.2 dB), click -99.0 dB
+MORPH              SWING SUB TO GROWL     TP -11.59  DC -111.7  MONO 0.00  ALIAS -102.9  CLICK -99.0  RATES ok  SCULPT TP  -8.88 MONO 0.00 CLICK -99.0  GR  0.0 FAIL DEAD-MACRO:SPACE
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 6.42 dBTP, mono loss 2.26 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -11.58 dBTP (CANYON), mono 0.00 dB, DC -97.5 dB, sub vs body -8.2 dB (absolute -2.0 dB), click -99.0 dB
+PHYSICAL           BREATHY PIPE BASS      TP  -8.42  DC -131.3  MONO 0.00  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP  -7.14 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 4.49 dBTP, mono loss 0.44 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -5.38 dBTP (BADLANDS), mono 0.00 dB, DC -74.6 dB, sub vs body -0.6 dB (absolute -0.3 dB), click -99.0 dB
+PHYSICAL           SLAP THUMB             TP  -5.00  DC  -98.4  MONO 0.00  ALIAS    n/a  CLICK  -7.6  RATES ok  SCULPT TP  -5.50 MONO 0.00 CLICK  -1.3  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 4.79 dBTP, mono loss 0.40 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -4.75 dBTP (BADLANDS), mono 0.00 dB, DC -85.7 dB, sub vs body -0.5 dB (absolute -0.5 dB), click -99.0 dB
+REESE & DNB        BLACK HOLE REESE       TP  -8.61  DC  -91.7  MONO 0.03  ALIAS  -52.2  CLICK -99.0  RATES ok  SCULPT TP  -7.94 MONO 0.12 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 8.98 dBTP, mono loss 0.82 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -9.66 dBTP (BADLANDS), mono 0.05 dB, DC -83.4 dB, sub vs body -0.8 dB (absolute -1.8 dB), click -99.0 dB
+REESE & DNB        DEEP REESE DRONE       TP -10.76  DC -113.3  MONO 0.00  ALIAS  -94.3  CLICK -99.0  RATES ok  SCULPT TP  -7.54 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 6.42 dBTP, mono loss 3.20 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -9.97 dBTP (CANYON), mono 0.00 dB, DC -100.1 dB, sub vs body -5.3 dB (absolute -1.9 dB), click -99.0 dB
+REESE & DNB        LIQUID SUB             TP -10.98  DC -111.2  MONO 0.00  ALIAS -105.5  CLICK -99.0  RATES ok  SCULPT TP  -7.54 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 5.31 dBTP, mono loss 1.98 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -9.55 dBTP (CANYON), mono 0.00 dB, DC -94.6 dB, sub vs body -9.0 dB (absolute -1.9 dB), click -99.0 dB
+REESE & DNB        REESE SWELL            TP  -7.78  DC -115.6  MONO 0.08  ALIAS  -53.5  CLICK -99.0  RATES ok  SCULPT TP  -5.04 MONO 0.05 CLICK  -0.2  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -2.81 dBTP, mono loss 0.10 dB
+      TERRAIN shapes: worst TP -7.54 dBTP (CANYON), mono 0.08 dB, DC -103.8 dB, sub vs body -0.5 dB (absolute -1.8 dB), click -99.0 dB
+REESE & DNB        WIDE REESE             TP  -5.82  DC -104.9  MONO 0.17  ALIAS -120.0  CLICK -99.0  RATES ok  SCULPT TP  -3.72 MONO 0.16 CLICK  -7.1  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -2.68 dBTP, mono loss 0.31 dB
+      TERRAIN shapes: worst TP -6.45 dBTP (RIDGE), mono 0.22 dB, DC -85.5 dB, sub vs body -0.7 dB (absolute -1.4 dB), click -99.0 dB
+STRETCH            STRETCH GLASS DRONE    TP  -4.82  DC -109.7  MONO 0.08  ALIAS  -98.6  CLICK -99.0  RATES ok  SCULPT TP  -4.80 MONO 0.18 CLICK  -1.7  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 0.72 dBTP, mono loss 0.23 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -5.26 dBTP (CANYON), mono 0.23 dB, DC -86.9 dB, sub vs body -2.0 dB (absolute -2.1 dB), click -99.0 dB
+SUB & 808          808 LONG BOOM          TP  -9.50  DC  -91.3  MONO 0.00  ALIAS -112.2  CLICK  -0.1  RATES ok  SCULPT TP  -8.89 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -7.02 dBTP, mono loss 0.01 dB
+      TERRAIN shapes: worst TP -10.30 dBTP (TWIN PEAKS), mono 0.00 dB, DC -86.1 dB, sub vs body -2.5 dB (absolute -2.5 dB), click -99.0 dB
+SUB & 808          KICK SUB DRUM          TP  -6.67  DC  -90.9  MONO 0.00  ALIAS  -54.8  CLICK -99.0  RATES ok  SCULPT TP  -4.46 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 0.48 dBTP, mono loss 0.49 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -6.59 dBTP (CANYON), mono 0.00 dB, DC -85.5 dB, sub vs body -7.3 dB (absolute -1.3 dB), click -99.0 dB
+SUB & 808          SATURATED 808          TP  -7.79  DC  -99.7  MONO 0.00  ALIAS -109.3  CLICK -99.0  RATES ok  SCULPT TP  -7.10 MONO 0.00 CLICK   3.0  GR  0.0 FAIL TERRAIN-SUB
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 2.14 dBTP, mono loss 0.26 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -7.79 dBTP (TWIN PEAKS), mono 0.00 dB, DC -88.2 dB, sub vs body -0.7 dB (absolute -3.2 dB), click -99.0 dB
+TECHNO & ACID      ACID DISTORTED         TP  -8.13  DC  -62.5  MONO 0.48  ALIAS  -89.1  CLICK -99.0  RATES ok  SCULPT TP  -8.06 MONO 2.38 CLICK -99.0  GR  0.0 FAIL SCULPT-MONO
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -5.05 dBTP, mono loss 1.97 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -8.29 dBTP (CANYON), mono 0.27 dB, DC -60.8 dB, sub vs body -0.3 dB (absolute -1.3 dB), click -99.0 dB
+TECHNO & ACID      ACID TRACER            TP  -3.00  DC  -35.5  MONO 0.30  ALIAS  -68.8  CLICK -99.0  RATES ok  SCULPT TP  -3.08 MONO 0.16 CLICK -99.0  GR  0.0 FAIL DC,TERRAIN-DC
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 3.73 dBTP, mono loss 4.16 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -4.73 dBTP (CANYON), mono 0.22 dB, DC -37.7 dB, sub vs body -0.0 dB (absolute -0.0 dB), click -99.0 dB
+TECHNO & ACID      PEAK TIME GROWL        TP  -4.99  DC  -74.5  MONO 0.06  ALIAS  -91.7  CLICK -99.0  RATES ok  SCULPT TP  -4.46 MONO 0.17 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -4.25 dBTP, mono loss 0.25 dB
+      TERRAIN shapes: worst TP -5.28 dBTP (RIDGE), mono 0.04 dB, DC -64.8 dB, sub vs body -0.4 dB (absolute -0.9 dB), click -99.0 dB
+TECHNO & ACID      WAREHOUSE KICK BASS    TP  -5.41  DC  -87.5  MONO 0.00  ALIAS -117.1  CLICK  -0.7  RATES ok  SCULPT TP  -5.49 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 2.46 dBTP, mono loss 0.06 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -6.21 dBTP (LONE SPIRE), mono 0.00 dB, DC -82.9 dB, sub vs body -0.8 dB (absolute -1.9 dB), click -99.0 dB
+TERRAIN            TERRAIN GRIT SPIRE     TP  -2.06  DC  -90.2  MONO 0.05  ALIAS  -87.6  CLICK -99.0  RATES ok  SCULPT TP  -4.61 MONO 0.18 CLICK  -0.4  GR  0.0 FAIL TERRAIN-SUB
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 2.89 dBTP, mono loss 0.30 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -3.81 dBTP (BADLANDS), mono 0.15 dB, DC -81.3 dB, sub vs body -0.5 dB (absolute -4.3 dB), click -99.0 dB
+ANALOG             CHORUS BOUNCE          TP  -3.01  DC -101.2  MONO 0.03  ALIAS  -54.5  CLICK -99.0  RATES ok  SCULPT TP  -8.49 MONO 0.04 CLICK  -3.1  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 5.91 dBTP, mono loss 0.32 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -6.78 dBTP (BADLANDS), mono 0.03 dB, DC -93.5 dB, sub vs body -0.5 dB (absolute -1.9 dB), click -99.0 dB
+ANALOG             MINI 3 OSC             TP  -3.13  DC  -95.8  MONO 0.06  ALIAS  -81.8  CLICK -99.0  RATES ok  SCULPT TP  -7.68 MONO 0.33 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 10.17 dBTP, mono loss 0.43 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -3.37 dBTP (BADLANDS), mono 0.18 dB, DC -88.9 dB, sub vs body -0.4 dB (absolute -1.9 dB), click -99.0 dB
+ANALOG             SQUARE ROOT            TP  -5.80  DC  -88.8  MONO 0.08  ALIAS  -87.3  CLICK  -0.0  RATES ok  SCULPT TP  -4.09 MONO 0.53 CLICK  -1.5  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 2.42 dBTP, mono loss 0.65 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -4.59 dBTP (CANYON), mono 0.21 dB, DC -78.9 dB, sub vs body -0.6 dB (absolute -2.8 dB), click -99.0 dB
+ANALOG             WARM TUBE ROUND        TP -10.58  DC -110.1  MONO 0.00  ALIAS  -96.8  CLICK -99.0  RATES ok  SCULPT TP  -9.89 MONO 0.01 CLICK  -0.6  GR  0.0 FAIL TERRAIN-SUB
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -1.24 dBTP, mono loss 0.03 dB
+      TERRAIN shapes: worst TP -11.63 dBTP (TWIN PEAKS), mono 0.01 dB, DC -96.3 dB, sub vs body -4.1 dB (absolute -3.2 dB), click -99.0 dB
+BLOCK STEP BASSES  BS BASS 02             TP -49.75  DC -137.2  MONO 0.00  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP -45.44 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 3.50 dBTP, mono loss 0.29 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -49.05 dBTP (CANYON), mono 0.00 dB, DC -118.7 dB, sub vs body -0.4 dB (absolute -2.5 dB), click -99.0 dB
+BLOCK STEP BASSES  BS BASS 06 DIRTY       TP  -6.08  DC  -98.6  MONO 0.00  ALIAS    n/a  CLICK  -2.3  RATES ok  SCULPT TP  -5.50 MONO 0.00 CLICK   4.9  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 8.15 dBTP, mono loss 0.07 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -7.03 dBTP (SPIRE FOREST), mono 0.00 dB, DC -94.3 dB, sub vs body -0.5 dB (absolute -2.8 dB), click -99.0 dB
+BLOCK STEP BASSES  BS BASS 08             TP  -9.42  DC -106.2  MONO 0.00  ALIAS    n/a  CLICK  -1.6  RATES ok  SCULPT TP  -8.22 MONO 0.01 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 6.37 dBTP, mono loss 0.16 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -7.36 dBTP (BADLANDS), mono 0.00 dB, DC -86.8 dB, sub vs body -0.1 dB (absolute -2.9 dB), click -99.0 dB
+BLOCK STEP BASSES  BS BASS 11             TP -21.99  DC -109.9  MONO 0.00  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP -21.04 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 4.96 dBTP, mono loss 0.09 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -21.65 dBTP (CANYON), mono 0.00 dB, DC -105.3 dB, sub vs body -0.5 dB (absolute -2.1 dB), click -99.0 dB
+BLOCK STEP BASSES  BS BASS 14             TP -20.01  DC -117.4  MONO 0.00  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP -16.55 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 3.14 dBTP, mono loss 0.08 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -19.28 dBTP (VOLCANO), mono 0.00 dB, DC -112.7 dB, sub vs body -0.2 dB (absolute -2.6 dB), click -99.0 dB
+CINEMATIC & HYBRID BRAAM HIT              TP  -5.70  DC  -96.0  MONO 0.01  ALIAS  -61.0  CLICK  -0.3  RATES ok  SCULPT TP  -4.11 MONO 0.01 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 0.28 dBTP, mono loss 0.03 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -5.25 dBTP (BADLANDS), mono 0.01 dB, DC -90.2 dB, sub vs body -3.0 dB (absolute -0.5 dB), click -99.0 dB
+CINEMATIC & HYBRID EPIC OCTAVES           TP  -5.15  DC  -87.7  MONO 0.03  ALIAS  -96.1  CLICK -99.0  RATES ok  SCULPT TP  -6.09 MONO 0.06 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 5.01 dBTP, mono loss 0.08 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -4.85 dBTP (BADLANDS), mono 0.04 dB, DC -76.1 dB, sub vs body -1.5 dB (absolute -2.2 dB), click -99.0 dB
+CINEMATIC & HYBRID ORCHESTRAL LOW         TP  -8.00  DC -119.5  MONO 0.00  ALIAS -101.6  CLICK -99.0  RATES ok  SCULPT TP  -4.97 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 2.09 dBTP, mono loss 3.25 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -7.76 dBTP (CANYON), mono 0.00 dB, DC -106.2 dB, sub vs body -7.6 dB (absolute -1.9 dB), click -99.0 dB
+DUBSTEP & GROWL    BRO STEP SAW           TP  -8.35  DC -110.7  MONO 0.04  ALIAS  -59.9  CLICK -99.0  RATES ok  SCULPT TP  -6.69 MONO 0.07 CLICK -99.0  GR  0.0 FAIL TERRAIN-DC
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 7.67 dBTP, mono loss 1.93 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -7.97 dBTP (CANYON), mono 0.04 dB, DC -43.5 dB, sub vs body -1.7 dB (absolute -1.9 dB), click -99.0 dB
+DUBSTEP & GROWL    DEEP DUB SINE          TP -11.08  DC -111.8  MONO 0.00  ALIAS -109.0  CLICK -99.0  RATES ok  SCULPT TP  -8.17 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 5.59 dBTP, mono loss 3.23 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -9.72 dBTP (CANYON), mono 0.00 dB, DC -95.3 dB, sub vs body -9.2 dB (absolute -1.9 dB), click -99.0 dB
+DUBSTEP & GROWL    MID GROWL              TP  -9.76  DC -101.1  MONO 0.00  ALIAS  -83.6  CLICK -99.0  RATES ok  SCULPT TP  -8.39 MONO 0.00 CLICK -99.0  GR  0.0 FAIL DEAD-MACRO:WIDTH
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -3.82 dBTP, mono loss 0.01 dB
+      TERRAIN shapes: worst TP -9.44 dBTP (CANYON), mono 0.00 dB, DC -83.1 dB, sub vs body -0.1 dB (absolute -1.6 dB), click -99.0 dB
+DUBSTEP & GROWL    VOWEL BEAST            TP  -3.14  DC -116.2  MONO 0.00  ALIAS  -67.6  CLICK -99.0  RATES ok  SCULPT TP  -6.25 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 4.82 dBTP, mono loss 0.05 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -4.01 dBTP (CANYON), mono 0.00 dB, DC -96.1 dB, sub vs body -2.0 dB (absolute -1.9 dB), click -99.0 dB
+DUBSTEP & GROWL    WOBBLE TRIPLET         TP  -6.60  DC -131.6  MONO 0.02  ALIAS  -56.0  CLICK -99.0  RATES ok  SCULPT TP  -5.00 MONO 0.10 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 16.29 dBTP, mono loss 1.00 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -7.68 dBTP (BADLANDS), mono 0.04 dB, DC -75.2 dB, sub vs body -2.6 dB (absolute -1.9 dB), click -99.0 dB
+EXPERIMENTAL       FREQ SHIFT DRIFT       TP  -6.96  DC -117.3  MONO 1.70  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP  -4.59 MONO 2.00 CLICK  -5.1  GR  0.0 FAIL MONO,SCULPT-MONO,TERRAIN-MONO
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -0.68 dBTP, mono loss 3.87 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -6.23 dBTP (CANYON), mono 2.04 dB, DC -95.2 dB, sub vs body -1.6 dB (absolute -1.9 dB), click -99.0 dB
+EXPERIMENTAL       GRAIN GROWL            TP  -5.79  DC -105.5  MONO 0.00  ALIAS    n/a  CLICK  -0.7  RATES ok  SCULPT TP  -4.21 MONO 0.01 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 10.16 dBTP, mono loss 0.04 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -5.41 dBTP (VOLCANO), mono 0.01 dB, DC -75.7 dB, sub vs body -0.7 dB (absolute -2.0 dB), click -99.0 dB
+EXPERIMENTAL       RESONATOR BODY         TP  -3.08  DC  -48.3  MONO 0.00  ALIAS    n/a  CLICK  -0.7  RATES ok  SCULPT TP  -4.40 MONO 0.00 CLICK -99.0  GR  0.0 FAIL DC,TERRAIN-DC
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 4.15 dBTP, mono loss 0.05 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -3.57 dBTP (CANYON), mono 0.00 dB, DC -42.1 dB, sub vs body -0.2 dB (absolute +0.0 dB), click -99.0 dB
+HOUSE              ACID HOUSE SQUELCH     TP  -4.16  DC -196.3  MONO 0.38  ALIAS  -98.4  CLICK -99.0  RATES ok  SCULPT TP  -5.40 MONO 2.35 CLICK  -5.4  GR  0.0 FAIL SCULPT-MONO
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -0.82 dBTP, mono loss 3.74 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -6.70 dBTP (CANYON), mono 0.18 dB, DC -114.8 dB, sub vs body -0.2 dB (absolute -1.9 dB), click -99.0 dB
+HOUSE              DISCO OCTAVE           TP  -3.00  DC -196.1  MONO 0.01  ALIAS  -98.5  CLICK -99.0  RATES ok  SCULPT TP  -6.77 MONO 0.17 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 4.82 dBTP, mono loss 0.13 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -2.84 dBTP (BADLANDS), mono 0.01 dB, DC -81.7 dB, sub vs body -0.3 dB (absolute -0.9 dB), click -99.0 dB
+HOUSE              ORGAN STAB             TP  -5.17  DC -220.8  MONO 0.00  ALIAS  -61.0  CLICK  -0.3  RATES ok  SCULPT TP  -2.71 MONO 0.00 CLICK  -0.0  GR  0.0 FAIL TERRAIN-SUB
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 10.34 dBTP, mono loss 0.15 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -5.97 dBTP (TWIN PEAKS), mono 0.00 dB, DC -95.2 dB, sub vs body -11.2 dB (absolute -13.7 dB), click -0.5 dB
+HOUSE              ROLLING PROG           TP  -3.00  DC -197.3  MONO 0.03  ALIAS  -91.8  CLICK -99.0  RATES ok  SCULPT TP  -6.83 MONO 0.12 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 7.71 dBTP, mono loss 0.10 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -2.29 dBTP (BADLANDS), mono 0.02 dB, DC -75.6 dB, sub vs body -0.6 dB (absolute -0.7 dB), click -99.0 dB
+MORPH              CLEAN TO DIRTY         TP  -4.68  DC  -96.8  MONO 0.00  ALIAS -120.0  CLICK  -1.1  RATES ok  SCULPT TP  -5.73 MONO 0.00 CLICK   4.5  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 8.86 dBTP, mono loss 0.06 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -3.88 dBTP (CANYON), mono 0.00 dB, DC -92.6 dB, sub vs body -0.5 dB (absolute -2.8 dB), click -99.0 dB
+MORPH              PENDULUM REESE         TP  -8.62  DC -110.6  MONO 0.02  ALIAS  -86.4  CLICK -99.0  RATES ok  SCULPT TP  -4.82 MONO 0.05 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -3.29 dBTP, mono loss 0.08 dB
+      TERRAIN shapes: worst TP -7.73 dBTP (CANYON), mono 0.05 dB, DC -100.7 dB, sub vs body -0.5 dB (absolute -1.7 dB), click -99.0 dB
+MORPH              TRIPLET FLIP           TP  -3.49  DC  -95.8  MONO 0.00  ALIAS  -77.8  CLICK -99.0  RATES ok  SCULPT TP  -6.57 MONO 0.00 CLICK  -8.3  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 7.75 dBTP, mono loss 0.05 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -3.40 dBTP (BADLANDS), mono 0.00 dB, DC -88.1 dB, sub vs body -0.8 dB (absolute -1.9 dB), click -99.0 dB
+PHYSICAL           FINGER PLUCK           TP  -9.46  DC  -99.8  MONO 0.00  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP  -7.15 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 3.83 dBTP, mono loss 0.41 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -8.61 dBTP (CANYON), mono 0.00 dB, DC -91.8 dB, sub vs body -0.3 dB (absolute -0.2 dB), click -99.0 dB
+PHYSICAL           SOFT MALLET SUB        TP  -8.53  DC -101.5  MONO 0.00  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP -10.03 MONO 0.00 CLICK -99.0  GR  0.0 FAIL DEAD-MACRO:BITE
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 3.38 dBTP, mono loss 0.40 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -9.06 dBTP (CANYON), mono 0.00 dB, DC -67.5 dB, sub vs body -9.1 dB (absolute -0.2 dB), click -99.0 dB
+REESE & DNB        CLASSIC REESE          TP  -7.39  DC -110.6  MONO 0.02  ALIAS  -90.2  CLICK -99.0  RATES ok  SCULPT TP  -4.82 MONO 0.06 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -3.29 dBTP, mono loss 0.10 dB
+      TERRAIN shapes: worst TP -7.53 dBTP (CANYON), mono 0.04 dB, DC -95.8 dB, sub vs body -0.5 dB (absolute -1.9 dB), click -99.0 dB
+REESE & DNB        FORMANT REESE          TP  -9.11  DC -111.2  MONO 0.00  ALIAS  -89.4  CLICK -99.0  RATES ok  SCULPT TP  -5.83 MONO 0.00 CLICK   1.9  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -1.10 dBTP, mono loss 0.01 dB
+      TERRAIN shapes: worst TP -7.87 dBTP (CANYON), mono 0.00 dB, DC -94.3 dB, sub vs body -1.1 dB (absolute -2.0 dB), click -99.0 dB
+REESE & DNB        METALLIC NEURO         TP  -6.76  DC  -99.9  MONO 0.00  ALIAS -115.1  CLICK  -1.5  RATES ok  SCULPT TP  -5.57 MONO 0.00 CLICK   1.4  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 4.91 dBTP, mono loss 0.03 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -7.29 dBTP (BADLANDS), mono 0.00 dB, DC -83.3 dB, sub vs body -1.5 dB (absolute -2.0 dB), click -0.6 dB
+REESE & DNB        SNARL BASS             TP  -5.33  DC  -32.5  MONO 0.06  ALIAS  -57.4  CLICK -99.0  RATES ok  SCULPT TP  -5.44 MONO 0.08 CLICK -99.0  GR  0.0 FAIL DC,TERRAIN-DC
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 17.99 dBTP, mono loss 1.76 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -5.98 dBTP (CANYON), mono 0.11 dB, DC -27.5 dB, sub vs body -2.4 dB (absolute -1.9 dB), click -99.0 dB
+REESE & DNB        WIDE ROLLER            TP -10.69  DC  -99.0  MONO 0.00  ALIAS  -80.6  CLICK -99.0  RATES ok  SCULPT TP  -6.31 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 6.61 dBTP, mono loss 3.20 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -8.98 dBTP (CANYON), mono 0.00 dB, DC -89.4 dB, sub vs body -8.4 dB (absolute -1.9 dB), click -99.0 dB
+STRETCH            STRETCH SLOW BLOOM     TP  -5.75  DC -116.0  MONO 0.03  ALIAS -116.2  CLICK -99.0  RATES ok  SCULPT TP  -4.73 MONO 0.04 CLICK  -0.6  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 0.20 dBTP, mono loss 0.02 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -5.75 dBTP (VOLCANO), mono 0.05 dB, DC -88.8 dB, sub vs body -1.1 dB (absolute -2.3 dB), click -99.0 dB
+SUB & 808          CLEAN SUB CLICK        TP  -7.83  DC  -92.2  MONO 0.00  ALIAS  -54.7  CLICK -99.0  RATES ok  SCULPT TP -10.79 MONO 0.00 CLICK -99.0  GR  0.0 FAIL TERRAIN-SUB
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 2.05 dBTP, mono loss 0.60 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -9.98 dBTP (LONE SPIRE), mono 0.00 dB, DC -87.5 dB, sub vs body -2.0 dB (absolute -3.7 dB), click -99.0 dB
+SUB & 808          KNOCK 808              TP  -7.34  DC  -84.9  MONO 0.00  ALIAS  -69.6  CLICK -99.0  RATES ok  SCULPT TP  -7.42 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 4.87 dBTP, mono loss 0.50 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -7.83 dBTP (RIDGE), mono 0.00 dB, DC -79.4 dB, sub vs body -2.2 dB (absolute -2.5 dB), click -99.0 dB
+SUB & 808          SATURATED SUB          TP  -9.76  DC  -97.9  MONO 0.00  ALIAS -113.0  CLICK  -7.3  RATES ok  SCULPT TP  -9.80 MONO 0.00 CLICK  -0.3  GR  0.0 FAIL TERRAIN-SUB
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 1.13 dBTP, mono loss 0.02 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -10.84 dBTP (LONE SPIRE), mono 0.00 dB, DC -90.7 dB, sub vs body -1.1 dB (absolute -3.7 dB), click -99.0 dB
+TECHNO & ACID      ACID SQUARE SLIDE      TP  -7.22  DC -104.3  MONO 0.32  ALIAS  -84.1  CLICK -99.0  RATES ok  SCULPT TP  -5.24 MONO 2.52 CLICK -99.0  GR  0.0 FAIL SCULPT-MONO
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -0.15 dBTP, mono loss 1.29 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -8.08 dBTP (CANYON), mono 0.19 dB, DC -98.3 dB, sub vs body -0.1 dB (absolute -1.7 dB), click -99.0 dB
+TECHNO & ACID      DUB TECHNO CHORD       TP  -4.79  DC  -92.6  MONO 0.01  ALIAS  -38.7  CLICK  -0.0  RATES ok  SCULPT TP -10.05 MONO 0.59 CLICK -99.0  GR  0.0 FAIL ALIAS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 9.81 dBTP, mono loss 0.43 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -4.28 dBTP (BADLANDS), mono 0.02 dB, DC -88.1 dB, sub vs body -0.1 dB (absolute -0.6 dB), click -99.0 dB
+TECHNO & ACID      RAVE HOOVER BASS       TP  -5.74  DC -110.3  MONO 0.11  ALIAS  -41.0  CLICK -14.9  RATES ok  SCULPT TP  -4.43 MONO 0.10 CLICK  -2.4  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -0.31 dBTP, mono loss 0.18 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -6.50 dBTP (CANYON), mono 0.09 dB, DC -99.6 dB, sub vs body -0.7 dB (absolute -1.5 dB), click -99.0 dB
+TECHNO & ACID      WAREHOUSE RUMBLE       TP  -4.55  DC  -97.8  MONO 0.37  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP  -4.31 MONO 0.55 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 6.71 dBTP, mono loss 9.47 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -4.55 dBTP (TWIN PEAKS), mono 0.44 dB, DC -93.2 dB, sub vs body -0.4 dB (absolute -2.7 dB), click -99.0 dB
+TERRAIN            TERRAIN RISING FORMANT TP  -4.58  DC  -95.5  MONO 0.20  ALIAS  -49.9  CLICK -99.0  RATES ok  SCULPT TP  -4.51 MONO 0.93 CLICK  -1.5  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 2.70 dBTP, mono loss 1.29 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -4.31 dBTP (CANYON), mono 0.48 dB, DC -88.7 dB, sub vs body -0.4 dB (absolute -2.0 dB), click -99.0 dB
+ANALOG             HARD SYNC BASS         TP  -7.74  DC  -91.7  MONO 0.02  ALIAS  -92.2  CLICK -16.2  RATES ok  SCULPT TP  -5.06 MONO 0.15 CLICK   1.1  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 0.14 dBTP, mono loss 0.05 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -6.25 dBTP (CANYON), mono 0.03 dB, DC -80.3 dB, sub vs body -0.3 dB (absolute -2.0 dB), click -99.0 dB
+ANALOG             PATCH CABLE GROWL      TP  -5.00  DC  -94.8  MONO 0.02  ALIAS  -74.3  CLICK -99.0  RATES ok  SCULPT TP  -7.36 MONO 0.16 CLICK  -1.6  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 8.16 dBTP, mono loss 0.18 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -4.94 dBTP (CANYON), mono 0.05 dB, DC -74.0 dB, sub vs body -0.5 dB (absolute -2.3 dB), click -99.0 dB
+ANALOG             STEP ANALOG            TP  -3.00  DC  -92.2  MONO 0.02  ALIAS -103.3  CLICK  -2.1  RATES ok  SCULPT TP  -4.27 MONO 0.09 CLICK  -0.9  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 10.65 dBTP, mono loss 0.06 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -3.59 dBTP (BADLANDS), mono 0.03 dB, DC -80.2 dB, sub vs body -1.0 dB (absolute -2.5 dB), click -99.0 dB
+ANALOG             WARM TUBE SAW          TP  -8.63  DC  -89.5  MONO 0.00  ALIAS  -67.4  CLICK  -0.5  RATES ok  SCULPT TP  -6.98 MONO 0.00 CLICK  -0.4  GR  0.0 FAIL TERRAIN-SUB
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -3.35 dBTP, mono loss 0.04 dB
+      TERRAIN shapes: worst TP -8.79 dBTP (TWIN PEAKS), mono 0.00 dB, DC -85.0 dB, sub vs body -2.9 dB (absolute -3.1 dB), click -99.0 dB
+BLOCK STEP BASSES  BS BASS 03             TP -18.69  DC -123.2  MONO 0.00  ALIAS    n/a  CLICK  -0.0  RATES ok  SCULPT TP -19.81 MONO 0.03 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 3.33 dBTP, mono loss 0.84 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -18.95 dBTP (VOLCANO), mono 0.00 dB, DC -112.4 dB, sub vs body -1.8 dB (absolute -2.8 dB), click -99.0 dB
+BLOCK STEP BASSES  BS BASS 06             TP  -4.38  DC  -97.8  MONO 0.00  ALIAS    n/a  CLICK  -1.3  RATES ok  SCULPT TP  -7.06 MONO 0.00 CLICK  -9.7  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 8.34 dBTP, mono loss 0.06 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -4.13 dBTP (CANYON), mono 0.00 dB, DC -93.4 dB, sub vs body -0.7 dB (absolute -2.9 dB), click -99.0 dB
+BLOCK STEP BASSES  BS BASS 09 PLUCK       TP  -6.55  DC -108.1  MONO 0.00  ALIAS    n/a  CLICK  -0.1  RATES ok  SCULPT TP  -5.51 MONO 0.00 CLICK  25.9  GR  0.0 FAIL SCULPT-CLICK
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 2.94 dBTP, mono loss 0.06 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -6.23 dBTP (TWIN PEAKS), mono 0.00 dB, DC -101.1 dB, sub vs body -0.7 dB (absolute -2.9 dB), click -99.0 dB
+BLOCK STEP BASSES  BS BASS 12             TP -23.23  DC -119.2  MONO 0.00  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP -19.02 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 5.64 dBTP, mono loss 0.13 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -20.88 dBTP (RIDGE), mono 0.00 dB, DC -115.2 dB, sub vs body -0.5 dB (absolute -1.8 dB), click -99.0 dB
+BLOCK STEP BASSES  BS BASS 15             TP  -4.34  DC -102.9  MONO 0.00  ALIAS    n/a  CLICK  -2.2  RATES ok  SCULPT TP  -6.97 MONO 0.01 CLICK -10.1  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 12.13 dBTP, mono loss 0.36 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -4.69 dBTP (CANYON), mono 0.00 dB, DC -87.7 dB, sub vs body -0.2 dB (absolute -2.9 dB), click -18.0 dB
+CINEMATIC & HYBRID DARK DRONE             TP  -5.79  DC -137.7  MONO 0.47  ALIAS  -60.2  CLICK -99.0  RATES ok  SCULPT TP  -4.92 MONO 0.99 CLICK  -5.5  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -0.26 dBTP, mono loss 0.65 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -5.96 dBTP (CANYON), mono 0.54 dB, DC -86.4 dB, sub vs body +0.0 dB (absolute +0.0 dB), click -99.0 dB
+CINEMATIC & HYBRID HYBRID FM SAMPLE       TP  -8.40  DC  -98.6  MONO 0.00  ALIAS -111.4  CLICK  -1.1  RATES ok  SCULPT TP  -5.02 MONO 0.00 CLICK  -0.2  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 0.86 dBTP, mono loss 0.02 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -7.61 dBTP (CANYON), mono 0.00 dB, DC -88.7 dB, sub vs body -0.3 dB (absolute -1.8 dB), click -99.0 dB
+CINEMATIC & HYBRID SUB QUAKE              TP  -8.31  DC -130.9  MONO 0.00  ALIAS  -52.7  CLICK -99.0  RATES ok  SCULPT TP  -5.66 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -5.31 dBTP, mono loss 0.02 dB
+      TERRAIN shapes: worst TP -8.30 dBTP (CANYON), mono 0.00 dB, DC -105.1 dB, sub vs body -5.7 dB (absolute -2.0 dB), click -99.0 dB
+DUBSTEP & GROWL    CHAINSAW               TP  -5.85  DC  -32.0  MONO 0.10  ALIAS  -62.6  CLICK -99.0  RATES ok  SCULPT TP  -5.45 MONO 0.16 CLICK -99.0  GR  0.0 FAIL DC,TERRAIN-DC
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 18.08 dBTP, mono loss 0.28 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -4.26 dBTP (BADLANDS), mono 0.15 dB, DC -26.1 dB, sub vs body -2.3 dB (absolute -1.9 dB), click -99.0 dB
+DUBSTEP & GROWL    FM BARK                TP  -3.00  DC -110.6  MONO 0.00  ALIAS  -83.1  CLICK  -0.9  RATES ok  SCULPT TP  -6.46 MONO 0.00 CLICK   0.8  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 17.84 dBTP, mono loss 0.03 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -3.11 dBTP (VOLCANO), mono 0.00 dB, DC -87.7 dB, sub vs body -0.6 dB (absolute -1.6 dB), click -0.0 dB
+DUBSTEP & GROWL    RIDDIM SQUARE          TP  -8.55  DC  -99.7  MONO 0.04  ALIAS  -63.9  CLICK -99.0  RATES ok  SCULPT TP  -5.28 MONO 0.26 CLICK  -0.6  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -5.03 dBTP, mono loss 0.39 dB
+      TERRAIN shapes: worst TP -6.77 dBTP (CANYON), mono 0.11 dB, DC -90.5 dB, sub vs body -0.4 dB (absolute -1.9 dB), click -99.0 dB
+DUBSTEP & GROWL    VOWEL TALKER           TP  -7.90  DC -107.2  MONO 0.06  ALIAS  -77.1  CLICK   1.2  RATES ok  SCULPT TP  -6.84 MONO 0.14 CLICK  -2.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 8.58 dBTP, mono loss 0.28 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -8.70 dBTP (CANYON), mono 0.13 dB, DC -78.2 dB, sub vs body -1.6 dB (absolute -2.1 dB), click -12.5 dB
+DUBSTEP & GROWL    YOI GROWL              TP  -6.34  DC  -82.5  MONO 0.00  ALIAS  -74.4  CLICK -99.0  RATES ok  SCULPT TP  -5.59 MONO 0.01 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -5.26 dBTP, mono loss 0.11 dB
+      TERRAIN shapes: worst TP -8.00 dBTP (TWIN PEAKS), mono 0.01 dB, DC -73.7 dB, sub vs body -0.8 dB (absolute -1.9 dB), click -99.0 dB
+EXPERIMENTAL       GLITCH SPECTRE         TP  -4.11  DC  -65.8  MONO 0.00  ALIAS    n/a  CLICK  -2.8  RATES ok  SCULPT TP  -3.34 MONO 0.00 CLICK   1.9  GR  0.0 FAIL TERRAIN-SUB
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 2.18 dBTP, mono loss 0.04 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -3.91 dBTP (GHOST), mono 0.00 dB, DC -66.1 dB, sub vs body -0.7 dB (absolute -3.3 dB), click 1.2 dB
+EXPERIMENTAL       GRAIN OCTAVE SHIMMER   TP  -9.85  DC -128.1  MONO 0.01  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP  -9.85 MONO 0.01 CLICK -99.0  GR  0.0 FAIL DEAD-MACRO:MOTION
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -1.26 dBTP, mono loss 3.28 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -10.33 dBTP (CANYON), mono 0.08 dB, DC -105.5 dB, sub vs body -12.2 dB (absolute -1.8 dB), click -99.0 dB
+EXPERIMENTAL       RING MOD CLANG         TP  -4.45  DC  -84.5  MONO 0.71  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP  -4.23 MONO 0.75 CLICK  -0.4  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 11.89 dBTP, mono loss 2.00 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -5.10 dBTP (BADLANDS), mono 0.70 dB, DC -94.9 dB, sub vs body -1.9 dB (absolute -1.8 dB), click -99.0 dB
+HOUSE              CHICAGO SQUARE         TP  -3.00  DC -234.2  MONO 0.03  ALIAS  -95.7  CLICK -99.0  RATES ok  SCULPT TP  -5.55 MONO 0.50 CLICK  -4.1  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 2.97 dBTP, mono loss 0.42 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -3.83 dBTP (TWIN PEAKS), mono 0.03 dB, DC -83.5 dB, sub vs body -0.3 dB (absolute -0.8 dB), click -99.0 dB
+HOUSE              LIQUID HOUSE           TP  -9.19  DC -218.2  MONO 0.01  ALIAS  -94.4  CLICK -99.0  RATES ok  SCULPT TP  -6.95 MONO 0.02 CLICK   1.8  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 9.42 dBTP, mono loss 2.87 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -9.60 dBTP (CANYON), mono 0.01 dB, DC -98.0 dB, sub vs body -1.0 dB (absolute -1.5 dB), click -99.0 dB
+HOUSE              PULSE FOLLOWER         TP  -6.46  DC -213.3  MONO 0.05  ALIAS  -93.0  CLICK -99.0  RATES ok  SCULPT TP  -5.77 MONO 0.37 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -1.95 dBTP, mono loss 0.41 dB
+      TERRAIN shapes: worst TP -7.27 dBTP (LONE SPIRE), mono 0.04 dB, DC -86.8 dB, sub vs body -0.2 dB (absolute -0.6 dB), click -99.0 dB
+HOUSE              SIDECHAIN PULSE        TP  -5.51  DC -203.3  MONO 0.04  ALIAS  -96.2  CLICK -99.0  RATES ok  SCULPT TP  -4.54 MONO 0.08 CLICK  -3.5  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 1.91 dBTP, mono loss 0.14 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -4.22 dBTP (CANYON), mono 0.03 dB, DC -84.0 dB, sub vs body -0.0 dB (absolute -2.2 dB), click -99.0 dB
+MORPH              DOTTED DRIFT           TP  -4.00  DC  -93.8  MONO 0.15  ALIAS  -78.9  CLICK -99.0  RATES ok  SCULPT TP  -4.27 MONO 1.01 CLICK -99.0  GR  0.0 FAIL SCULPT-MONO
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 0.67 dBTP, mono loss 0.91 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -3.73 dBTP (BADLANDS), mono 0.28 dB, DC -87.2 dB, sub vs body -0.4 dB (absolute -1.9 dB), click -99.0 dB
+MORPH              PLUCK TO BLOOM         TP  -6.74  DC -109.0  MONO 0.00  ALIAS -120.0  CLICK  -0.1  RATES ok  SCULPT TP  -5.10 MONO 0.00 CLICK  33.4  GR  0.0 FAIL SCULPT-CLICK
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 3.83 dBTP, mono loss 0.05 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -6.16 dBTP (CANYON), mono 0.00 dB, DC -101.7 dB, sub vs body -0.6 dB (absolute -2.9 dB), click -99.0 dB
+PHYSICAL           BOWED LOW STRING       TP  -9.72  DC -133.2  MONO 0.00  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP  -9.33 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 3.99 dBTP, mono loss 0.45 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -6.81 dBTP (BADLANDS), mono 0.00 dB, DC -99.6 dB, sub vs body -0.1 dB (absolute -0.2 dB), click -99.0 dB
+PHYSICAL           PLUCKED UPRIGHT        TP  -9.79  DC  -99.5  MONO 0.00  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP  -8.16 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 4.50 dBTP, mono loss 0.41 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -7.72 dBTP (CANYON), mono 0.00 dB, DC -91.3 dB, sub vs body -0.2 dB (absolute -0.2 dB), click -99.0 dB
+PHYSICAL           STRUCK BAR BASS        TP  -6.38  DC  -99.1  MONO 0.00  ALIAS    n/a  CLICK  -1.5  RATES ok  SCULPT TP  -6.56 MONO 0.00 CLICK   0.5  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 5.07 dBTP, mono loss 0.40 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -6.26 dBTP (BADLANDS), mono 0.00 dB, DC -93.6 dB, sub vs body -0.2 dB (absolute -0.3 dB), click -0.2 dB
+REESE & DNB        DANCEFLOOR DNB         TP  -9.54  DC  -67.1  MONO 0.07  ALIAS  -75.2  CLICK -99.0  RATES ok  SCULPT TP  -6.47 MONO 0.10 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -4.29 dBTP, mono loss 0.15 dB
+      TERRAIN shapes: worst TP -8.63 dBTP (CANYON), mono 0.10 dB, DC -66.4 dB, sub vs body -0.9 dB (absolute -1.6 dB), click -99.0 dB
+REESE & DNB        HALFTIME SLUDGE        TP -10.06  DC  -68.0  MONO 0.03  ALIAS  -79.0  CLICK -99.0  RATES ok  SCULPT TP  -6.77 MONO 0.03 CLICK -99.0  GR  0.0 FAIL TERRAIN-DC
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -3.45 dBTP, mono loss 0.23 dB
+      TERRAIN shapes: worst TP -8.39 dBTP (CANYON), mono 0.04 dB, DC -46.2 dB, sub vs body -3.2 dB (absolute -1.8 dB), click -99.0 dB
+REESE & DNB        MOVING REESE           TP  -6.46  DC -118.2  MONO 0.01  ALIAS  -76.1  CLICK   0.2  RATES ok  SCULPT TP  -4.91 MONO 0.01 CLICK   2.1  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -2.21 dBTP, mono loss 0.05 dB
+      TERRAIN shapes: worst TP -6.70 dBTP (CANYON), mono 0.02 dB, DC -96.8 dB, sub vs body -0.4 dB (absolute -1.6 dB), click -1.5 dB
+REESE & DNB        TALKING METAL          TP  -6.23  DC -108.8  MONO 0.02  ALIAS  -40.8  CLICK  -5.3  RATES ok  SCULPT TP  -4.13 MONO 0.12 CLICK  -0.8  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -1.09 dBTP, mono loss 0.07 dB
+      TERRAIN shapes: worst TP -7.83 dBTP (CANYON), mono 0.03 dB, DC -80.0 dB, sub vs body -0.6 dB (absolute -2.0 dB), click -2.0 dB
+STRETCH            STRETCH CATHEDRAL SUB  TP  -9.78  DC -119.1  MONO 0.00  ALIAS -103.5  CLICK   0.1  RATES ok  SCULPT TP  -7.84 MONO 0.00 CLICK  -1.7  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -5.63 dBTP, mono loss 0.04 dB
+      TERRAIN shapes: worst TP -9.96 dBTP (TWIN PEAKS), mono 0.00 dB, DC -108.1 dB, sub vs body -2.5 dB (absolute -1.9 dB), click -99.0 dB
+SUB & 808          808 DISTORTED          TP  -4.05  DC  -32.8  MONO 0.00  ALIAS  -66.0  CLICK -99.0  RATES ok  SCULPT TP  -5.10 MONO 0.00 CLICK -99.0  GR  0.0 FAIL DC,TERRAIN-DC
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 17.88 dBTP, mono loss 0.27 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -4.76 dBTP (CANYON), mono 0.00 dB, DC -29.6 dB, sub vs body -6.5 dB (absolute -0.6 dB), click -99.0 dB
+SUB & 808          DEEP SINE SUB          TP -11.00  DC -111.2  MONO 0.00  ALIAS -112.0  CLICK -99.0  RATES ok  SCULPT TP  -7.75 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 4.20 dBTP, mono loss 0.28 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -10.65 dBTP (CANYON), mono 0.00 dB, DC -95.7 dB, sub vs body -8.6 dB (absolute -2.2 dB), click -99.0 dB
+SUB & 808          PURE SUB               TP -10.86  DC -111.2  MONO 0.00  ALIAS -109.3  CLICK -99.0  RATES ok  SCULPT TP -11.40 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -6.27 dBTP, mono loss 0.14 dB
+      TERRAIN shapes: worst TP -11.15 dBTP (CANYON), mono 0.00 dB, DC -98.7 dB, sub vs body -6.1 dB (absolute -2.4 dB), click -99.0 dB
+SUB & 808          SUB DROP 808           TP  -8.87  DC  -99.6  MONO 0.00  ALIAS -105.8  CLICK -99.0  RATES ok  SCULPT TP  -8.38 MONO 0.00 CLICK -99.0  GR  0.0 FAIL TERRAIN-SUB
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 3.72 dBTP, mono loss 0.02 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -8.74 dBTP (CANYON), mono 0.00 dB, DC -92.1 dB, sub vs body -6.2 dB (absolute -5.3 dB), click -99.0 dB
+TECHNO & ACID      ACID SQUELCH SAW       TP  -3.00  DC -117.7  MONO 0.45  ALIAS  -68.1  CLICK -37.2  RATES ok  SCULPT TP  -4.29 MONO 2.95 CLICK   1.1  GR  0.0 FAIL SCULPT-MONO
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 16.36 dBTP, mono loss 2.59 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -5.03 dBTP (CANYON), mono 0.39 dB, DC -88.3 dB, sub vs body -0.2 dB (absolute -1.8 dB), click -99.0 dB
+TECHNO & ACID      HYPNOTIC PULSE         TP  -5.39  DC  -92.1  MONO 0.00  ALIAS  -45.6  CLICK -99.0  RATES ok  SCULPT TP  -4.67 MONO 0.19 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 7.11 dBTP, mono loss 0.14 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -5.93 dBTP (BADLANDS), mono 0.01 dB, DC -84.7 dB, sub vs body -0.3 dB (absolute -0.3 dB), click -99.0 dB
+TECHNO & ACID      RUMBLE KICK BASS       TP  -5.90  DC  -90.8  MONO 0.00  ALIAS    n/a  CLICK  -1.0  RATES ok  SCULPT TP  -5.04 MONO 0.00 CLICK   0.0  GR  0.0 FAIL TERRAIN-SUB
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 1.08 dBTP, mono loss 0.12 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -6.22 dBTP (CANYON), mono 0.00 dB, DC -85.8 dB, sub vs body -1.3 dB (absolute -4.0 dB), click -0.0 dB
+TERRAIN            TERRAIN DRIFTING RIDGE TP  -5.89  DC -107.1  MONO 0.07  ALIAS  -49.6  CLICK -99.0  RATES ok  SCULPT TP  -4.59 MONO 0.09 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -1.33 dBTP, mono loss 0.15 dB
+      TERRAIN shapes: worst TP -6.22 dBTP (CANYON), mono 0.05 dB, DC -82.9 dB, sub vs body -1.9 dB (absolute -3.0 dB), click -99.0 dB
+TERRAIN            TERRAIN TWIN PEAKS     TP  -5.65  DC  -93.3  MONO 0.25  ALIAS  -95.7  CLICK -99.0  RATES ok  SCULPT TP  -4.45 MONO 0.24 CLICK  -4.3  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -0.18 dBTP, mono loss 0.37 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -3.90 dBTP (CANYON), mono 0.22 dB, DC -84.1 dB, sub vs body -2.4 dB (absolute -2.0 dB), click -99.0 dB
+ANALOG             LADDER DRIVE           TP  -3.49  DC  -95.8  MONO 0.00  ALIAS  -87.9  CLICK -99.0  RATES ok  SCULPT TP  -7.67 MONO 0.00 CLICK  -1.2  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 7.79 dBTP, mono loss 0.05 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -2.06 dBTP (BADLANDS), mono 0.00 dB, DC -90.8 dB, sub vs body -0.8 dB (absolute -1.8 dB), click -99.0 dB
+ANALOG             PULSE WIDTH BASS       TP  -3.00  DC  -93.8  MONO 0.13  ALIAS  -98.7  CLICK -99.0  RATES ok  SCULPT TP  -4.39 MONO 1.06 CLICK  -2.3  GR  0.0 FAIL SCULPT-MONO
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 1.49 dBTP, mono loss 0.92 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -3.12 dBTP (VOLCANO), mono 0.32 dB, DC -85.7 dB, sub vs body -0.4 dB (absolute -1.7 dB), click -99.0 dB
+ANALOG             VELVET LADDER          TP  -5.23  DC -102.0  MONO 0.12  ALIAS  -78.8  CLICK -99.0  RATES ok  SCULPT TP  -8.63 MONO 2.42 CLICK  -2.3  GR  0.0 FAIL SCULPT-MONO
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 4.41 dBTP, mono loss 1.11 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -5.54 dBTP (CANYON), mono 0.33 dB, DC -95.1 dB, sub vs body -0.3 dB (absolute -2.3 dB), click -99.0 dB
+BLOCK STEP BASSES  BS BASS 01             TP -25.85  DC -112.4  MONO 0.00  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP -20.94 MONO 0.00 CLICK -99.0  GR  0.0 FAIL DEAD-MACRO:MOTION/WIDTH
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 4.72 dBTP, mono loss 0.30 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -22.08 dBTP (RIDGE), mono 0.00 dB, DC -105.2 dB, sub vs body -6.7 dB (absolute -0.9 dB), click -99.0 dB
+BLOCK STEP BASSES  BS BASS 04             TP -44.37  DC -135.2  MONO 0.00  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP -45.06 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -1.52 dBTP, mono loss 0.16 dB
+      TERRAIN shapes: worst TP -44.65 dBTP (CANYON), mono 0.00 dB, DC -125.9 dB, sub vs body -4.0 dB (absolute -2.0 dB), click -99.0 dB
+BLOCK STEP BASSES  BS BASS 07             TP  -6.38  DC  -97.9  MONO 0.00  ALIAS    n/a  CLICK  -0.0  RATES ok  SCULPT TP  -6.33 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 5.40 dBTP, mono loss 0.09 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -7.14 dBTP (CANYON), mono 0.00 dB, DC -92.0 dB, sub vs body -0.1 dB (absolute -2.9 dB), click -99.0 dB
+BLOCK STEP BASSES  BS BASS 09             TP  -7.12  DC -107.7  MONO 0.00  ALIAS    n/a  CLICK  -2.2  RATES ok  SCULPT TP  -6.68 MONO 0.00 CLICK  29.7  GR  0.0 FAIL SCULPT-CLICK
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 2.51 dBTP, mono loss 0.06 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -7.80 dBTP (CANYON), mono 0.00 dB, DC -102.8 dB, sub vs body -0.4 dB (absolute -2.9 dB), click -99.0 dB
+BLOCK STEP BASSES  BS BASS 13             TP -39.85  DC -141.5  MONO 0.00  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP -24.90 MONO 0.01 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 3.38 dBTP, mono loss 0.53 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -36.92 dBTP (TWIN PEAKS), mono 0.00 dB, DC -128.9 dB, sub vs body -0.8 dB (absolute -1.5 dB), click -99.0 dB
+BLOCK STEP BASSES  BS BASS 16             TP -26.63  DC -130.0  MONO 0.00  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP -25.18 MONO 0.00 CLICK -99.0  GR  0.0 FAIL DEAD-MACRO:MOTION/WIDTH
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 5.87 dBTP, mono loss 0.11 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -25.70 dBTP (CANYON), mono 0.00 dB, DC -124.9 dB, sub vs body -1.1 dB (absolute -1.7 dB), click -99.0 dB
+CINEMATIC & HYBRID DARK PULSE SCORE       TP  -5.51  DC  -94.5  MONO 0.01  ALIAS  -86.6  CLICK -99.0  RATES ok  SCULPT TP  -4.78 MONO 0.19 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 6.64 dBTP, mono loss 0.09 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -5.53 dBTP (CANYON), mono 0.01 dB, DC -87.9 dB, sub vs body -0.4 dB (absolute -0.7 dB), click -99.0 dB
+CINEMATIC & HYBRID HYBRID GRAIN SUB       TP -10.13  DC  -99.7  MONO 0.00  ALIAS  -40.2  CLICK -99.0  RATES ok  SCULPT TP  -5.81 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 5.74 dBTP, mono loss 3.20 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -8.93 dBTP (CANYON), mono 0.02 dB, DC -90.1 dB, sub vs body -9.0 dB (absolute -1.9 dB), click -99.0 dB
+CINEMATIC & HYBRID TENSION RISER BASS     TP  -9.73  DC -116.0  MONO 0.04  ALIAS  -92.7  CLICK -99.0  RATES ok  SCULPT TP  -8.19 MONO 0.03 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 7.67 dBTP, mono loss 0.93 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -10.44 dBTP (CANYON), mono 0.04 dB, DC -111.6 dB, sub vs body -5.0 dB (absolute -1.9 dB), click -99.0 dB
+DUBSTEP & GROWL    CLASSIC WOBBLE         TP  -6.57  DC -121.4  MONO 0.07  ALIAS  -44.8  CLICK -99.0  RATES ok  SCULPT TP  -4.64 MONO 0.11 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 15.24 dBTP, mono loss 2.12 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -7.05 dBTP (CANYON), mono 0.09 dB, DC -78.6 dB, sub vs body -2.4 dB (absolute -1.9 dB), click -99.0 dB
+DUBSTEP & GROWL    FM GROWL               TP  -7.85  DC -109.4  MONO 0.00  ALIAS  -44.1  CLICK -99.0  RATES ok  SCULPT TP  -7.88 MONO 0.00 CLICK -99.0  GR  0.0 FAIL TERRAIN-SUB
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 3.88 dBTP, mono loss 0.04 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -8.99 dBTP (CANYON), mono 0.00 dB, DC -87.4 dB, sub vs body -1.0 dB (absolute -4.7 dB), click -99.0 dB
+DUBSTEP & GROWL    SUB DROP GROWL         TP  -9.04  DC -110.5  MONO 0.00  ALIAS  -84.5  CLICK -99.0  RATES ok  SCULPT TP  -6.49 MONO 0.00 CLICK  -1.5  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 7.85 dBTP, mono loss 3.21 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -8.74 dBTP (CANYON), mono 0.00 dB, DC -77.6 dB, sub vs body -3.6 dB (absolute -1.9 dB), click -99.0 dB
+DUBSTEP & GROWL    VOWEL WOBBLE           TP  -6.62  DC  -85.8  MONO 0.00  ALIAS  -73.6  CLICK -99.0  RATES ok  SCULPT TP  -5.85 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -2.36 dBTP, mono loss 0.01 dB
+      TERRAIN shapes: worst TP -8.70 dBTP (BADLANDS), mono 0.01 dB, DC -81.8 dB, sub vs body -0.1 dB (absolute -1.6 dB), click -99.0 dB
+EXPERIMENTAL       BITCRUSH DIGI          TP  -7.70  DC  -97.9  MONO 0.04  ALIAS    n/a  CLICK  -1.8  RATES ok  SCULPT TP  -4.22 MONO 0.18 CLICK  -0.2  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -7.06 dBTP, mono loss 0.29 dB
+      TERRAIN shapes: worst TP -8.14 dBTP (CANYON), mono 0.08 dB, DC -89.7 dB, sub vs body -0.6 dB (absolute -2.4 dB), click -1.7 dB
+EXPERIMENTAL       GRAIN BASS             TP -10.28  DC  -94.9  MONO 0.00  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP  -6.57 MONO 0.00 CLICK  -0.2  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 0.38 dBTP, mono loss 0.20 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -8.86 dBTP (CANYON), mono 0.00 dB, DC -89.4 dB, sub vs body -2.5 dB (absolute -1.6 dB), click -99.0 dB
+EXPERIMENTAL       GRAIN STUTTER          TP  -9.15  DC  -99.7  MONO 0.00  ALIAS    n/a  CLICK  -2.8  RATES ok  SCULPT TP  -7.60 MONO 0.00 CLICK  -4.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 4.73 dBTP, mono loss 1.91 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -8.78 dBTP (CANYON), mono 0.01 dB, DC -89.0 dB, sub vs body -0.2 dB (absolute -1.9 dB), click -99.0 dB
+EXPERIMENTAL       SPECTRAL FOLD          TP  -6.18  DC -102.1  MONO 0.00  ALIAS    n/a  CLICK  -1.6  RATES ok  SCULPT TP  -5.99 MONO 0.00 CLICK   2.1  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 6.15 dBTP, mono loss 0.06 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -6.10 dBTP (TWIN PEAKS), mono 0.00 dB, DC -92.9 dB, sub vs body -0.1 dB (absolute -1.8 dB), click -6.9 dB
+HOUSE              DEEP HOUSE ORGAN       TP  -4.56  DC -202.1  MONO 0.00  ALIAS -114.6  CLICK -99.0  RATES ok  SCULPT TP  -3.62 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 11.55 dBTP, mono loss 2.57 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -4.55 dBTP (CANYON), mono 0.00 dB, DC -84.8 dB, sub vs body -0.5 dB (absolute -0.5 dB), click -99.0 dB
+HOUSE              MELODIC PROG PLUCK     TP  -3.00  DC -194.6  MONO 0.00  ALIAS  -81.7  CLICK -99.0  RATES ok  SCULPT TP  -6.68 MONO 0.01 CLICK -99.0  GR  0.0 FAIL DEAD-MACRO:SPACE
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 11.57 dBTP, mono loss 0.96 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -2.50 dBTP (BADLANDS), mono 0.01 dB, DC -75.2 dB, sub vs body -0.4 dB (absolute -0.5 dB), click -99.0 dB
+HOUSE              PUMPING PROG           TP  -3.00  DC -192.3  MONO 0.05  ALIAS  -95.4  CLICK -99.0  RATES ok  SCULPT TP  -5.41 MONO 0.05 CLICK -10.2  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 3.91 dBTP, mono loss 0.12 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -3.34 dBTP (BADLANDS), mono 0.05 dB, DC -83.4 dB, sub vs body -1.5 dB (absolute -2.0 dB), click -99.0 dB
+HOUSE              TECH HOUSE BOUNCE      TP  -3.00  DC -200.5  MONO 0.00  ALIAS -114.8  CLICK -99.0  RATES ok  SCULPT TP  -5.45 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 7.36 dBTP, mono loss 0.12 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -3.74 dBTP (VOLCANO), mono 0.00 dB, DC -85.6 dB, sub vs body -0.3 dB (absolute -0.3 dB), click -99.0 dB
+MORPH              DRAWN RISE             TP  -9.47  DC  -90.6  MONO 0.00  ALIAS -109.6  CLICK  -0.1  RATES ok  SCULPT TP  -9.12 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -5.26 dBTP, mono loss 0.03 dB
+      TERRAIN shapes: worst TP -10.38 dBTP (TWIN PEAKS), mono 0.00 dB, DC -85.9 dB, sub vs body -2.3 dB (absolute -2.6 dB), click -99.0 dB
+MORPH              RANDOM WALK BASS       TP -12.05  DC -121.6  MONO 0.00  ALIAS  -41.5  CLICK -99.0  RATES ok  SCULPT TP  -8.34 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -0.99 dBTP, mono loss 2.79 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -11.16 dBTP (CANYON), mono 0.00 dB, DC -102.3 dB, sub vs body -5.4 dB (absolute -1.9 dB), click -99.0 dB
+PHYSICAL           BRASS LIPS BASS        TP  -9.96  DC -119.0  MONO 0.00  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP  -8.48 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -0.24 dBTP, mono loss 0.43 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -8.82 dBTP (CANYON), mono 0.00 dB, DC -63.8 dB, sub vs body -5.5 dB (absolute -0.2 dB), click -99.0 dB
+PHYSICAL           REED DRONE BASS        TP -10.48  DC -121.3  MONO 0.00  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP  -9.71 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -0.59 dBTP, mono loss 0.42 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -9.73 dBTP (BADLANDS), mono 0.00 dB, DC -66.8 dB, sub vs body -7.9 dB (absolute -0.2 dB), click -99.0 dB
+REESE & DNB        AMEN ROLLER SUB        TP  -8.91  DC -156.5  MONO 0.00  ALIAS  -89.6  CLICK -99.0  RATES ok  SCULPT TP  -7.70 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 14.39 dBTP, mono loss 1.95 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -10.02 dBTP (CANYON), mono 0.00 dB, DC -78.4 dB, sub vs body -3.4 dB (absolute -1.9 dB), click -99.0 dB
+REESE & DNB        DARK REESE             TP  -9.33  DC -120.8  MONO 0.02  ALIAS  -59.5  CLICK  -0.0  RATES ok  SCULPT TP  -9.65 MONO 0.01 CLICK  -0.1  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 0.87 dBTP, mono loss 0.05 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -10.58 dBTP (CANYON), mono 0.02 dB, DC -100.4 dB, sub vs body -5.5 dB (absolute -2.3 dB), click -0.6 dB
+REESE & DNB        JUMP UP WHOOP          TP  -8.87  DC -102.7  MONO 0.04  ALIAS  -87.6  CLICK -99.0  RATES ok  SCULPT TP  -6.99 MONO 0.22 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -4.03 dBTP, mono loss 0.37 dB
+      TERRAIN shapes: worst TP -9.47 dBTP (CANYON), mono 0.07 dB, DC -92.8 dB, sub vs body -1.1 dB (absolute -2.0 dB), click -99.0 dB
+REESE & DNB        NEURO GRIND            TP  -4.68  DC  -89.6  MONO 0.64  ALIAS -120.0  CLICK -99.0  RATES ok  SCULPT TP  -4.37 MONO 0.54 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -4.27 dBTP, mono loss 0.90 dB
+      TERRAIN shapes: worst TP -4.79 dBTP (ARCHIPELAGO), mono 0.53 dB, DC -73.7 dB, sub vs body +0.0 dB (absolute -0.7 dB), click -99.0 dB
+REESE & DNB        TECHSTEP DARK          TP  -4.35  DC -115.4  MONO 0.97  ALIAS  -92.0  CLICK -99.0  RATES ok  SCULPT TP  -4.40 MONO 0.72 CLICK  -1.9  GR  0.0 FAIL TERRAIN-MONO
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 0.71 dBTP, mono loss 1.19 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -3.93 dBTP (TWIN PEAKS), mono 1.25 dB, DC -92.8 dB, sub vs body -0.6 dB (absolute -1.9 dB), click -99.0 dB
+STRETCH            STRETCH DEEP FOG       TP  -5.62  DC -109.7  MONO 0.20  ALIAS  -88.9  CLICK -99.0  RATES ok  SCULPT TP  -5.67 MONO 0.23 CLICK  -4.3  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 1.11 dBTP, mono loss 0.20 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -6.01 dBTP (BADLANDS), mono 0.28 dB, DC -86.3 dB, sub vs body -0.9 dB (absolute -2.4 dB), click -99.0 dB
+SUB & 808          808 GLIDE              TP  -5.99  DC -114.1  MONO 0.00  ALIAS  -74.6  CLICK -99.0  RATES ok  SCULPT TP  -7.84 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 16.37 dBTP, mono loss 0.22 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -7.37 dBTP (BADLANDS), mono 0.00 dB, DC -82.8 dB, sub vs body -4.2 dB (absolute -0.8 dB), click -99.0 dB
+SUB & 808          FM SUB KNOCK           TP  -8.29  DC -102.0  MONO 0.00  ALIAS -111.3  CLICK  -0.4  RATES ok  SCULPT TP  -4.68 MONO 0.00 CLICK  -0.3  GR  0.0 FAIL TERRAIN-SUB
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 3.37 dBTP, mono loss 0.01 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -8.64 dBTP (CANYON), mono 0.00 dB, DC -92.4 dB, sub vs body -2.3 dB (absolute -3.0 dB), click -99.0 dB
+SUB & 808          REESE SUB              TP -10.85  DC -109.6  MONO 0.00  ALIAS -110.4  CLICK -99.0  RATES ok  SCULPT TP  -7.61 MONO 0.00 CLICK -99.0  GR  0.0 FAIL DEAD-MACRO:SPACE
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 3.91 dBTP, mono loss 0.94 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -10.46 dBTP (CANYON), mono 0.00 dB, DC -94.6 dB, sub vs body -10.0 dB (absolute -2.1 dB), click -99.0 dB
+SUB & 808          TRIANGLE SUB           TP  -7.11  DC -118.0  MONO 0.00  ALIAS -115.7  CLICK -99.0  RATES ok  SCULPT TP  -5.42 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 0.42 dBTP, mono loss 0.04 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -6.22 dBTP (CANYON), mono 0.00 dB, DC -88.7 dB, sub vs body -0.4 dB (absolute -2.1 dB), click -99.0 dB
+TECHNO & ACID      ACID SQUELCH           TP  -5.28  DC -106.8  MONO 0.36  ALIAS  -87.8  CLICK -31.3  RATES ok  SCULPT TP  -2.73 MONO 0.06 CLICK  -4.8  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 1.12 dBTP, mono loss 2.14 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -5.65 dBTP (PLATEAU), mono 0.14 dB, DC -95.7 dB, sub vs body -0.0 dB (absolute +0.0 dB), click -99.0 dB
+TECHNO & ACID      INDUSTRIAL GRIND       TP  -3.02  DC  -81.7  MONO 0.04  ALIAS    n/a  CLICK  -2.1  RATES ok  SCULPT TP  -4.63 MONO 0.99 CLICK   0.7  GR  0.0 FAIL DEAD-MACRO:SPACE
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP -1.73 dBTP, mono loss 0.43 dB
+      TERRAIN shapes: worst TP -3.37 dBTP (CANYON), mono 0.04 dB, DC -77.7 dB, sub vs body -0.3 dB (absolute -2.4 dB), click -1.0 dB
+TECHNO & ACID      RUMBLE TAIL            TP -11.05  DC -115.5  MONO 0.00  ALIAS  -75.7  CLICK -99.0  RATES ok  SCULPT TP -10.00 MONO 0.00 CLICK -99.0  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 8.93 dBTP, mono loss 3.89 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -12.03 dBTP (TWIN PEAKS), mono 0.00 dB, DC -109.9 dB, sub vs body -0.2 dB (absolute -1.4 dB), click -99.0 dB
+TERRAIN            TERRAIN FALLING VALLEY TP  -5.03  DC  -96.1  MONO 0.09  ALIAS  -46.1  CLICK  -9.4  RATES ok  SCULPT TP  -4.57 MONO 0.08 CLICK  -4.8  GR  0.0 PASS
+      macros at 100% (the sound's own Surge controls, SAFETY LIMITER off): worst TP 0.37 dBTP, mono loss 0.12 dB  (over the ceiling: as Surge plays it)
+      TERRAIN shapes: worst TP -5.68 dBTP (CANYON), mono 0.07 dB, DC -85.1 dB, sub vs body -1.3 dB (absolute -2.5 dB), click -99.0 dB

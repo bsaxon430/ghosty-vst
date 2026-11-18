@@ -1,0 +1,69 @@
+ANALOG             BIG BRASS BASS           rest  -5.05 dBTP  DC -192.3 dB  levelcomp 3.3 0.0 0.4 0.3 0.4 0.3 1.1  worst with it  -2.43 dBTP
+ANALOG             CHORUS BOUNCE            rest  -7.77 dBTP  DC -207.9 dB  levelcomp 4.3 0.0 1.2 0.4 1.6 0.0 1.6  worst with it  -2.75 dBTP
+ANALOG             HARD SYNC BASS           rest  -7.87 dBTP  DC -240.0 dB  levelcomp 0.4 0.0 0.4 0.0 0.4 0.0 0.4  worst with it  -2.30 dBTP
+ANALOG             LADDER DRIVE             rest  -4.35 dBTP  DC -215.6 dB  levelcomp 8.4 2.0 0.3 0.7 0.9 0.0 6.1  worst with it  -2.15 dBTP
+ANALOG             LADDER SQUELCH           rest  -5.39 dBTP  DC -203.9 dB  levelcomp 1.9 0.0 0.6 0.0 0.6 0.0 0.6  worst with it  -2.10 dBTP
+ANALOG             MINI 3 OSC               rest  -3.84 dBTP  DC -195.2 dB  levelcomp 6.6 0.7 1.0 0.2 0.8 0.5 4.2  worst with it  -2.54 dBTP
+ANALOG             PATCH CABLE GROWL        rest  -5.24 dBTP  DC -209.8 dB  levelcomp 5.1 0.2 1.1 0.5 1.1 0.5 1.9  worst with it  -2.54 dBTP
+ANALOG             PULSE WIDTH BASS         rest  -2.51 dBTP  DC -221.1 dB  levelcomp 4.8 0.8 0.9 0.2 0.8 0.4 2.5  worst with it  -2.37 dBTP
+ANALOG             RUBBER BAND              rest  -3.46 dBTP  DC -196.0 dB  levelcomp 0.3 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -2.48 dBTP
+ANALOG             SQUARE ROOT              rest  -6.19 dBTP  DC -192.0 dB  levelcomp 0.5 0.0 0.4 0.0 0.4 0.0 0.4  worst with it  -2.21 dBTP
+ANALOG             STEP ANALOG              rest  -3.94 dBTP  DC -188.1 dB  levelcomp 7.0 1.1 1.5 0.5 1.3 0.7 4.6  worst with it  -2.04 dBTP
+ANALOG             VELVET LADDER            rest  -4.98 dBTP  DC -199.1 dB  levelcomp 5.3 0.0 0.5 0.0 0.5 0.0 0.9  worst with it  -2.37 dBTP
+ANALOG             VINTAGE FINGER           rest  -8.30 dBTP  DC -197.4 dB  levelcomp 0.4 0.0 0.2 0.2 0.2 0.2 0.4  worst with it  -1.89 dBTP
+ANALOG             WARM TUBE ROUND          rest -11.48 dBTP  DC -196.0 dB  levelcomp 0.0 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -8.98 dBTP
+ANALOG             WARM TUBE SAW            rest  -8.94 dBTP  DC -187.8 dB  levelcomp 0.0 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -6.65 dBTP
+BLOCK STEP BASSES  BS BASS 01               rest  -4.23 dBTP  DC -195.0 dB  levelcomp 2.3 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -2.33 dBTP
+BLOCK STEP BASSES  BS BASS 02               rest  -4.16 dBTP  DC -202.1 dB  levelcomp 1.0 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -2.38 dBTP
+BLOCK STEP BASSES  BS BASS 02 SHORT         rest  -5.19 dBTP  DC -210.9 dB  levelcomp 0.4 0.0 0.4 0.0 0.4 0.0 0.4  worst with it  -2.00 dBTP
+BLOCK STEP BASSES  BS BASS 03               rest  -6.97 dBTP  DC -195.8 dB  levelcomp 1.1 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -2.57 dBTP
+BLOCK STEP BASSES  BS BASS 04               rest  -8.67 dBTP  DC -240.0 dB  levelcomp 0.0 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -4.37 dBTP
+BLOCK STEP BASSES  BS BASS 05               rest  -6.48 dBTP  DC -218.6 dB  levelcomp 0.3 0.0 0.3 0.0 0.3 0.0 0.3  worst with it  -2.75 dBTP
+BLOCK STEP BASSES  BS BASS 06               rest  -7.02 dBTP  DC -193.5 dB  levelcomp 2.3 0.0 0.2 0.0 0.2 0.0 0.2  worst with it  -1.95 dBTP
+BLOCK STEP BASSES  BS BASS 06 DIRTY         rest  -7.90 dBTP  DC -185.7 dB  levelcomp 0.0 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -4.67 dBTP
+BLOCK STEP BASSES  BS BASS 07               rest  -7.84 dBTP  DC -200.4 dB  levelcomp 0.1 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -3.28 dBTP
+BLOCK STEP BASSES  BS BASS 08               rest  -6.23 dBTP  DC -196.5 dB  levelcomp 1.1 0.0 0.0 0.3 0.3 0.0 0.3  worst with it  -2.77 dBTP
+BLOCK STEP BASSES  BS BASS 08 GLIDE         rest  -6.37 dBTP  DC -193.8 dB  levelcomp 1.2 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -2.65 dBTP
+BLOCK STEP BASSES  BS BASS 09               rest  -8.28 dBTP  DC -199.1 dB  levelcomp 0.0 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -4.65 dBTP
+BLOCK STEP BASSES  BS BASS 09 PLUCK         rest  -7.72 dBTP  DC -193.8 dB  levelcomp 0.0 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -2.64 dBTP
+BLOCK STEP BASSES  BS BASS 10               rest  -4.68 dBTP  DC -201.8 dB  levelcomp 1.7 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -2.33 dBTP
+BLOCK STEP BASSES  BS BASS 11               rest  -4.63 dBTP  DC -201.4 dB  levelcomp 2.9 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -2.12 dBTP
+BLOCK STEP BASSES  BS BASS 12               rest  -4.56 dBTP  DC -213.1 dB  levelcomp 2.4 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -2.31 dBTP
+BLOCK STEP BASSES  BS BASS 13               rest  -6.18 dBTP  DC -209.3 dB  levelcomp 0.6 0.0 0.2 0.0 0.2 0.0 0.2  worst with it  -1.91 dBTP
+BLOCK STEP BASSES  BS BASS 14               rest  -4.39 dBTP  DC -191.6 dB  levelcomp 3.7 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -3.81 dBTP
+BLOCK STEP BASSES  BS BASS 14 SLIDE         rest  -4.51 dBTP  DC -198.2 dB  levelcomp 3.7 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -3.59 dBTP
+BLOCK STEP BASSES  BS BASS 15               rest  -5.68 dBTP  DC -188.7 dB  levelcomp 2.7 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -2.18 dBTP
+BLOCK STEP BASSES  BS BASS 16               rest  -5.27 dBTP  DC -207.4 dB  levelcomp 3.2 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -2.45 dBTP
+BLOCK STEP BASSES  BS BASS 17               rest  -5.88 dBTP  DC -206.4 dB  levelcomp 1.0 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -2.25 dBTP
+CINEMATIC & HYBRID BRAAM HIT                rest  -5.70 dBTP  DC -215.6 dB  levelcomp 1.9 0.3 0.6 0.3 0.3 0.6 0.9  worst with it  -2.78 dBTP
+CINEMATIC & HYBRID DARK DRONE               rest  -6.73 dBTP  DC -172.8 dB  levelcomp 0.0 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -2.68 dBTP
+CINEMATIC & HYBRID DARK PULSE SCORE         rest  -6.38 dBTP  DC -201.4 dB  levelcomp 2.2 0.0 0.7 0.0 0.3 0.4 0.7  worst with it  -2.08 dBTP
+CINEMATIC & HYBRID DOOM BRASS               rest  -5.96 dBTP  DC -197.0 dB  levelcomp 2.3 0.7 0.8 0.2 1.0 0.0 1.1  worst with it  -2.30 dBTP
+CINEMATIC & HYBRID EPIC OCTAVES             rest  -5.74 dBTP  DC -212.2 dB  levelcomp 4.1 0.4 0.9 0.2 0.8 0.3 1.8  worst with it  -2.17 dBTP
+CINEMATIC & HYBRID HYBRID FM SAMPLE         rest  -9.22 dBTP  DC -198.0 dB  levelcomp 0.4 0.0 0.4 0.0 0.4 0.0 0.4  worst with it  -2.37 dBTP
+CINEMATIC & HYBRID HYBRID GRAIN SUB         rest -10.96 dBTP  DC -194.8 dB  levelcomp 0.0 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -2.24 dBTP
+CINEMATIC & HYBRID HYBRID TITAN             rest -10.54 dBTP  DC -199.8 dB  levelcomp 0.0 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -6.52 dBTP
+CINEMATIC & HYBRID ORCHESTRAL LOW           rest  -8.87 dBTP  DC -193.1 dB  levelcomp 0.6 0.0 0.3 0.2 0.3 0.2 0.6  worst with it  -2.78 dBTP
+CINEMATIC & HYBRID SUB QUAKE                rest  -8.31 dBTP  DC -205.1 dB  levelcomp 0.0 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -5.07 dBTP
+CINEMATIC & HYBRID TENSION RISER BASS       rest -10.58 dBTP  DC -194.1 dB  levelcomp 0.0 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -5.89 dBTP
+CINEMATIC & HYBRID TRAILER BOOM             rest  -9.99 dBTP  DC -118.9 dB  levelcomp 0.0 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -7.86 dBTP
+DUBSTEP & GROWL    BRO STEP SAW             rest  -9.78 dBTP  DC  -99.6 dB  levelcomp 0.0 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -6.38 dBTP
+DUBSTEP & GROWL    CHAINSAW                 rest  -8.60 dBTP  DC -182.6 dB  levelcomp 1.4 0.0 0.8 0.2 1.0 0.0 1.0  worst with it  -2.73 dBTP
+DUBSTEP & GROWL    CLASSIC WOBBLE           rest  -7.44 dBTP  DC -199.1 dB  levelcomp 0.0 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -2.46 dBTP
+DUBSTEP & GROWL    COLOR BASS CHORD         rest  -8.56 dBTP  DC -215.6 dB  levelcomp 1.9 0.0 1.1 0.3 1.4 0.0 1.7  worst with it  -2.25 dBTP
+DUBSTEP & GROWL    DEEP DUB SINE            rest -11.21 dBTP  DC -215.6 dB  levelcomp 0.0 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -6.80 dBTP
+DUBSTEP & GROWL    FM BARK                  rest  -3.72 dBTP  DC -209.8 dB  levelcomp 6.2 0.0 1.1 0.2 1.0 0.4 3.6  worst with it  -2.03 dBTP
+DUBSTEP & GROWL    FM GROWL                 rest  -9.03 dBTP  DC -112.7 dB  levelcomp 0.0 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -7.52 dBTP
+DUBSTEP & GROWL    GRIME SQUARE             rest  -4.73 dBTP  DC -202.9 dB  levelcomp 1.9 0.0 0.0 0.0 0.0 0.0 0.9  worst with it  -2.35 dBTP
+DUBSTEP & GROWL    MID GROWL                rest  -8.77 dBTP  DC -120.6 dB  levelcomp 0.0 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -4.96 dBTP
+DUBSTEP & GROWL    RIDDIM SQUARE            rest  -9.61 dBTP  DC -206.4 dB  levelcomp 0.0 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -4.77 dBTP
+DUBSTEP & GROWL    SUB DROP GROWL           rest  -9.85 dBTP  DC -180.2 dB  levelcomp 0.6 0.0 0.6 0.0 0.6 0.0 0.6  worst with it  -2.17 dBTP
+DUBSTEP & GROWL    TEAROUT SCREECH          rest  -7.71 dBTP  DC -197.2 dB  levelcomp 0.4 0.0 0.4 0.0 0.4 0.0 0.4  worst with it  -2.75 dBTP
+DUBSTEP & GROWL    VOWEL BEAST              rest  -4.87 dBTP  DC -103.7 dB  levelcomp 1.0 2.2 0.0 1.0 1.0 0.0 1.8  worst with it  -2.39 dBTP
+DUBSTEP & GROWL    VOWEL TALKER             rest  -8.43 dBTP  DC -194.1 dB  levelcomp 1.9 0.0 1.5 0.4 1.1 0.7 1.9  worst with it  -2.75 dBTP
+DUBSTEP & GROWL    VOWEL WOBBLE             rest  -9.23 dBTP  DC  -83.6 dB  levelcomp 0.0 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -5.01 dBTP
+DUBSTEP & GROWL    WOBBLE MONSTER           rest  -7.92 dBTP  DC  -78.8 dB  levelcomp 0.0 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -6.96 dBTP
+DUBSTEP & GROWL    WOBBLE TRIPLET           rest  -7.57 dBTP  DC -209.8 dB  levelcomp 0.0 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -2.89 dBTP
+DUBSTEP & GROWL    YOI GROWL                rest  -8.32 dBTP  DC  -87.5 dB  levelcomp 0.0 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -5.51 dBTP
+EXPERIMENTAL       BITCRUSH DIGI            rest  -9.07 dBTP  DC -206.4 dB  levelcomp 0.0 0.0 0.0 0.0 0.0 0.0 0.0  worst with it  -2.39 dBTP
+EXPERIMENTAL       FREQ SHIFT DRIFT         rest  -8.97 dBTP  DC -198.0 dB  levelcomp 0.7 0.0 0.4 0.2 0.4 0.2 0.7  worst with it  -2.57 dBTP

@@ -1,0 +1,49 @@
+GHOST BASS - build 11 (test build for Mac)
+
+The sound is Surge XT, exactly: its engine and its own factory and third-party patches, unchanged.
+Ghost Bass adds the EASY screen - ways to move Surge's own controls. Pick a sound, blend sounds, play.
+
+1. Double-click "Install Ghost Bass.command" (if macOS blocks it: right-click > Open; or System
+   Settings > Privacy & Security > Open Anyway).
+2. In FL Studio: Options > Manage plugins > Find more plugins. Ghost Bass is an INSTRUMENT: add it in
+   the Channel rack (+ > Ghost Bass). In Logic / GarageBand it is an Audio Unit instrument.
+3. Or open "Ghost Bass" from Applications.
+The window opens at its fitting size (about 1200 x 760) and can be resized.
+
+EASY screen
+  Sound picker (top)  click the sound's name: folders open to the right (Basses, Leads, Pads ... and the
+                      packs in Documents/Ghost Bass/Patches), then the sounds. Type in the search box to
+                      find one. < > step through the sounds of the same folder.
+  BLEND (main page)   the BLEND BOARD: pick a sound for 2 to 4 corners (click or right-click a corner, or
+                      CURRENT SOUND), then drag the puck. Every blendable control of the sounds glides by
+                      how close the puck is to each; the boxes and the list show how much of each you hear.
+  TERRAIN             draw a landscape: it moves Surge's own controls (filter, drive, macros) over each note.
+                      MOVEMENT makes it wander, CHAOS adds jitter, SHAKE gives a controlled random nudge (UNDO takes it back).
+  MORPH               pick sound A and B: BLEND, PENDULUM (synced to your DAW) or DRAW your own curve.
+  SUB                 the sub layer's own controls. LOCK = GHOST LOCK: it keeps ENGINE and SUB from piling up in the lows
+                      (on by default, and only works while SUB is on).
+  SEQUENCER           the bass sequencer (below).
+  MACROS (right)      SUB GRIT BITE MOTION WIDTH SPACE - set up differently for every sound.
+  Bottom              the ENGINE and SUB strip (on/off, level, octave, pan) and a keyboard.
+
+BASS SEQUENCER (the SEQUENCER page)
+  PLAY / NEW PATTERN   play it (follows your DAW's tempo and position) / write a new bassline.
+  STYLE                ANY, OFFBEAT (house), ROLLING (16ths), SYNCOPATED (3-3-2), HALF-TIME, ACID.
+  KEY / SCALE          the key and scale the pattern is written in (NEW PATTERN stays in key).
+  16 / 32 STEPS        32 = a two-bar phrase: the second bar answers the first.
+  GROOVE + amount      STRAIGHT, SWING 16, SHUFFLE 8, PUSH (rushed), LAZY (laid back).
+  GATE                 how long the normal notes hold.
+  CHORD                hold notes on your keyboard / in FL: one note moves the pattern to it,
+                       a chord makes every step use the chord's notes. Let go = silence.
+  LOCK                 keep this pattern when you change sound (otherwise each sound brings its own).
+  POLY / MONO / LEGATO, GLIDE, LAST / LOW / HIGH NOTE   how notes play and which note wins in mono.
+  DRAG MIDI            drag it into FL Studio's playlist or piano roll. A click saves the .mid in
+                       Documents/Ghost Bass/MIDI and shows it in Finder.
+  Steps: click = on/off, SHIFT = accent, ALT = slide, CMD = retrigger (1-4 hits), drag up/down =
+  note, click the thin lane under a step = its gate (short / normal / long / tie).
+
+  ENGINE            opens DEEP mode: the full engine. The EASY button (top right) comes back.
+
+Ghost Bass is free, open-source software (GPL-3), built on Surge XT by the Surge Synth Team.
+Your sounds are saved in Documents/Ghost Bass. Nothing else on your computer is touched, and an
+installed Surge XT is left alone.

@@ -1,0 +1,5478 @@
+/*
+ * Surge XT - a free and open source hybrid synthesizer,
+ * built by Surge Synth Team
+ *
+ * Learn more at https://surge-synthesizer.github.io/
+ *
+ * Copyright 2018-2024, various authors, as described in the GitHub
+ * transaction log.
+ *
+ * Surge XT is released under the GNU General Public Licence v3
+ * or later (GPL-3.0-or-later). The license is found in the "LICENSE"
+ * file in the root of this repository, or at
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * Surge was a commercial product from 2004-2018, copyright and ownership
+ * held by Claes Johanson at Vember Audio during that period.
+ * Claes made Surge open source in September 2018.
+ *
+ * All source for Surge XT is available at
+ * https://github.com/surge-synthesizer/surge
+ */
+
+#include "MSEGEditor.h"
+#include "MSEGEditorAccessibleKeyboard.h"
+#include "MSEGModulationHelper.h"
+#include "UserDefaults.h"
+#include "SurgeGUIUtils.h"
+#include "DebugHelpers.h"
+#include "SkinColors.h"
+#include "basic_dsp.h" // for limit_range
+#include "SurgeImage.h"
+#include "SurgeImageStore.h"
+#include "SurgeGUIEditor.h"
+#include "RuntimeFont.h"
+
+#include "widgets/MultiSwitch.h"
+#include "widgets/NumberField.h"
+#include "widgets/Switch.h"
+#include "overlays/TypeinParamEditor.h"
+#include "overlays/OverlayWrapper.h"
+#include <algorithm>
+#include <set>
+#include "widgets/MenuCustomComponents.h"
+
+using namespace Surge::GUI;
+
+namespace Surge
+{
+namespace Overlays
+{
+
+struct TimeThisBlock
+{
+    TimeThisBlock(const std::string &tag) : tag(tag)
+    {
+        start = std::chrono::high_resolution_clock::now();
+    }
+    void bump(const std::string &msg)
+    {
+        auto end = std::chrono::high_resolution_clock::now();
+        auto int_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        std::cout << "   " << msg << tag << " @ " << int_ms.count() << std::endl;
+    }
+    ~TimeThisBlock()
+    {
+        auto end = std::chrono::high_resolution_clock::now();
+        auto int_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        std::cout << "Block in " << tag << " took " << int_ms.count() << "ms ("
+                  << 1000.0 / int_ms.count() << " fps)" << std::endl;
+    }
+    std::string tag;
+    std::chrono::time_point<std::chrono::high_resolution_clock> start;
+};
+
+struct MSEGCanvas;
+
+struct MSEGControlRegion : public juce::Component,
+                           public Surge::GUI::SkinConsumingComponent,
+                           public Surge::GUI::IComponentTagValue::Listener
+{
+    MSEGControlRegion(MSEGCanvas *c, SurgeStorage *storage, LFOStorage *lfos, MSEGStorage *ms,
+                      MSEGEditor::State *eds, Surge::GUI::Skin::ptr_t skin,
+                      std::shared_ptr<SurgeImageStore> b, SurgeGUIEditor *sge)
+        : juce::Component("MSEG Settings")
+    {
+        setSkin(skin, b);
+
+        this->ms = ms;
+        this->eds = eds;
+        this->lfodata = lfos;
+        this->canvas = c;
+        this->storage = storage;
+        this->sge = sge;
+
+        setAccessible(true);
+        setTitle("MSEG Settings");
+        setDescription("MSEG Settings");
+
+        // Accessibility grouping. Tab cycles and wraps in here instead of escaping to the
+        // canvas. Not a tab stop itself, so entering the group lands on a widget.
+        setFocusContainerType(juce::Component::FocusContainerType::keyboardFocusContainer);
+
+        rebuild();
+    };
+
+    std::unique_ptr<Surge::Overlays::TypeinLambdaEditor> typeinEditor;
+
+    void rebuild();
+
+    // One tab stop per switch, on its selected cell.
+    std::unique_ptr<juce::ComponentTraverser> createKeyboardFocusTraverser() override
+    {
+        return std::make_unique<Surge::Widgets::SelectionCollapsingKeyboardFocusTraverser>();
+    }
+
+    void valueChanged(Surge::GUI::IComponentTagValue *p) override;
+    int32_t controlModifierClicked(Surge::GUI::IComponentTagValue *pControl,
+                                   const juce::ModifierKeys &button,
+                                   bool isDoubleClickEvent) override;
+
+    void paint(juce::Graphics &g) override { g.fillAll(skin->getColor(Colors::MSEGEditor::Panel)); }
+
+    std::unique_ptr<Surge::Widgets::Switch> hSnapButton, vSnapButton;
+    std::unique_ptr<Surge::Widgets::MultiSwitch> loopMode, editMode, movementMode;
+    std::unique_ptr<Surge::Widgets::NumberField> hSnapSize, vSnapSize;
+    std::unique_ptr<Surge::Widgets::NumberField> nodeSelect;
+    std::unique_ptr<juce::ToggleButton> deformUseButton, deformInvertButton, triggerFilterButton,
+        triggerAmpButton;
+    std::unique_ptr<juce::Label> deformUseLabel, deformInvertLabel, triggerFilterLabel,
+        triggerAmpLabel;
+    std::vector<std::unique_ptr<juce::Label>> labels;
+
+    void hvSnapTypein(bool isH);
+
+    // Mirrors MSEGCanvas::isSceneMSEG(). Duplicated rather than routed through
+    // canvas because canvas is nullptr during the constructor's initial
+    // rebuild(), while lfodata is always valid on MSEGControlRegion.
+    bool isSceneMSEG() const { return lfodata->shape.ctrlgroup_entry >= ms_slfo1; }
+
+    // Which segment indices the trigger/deform checkboxes currently act on:
+    // either the single kbdHandler cursor node, or every node in the active
+    // lasso/keyboard selection. Always non-empty.
+    std::vector<int> activeNodeSelection() const;
+
+    // Node whose current settings the checkboxes should display when the
+    // selection has more than one member: the selected node spanning the
+    // longest segment duration. Lassos never produce disjoint selections
+    // (a new shift+drag replaces rather than adds), so "longest segment" is
+    // a stable, cheap proxy for "most recently touched."
+    int representativeNodeForSelection(const std::vector<int> &sel) const;
+
+    // Refreshes nodeSelect and the footer checkboxes from the current cursor
+    // state. Called after rebuild() and whenever the canvas reports a selection
+    // or cursor change.
+    void refreshNodeControls();
+
+    // Shared onClick handler for the footer trigger/deform toggle buttons.
+    // Applies the clicked button's new state to every node in the active selection.
+    void toggleButtonClicked(int tag);
+
+    MSEGStorage *ms = nullptr;
+    MSEGEditor::State *eds = nullptr;
+    MSEGCanvas *canvas = nullptr;
+    LFOStorage *lfodata = nullptr;
+    SurgeStorage *storage = nullptr;
+    SurgeGUIEditor *sge = nullptr;
+
+    bool keyPressed(const juce::KeyPress &key) override;
+};
+
+struct MSEGCanvas : public juce::Component, public Surge::GUI::SkinConsumingComponent
+{
+    MSEGCanvas(SurgeStorage *storage, LFOStorage *lfodata, MSEGStorage *ms, MSEGEditor::State *eds,
+               Surge::GUI::Skin::ptr_t skin, std::shared_ptr<SurgeImageStore> b,
+               SurgeGUIEditor *sge)
+        : juce::Component("MSEG Display")
+    {
+        setSkin(skin, b);
+        this->storage = storage;
+        this->ms = ms;
+        this->eds = eds;
+        this->lfodata = lfodata;
+        this->sge = sge;
+        Surge::MSEG::rebuildCache(ms);
+        handleDrawable = b->getImage(IDB_MSEG_NODES);
+        timeEditMode = (MSEGCanvas::TimeEdit)eds->timeEditMode;
+        setOpaque(true);
+        setTitle("MSEG Display/Editor");
+        setDescription("MSEG Display/Editor");
+        setAccessible(true);
+        setupAccessibleKeyboard();
+    };
+
+    using segType = MSEGStorage::segment::Type;
+
+    struct SegmentTypeMenuEntry
+    {
+        segType type;
+        std::string label;
+    };
+
+    static const std::vector<SegmentTypeMenuEntry> &segmentTypeMenuLayout()
+    {
+        static const std::vector<SegmentTypeMenuEntry> layout = [] {
+            std::vector<SegmentTypeMenuEntry> v;
+
+            v.push_back({segType::HOLD, "Hold"});
+            v.push_back({segType::LINEAR, "Linear"});
+            v.push_back({segType::SCURVE, toOSCase("S-Curve")});
+            v.push_back({segType::QUAD_BEZIER, "Bezier"});
+
+            v.push_back({segType::NONE, ""}); // separator
+
+            v.push_back({segType::SINE, "Sine"});
+            v.push_back({segType::TRIANGLE, "Triangle"});
+            v.push_back({segType::SAWTOOTH, "Sawtooth"});
+            v.push_back({segType::SQUARE, "Square"});
+
+            v.push_back({segType::NONE, ""}); // separator
+
+            for (int i = 0; i < 8; i++)
+            {
+                v.push_back({static_cast<segType>(segType::RATCHET_1 + i),
+                             fmt::format("Ratchet {:d}", i + 1)});
+            }
+
+            v.push_back({segType::NONE, ""}); // separator
+
+            v.push_back({segType::BUMP, "Bump"});
+            v.push_back({segType::STAIRS, "Stairs"});
+            v.push_back({segType::SMOOTH_STAIRS, toOSCase("Smooth Stairs")});
+            v.push_back({segType::BROWNIAN, toOSCase("Brownian Bridge")});
+
+            return v;
+        }();
+
+        return layout;
+    }
+
+    enum SegmentProps
+    {
+        duration,
+        value,
+        cp_duration,
+        cp_value,
+    };
+
+    std::unique_ptr<Surge::Overlays::TypeinLambdaEditor> typeinEditor;
+
+    /*
+    ** We make a list of hotzones when we draw so we don't have to recalculate the
+    ** mouse locations in drag and so on events
+    */
+    struct hotzone
+    {
+        juce::Rectangle<float> rect;
+        juce::Rectangle<float> drawRect;
+        bool useDrawRect = false;
+        int associatedSegment;
+        bool active = false;
+        bool dragging = false;
+        // For pan and zoom we need to treat the endpoint of the last segment specially
+        bool specialEndpoint = false;
+
+        enum Type
+        {
+            MOUSABLE_NODE,
+            INACTIVE_NODE, // To keep the array the same size add dummies when you suppress controls
+            LOOPMARKER
+        } type;
+
+        enum ZoneSubType
+        {
+            SEGMENT_ENDPOINT,
+            SEGMENT_CONTROL,
+            LOOP_START,
+            LOOP_END
+        } zoneSubType = SEGMENT_CONTROL;
+
+        enum SegmentControlDirection
+        {
+            VERTICAL_ONLY = 1,
+            HORIZONTAL_ONLY,
+            BOTH_DIRECTIONS
+        } segmentDirection = VERTICAL_ONLY;
+        std::function<void(float, float, const juce::Point<float> &)> onDrag;
+    };
+
+    std::function<void()> onModelChanged = []() {};
+    std::vector<hotzone> hotzones;
+
+    static constexpr int drawInsertX = 10, drawInsertY = 10, axisSpaceX = 18, axisSpaceY = 8;
+
+    inline float drawDuration()
+    {
+        /*
+        if( ms->n_activeSegments == 0 )
+           return 1.0;
+        return std::max( 1.0f, ms->totalDuration );
+         */
+        return ms->axisWidth;
+    }
+
+    inline juce::Rectangle<int> getDrawArea()
+    {
+        auto drawArea = getLocalBounds()
+                            .reduced(drawInsertX, drawInsertY)
+                            .withTrimmedBottom(axisSpaceY)
+                            .withTrimmedLeft(axisSpaceX)
+                            .withTrimmedTop(4);
+        return drawArea;
+    }
+
+    inline juce::Rectangle<int> getHAxisArea()
+    {
+        auto drawArea = getLocalBounds().reduced(drawInsertX, drawInsertY);
+        drawArea = drawArea.withTop(drawArea.getBottom() - axisSpaceY).withTrimmedLeft(axisSpaceX);
+        return drawArea;
+    }
+
+    // Stretch all the way to the bottom
+    inline juce::Rectangle<int> getHAxisDoubleClickArea()
+    {
+        return getHAxisArea().withBottom(getLocalBounds().getBottom());
+    }
+
+    inline juce::Rectangle<int> getVAxisArea()
+    {
+        auto drawArea = getLocalBounds()
+                            .reduced(drawInsertX, drawInsertY)
+                            .withWidth(axisSpaceX)
+                            .withTrimmedBottom(axisSpaceY);
+        return drawArea;
+    }
+
+    std::function<float(float)> valToPx()
+    {
+        const auto drawArea = getDrawArea();
+        const float vscale = drawArea.getHeight();
+        return [vscale, drawArea](float vp) -> float {
+            float v = 1 - (vp + 1) * 0.5;
+            return v * vscale + drawArea.getY();
+        };
+    }
+
+    std::function<float(float)> pxToVal()
+    {
+        const auto drawArea = getDrawArea();
+        const float vscale = drawArea.getHeight();
+        return [vscale, drawArea](float vx) -> float {
+            auto v = (vx - drawArea.getY()) / vscale;
+            auto vp = (1 - v) * 2 - 1;
+            return vp;
+        };
+    }
+
+    std::function<float(float)> timeToPx()
+    {
+        const auto drawArea = getDrawArea();
+        const float maxt = drawDuration();
+        const float tscale = 1.f * drawArea.getWidth() / maxt;
+        return [tscale, drawArea, this](float t) {
+            return (t - ms->axisStart) * tscale + drawArea.getX();
+        };
+    }
+
+    std::function<float(float)> pxToTime() // INVESTIGATE
+    {
+        const auto drawArea = getDrawArea();
+        const float maxt = drawDuration();
+        const float tscale = 1.f * drawArea.getWidth() / maxt;
+
+        // So px = t * tscale + drawarea;
+        // So t = ( px - drawarea ) / tscale;
+        return [tscale, drawArea, this](float px) {
+            return (px - drawArea.getX()) / tscale + ms->axisStart;
+        };
+    }
+
+    void offsetValue(float &v, float d) { v = limit_range(v + d, -1.f, 1.f); }
+
+    void adjustValue(int idx, bool cpvNotV0, float d, float snapResolution)
+    {
+        if (cpvNotV0)
+        {
+            offsetValue(ms->segments[idx].cpv, d);
+        }
+        else
+        {
+            offsetValue(ms->segments[idx].dragv0, d);
+            if (snapResolution <= 0)
+                ms->segments[idx].v0 = ms->segments[idx].dragv0;
+            else
+            {
+                float q = ms->segments[idx].dragv0 + 1;
+                float pos = round(q / snapResolution) * snapResolution;
+                float adj = pos - 1.0;
+                ms->segments[idx].v0 = limit_range(adj, -1.f, 1.f);
+            }
+        }
+    }
+
+    // This little struct acts as a SnapGuard so that Shift-drags can (un)reset snap
+    struct SnapGuard
+    {
+        SnapGuard(MSEGCanvas *c) : c(c)
+        {
+            hSnapO = c->ms->hSnap;
+            vSnapO = c->ms->vSnap;
+            c->repaint();
+        }
+        ~SnapGuard()
+        {
+            c->ms->hSnap = hSnapO;
+            c->ms->vSnap = vSnapO;
+            c->repaint();
+        }
+        MSEGCanvas *c;
+        float hSnapO, vSnapO;
+    };
+    std::shared_ptr<SnapGuard> snapGuard;
+
+    enum TimeEdit
+    {
+        SINGLE, // movement bound between two neighboring nodes
+        SHIFT,  // shifts all following nodes along, relatively
+        DRAW,   // only change amplitude of nodes as the cursor passes along the timeline
+    } timeEditMode = SINGLE;
+
+    const int loopMarkerWidth = 7, loopMarkerHeight = 15;
+
+    void recalcHotZones(const juce::Point<int> &where)
+    {
+        hotzones.clear();
+
+        const auto drawArea = getDrawArea();
+
+        auto handleRadius = 6.5;
+
+        float maxt = drawDuration();
+        float tscale = 1.f * drawArea.getWidth() / maxt;
+        float vscale = drawArea.getHeight();
+        auto valpx = valToPx();
+        auto tpx = timeToPx();
+        auto pxt = pxToTime();
+
+        // Put in the loop marker boxes
+        if (ms->loopMode != MSEGStorage::LoopMode::ONESHOT && ms->editMode != MSEGStorage::LFO)
+        {
+            int ls = (ms->loop_start == MSEGStorage::kLoopPointUnset) ? 0 : ms->loop_start;
+            int le = (ms->loop_end == MSEGStorage::kLoopPointUnset) ? ms->n_activeSegments - 1
+                                                                    : ms->loop_end;
+            float pxs =
+                (ls >= ms->n_activeSegments) ? tpx(ms->totalDuration) : tpx(ms->segmentStart[ls]);
+            float pxe = (le < 0) ? tpx(0.f) : tpx(ms->segmentEnd[le]);
+            auto hs = hotzone();
+            hs.type = hotzone::Type::LOOPMARKER;
+            hs.segmentDirection = hotzone::HORIZONTAL_ONLY;
+            hs.associatedSegment = -1;
+
+            auto he = hs;
+
+            auto haxisArea = getHAxisArea();
+
+            if (this->ms->editMode != MSEGStorage::LFO)
+            {
+                hs.onDrag = [pxt, this](float x, float y, const juce::Point<float> &w) {
+                    auto t = pxt(w.x);
+                    t = limit_range(t, 0.f, ms->totalDuration);
+
+                    int seg;
+
+                    if (t >= ms->totalDuration)
+                    {
+                        seg = ms->n_activeSegments; // last point
+                    }
+                    else
+                    {
+                        seg = Surge::MSEG::timeToSegment(this->ms, t);
+                        float pct = 0;
+
+                        if (this->ms->segments[seg].duration > 0)
+                        {
+                            pct = (t - this->ms->segmentStart[seg]) /
+                                  this->ms->segments[seg].duration;
+                        }
+
+                        if (pct > 0.5)
+                        {
+                            seg++;
+                        }
+                    }
+
+                    if (seg != ms->loop_start)
+                    {
+                        Surge::MSEG::setLoopStart(ms, seg);
+                        modelChanged();
+                    }
+
+                    loopDragTime = t;
+                    loopDragIsStart = true;
+
+                    if (ms->loop_start == MSEGStorage::kLoopPointUnset)
+                    {
+                        loopDragEnd = 0;
+                    }
+                    else if (ms->loop_start >= ms->n_activeSegments)
+                    {
+                        loopDragEnd = ms->totalDuration;
+                    }
+                    else
+                    {
+                        loopDragEnd = ms->segmentStart[ms->loop_start];
+                    }
+                };
+
+                hs.rect = juce::Rectangle<float>(pxs - 0.5, haxisArea.getY() + 1, loopMarkerWidth,
+                                                 loopMarkerHeight);
+                hs.zoneSubType = hotzone::LOOP_START;
+
+                he.rect = juce::Rectangle<float>(pxe - loopMarkerWidth + 0.5, haxisArea.getY() + 1,
+                                                 loopMarkerWidth, loopMarkerHeight);
+                he.zoneSubType = hotzone::LOOP_END;
+
+                he.onDrag = [pxt, this](float x, float y, const juce::Point<float> &w) {
+                    auto t = pxt(w.x);
+                    t = limit_range(t, 0.f, ms->totalDuration);
+
+                    int seg;
+                    if (t <= 0.f)
+                    {
+                        seg = -1; // point 0
+                    }
+                    else if (t >= ms->totalDuration)
+                    {
+                        seg = ms->n_activeSegments - 1;
+                    }
+                    else
+                    {
+                        seg = Surge::MSEG::timeToSegment(this->ms, t);
+
+                        if (seg > 0)
+                        {
+                            seg--; // END marker: seg index is the one that ends here
+                        }
+
+                        float pct = 0;
+
+                        if (seg + 1 < ms->n_activeSegments &&
+                            this->ms->segments[seg + 1].duration > 0)
+                        {
+                            pct = (t - ms->segmentEnd[seg]) / this->ms->segments[seg + 1].duration;
+                        }
+
+                        if (pct > 0.5)
+                        {
+                            seg++;
+                        }
+                    }
+
+                    if (seg != ms->loop_end)
+                    {
+                        Surge::MSEG::setLoopEnd(ms, seg);
+                        modelChanged();
+                    }
+
+                    loopDragTime = t;
+                    loopDragIsStart = false;
+
+                    if (ms->loop_end == MSEGStorage::kLoopPointUnset)
+                    {
+                        loopDragEnd = ms->totalDuration;
+                    }
+                    else if (ms->loop_end < 0)
+                    {
+                        loopDragEnd = 0.f;
+                    }
+                    else
+                    {
+                        loopDragEnd = ms->segmentEnd[ms->loop_end];
+                    }
+                };
+
+                hotzones.push_back(hs);
+                hotzones.push_back(he);
+            }
+        }
+
+        for (int i = 0; i < ms->n_activeSegments; ++i)
+        {
+            auto t0 = tpx(ms->segmentStart[i]);
+            auto t1 = tpx(ms->segmentEnd[i]);
+
+            auto segrec = juce::Rectangle<float>(juce::Point<float>(t0, drawArea.getY()),
+                                                 juce::Point<float>(t1, drawArea.getBottom()));
+
+            // Now add the mousable zones
+            auto &s = ms->segments[i];
+            auto rectForPoint =
+                [&](float t, float v, hotzone::ZoneSubType mt,
+                    std::function<void(float, float, const juce::Point<float> &)> onDrag) {
+                    auto h = hotzone();
+                    h.rect = juce::Rectangle<float>(
+                        juce::Point<float>(t - handleRadius, valpx(v) - handleRadius),
+                        juce::Point<float>(t + handleRadius, valpx(v) + handleRadius));
+                    h.type = hotzone::Type::MOUSABLE_NODE;
+                    if (h.rect.contains(where.getX(), where.getY()))
+                        h.active = true;
+                    h.onDrag = onDrag;
+                    h.associatedSegment = i;
+                    h.zoneSubType = mt;
+                    hotzones.push_back(h);
+                };
+
+            auto timeConstraint = [&](int prior, float dx) {
+                switch (this->timeEditMode)
+                {
+                case DRAW:
+                    break;
+                case SHIFT:
+                    if (lassoSelector)
+                    {
+                        bool isLast{true};
+                        for (auto si : lassoSelector->items)
+                        {
+                            isLast = isLast && si <= prior + 1;
+                        }
+                        if (isLast)
+                        {
+                            Surge::MSEG::adjustDurationShiftingSubsequent(this->ms, prior, dx,
+                                                                          ms->hSnap, max_msegs);
+                        }
+                        else
+                        {
+                            Surge::MSEG::adjustDurationConstantTotalDuration(this->ms, prior, dx,
+                                                                             ms->hSnap);
+                        }
+                    }
+                    else
+                    {
+                        Surge::MSEG::adjustDurationShiftingSubsequent(this->ms, prior, dx,
+                                                                      ms->hSnap, max_msegs);
+                    }
+                    break;
+                case SINGLE:
+                    Surge::MSEG::adjustDurationConstantTotalDuration(this->ms, prior, dx,
+                                                                     ms->hSnap);
+                    break;
+                }
+            };
+
+            auto unipolarFactor = 1 + lfodata->unipolar.val.b;
+
+            // We get a mousable point at the start of the line
+            rectForPoint(t0, s.v0, hotzone::SEGMENT_ENDPOINT,
+                         [i, this, vscale, tscale, timeConstraint,
+                          unipolarFactor](float dx, float dy, const juce::Point<float> &where) {
+                             adjustValue(i, false, -2 * dy / vscale, ms->vSnap * unipolarFactor);
+
+                             if (i != 0)
+                             {
+                                 timeConstraint(i - 1, dx / tscale);
+                             }
+                         });
+
+            // Control point editor
+            if (ms->segments[i].duration > 0.01 &&
+                ms->segments[i].type != MSEGStorage::segment::HOLD)
+            {
+                // Drop in a control point. But where and moving how?
+                // Here's some good defaults
+                bool verticalMotion = true;
+                bool horizontalMotion = false;
+                bool verticalScaleByValues = false;
+
+                switch (ms->segments[i].type)
+                {
+                // Ones where we scan the entire square
+                case MSEGStorage::segment::QUAD_BEZIER:
+                case MSEGStorage::segment::BROWNIAN:
+                case MSEGStorage::segment::RATCHET_1:
+                case MSEGStorage::segment::RATCHET_2:
+                case MSEGStorage::segment::RATCHET_3:
+                case MSEGStorage::segment::RATCHET_4:
+                case MSEGStorage::segment::RATCHET_5:
+                case MSEGStorage::segment::RATCHET_6:
+                case MSEGStorage::segment::RATCHET_7:
+                case MSEGStorage::segment::RATCHET_8:
+                    horizontalMotion = true;
+                    break;
+                // Ones where we stay within the range
+                case MSEGStorage::segment::LINEAR:
+                    verticalScaleByValues = true;
+                    break;
+                default:
+                    break;
+                }
+
+                // Follow the mouse with scaling of course
+
+                float vLocation = ms->segments[i].cpv;
+                if (verticalScaleByValues)
+                    vLocation = 0.5 * (vLocation + 1) * (ms->segments[i].nv1 - ms->segments[i].v0) +
+                                ms->segments[i].v0;
+
+                // switch is here in case some other curves need the fixed control point in other
+                // places horizontally
+                float fixtLocation;
+                switch (ms->segments[i].type)
+                {
+                default:
+                    fixtLocation = 0.5;
+                    break;
+                }
+
+                float tLocation = fixtLocation * ms->segments[i].duration + ms->segmentStart[i];
+
+                if (horizontalMotion)
+                    tLocation =
+                        ms->segments[i].cpduration * ms->segments[i].duration + ms->segmentStart[i];
+
+                float t = tpx(tLocation);
+                float v = valpx(vLocation);
+                auto h = hotzone();
+
+                h.rect =
+                    juce::Rectangle<float>(juce::Point<float>(t - handleRadius, v - handleRadius),
+                                           juce::Point<float>(t + handleRadius, v + handleRadius));
+                h.type = hotzone::Type::MOUSABLE_NODE;
+
+                if (h.rect.contains(where.getX(), where.getY()))
+                {
+                    h.active = true;
+                }
+
+                h.useDrawRect = false;
+
+                if ((verticalMotion && !horizontalMotion &&
+                     (ms->segments[i].type != MSEGStorage::segment::LINEAR &&
+                      ms->segments[i].type != MSEGStorage::segment::BUMP)) ||
+                    ms->segments[i].type == MSEGStorage::segment::BROWNIAN)
+                {
+                    float t = tpx(0.5 * ms->segments[i].duration + ms->segmentStart[i]);
+                    float v = valpx(0.5 * (ms->segments[i].nv1 + ms->segments[i].v0));
+
+                    h.drawRect = juce::Rectangle<float>(
+                        juce::Point<float>(t - handleRadius, v - handleRadius),
+                        juce::Point<float>(t + handleRadius, v + handleRadius));
+                    h.rect = h.drawRect;
+                    h.useDrawRect = true;
+                }
+
+                float segdt = ms->segmentEnd[i] - ms->segmentStart[i];
+                float segdx = ms->segments[i].nv1 - ms->segments[i].v0;
+
+                h.onDrag = [this, i, tscale, vscale, verticalMotion, horizontalMotion,
+                            verticalScaleByValues, segdt,
+                            segdx](float dx, float dy, const juce::Point<float> &where) {
+                    if (verticalMotion)
+                    {
+                        float dv = 0;
+
+                        if (verticalScaleByValues)
+                        {
+                            if (segdx == 0)
+                                dv = 0;
+                            else
+                                dv = -2 * dy / vscale / (0.5 * segdx);
+                        }
+                        else
+                            dv = -2 * dy / vscale;
+
+                        /*
+                         * OK we have some special case edge scalings for sensitive types.
+                         * If this ends up applying to more than linear then I would be surprised
+                         * but write a switch anyway :)
+                         */
+                        switch (ms->segments[i].type)
+                        {
+                        case MSEGStorage::segment::LINEAR:
+                        case MSEGStorage::segment::SCURVE:
+                        {
+                            // Slowdown parameters. Basically slow down mouse -> delta linearly near
+                            // edge
+                            float slowdownInTheLast = 0.15;
+                            float slowdownAtMostTo = 0.015;
+                            float adj = 1;
+
+                            if (ms->segments[i].cpv > (1.0 - slowdownInTheLast))
+                            {
+                                auto lin = (ms->segments[i].cpv - slowdownInTheLast) /
+                                           (1.0 - slowdownInTheLast);
+                                adj = (1.0 - (1.0 - slowdownAtMostTo) * lin);
+                            }
+                            else if (ms->segments[i].cpv < (-1.0 + slowdownInTheLast))
+                            {
+                                auto lin = (ms->segments[i].cpv + slowdownInTheLast) /
+                                           (-1.0 + slowdownInTheLast);
+                                adj = (1.0 - (1.0 - slowdownAtMostTo) * lin);
+                            }
+                            dv *= adj;
+                        }
+                        default:
+                            break;
+                        }
+
+                        ms->segments[i].cpv += dv;
+                    }
+
+                    if (horizontalMotion)
+                    {
+                        ms->segments[i].cpduration += dx / tscale / segdt;
+                    }
+
+                    Surge::MSEG::constrainControlPointAt(ms, i);
+                    modelChanged(i);
+                };
+
+                h.associatedSegment = i;
+                h.zoneSubType = hotzone::SEGMENT_CONTROL;
+
+                if (verticalMotion && horizontalMotion)
+                    h.segmentDirection = hotzone::BOTH_DIRECTIONS;
+                else if (horizontalMotion)
+                    h.segmentDirection = hotzone::HORIZONTAL_ONLY;
+                else
+                    h.segmentDirection = hotzone::VERTICAL_ONLY;
+
+                hotzones.push_back(h);
+            }
+            else
+            {
+                hotzone h;
+                h.type = hotzone::INACTIVE_NODE;
+                hotzones.push_back(h);
+            }
+
+            // Specially we have to add an endpoint editor
+            if (i == ms->n_activeSegments - 1)
+            {
+                rectForPoint(
+                    tpx(ms->totalDuration),
+                    ms->segments[ms->n_activeSegments - 1].nv1, // which is [0].v0 in lock mode only
+                    hotzone::SEGMENT_ENDPOINT,
+                    [this, vscale, tscale, unipolarFactor](float dx, float dy,
+                                                           const juce::Point<float> &where) {
+                        if (ms->endpointMode == MSEGStorage::EndpointMode::FREE)
+                        {
+                            float d = -2 * dy / vscale;
+                            float snapResolution = ms->vSnap * unipolarFactor;
+                            int idx = ms->n_activeSegments - 1;
+
+                            offsetValue(ms->segments[idx].dragv1, d);
+
+                            if (snapResolution <= 0)
+                                ms->segments[idx].nv1 = ms->segments[idx].dragv1;
+                            else
+                            {
+                                float q = ms->segments[idx].dragv1 + 1;
+                                float pos = round(q / snapResolution) * snapResolution;
+                                float adj = pos - 1.0;
+
+                                ms->segments[idx].nv1 = limit_range(adj, -1.f, 1.f);
+                            }
+                        }
+                        else
+                        {
+                            adjustValue(0, false, -2 * dy / vscale, ms->vSnap);
+                        }
+
+                        // We need to deal with the cpduration also
+                        auto cpv = this->ms->segments[ms->n_activeSegments - 1].cpduration /
+                                   this->ms->segments[ms->n_activeSegments - 1].duration;
+
+                        // Don't allow endpoint time adjust in LFO mode
+                        if (this->ms->editMode == MSEGStorage::ENVELOPE)
+                        {
+                            if (!this->getLocalBounds().contains(where.toInt()))
+                            {
+                                auto howFar = where.x - this->getLocalBounds().getRight();
+
+                                if (howFar > 0)
+                                    dx *= howFar * 0.1; // this is really just a speedup as our axes
+                                                        // shrinks. Just a fudge
+                            }
+
+                            Surge::MSEG::adjustDurationShiftingSubsequent(
+                                ms, ms->n_activeSegments - 1, dx / tscale, ms->hSnap, max_msegs);
+                        }
+                    });
+
+                hotzones.back().specialEndpoint = true;
+            }
+        }
+    }
+
+    // vertical grid thinning
+    const int gridMaxVSteps = 10;
+
+    void drawLoopDragMarker(juce::Graphics &g, juce::Colour markerColor,
+                            hotzone::ZoneSubType subtype, const juce::Rectangle<float> &rect)
+    {
+        auto ha = getHAxisArea();
+        auto height = rect.getHeight();
+        auto start = rect.getRight();
+        auto end = rect.getX();
+        auto top = rect.getY();
+
+        if (subtype == hotzone::LOOP_START)
+        {
+            std::swap(start, end);
+        }
+
+        juce::Path p;
+        p.startNewSubPath(start, top);
+        p.lineTo(start, top + height);
+        p.lineTo(end, top + height);
+        p.closeSubPath();
+
+        g.setColour(markerColor);
+        g.fillPath(p);
+
+        g.drawLine(start, top, start, top + height, 1);
+    }
+
+    void drawLoopDragMarker(juce::Graphics &g, juce::Colour markerColor,
+                            hotzone::ZoneSubType subtype, float time)
+    {
+        auto tpx = timeToPx();
+        auto ha = getHAxisArea();
+        auto start = tpx(time) - 0.5;
+        bool hide = false;
+
+        if (subtype == hotzone::LOOP_END)
+        {
+            start -= loopMarkerWidth;
+
+            /* this -1 is because we offset half a px to the left in our rect */
+            if (start < ha.getX() - 1 || start + loopMarkerWidth > ha.getRight())
+            {
+                hide = true;
+            }
+        }
+        else
+        {
+            /* this -1 is because we offset half a px to the left in our rect */
+            if (start < ha.getX() - 1 || start + loopMarkerWidth > ha.getRight())
+            {
+                hide = true;
+            }
+        }
+
+        if (!hide)
+        {
+            drawLoopDragMarker(
+                g, markerColor, subtype,
+                juce::Rectangle<float>(start, ha.getY(), loopMarkerWidth, loopMarkerHeight));
+        }
+    }
+
+    inline void drawAxis(juce::Graphics &g)
+    {
+        auto primaryFont = skin->fontManager->getLatoAtSize(9, juce::Font::bold);
+        auto secondaryFont = skin->fontManager->getLatoAtSize(7);
+
+        auto haxisArea = getHAxisArea();
+        auto tpx = timeToPx();
+        float maxt = drawDuration();
+
+        // draw looped area of the axis
+        if (ms->loopMode != MSEGStorage::ONESHOT && ms->editMode != MSEGStorage::LFO)
+        {
+            int ls = (ms->loop_start == MSEGStorage::kLoopPointUnset) ? 0 : ms->loop_start;
+            int le = (ms->loop_end == MSEGStorage::kLoopPointUnset) ? ms->n_activeSegments - 1
+                                                                    : ms->loop_end;
+            float pxs =
+                (ls >= ms->n_activeSegments) ? tpx(ms->totalDuration) : tpx(ms->segmentStart[ls]);
+            float pxe = (le < 0) ? tpx(0.f) : tpx(ms->segmentEnd[le]);
+
+            auto r = juce::Rectangle<float>(juce::Point<float>(pxs, haxisArea.getY()),
+                                            juce::Point<float>(pxe, haxisArea.getY() + 15));
+
+            // draw the loop region start to end
+            if (!(ms->loop_start != MSEGStorage::kLoopPointUnset &&
+                  ms->loop_end != MSEGStorage::kLoopPointUnset &&
+                  ms->loop_start == ms->loop_end + 1))
+            {
+                g.setColour(skin->getColor(Colors::MSEGEditor::Loop::RegionAxis));
+                g.fillRect(r);
+            }
+
+            auto mcolor = skin->getColor(Colors::MSEGEditor::Loop::Marker);
+
+            // draw loop markers
+            if ((loopDragTime < 0 || !loopDragIsStart))
+            {
+                float startT =
+                    (ls >= ms->n_activeSegments) ? ms->totalDuration : ms->segmentStart[ls];
+                drawLoopDragMarker(g, mcolor, hotzone::LOOP_START, startT);
+            }
+
+            if ((loopDragTime < 0 || loopDragIsStart))
+            {
+                float endT = (le < 0) ? 0.f : ms->segmentEnd[le];
+                drawLoopDragMarker(g, mcolor, hotzone::LOOP_END, endT);
+            }
+
+            // loop marker when dragged
+            if (loopDragTime >= 0)
+            {
+                drawLoopDragMarker(g, mcolor,
+                                   (loopDragIsStart ? hotzone::LOOP_START : hotzone::LOOP_END),
+                                   loopDragTime);
+            }
+        }
+
+        updateHTicks();
+
+        for (auto hp : hTicks)
+        {
+            float t = hp.first;
+            auto c = hp.second;
+            float px = tpx(t);
+            int yofs = 13;
+            std::string txt;
+
+            if (!(c & TickDrawStyle::kNoLabel))
+            {
+
+                int sw = 0;
+
+                if (fmod(t, 1.f) == 0.f)
+                {
+                    g.setColour(skin->getColor(Colors::MSEGEditor::Axis::Text));
+                    g.setFont(primaryFont);
+                    txt = fmt::format("{:d}", int(t));
+                    sw = SST_STRING_WIDTH_INT(primaryFont, txt);
+                }
+                else
+                {
+                    g.setColour(skin->getColor(Colors::MSEGEditor::Axis::SecondaryText));
+                    g.setFont(secondaryFont);
+                    txt = fmt::format("{:5.2f}", t);
+                    sw = SST_STRING_WIDTH_INT(secondaryFont, txt);
+                }
+
+                g.drawText(txt, px - (sw / 2), haxisArea.getY() + 2, sw, yofs,
+                           juce::Justification::centredBottom);
+            }
+        }
+
+        // vertical axis
+        auto vaxisArea = getVAxisArea();
+        auto valpx = valToPx();
+
+        vaxisArea = vaxisArea.expanded(1, 0);
+
+        g.setColour(skin->getColor(Colors::MSEGEditor::Axis::Line));
+        auto s = vaxisArea.getTopRight();
+        auto b = vaxisArea.getBottomRight().translated(0, 4);
+        g.drawLine(s.getX(), s.getY(), b.getX(), b.getY(), 1);
+
+        g.setFont(primaryFont);
+        g.setColour(skin->getColor(Colors::MSEGEditor::Axis::Text));
+
+        updateVTicks();
+
+        auto uni = lfodata->unipolar.val.b;
+
+        for (auto vp : vTicks)
+        {
+            float p = valpx(std::get<0>(vp));
+
+            float off = vaxisArea.getWidth() * 0.666;
+
+            if (std::get<2>(vp))
+            {
+                off = 0;
+            }
+
+            if (off == 0)
+            {
+                g.setColour(skin->getColor(Colors::MSEGEditor::Axis::Line));
+            }
+            else
+            {
+                g.setColour(skin->getColor(Colors::MSEGEditor::Grid::SecondaryHorizontal));
+                g.drawLine(vaxisArea.getX() + off, p, vaxisArea.getRight() - 1.f, p);
+            }
+
+            if (off == 0)
+            {
+                std::string txt;
+                auto value = std::get<1>(vp);
+                int ypos = 3;
+
+                if (value == 0.f && std::signbit(value))
+                {
+                    value = -value;
+                }
+
+                txt = fmt::format("{:5.1f}", value);
+
+                g.setColour(skin->getColor(Colors::MSEGEditor::Axis::SecondaryText));
+
+                if (value == 1.f)
+                {
+                    g.drawText(txt, vaxisArea.getX() - 3, p, vaxisArea.getWidth(), 12,
+                               juce::Justification::topRight);
+                }
+                else if (value == -1.f || (value == 0.f && uni))
+                {
+                    g.drawText(txt, vaxisArea.getX() - 3, p - 12, vaxisArea.getWidth(), 12,
+                               juce::Justification::bottomRight);
+                }
+                else
+                {
+                    g.drawText(txt, vaxisArea.getX() - 3, p - 6, vaxisArea.getWidth(), 12,
+                               juce::Justification::centredRight);
+                }
+            }
+        }
+    }
+
+    enum TickDrawStyle
+    {
+        kNoLabel = 1 << 0,
+        kHighlight = 1 << 1
+    };
+
+    std::vector<std::pair<float, int>> hTicks;
+    float hTicksAsOf[3] = {-1, -1, -1};
+    void updateHTicks()
+    {
+        if (hTicksAsOf[0] == ms->hSnapDefault && hTicksAsOf[1] == ms->axisStart &&
+            hTicksAsOf[2] == ms->axisWidth)
+            return;
+
+        hTicksAsOf[0] = ms->hSnapDefault;
+        hTicksAsOf[1] = ms->axisStart;
+        hTicksAsOf[2] = ms->axisWidth;
+
+        hTicks.clear();
+
+        float dStep = ms->hSnapDefault;
+        if (dStep <= 0)
+        {
+            /*
+             * This error condition should never occur, but once I screwed up streaming, it did
+             * and then this code runs forever so...
+             */
+            dStep = 0.01;
+        }
+        /*
+         * OK two cases - step makes a squillion white lines, or step makes too few lines. Both of
+         * these depend on this ratio
+         */
+        float widthByStep = ms->axisWidth / dStep;
+
+        if (widthByStep < 4)
+        {
+            while (widthByStep < 4)
+            {
+                dStep /= 2;
+                widthByStep = ms->axisWidth / dStep;
+            }
+        }
+        else if (widthByStep > 20)
+        {
+            while (widthByStep > 20)
+            {
+                dStep *= 2;
+                widthByStep = ms->axisWidth / dStep;
+            }
+        }
+
+        // OK so what's our zero point.
+        int startPoint = ceil(ms->axisStart / dStep);
+        int endPoint = ceil((ms->axisStart + ms->axisWidth) / dStep);
+
+        for (int i = startPoint; i <= endPoint; ++i)
+        {
+            float f = i * dStep;
+            bool isInt = fabs(f - round(f)) < 1e-4;
+
+            hTicks.push_back(std::make_pair(f, isInt ? kHighlight : 0));
+        }
+    }
+
+    std::vector<std::tuple<float, float, bool>> vTicks; // position, display, is highlight
+    float vTickAsOf = -1;
+    void updateVTicks()
+    {
+        auto uni = lfodata->unipolar.val.b;
+
+        if (ms->vSnapDefault != vTickAsOf)
+        {
+            vTicks.clear();
+
+            float dStep = ms->vSnapDefault;
+            // See comment above
+            if (dStep <= 0)
+            {
+                dStep = 0.01;
+            }
+
+            while (dStep < 1.0 / (gridMaxVSteps * (1 + uni)))
+            {
+                dStep *= 2;
+            }
+
+            int steps = ceil(1.0 / dStep);
+            int start, end;
+
+            if (uni)
+            {
+                start = 0;
+                end = steps + 1;
+            }
+            else
+            {
+                start = -steps - 1;
+                end = steps + 1;
+            }
+
+            for (int vi = start; vi < end; vi++)
+            {
+                float val = vi * dStep;
+                auto doDraw = true;
+
+                if (val > 1)
+                {
+                    val = 1.0;
+                    if (vi != end - 1)
+                        doDraw = false;
+                }
+
+                if (val < -1)
+                {
+                    val = -1.0;
+                    if (vi != start)
+                        doDraw = false;
+                }
+
+                if (uni && val < 0)
+                {
+                    val = 0;
+                    if (vi != start)
+                        doDraw = false;
+                }
+
+                if (doDraw)
+                {
+                    // Little secret: unipolar is just a relabeled bipolar
+                    float pval = val;
+
+                    if (uni)
+                    {
+                        pval = val * 2 - 1;
+                    }
+
+                    vTicks.push_back(
+                        std::make_tuple(pval, val, vi == 0 || vi == start || vi == end - 1));
+                }
+            }
+        }
+    }
+
+    virtual void paint(juce::Graphics &g) override
+    {
+        auto uni = lfodata->unipolar.val.b;
+        auto vs = getLocalBounds();
+
+        if (ms->axisWidth < 0 || ms->axisStart < 0)
+            zoomToFull();
+
+        if (hotzones.empty())
+            recalcHotZones(juce::Point<int>(vs.getX(), vs.getY()));
+
+        g.fillAll(skin->getColor(Colors::MSEGEditor::Background));
+        const auto drawArea = getDrawArea();
+        float maxt = drawDuration();
+        auto valpx = valToPx();
+        auto tpx = timeToPx();
+        auto pxt = pxToTime();
+
+        // Draw the loop region fill
+        if (ms->loopMode != MSEGStorage::LoopMode::ONESHOT && ms->editMode != MSEGStorage::LFO)
+        {
+            int ls = (ms->loop_start == MSEGStorage::kLoopPointUnset) ? 0 : ms->loop_start;
+            int le = (ms->loop_end == MSEGStorage::kLoopPointUnset) ? ms->n_activeSegments - 1
+                                                                    : ms->loop_end;
+            float pxs =
+                (ls >= ms->n_activeSegments) ? tpx(ms->totalDuration) : tpx(ms->segmentStart[ls]);
+            float pxe = (le < 0) ? tpx(0.f) : tpx(ms->segmentEnd[le]);
+
+            if (!(pxs > drawArea.getRight() || pxe < drawArea.getX()))
+            {
+                auto oldpxs = pxs, oldpxe = pxe;
+                pxs = std::max(drawArea.getX(), (int)pxs);
+                pxe = std::min(drawArea.getRight(), (int)pxe);
+
+                auto loopRect =
+                    juce::Rectangle<float>(juce::Point<float>(pxs - 0.5, drawArea.getY()),
+                                           juce::Point<float>(pxe, drawArea.getBottom()));
+                auto cf = skin->getColor(Colors::MSEGEditor::Loop::RegionFill);
+
+                g.setColour(cf);
+                g.fillRect(loopRect);
+            }
+        }
+
+        Surge::MSEG::EvaluatorState es, esdf;
+        // This is different from the number in LFOMS::assign in draw mode on purpose
+        es.seed(8675309);
+        esdf.seed(8675309);
+
+        auto path = juce::Path();
+        auto highlightPath = juce::Path();
+        auto defpath = juce::Path();
+        auto fillpath = juce::Path();
+
+        float pathScale = 1.0;
+
+        float yOff = drawArea.getY();
+
+        auto beginP = [yOff, pathScale](juce::Path &p, float x, float y) {
+            p.startNewSubPath(pathScale * x, pathScale * (y - yOff));
+        };
+
+        auto addP = [yOff, pathScale](juce::Path &p, float x, float y) {
+            p.lineTo(pathScale * x, pathScale * (y - yOff));
+        };
+
+        bool hlpathUsed = false;
+
+        float pathFirstY, pathLastX, pathLastY, pathLastDef;
+
+        // this slightly odd construct means we always draw beyond the last point
+        bool drawnLast = false;
+        int priorEval = 0;
+
+        for (int q = 0; q <= drawArea.getWidth(); ++q)
+        {
+            float up = pxt(q + drawArea.getX());
+            int i = q;
+            if (!drawnLast)
+            {
+                float iup = (int)up;
+                float fup = up - iup;
+                float v = Surge::MSEG::valueAt(iup, fup, 0, ms, &es, true);
+                float vdef = Surge::MSEG::valueAt(iup, fup, lfodata->deform.val.f, ms, &esdf, true);
+
+                v = valpx(v);
+                vdef = valpx(vdef);
+                // Brownian doesn't deform and the second display is confusing since it is
+                // independently random
+                if (es.lastEval >= 0 && es.lastEval <= ms->n_activeSegments - 1 &&
+                    ms->segments[es.lastEval].type == MSEGStorage::segment::Type::BROWNIAN)
+                    vdef = v;
+
+                int compareWith = es.lastEval;
+
+                if (up >= ms->totalDuration)
+                    compareWith = ms->n_activeSegments - 1;
+
+                if (compareWith != priorEval)
+                {
+                    // OK so make sure that priorEval nv1 is in there
+                    addP(path, i, valpx(ms->segments[priorEval].nv1));
+                    for (int ns = priorEval + 1; ns <= compareWith; ns++)
+                    {
+                        // Special case - hold draws endpoint
+                        if (ns > 0 && ms->segments[ns - 1].type == MSEGStorage::segment::HOLD)
+                            addP(path, i, valpx(ms->segments[ns - 1].v0));
+                        addP(path, i, valpx(ms->segments[ns].v0));
+                    }
+
+                    if (priorEval == hoveredSegment && hlpathUsed)
+                    {
+                        addP(highlightPath, i, valpx(ms->segments[priorEval].nv1));
+                    }
+
+                    priorEval = es.lastEval;
+                }
+
+                if (es.lastEval == hoveredSegment)
+                {
+                    bool skipThisAdd = false;
+
+                    // edge case when you go exactly up to 1 evenly. See #3940
+                    if (up < ms->segmentStart[es.lastEval] || up > ms->segmentEnd[es.lastEval])
+                        skipThisAdd = true;
+
+                    if (!hlpathUsed)
+                    {
+                        // We always want to hit the start
+                        if (ms->segmentStart[hoveredSegment] >= ms->axisStart)
+                            beginP(highlightPath, i, valpx(ms->segments[hoveredSegment].v0));
+                        else
+                        {
+                            skipThisAdd = true;
+                            beginP(highlightPath, i, v);
+                            beginP(highlightPath, i, v);
+                        }
+
+                        hlpathUsed = true;
+                    }
+
+                    if (!skipThisAdd)
+                    {
+                        addP(highlightPath, i, v);
+                    }
+                }
+
+                if (i == 0)
+                {
+                    beginP(path, i, v);
+                    beginP(defpath, i, vdef);
+                    beginP(fillpath, i, v);
+                    pathFirstY = v;
+                }
+                else
+                {
+                    addP(path, i, v);
+                    addP(defpath, i, vdef);
+                    addP(fillpath, i, v);
+                }
+
+                pathLastX = i;
+                pathLastY = v;
+                pathLastDef = vdef;
+            }
+
+            drawnLast = up > ms->totalDuration;
+        }
+
+        int uniLimit = uni ? -1 : 0;
+
+        addP(fillpath, pathLastX, valpx(uniLimit));
+        addP(fillpath, uniLimit, valpx(uniLimit));
+        addP(fillpath, uniLimit, pathFirstY);
+
+        auto tfpath = juce::AffineTransform()
+                          .scaled(1.0 / pathScale, 1.0 / pathScale)
+                          .translated(drawArea.getX(), drawArea.getY());
+
+        juce::ColourGradient cg;
+
+        if (uni)
+        {
+            cg = juce::ColourGradient::vertical(
+                skin->getColor(Colors::MSEGEditor::GradientFill::StartColor),
+                skin->getColor(Colors::MSEGEditor::GradientFill::EndColor), drawArea);
+        }
+        else
+        {
+            cg = juce::ColourGradient::vertical(
+                skin->getColor(Colors::MSEGEditor::GradientFill::StartColor),
+                skin->getColor(Colors::MSEGEditor::GradientFill::StartColor), drawArea);
+            cg.addColour(0.5, skin->getColor(Colors::MSEGEditor::GradientFill::EndColor));
+        }
+
+        {
+            juce::Graphics::ScopedSaveState gs(g);
+            g.setGradientFill(cg);
+            g.fillPath(fillpath, tfpath);
+        }
+
+        // draw vertical grid
+        auto primaryGridColor = skin->getColor(Colors::MSEGEditor::Grid::Primary);
+        auto secondaryHGridColor = skin->getColor(Colors::MSEGEditor::Grid::SecondaryHorizontal);
+        auto secondaryVGridColor = skin->getColor(Colors::MSEGEditor::Grid::SecondaryVertical);
+
+        updateHTicks();
+
+        for (auto hp : hTicks)
+        {
+            auto t = hp.first;
+            auto c = hp.second;
+            auto px = tpx(t);
+            auto linewidth = 1.f;
+            int ticklen = 4;
+
+            if (c & TickDrawStyle::kHighlight)
+            {
+                g.setColour(primaryGridColor);
+            }
+            else
+            {
+                g.setColour(secondaryVGridColor);
+            }
+
+            float pxa = px - linewidth * 0.5;
+
+            if (pxa < drawArea.getX() || pxa > drawArea.getRight())
+                continue;
+
+            g.drawLine(pxa, drawArea.getY(), pxa, drawArea.getBottom() + ticklen, linewidth);
+        }
+
+        updateVTicks();
+
+        for (auto vp : vTicks)
+        {
+            float val = std::get<0>(vp);
+            float v = valpx(val);
+            int ticklen = 0;
+            auto sp = juce::PathStrokeType(1.0);
+
+            if (std::get<2>(vp))
+            {
+                g.setColour(primaryGridColor);
+
+                if (val != 0.f)
+                {
+                    ticklen = 20;
+                }
+
+                g.drawLine(drawArea.getX() - ticklen, v, drawArea.getRight(), v);
+            }
+            else
+            {
+                g.setColour(secondaryHGridColor);
+
+                float x = drawArea.getX() - ticklen;
+                float xe = drawArea.getRight();
+
+                if (val != -1.f)
+                {
+                    while (x < xe)
+                    {
+                        g.drawLine(x, v, std::min(xe, x + 2), v, 0.5);
+                        x += 5;
+                    }
+                }
+            }
+        }
+
+        // draw hover loop markers
+        for (const auto &h : hotzones)
+        {
+            if (h.type == hotzone::LOOPMARKER)
+            {
+                /*
+                 * OK the loop marker suppression is a wee bit complicated
+                 * If the end is at 0, it draws over the axis; if the start is at end similar
+                 * so handle the cases differently. Remember this is because the 'marker'
+                 * of the start graphic is the left edge |< and the right end is >|
+                 */
+                if (h.zoneSubType == hotzone::LOOP_START)
+                {
+                    // my left edge is off the right or my left edge is off the left
+                    if (h.rect.getX() > drawArea.getRight() + 1 ||
+                        h.rect.getX() < drawArea.getX() - 1)
+                    {
+                        continue;
+                    }
+                }
+                else if (h.zoneSubType == hotzone::LOOP_END)
+                {
+                    // my right edge is off the right or left
+                    if (h.rect.getRight() > drawArea.getRight() + 1 ||
+                        h.rect.getRight() <= drawArea.getX())
+                    {
+                        continue;
+                    }
+                }
+
+                // draw a hovered loop marker
+                if (h.active)
+                {
+                    auto c = skin->getColor(Colors::MSEGEditor::Loop::Marker);
+                    auto hr = h.rect.translated(0, -1);
+
+                    g.setColour(c);
+                    g.fillRect(hr);
+
+                    drawLoopDragMarker(g, c, h.zoneSubType, hr);
+                }
+            }
+        }
+
+        drawAxis(g);
+
+        // draw the loop region borders
+        if (ms->loopMode != MSEGStorage::LoopMode::ONESHOT && ms->editMode != MSEGStorage::LFO)
+        {
+            int ls = (ms->loop_start == MSEGStorage::kLoopPointUnset) ? 0 : ms->loop_start;
+            int le = (ms->loop_end == MSEGStorage::kLoopPointUnset) ? ms->n_activeSegments - 1
+                                                                    : ms->loop_end;
+
+            float pxs = tpx(ms->segmentStart[ls]);
+            float pxe = tpx(ms->segmentEnd[le]);
+
+            // one-past-end sentinel: loop start is pinned at the current envelope end
+            if (ls >= ms->n_activeSegments)
+            {
+                pxs = tpx(ms->segmentEnd[ms->n_activeSegments - 1]);
+            }
+
+            if (!(pxs > drawArea.getRight() || pxe < drawArea.getX()))
+            {
+                auto cb = skin->getColor(Colors::MSEGEditor::Loop::RegionBorder);
+                g.setColour(cb);
+
+                if (pxe > drawArea.getX() && pxe <= drawArea.getRight())
+                {
+                    g.drawLine(pxe - 0.5, drawArea.getY(), pxe - 0.5, drawArea.getBottom(), 1);
+                }
+                if (pxs >= drawArea.getX() && pxs < drawArea.getRight())
+                {
+                    g.drawLine(pxs - 0.5, drawArea.getY(), pxs - 0.5, drawArea.getBottom(), 1);
+                }
+            }
+        }
+
+        // draw segment curve
+        auto strokeStyle = juce::PathStrokeType(0.75 * pathScale, juce::PathStrokeType::beveled,
+                                                juce::PathStrokeType::butt);
+        g.setColour(skin->getColor(Colors::MSEGEditor::DeformCurve));
+        g.strokePath(defpath, strokeStyle, tfpath);
+
+        strokeStyle = juce::PathStrokeType(1.0 * pathScale, juce::PathStrokeType::beveled,
+                                           juce::PathStrokeType::butt);
+        g.setColour(skin->getColor(Colors::MSEGEditor::Curve));
+        g.strokePath(path, strokeStyle, tfpath);
+
+        if (hlpathUsed && !inFreehandDrag)
+        {
+            strokeStyle = juce::PathStrokeType(1.5 * pathScale, juce::PathStrokeType::beveled,
+                                               juce::PathStrokeType::butt);
+            g.setColour(skin->getColor(Colors::MSEGEditor::CurveHighlight));
+            g.strokePath(highlightPath, strokeStyle, tfpath);
+        }
+
+        // Draw freehand gesture overlay
+        if (inFreehandDrag && freehandSamples.size() >= 2)
+        {
+            auto tpx = timeToPx();
+            auto vpx = valToPx();
+
+            juce::Path freehandPath;
+            bool first = true;
+
+            for (auto &s : freehandSamples)
+            {
+                float px = tpx(s.first);
+                float py = vpx(s.second);
+
+                if (first)
+                {
+                    freehandPath.startNewSubPath(px, py);
+                    first = false;
+                }
+                else
+                {
+                    freehandPath.lineTo(px, py);
+                }
+            }
+
+            auto strokeStyle = juce::PathStrokeType(
+                0.75f * pathScale, juce::PathStrokeType::beveled, juce::PathStrokeType::butt);
+
+            g.setColour(skin->getColor(Colors::MSEGEditor::CurveHighlight).withAlpha(0.6f));
+            g.strokePath(freehandPath, strokeStyle);
+        }
+
+        const hotzone *readoutHotzone{nullptr};
+
+        using type = MSEGStorage::segment::Type;
+
+        // recalcHotZones tags the trailing "end of the whole MSEG" hotzone
+        // (added once, only for the last segment) with the same
+        // associatedSegment as that segment's own start-node hotzone - see
+        // the two rectForPoint(..., SEGMENT_ENDPOINT, ...) calls there. That
+        // makes the two indistinguishable by associatedSegment alone. By
+        // construction order the start-node hotzone always comes first for a
+        // given associatedSegment, so the second SEGMENT_ENDPOINT occurrence
+        // is always the trailing one; treat it as node index
+        // associatedSegment+1 for cursor/selection matching below instead of
+        // colliding with the start node.
+        std::set<int> seenSegmentStartHotzone;
+
+        for (const auto &h : hotzones)
+        {
+            if (h.type == hotzone::MOUSABLE_NODE)
+            {
+                int sz = 13;
+                int offx = 0, offy = 0;
+                bool showValue = false;
+                const bool isMouseDown = (mouseDownInitiation == MOUSE_DOWN_IN_DRAW_AREA);
+
+                if (h.active)
+                {
+                    offy = 1;
+                    showValue = isMouseDown;
+                }
+
+                if (h.dragging)
+                {
+                    offy = 2;
+                    showValue = isMouseDown;
+                }
+
+                if (h.zoneSubType == hotzone::SEGMENT_CONTROL)
+                {
+                    offx = 1;
+                }
+                else
+                {
+                    int nodeIndex = h.associatedSegment;
+
+                    if (h.zoneSubType == hotzone::SEGMENT_ENDPOINT)
+                    {
+                        if (seenSegmentStartHotzone.count(h.associatedSegment))
+                        {
+                            nodeIndex = h.associatedSegment + 1;
+                        }
+                        else
+                        {
+                            seenSegmentStartHotzone.insert(h.associatedSegment);
+                        }
+                    }
+
+                    // we only want nodes to show they're selected, not control points
+                    // less visual distraction!
+                    if (!inZoomLasso && lassoSelector &&
+                        lassoSelector->contains(h.associatedSegment))
+                        offy = 2;
+                    else if (kbdHandler &&
+                             kbdHandler->mode == MSEGAccessibleKeyboardHandler::Mode::CURSOR &&
+                             !(lassoSelector && lassoSelector->items.getNumSelected() > 0) &&
+                             nodeIndex == kbdHandler->index)
+                    {
+                        // the keyboard cursor / footer "current node" NumberField
+                        // selection shares the same selected look as a lasso pick,
+                        // and applies regardless of where keyboard focus currently
+                        // sits so dragging the NumberField reads correctly even
+                        // when the canvas itself isn't focused
+                        offy = 2;
+                    }
+                }
+
+                auto r = h.rect;
+
+                if (h.useDrawRect)
+                {
+                    r = h.drawRect;
+                }
+
+                int cx = r.getCentreX();
+
+                if (handleDrawable)
+                {
+                    if (cx >= drawArea.getX() && cx <= drawArea.getRight())
+                    {
+                        juce::Graphics::ScopedSaveState gs(g);
+                        auto movet = juce::AffineTransform().translated(r.getTopLeft());
+
+                        g.addTransform(movet);
+                        g.reduceClipRegion(juce::Rectangle<int>(0, 0, sz, sz));
+
+                        auto at = juce::AffineTransform().translated(-offx * sz, -offy * sz);
+
+                        handleDrawable->draw(g, 1.0, at);
+                    }
+                }
+
+                if (showValue)
+                {
+                    readoutHotzone = &h;
+                }
+            }
+        }
+
+        if (readoutHotzone)
+        {
+            const auto &h = *readoutHotzone;
+
+            auto fillr = [&g](juce::Rectangle<float> r, juce::Colour c) {
+                g.setColour(c);
+                g.fillRect(r);
+            };
+
+            const int detailedMode = Surge::Storage::getValueDisplayPrecision(storage);
+            const bool is2Dcp =
+                ms->segments[h.associatedSegment].type == type::QUAD_BEZIER ||
+                ms->segments[h.associatedSegment].type == type::BROWNIAN ||
+                (ms->segments[h.associatedSegment].type >= MSEGStorage::segment::RATCHET_1 &&
+                 ms->segments[h.associatedSegment].type <= MSEGStorage::segment::RATCHET_8);
+            const bool readoutHasTwoRows = h.zoneSubType != hotzone::SEGMENT_CONTROL ||
+                                           (h.zoneSubType == hotzone::SEGMENT_CONTROL && is2Dcp);
+
+            auto r = h.rect;
+
+            if (h.useDrawRect)
+            {
+                r = h.drawRect;
+            }
+
+            int cx = r.getCentreX();
+
+            g.setFont(skin->fontManager->lfoTypeFont);
+
+            float val = h.specialEndpoint ? ms->segments[h.associatedSegment].nv1
+                                          : ms->segments[h.associatedSegment].v0;
+
+            std::string txt1, txt2;
+
+            if (h.zoneSubType == hotzone::SEGMENT_CONTROL)
+            {
+                if (readoutHasTwoRows)
+                {
+                    txt1 = fmt::format("CP X: {:.{}f}",
+                                       ms->segments[h.associatedSegment].cpduration, detailedMode);
+                    txt2 = fmt::format("CP Y: {:.{}f}", ms->segments[h.associatedSegment].cpv,
+                                       detailedMode);
+                }
+                else
+                {
+                    txt1 = fmt::format("CP: {:.{}f}", ms->segments[h.associatedSegment].cpv,
+                                       detailedMode);
+                }
+            }
+            else
+            {
+                txt1 = fmt::format("X: {:.{}f}", pxt(cx), detailedMode);
+                txt2 = fmt::format("Y: {:.{}f}", val, detailedMode);
+            }
+
+            int sw1 = SST_STRING_WIDTH_INT(g.getCurrentFont(), txt1),
+                sw2 = SST_STRING_WIDTH_INT(g.getCurrentFont(), txt2);
+
+            float dragX = r.getRight(), dragY = r.getBottom();
+            float dragW = 6 + std::max(sw1, sw2), dragH = readoutHasTwoRows ? 22 : 11;
+
+            // reposition the display if we've reached right or bottom edge of drawArea
+            if (dragX + dragW > drawArea.getRight())
+            {
+                dragX -= int(dragX + dragW) % drawArea.getRight();
+            }
+
+            if (dragY + dragH > drawArea.getBottom())
+            {
+                dragY -= int(dragY + dragH) % drawArea.getBottom();
+            }
+
+            auto readout = juce::Rectangle<float>(dragX, dragY, dragW, dragH);
+
+            // if the readout intersects with a node rect, shift it up
+            // (this only happens in bottom right corner)
+            auto overlap = r.getIntersection(readout);
+
+            if (!overlap.isEmpty())
+            {
+                readout = readout.withRightX(r.getX()).withBottomY(r.getY());
+            }
+
+            fillr(readout, skin->getColor(Colors::LFO::StepSeq::InfoWindow::Border));
+
+            readout.reduce(1, 1);
+
+            fillr(readout, skin->getColor(Colors::LFO::StepSeq::InfoWindow::Background));
+
+            readout = readout.withTrimmedLeft(2).withHeight(10);
+
+            g.setColour(skin->getColor(Colors::LFO::StepSeq::InfoWindow::Text));
+            g.drawText(txt1, readout, juce::Justification::centredLeft);
+
+            if (readoutHasTwoRows)
+            {
+                readout = readout.translated(0, 10);
+
+                g.drawText(txt2, readout, juce::Justification::centredLeft);
+            }
+        }
+
+        // Keyboard cursor visualization is now unified into the offy=2
+        // selected-node look above (see the MOUSABLE_NODE loop), instead of
+        // a separate ellipse overlay here.
+        //
+        // NOTE: this assumes kbdHandler->index always addresses one of the
+        // hotzones iterated above (i.e. index < ms->n_activeSegments). If the
+        // cursor can ever rest on the final endpoint (index == numNodes()),
+        // that position won't have a matching hotzone in this loop and will
+        // draw no highlight at all, silently regressing the old always-drawn
+        // ellipse. Flagging rather than guessing: MSEGEditorAccessibleKeyboard.cpp
+        // isn't available to me, so I can't confirm whether index ever reaches
+        // that value. Worth a quick check before this ships.
+    }
+
+    juce::Point<int> mouseDownOrigin, lastPanZoomMousePos, cursorHideOrigin;
+    juce::Point<float> zoomLassoStart;
+
+    bool cursorResetPosition = false;
+    bool inDrag = false;
+    bool inDrawDrag = false;
+    bool inFreehandDrag = false;
+    bool inZoomLasso = false;
+
+    std::vector<std::pair<float, float>> freehandSamples;
+
+    enum
+    {
+        NOT_MOUSE_DOWN,
+        MOUSE_DOWN_IN_DRAW_AREA,
+        MOUSE_DOWN_OUTSIDE_DRAW_AREA
+    } mouseDownInitiation = NOT_MOUSE_DOWN;
+    bool cursorHideEnqueued = false;
+
+    void mouseDown(const juce::MouseEvent &e) override
+    {
+        prepareForUndo();
+
+        const auto drawArea = getDrawArea();
+
+        auto updateSelectedSegment = [this, drawArea](juce::Point<float> where,
+                                                      const bool gotLastHZ = false) {
+            if (drawArea.contains(where.toInt()) && kbdHandler && !gotLastHZ)
+            {
+                auto pxt = pxToTime();
+                auto t = pxt(where.getX());
+                int seg = (t < 0)                    ? 0
+                          : (t >= ms->totalDuration) ? std::max(0, ms->n_activeSegments - 1)
+                                                     : Surge::MSEG::timeToSegment(ms, t);
+
+                kbdHandler->setCursorNode(seg, false);
+
+                if (controlregion)
+                {
+                    controlregion->refreshNodeControls();
+                }
+            }
+        };
+
+        mouseDownInitiation =
+            (drawArea.contains(e.position.toInt()) ? MOUSE_DOWN_IN_DRAW_AREA
+                                                   : MOUSE_DOWN_OUTSIDE_DRAW_AREA);
+
+        // Edge case: Hotzones can span the axis and we want the entire node to be mouse clickable
+        for (auto h : hotzones)
+        {
+            if (h.rect.contains(e.position) && mouseDownInitiation == MOUSE_DOWN_OUTSIDE_DRAW_AREA)
+            {
+                mouseDownInitiation = MOUSE_DOWN_IN_DRAW_AREA;
+            }
+        }
+
+        // Start freehand drawing - fun! :)
+        if (mouseDownInitiation == MOUSE_DOWN_IN_DRAW_AREA && e.mods.isShiftDown() &&
+            e.mods.isCommandDown() && e.mods.isAltDown())
+        {
+            inFreehandDrag = true;
+            freehandSamples.clear();
+            return;
+        }
+
+        if (e.mods.isPopupMenu())
+        {
+
+            if (mouseDownInitiation)
+            {
+                openPopup(e.position);
+
+                updateSelectedSegment(e.position, false);
+            }
+
+            return;
+        }
+
+        for (auto &s : ms->segments)
+        {
+            s.dragv0 = s.v0;
+            s.dragv1 = s.nv1;
+            s.dragcpv = s.cpv;
+            s.dragDuration = s.duration;
+        }
+
+        if (e.mods.isShiftDown() && e.mods.isCommandDown() && !e.mods.isAltDown())
+        {
+            inZoomLasso = true;
+            zoomLassoStart = e.position;
+        }
+
+        if (e.mods.isShiftDown())
+        {
+            lasso = std::make_unique<juce::LassoComponent<MSEGLassoItem>>();
+            // FIX ME SKIN COLOR
+            lasso->setColour(juce::LassoComponent<MSEGLassoItem>::lassoFillColourId,
+                             juce::Colour(220, 220, 250).withAlpha(0.1f));
+
+            lassoSelector = std::make_unique<MSEGLassoSelector>(this);
+            addAndMakeVisible(*lasso);
+
+            repaint();
+            lasso->beginLasso(e, lassoSelector.get());
+            return;
+        }
+
+        if (lassoSelector)
+        {
+            bool clearLasso = true;
+            for (auto &h : hotzones)
+            {
+                if (h.rect.contains(e.position.toFloat()) && h.type == hotzone::MOUSABLE_NODE &&
+                    (h.zoneSubType == hotzone::SEGMENT_ENDPOINT ||
+                     h.zoneSubType == hotzone::SEGMENT_CONTROL) &&
+                    lassoSelector->contains(h.associatedSegment))
+                    clearLasso = false;
+            }
+
+            if (timeEditMode == DRAW)
+                clearLasso = false;
+
+            if (clearLasso)
+            {
+                lassoSelector.reset(nullptr);
+                if (controlregion)
+                    controlregion->refreshNodeControls();
+            }
+            repaint();
+        }
+
+        auto where = e.position;
+
+        if (timeEditMode == DRAW)
+        {
+            // Allow us to initiate drags on control points in draw mode
+            bool amOverControl = false;
+
+            for (auto &h : hotzones)
+            {
+                if (h.rect.contains(where) && h.type == hotzone::MOUSABLE_NODE &&
+                    h.zoneSubType == hotzone::SEGMENT_CONTROL)
+                {
+                    amOverControl = true;
+                }
+            }
+
+            if (!amOverControl)
+            {
+                // Only initiate draws in the draw area allowing the axis to still pan and zoom
+                if (drawArea.contains(where.toInt()) &&
+                    !(e.mods.isShiftDown() || e.mods.isMiddleButtonDown()))
+                {
+                    // Activate temporary snap but in draw mode, do vSnap only
+                    bool a = e.mods.isAltDown();
+
+                    if (a)
+                    {
+                        snapGuard = std::make_shared<SnapGuard>(this);
+
+                        if (a)
+                        {
+                            ms->vSnap = ms->vSnapDefault;
+                        }
+                    }
+
+                    inDrawDrag = true;
+
+                    return;
+                }
+            }
+        }
+
+        mouseDownOrigin = where.toInt();
+        lastPanZoomMousePos = where.toInt();
+        inDrag = true;
+
+        bool gotHZ = false;
+        bool gotLastHZ = false;
+
+        std::set<int> seenSegmentStartHotzone;
+
+        for (auto &h : hotzones)
+        {
+            int nodeIndex = h.associatedSegment;
+
+            if (h.type == hotzone::MOUSABLE_NODE && h.zoneSubType == hotzone::SEGMENT_ENDPOINT)
+            {
+                if (seenSegmentStartHotzone.count(h.associatedSegment))
+                    nodeIndex = h.associatedSegment + 1;
+                else
+                    seenSegmentStartHotzone.insert(h.associatedSegment);
+            }
+
+            if (h.rect.contains(where) && h.type == hotzone::MOUSABLE_NODE)
+            {
+                gotHZ = true;
+
+                hideCursor(where.toInt());
+
+                h.active = true;
+                h.dragging = true;
+
+                if (h.zoneSubType == hotzone::SEGMENT_ENDPOINT && kbdHandler)
+                {
+                    gotLastHZ = true;
+                    kbdHandler->setCursorNode(nodeIndex, false);
+
+                    if (controlregion)
+                    {
+                        controlregion->refreshNodeControls();
+                    }
+                }
+
+                repaint();
+
+                // Activate temporary snap. Note this is also handled similarly in
+                // onMouseMoved so if you change ctrl/alt here change it there too
+                bool c = e.mods.isCommandDown();
+                bool a = e.mods.isAltDown();
+
+                if (c || a)
+                {
+                    snapGuard = std::make_shared<SnapGuard>(this);
+
+                    if (c)
+                    {
+                        ms->hSnap = ms->hSnapDefault;
+                    }
+                    if (a)
+                    {
+                        ms->vSnap = ms->vSnapDefault;
+                    }
+                }
+                break;
+            }
+
+            if (h.rect.contains(where) && h.type == hotzone::LOOPMARKER)
+            {
+                gotHZ = true;
+                hideCursor(where.toInt());
+                h.active = true;
+                h.dragging = true;
+                repaint();
+            }
+        }
+
+        if (!gotHZ)
+        {
+            // Lin doesn't cursor hide so this hand is bad there
+            setMouseCursor(juce::MouseCursor::DraggingHandCursor);
+        }
+
+        updateSelectedSegment(where, gotLastHZ);
+
+        return;
+    }
+
+    void mouseDoubleClick(const juce::MouseEvent &event) override
+    {
+        auto ha = getHAxisDoubleClickArea();
+        auto where = event.position.toInt();
+
+        if (ha.contains(where))
+        {
+            zoomToFull();
+            return;
+        }
+
+        auto drawArea = getDrawArea();
+        const auto inDrawArea =
+            (drawArea.contains(event.position.toInt()) ? MOUSE_DOWN_IN_DRAW_AREA
+                                                       : MOUSE_DOWN_OUTSIDE_DRAW_AREA);
+
+        if (inDrawArea)
+        {
+            auto tf = pxToTime();
+            auto pv = pxToVal();
+            auto tp = timeToPx();
+            auto vp = valToPx();
+
+            auto t = tf(where.x);
+            auto v = pv(where.y);
+
+            auto testIfLastNode = [tp, vp](juce::Point<int> where, MSEGStorage *ms) {
+                auto idx = ms->n_activeSegments;
+                auto area = juce::Rectangle<int>(where.x, where.y, 4, 4);
+                auto last_node =
+                    juce::Point<int>(tp(ms->segmentEnd[idx]), vp(ms->segments[idx].nv1));
+
+                return area.contains(last_node);
+            };
+
+            // Check if I'm on a hotzone
+            for (auto &h : hotzones)
+            {
+                if (h.rect.contains(where.toFloat()) && h.type == hotzone::MOUSABLE_NODE)
+                {
+                    switch (h.zoneSubType)
+                    {
+                    case hotzone::SEGMENT_ENDPOINT:
+                    {
+                        if (ms->editMode == MSEGStorage::LFO && testIfLastNode(where, ms))
+                        {
+                            return;
+                        }
+                        else
+                        {
+                            if (event.mods.isShiftDown() && h.associatedSegment >= 0)
+                            {
+                                prepareForUndo();
+                                Surge::MSEG::deleteSegment(ms,
+                                                           ms->segmentStart[h.associatedSegment]);
+                                pushToUndo();
+                            }
+                            else
+                            {
+                                prepareForUndo();
+                                Surge::MSEG::unsplitSegment(ms, t);
+                                pushToUndo();
+                            }
+
+                            modelChanged();
+
+                            return;
+                        }
+                    }
+                    case hotzone::SEGMENT_CONTROL:
+                    {
+                        // Reset the control point to half segment duration, middle value
+                        prepareForUndo();
+                        Surge::MSEG::resetControlPoint(ms, t);
+                        pushToUndo();
+
+                        modelChanged();
+
+                        return;
+                    }
+                    case hotzone::LOOP_START:
+                    case hotzone::LOOP_END:
+                        // FIXME : Implement this
+                        break;
+                    }
+                }
+            }
+
+            if (t < ms->totalDuration)
+            {
+                if (event.mods.isShiftDown())
+                {
+                    prepareForUndo();
+                    Surge::MSEG::deleteSegment(ms, t);
+                    pushToUndo();
+                }
+                else
+                {
+                    prepareForUndo();
+                    Surge::MSEG::splitSegment(ms, t, v);
+                    pushToUndo();
+                }
+
+                modelChanged(-1, false, true, t);
+
+                return;
+            }
+            else
+            {
+                prepareForUndo();
+                Surge::MSEG::extendTo(ms, t, v);
+                pushToUndo();
+
+                modelChanged(-1, false, true, t);
+
+                return;
+            }
+        }
+
+        guaranteeCursorShown();
+    }
+
+    void mouseUp(const juce::MouseEvent &e) override
+    {
+        pushToUndoIfDirty();
+        auto where = e.position.toInt();
+
+        mouseDownInitiation = NOT_MOUSE_DOWN;
+
+        setMouseCursor(juce::MouseCursor::NormalCursor);
+        inDrag = false;
+        inDrawDrag = false;
+
+        if (inFreehandDrag && !freehandSamples.empty())
+        {
+            commitFreehandGesture();
+            freehandSamples.clear();
+            inFreehandDrag = false;
+        }
+
+        if (inZoomLasso)
+        {
+            const auto tf = pxToTime();
+            const float t1 = tf(std::min(zoomLassoStart.x, e.position.x));
+            const float t2 = tf(std::max(zoomLassoStart.x, e.position.x));
+
+            ms->axisStart = std::max(t1, 0.f);
+            ms->axisWidth = t2 - t1;
+
+            applyZoomPanConstraints();
+            recalcHotZones(e.position.toInt());
+
+            lasso->endLasso();
+            removeChildComponent(lasso.get());
+            lasso.reset(nullptr);
+            lassoSelector.reset(nullptr);
+
+            inZoomLasso = false;
+
+            repaint();
+            return;
+        }
+
+        if (lasso)
+        {
+            lasso->endLasso();
+            removeChildComponent(lasso.get());
+            lasso.reset(nullptr);
+
+            if (lassoSelector && lassoSelector->items.getNumSelected() == 0)
+            {
+                lassoSelector.reset(nullptr);
+            }
+
+            if (controlregion)
+            {
+                controlregion->refreshNodeControls();
+            }
+
+            return;
+        }
+
+        if (loopDragTime >= 0)
+        {
+            loopDragTime = -1;
+            repaint();
+        }
+
+        for (auto &h : hotzones)
+        {
+            if (h.dragging)
+            {
+                if (h.type == hotzone::MOUSABLE_NODE)
+                {
+                    if (h.zoneSubType == hotzone::SEGMENT_ENDPOINT)
+                    {
+                        showCursorAt(h.rect.getCentre());
+                    }
+
+                    if (h.zoneSubType == hotzone::SEGMENT_CONTROL && !h.useDrawRect)
+                    {
+                        showCursorAt(h.rect.getCentre());
+                    }
+                }
+
+                if (h.type == hotzone::LOOPMARKER)
+                {
+                    showCursorAt(h.rect.getCentre());
+                }
+            }
+
+            h.active = false;
+            h.dragging = false;
+
+            repaint();
+        }
+
+        snapGuard = nullptr;
+        guaranteeCursorShown();
+
+        return;
+    }
+
+    void commitFreehandGesture()
+    {
+        prepareForUndo();
+
+        if (freehandSamples.size() < 2)
+        {
+            return;
+        }
+
+        // first let's make sure our values are sorted
+        std::sort(freehandSamples.begin(), freehandSamples.end(),
+                  [](const auto &a, const auto &b) { return a.first < b.first; });
+
+        static constexpr float nodeMinSpacing = 4.f; // px
+        const auto drawArea = getDrawArea();
+        float tMin = pxToTime()(drawArea.getX());
+        float tMax = pxToTime()(drawArea.getRight());
+        float tEpsilon = ((tMax - tMin) / drawArea.getWidth()) * nodeMinSpacing;
+
+        float gestureStart = freehandSamples.front().first;
+        float gestureEnd = freehandSamples.back().first;
+
+        gestureStart = std::max(gestureStart, 0.f);
+        gestureEnd = std::min(gestureEnd, ms->totalDuration);
+
+        if (gestureEnd - gestureStart < tEpsilon)
+        {
+            return;
+        }
+
+        // snap gesture boundaries to existing nodes if close enough
+        auto snapToNearestNode = [&](float t, bool isEnd = false) -> float {
+            for (int i = 0; i < ms->n_activeSegments; ++i)
+            {
+                if (fabs(ms->segmentStart[i] - t) < tEpsilon)
+                {
+                    // Use the gesture's OWN nearby value here, not the
+                    // existing curve's stale value. This snap should only
+                    // align the TIME to an existing node boundary so
+                    // leftIdx/segsAfter compute cleanly - it must never
+                    // resurrect the old value the user is actively drawing over.
+                    float gestureValue =
+                        isEnd ? freehandSamples.back().second : freehandSamples.front().second;
+
+                    if (isEnd)
+                        freehandSamples.push_back({ms->segmentStart[i], gestureValue});
+                    else
+                        freehandSamples.insert(freehandSamples.begin(),
+                                               {ms->segmentStart[i], gestureValue});
+                    return ms->segmentStart[i];
+                }
+            }
+
+            return t;
+        };
+
+        gestureStart = snapToNearestNode(gestureStart);
+        gestureEnd = snapToNearestNode(gestureEnd, true);
+
+        if (gestureStart > 0.f && gestureStart <= tEpsilon)
+        {
+            gestureStart = 0.f;
+        }
+
+        if (gestureEnd < ms->totalDuration && gestureEnd >= ms->totalDuration - tEpsilon)
+        {
+            gestureEnd = ms->totalDuration;
+        }
+
+        float totalTimeSpan = gestureEnd - gestureStart;
+
+        // --- 0. Save loop marker time positions up front ---
+        //
+        // We save *time* positions now, and at the very end - once the segment
+        // array is in its final state - we look up which segment starts at that time.
+        // This is immune to however many segments got shuffled, merged, or split in between.
+        //
+        // For this to work when a loop marker's time falls inside the
+        // gesture region, we need to guarantee a node survives at exactly
+        // that time (otherwise the final lookup has nothing exact to find).
+        // That's what the pinned-time sub-range fitting below does.
+        bool hasLoopStart = ms->loop_start != MSEGStorage::kLoopPointUnset;
+        bool hasLoopEnd = ms->loop_end != MSEGStorage::kLoopPointUnset;
+
+        float loopStartTime = hasLoopStart ? ms->segmentStart[ms->loop_start] : 0.f;
+        // loop_end indexes the LAST segment included in the loop (inclusive),
+        // not a segment that starts at the loop-end marker. Its marker time
+        // is therefore that segment's END, not its start - when loop_start
+        // and loop_end reference the same single-segment loop, segmentStart
+        // would (wrongly) give the same value as loopStartTime.
+        float loopEndTime = hasLoopEnd ? ms->segmentEnd[ms->loop_end] : 0.f;
+
+        bool preserveLoopStart = hasLoopStart && (loopStartTime > gestureStart + tEpsilon) &&
+                                 (loopStartTime < gestureEnd - tEpsilon);
+        bool preserveLoopEnd = hasLoopEnd && (loopEndTime > gestureStart + tEpsilon) &&
+                               (loopEndTime < gestureEnd - tEpsilon);
+
+        // Pinned times: gestureStart, any interior loop marker(s), gestureEnd.
+        // Deduped with tEpsilon tolerance - this is what makes loop_start ==
+        // loop_end (same node) fall out for free: both collapse to a single
+        // pinned time instead of creating a degenerate zero-length sub-range.
+        std::vector<float> pinnedTimes = {gestureStart};
+
+        if (preserveLoopStart)
+        {
+            pinnedTimes.push_back(loopStartTime);
+        }
+
+        if (preserveLoopEnd)
+        {
+            pinnedTimes.push_back(loopEndTime);
+        }
+
+        pinnedTimes.push_back(gestureEnd);
+
+        std::sort(pinnedTimes.begin(), pinnedTimes.end());
+        pinnedTimes.erase(std::unique(pinnedTimes.begin(), pinnedTimes.end(),
+                                      [&](float a, float b) { return fabs(a - b) < tEpsilon; }),
+                          pinnedTimes.end());
+
+        // Make sure every pinned time actually has a sample sitting exactly on
+        // it, so each sub-range fit below starts/ends precisely there. Where
+        // one doesn't exist yet (a loop marker time the freehand stroke just
+        // passed over), synthesize one via linear interpolation against the
+        // raw gesture samples - it only needs to anchor the split, not be a
+        // perfect representation of the stroke at that instant.
+        //
+        // IMPORTANT: interpAt must read from a snapshot taken before this
+        // loop starts appending new samples, not the live freehandSamples
+        // array. freehandSamples is only re-sorted once, AFTER this whole
+        // loop finishes - so once the first pinned sample gets appended
+        // (out of chronological order, at the back of the vector), a
+        // second interpAt() call against the live array sees a corrupted
+        // "back()" and can return a value from entirely the wrong part of
+        // the stroke.
+        const std::vector<std::pair<float, float>> sortedStrokeSamples = freehandSamples;
+
+        auto interpAt = [&](float t) -> float {
+            if (t <= sortedStrokeSamples.front().first)
+                return sortedStrokeSamples.front().second;
+            if (t >= sortedStrokeSamples.back().first)
+                return sortedStrokeSamples.back().second;
+
+            for (size_t i = 1; i < sortedStrokeSamples.size(); ++i)
+            {
+                if (sortedStrokeSamples[i].first >= t)
+                {
+                    float t0 = sortedStrokeSamples[i - 1].first, t1 = sortedStrokeSamples[i].first;
+                    float v0 = sortedStrokeSamples[i - 1].second,
+                          v1 = sortedStrokeSamples[i].second;
+                    float a = (t1 > t0) ? (t - t0) / (t1 - t0) : 0.f;
+                    return v0 + a * (v1 - v0);
+                }
+            }
+
+            return sortedStrokeSamples.back().second;
+        };
+
+        for (float t : pinnedTimes)
+        {
+            bool exists = std::any_of(freehandSamples.begin(), freehandSamples.end(),
+                                      [&](auto &s) { return fabs(s.first - t) < 1e-5f; });
+
+            if (!exists)
+            {
+                freehandSamples.push_back({t, interpAt(t)});
+            }
+        }
+
+        std::sort(freehandSamples.begin(), freehandSamples.end(),
+                  [](const auto &a, const auto &b) { return a.first < b.first; });
+
+        // Sub-ranges between consecutive pinned times, as index ranges into
+        // freehandSamples (inclusive on both ends - shared boundary sample).
+        struct SubRange
+        {
+            size_t beginIdx, endIdx;
+        };
+
+        std::vector<SubRange> subRanges;
+
+        for (size_t p = 0; p + 1 < pinnedTimes.size(); ++p)
+        {
+            float tA = pinnedTimes[p], tB = pinnedTimes[p + 1];
+            size_t iA = 0, iB = freehandSamples.size() - 1;
+            bool foundA = false, foundB = false;
+
+            for (size_t i = 0; i < freehandSamples.size(); ++i)
+            {
+                if (!foundA && fabs(freehandSamples[i].first - tA) < 1e-5f)
+                {
+                    iA = i;
+                    foundA = true;
+                }
+
+                if (fabs(freehandSamples[i].first - tB) < 1e-5f)
+                {
+                    iB = i;
+                    foundB = true;
+                }
+            }
+
+            if (foundA && foundB && iB > iA)
+            {
+                subRanges.push_back({iA, iB});
+            }
+        }
+
+        // --- 1. Split at gesture boundaries ---
+        for (float t : {gestureStart, gestureEnd})
+        {
+            // Nothing to split at the very start/end of the MSEG - those are
+            // terminal boundaries, not points inside a segment, and there's
+            // already a natural boundary there (segment 0 always starts at
+            // 0, and the last segment always ends at totalDuration).
+            if (t <= tEpsilon || t >= ms->totalDuration - tEpsilon)
+            {
+                continue;
+            }
+
+            int seg = Surge::MSEG::timeToSegment(ms, t);
+
+            if (seg >= 0 && fabs(t - ms->segmentStart[seg]) > tEpsilon &&
+                fabs(t - ms->segmentEnd[seg]) > tEpsilon)
+            {
+                float v = freehandSamples.front().second;
+                float bestDist = std::numeric_limits<float>::max();
+
+                for (auto &s : freehandSamples)
+                {
+                    float d = fabs(s.first - t);
+
+                    if (d < bestDist)
+                    {
+                        bestDist = d;
+                        v = s.second;
+                    }
+                }
+
+                Surge::MSEG::splitSegment(ms, t, v);
+                Surge::MSEG::rebuildCache(ms);
+            }
+        }
+
+        // --- 2. Delete all segments strictly inside gesture region ---
+        bool deleted = true;
+
+        while (deleted)
+        {
+            deleted = false;
+
+            for (int i = 0; i < ms->n_activeSegments; ++i)
+            {
+                float segStart = ms->segmentStart[i];
+
+                if (segStart <= gestureStart + tEpsilon)
+                {
+                    continue;
+                }
+
+                if (segStart >= gestureEnd - tEpsilon)
+                {
+                    continue;
+                }
+
+                // Find left neighbor and extend it to cover the gap
+                if (i > 0)
+                {
+                    ms->segments[i - 1].duration += ms->segments[i].duration;
+
+                    for (int j = i; j < ms->n_activeSegments - 1; ++j)
+                    {
+                        ms->segments[j] = ms->segments[j + 1];
+                    }
+
+                    ms->n_activeSegments--;
+
+                    Surge::MSEG::rebuildCache(ms);
+
+                    deleted = true;
+
+                    break;
+                }
+            }
+        }
+
+        // --- 3. Run RDP on each sub-range between consecutive pinned times
+        //
+        //        ...while collecting all fitted segments into one vector.
+        //        Fitting each pinned interval independently (rather than the whole
+        //        gesture in one call) is what guarantees a segment boundary lands
+        //        exactly on a loop marker time: RDP always terminates a segment at
+        //        samples.front()/back() of whatever span it's given, so handing it
+        //        one span per pinned interval forces the split there.
+        std::vector<MSEGStorage::segment> fitted;
+
+        // Count how many segments currently span the gesture region
+        int budget = max_msegs - ms->n_activeSegments + 1;
+        budget = std::max(1, budget);
+
+        // binary search on epsilon
+        float epLo{0.f}, epHi{2.f}, gestureValueRange{0.f};
+
+        for (auto &s : freehandSamples)
+        {
+            gestureValueRange =
+                std::max(gestureValueRange, fabs(s.second - freehandSamples.front().second));
+        }
+
+        // minimum range to avoid division issues
+        gestureValueRange = std::max(gestureValueRange, 0.1f);
+
+        float epsilon = std::max(0.05f, gestureValueRange * 0.05f); // 5% of gesture value range
+
+        auto fitAllSubRanges = [&](float eps, std::vector<MSEGStorage::segment> &out) {
+            out.clear();
+
+            for (auto &sr : subRanges)
+            {
+                std::span<const std::pair<float, float>> sub(freehandSamples.data() + sr.beginIdx,
+                                                             sr.endIdx - sr.beginIdx + 1);
+
+                Surge::MSEG::freehandRDP(sub, eps, totalTimeSpan, out);
+            }
+        };
+
+        for (int iter = 0; iter < 16; ++iter)
+        {
+            fitAllSubRanges(epsilon, fitted);
+
+            if ((int)fitted.size() <= budget)
+            {
+                break;
+            }
+
+            epLo = epsilon;
+            epsilon = (epsilon + epHi) * 0.5f;
+        }
+
+        // density-based widening
+        float nodesPerUnit = (float)fitted.size() / totalTimeSpan;
+
+        if (nodesPerUnit > 16.f)
+        {
+            float epLo2 = epsilon, epHi2 = 0.1f;
+
+            for (int iter = 0; iter < 16; ++iter)
+            {
+                float epMid = (epLo2 + epHi2) * 0.5f;
+                std::vector<MSEGStorage::segment> candidate;
+
+                fitAllSubRanges(epMid, candidate);
+
+                if ((float)candidate.size() / totalTimeSpan <= 16.f || epMid >= 0.1f)
+                {
+                    fitted = candidate;
+                    break;
+                }
+
+                epLo2 = epMid;
+            }
+        }
+
+        // --- 4. Write fitted segments directly into ms->segments[] ---
+        int leftIdxRaw = Surge::MSEG::timeToSegment(ms, gestureStart + tEpsilon);
+        int leftIdx = leftIdxRaw;
+
+        if (leftIdx < 0)
+        {
+            leftIdx = 0;
+        }
+
+        int newCount = (int)fitted.size();
+        int segsAfter = ms->n_activeSegments - leftIdx - 1;
+
+        segsAfter = std::max(0, segsAfter);
+
+        int newTotal = leftIdx + newCount + segsAfter;
+
+        if (newTotal > max_msegs)
+        {
+            newCount = max_msegs - leftIdx - segsAfter;
+            newCount = std::max(1, newCount);
+
+            if (newCount < (int)fitted.size())
+            {
+                // Collapse the excess into the last kept segment instead of
+                // just resizing it away. A plain resize() silently drops
+                // whatever time span those trailing segments covered, which
+                // shifts every segment after the gesture region - including
+                // the whole point of step 5 below, which relies on segments
+                // outside the gesture region never having moved in absolute
+                // time. Losing fidelity here is fine (this is already a
+                // last-resort budget cap); losing time span is not.
+                float droppedDuration = 0.f;
+
+                for (int i = newCount; i < (int)fitted.size(); ++i)
+                {
+                    droppedDuration += fitted[i].duration;
+                }
+
+                fitted.resize(newCount);
+                fitted.back().duration += droppedDuration;
+            }
+        }
+
+        // Defensive: guarantee the fitted segments' total duration exactly
+        // matches the gesture region span, regardless of any float
+        // accumulation or fitting edge case. Everything after the gesture
+        // region - and the loop marker relocation in step 5 - depends on
+        // this being exact. If it drifts even slightly, a marker time
+        // outside the gesture region can miss the lookup below and fall
+        // back to a nearest-match that isn't actually close.
+        if (!fitted.empty())
+        {
+            float fittedDurationSum = 0.f;
+
+            for (auto &seg : fitted)
+            {
+                fittedDurationSum += seg.duration;
+            }
+
+            float durationError = totalTimeSpan - fittedDurationSum;
+
+            if (fabs(durationError) > 1e-6f)
+            {
+                fitted.back().duration += durationError;
+            }
+        }
+
+        // Shift segments after gesture region
+        for (int i = segsAfter - 1; i >= 0; --i)
+        {
+            ms->segments[leftIdx + newCount + i] = ms->segments[leftIdx + 1 + i];
+        }
+
+        // Write fitted segments
+        for (int i = 0; i < newCount; ++i)
+        {
+            ms->segments[leftIdx + i] = fitted[i];
+        }
+
+        ms->n_activeSegments = leftIdx + newCount + segsAfter;
+
+        // Fix right boundary v0
+        if (leftIdx + newCount < ms->n_activeSegments)
+        {
+            std::cout << "commitFreehandGesture BOUNDARY-V0: took INNER branch, writing segments["
+                      << (leftIdx + newCount) << "].v0=" << freehandSamples.back().second
+                      << std::endl;
+            ms->segments[leftIdx + newCount].v0 = freehandSamples.back().second;
+        }
+        else if (ms->endpointMode != MSEGStorage::EndpointMode::LOCKED)
+        {
+            // The gesture reached the very end of the MSEG - there's no
+            // "next segment" for the last fitted segment's end value to
+            // come from. That value instead lives in the one-past-the-end
+            // slot that rebuildCache() reads as nv1 for the final segment,
+            // and nothing else in this function ever touches it, so it was
+            // silently left stale.
+            std::cout
+                << "commitFreehandGesture BOUNDARY-V0: took TERMINAL branch, writing segments["
+                << ms->n_activeSegments << "].v0=" << freehandSamples.back().second << std::endl;
+            ms->segments[ms->n_activeSegments - 1].nv1 = freehandSamples.back().second;
+        }
+        else
+        {
+            // Endpoints are linked: rebuildCache() unconditionally mirrors
+            // nv1 of the last segment from segments[0].v0, so segments[0].v0
+            // is the only real source of truth for both ends. Writing the
+            // terminal slot here would just be ignored. To make the
+            // gesture's actual drawn ending value "stick" under linking, we
+            // have to drive it through segments[0].v0 instead - which also
+            // correctly moves the start node to match, since that's what
+            // linking means.
+            std::cout << "commitFreehandGesture BOUNDARY-V0: took LOCKED-TERMINAL branch, writing "
+                         "segments[0].v0="
+                      << freehandSamples.back().second << std::endl;
+            ms->segments[0].v0 = freehandSamples.back().second;
+        }
+
+        // Cache needs to be fresh before we can look up segments by time below.
+        Surge::MSEG::rebuildCache(ms);
+
+        // --- 5. Relocate loop markers by their saved time positions ---
+        //
+        // Loop markers outside of the gesture region never moved in absolute time,
+        // so this finds them exactly. Markers inside the gesture region were pinned above,
+        // so a segment boundary is guaranteed to exist at their saved time too.
+        //
+        // loop_start and loop_end need DIFFERENT lookups: loop_start is the
+        // index of the segment that STARTS the loop, but loop_end is the
+        // index of the segment that ENDS the loop (the last segment
+        // included in it) - so we search segmentStart[] for one and
+        // segmentEnd[] for the other.
+        auto findSegmentIndexByStart = [&](float t) -> int {
+            // Closest match within tolerance, not first match - a dense fit
+            // can pack multiple segment boundaries within tEpsilon of each
+            // other, and the pin only guarantees an exact node exists at t,
+            // not that it's the only candidate within tolerance.
+            int best = -1;
+            float bestDist = std::numeric_limits<float>::max();
+
+            for (int i = 0; i < ms->n_activeSegments; ++i)
+            {
+                float d = fabs(ms->segmentStart[i] - t);
+
+                if (d < tEpsilon && d < bestDist)
+                {
+                    bestDist = d;
+                    best = i;
+                }
+            }
+
+            if (best >= 0)
+            {
+                return best;
+            }
+
+            // Shouldn't happen given the pinning guarantee above, but fall
+            // back to the nearest segment start rather than leaving the
+            // marker on a stale/meaningless index.
+            for (int i = 0; i < ms->n_activeSegments; ++i)
+            {
+                float d = fabs(ms->segmentStart[i] - t);
+
+                if (d < bestDist)
+                {
+                    bestDist = d;
+                    best = i;
+                }
+            }
+
+            return best;
+        };
+
+        auto findSegmentIndexByEnd = [&](float t) -> int {
+            int best = -1;
+            float bestDist = std::numeric_limits<float>::max();
+
+            for (int i = 0; i < ms->n_activeSegments; ++i)
+            {
+                float d = fabs(ms->segmentEnd[i] - t);
+
+                if (d < tEpsilon && d < bestDist)
+                {
+                    bestDist = d;
+                    best = i;
+                }
+            }
+
+            if (best >= 0)
+            {
+                return best;
+            }
+
+            for (int i = 0; i < ms->n_activeSegments; ++i)
+            {
+                float d = fabs(ms->segmentEnd[i] - t);
+
+                if (d < bestDist)
+                {
+                    bestDist = d;
+                    best = i;
+                }
+            }
+
+            return best;
+        };
+
+        if (hasLoopStart)
+        {
+            ms->loop_start = findSegmentIndexByStart(loopStartTime);
+        }
+
+        if (hasLoopEnd)
+        {
+            ms->loop_end = findSegmentIndexByEnd(loopEndTime);
+        }
+
+        pushToUndo();
+        modelChanged();
+    }
+
+    void showCursorAt(const juce::Point<float> &w) { cursorHideOrigin = w.toInt(); }
+
+    void showCursorAt(const juce::Point<int> &w) { cursorHideOrigin = w; }
+
+    void guaranteeCursorShown()
+    {
+        if (!Surge::GUI::showCursor(storage) && cursorHidden)
+        {
+            juce::Desktop::getInstance().getMainMouseSource().enableUnboundedMouseMovement(false);
+            auto h = localPointToGlobal(cursorHideOrigin);
+            juce::Desktop::getInstance().getMainMouseSource().setScreenPosition(h.toFloat());
+            cursorHidden = false;
+        }
+    }
+
+    bool cursorHidden = false;
+
+    void hideCursor(const juce::Point<int> &w)
+    {
+        cursorHideOrigin = w;
+        if (!Surge::GUI::showCursor(storage))
+        {
+            cursorHidden = true;
+            juce::Desktop::getInstance().getMainMouseSource().enableUnboundedMouseMovement(true);
+        }
+    }
+
+    void mouseExit(const juce::MouseEvent &e) override
+    {
+        hoveredSegment = -1;
+        repaint();
+        return;
+    }
+
+    void mouseMagnify(const juce::MouseEvent &event, float scaleFactor) override
+    {
+
+        auto pii = event.position.toInt();
+        zoom(pii, -(1.f - scaleFactor) * 4);
+        return;
+    }
+
+    void mouseMove(const juce::MouseEvent &event) override
+    {
+        auto tf = pxToTime();
+        auto t = tf(event.position.getX());
+        auto drawArea = getDrawArea();
+        auto where = event.position.toInt();
+
+        const auto inDrawArea =
+            (drawArea.contains(where) ? MOUSE_DOWN_IN_DRAW_AREA : MOUSE_DOWN_OUTSIDE_DRAW_AREA);
+
+        if (inDrawArea == MOUSE_DOWN_IN_DRAW_AREA && event.mods.isShiftDown() &&
+            event.mods.isCommandDown() && event.mods.isAltDown())
+        {
+            setMouseCursor(juce::MouseCursor::PointingHandCursor);
+            return;
+        }
+
+        if (event.mods.isCommandDown() && event.mods.isShiftDown() && !event.mods.isAltDown())
+        {
+            setMouseCursor(juce::MouseCursor::IBeamCursor);
+            return;
+        }
+
+        if (event.mods.isShiftDown())
+        {
+            setMouseCursor(juce::MouseCursor::CrosshairCursor);
+        }
+
+        if (inDrawArea)
+        {
+            auto ohs = hoveredSegment;
+
+            if (t < 0)
+            {
+                hoveredSegment = 0;
+            }
+            else if (t >= ms->totalDuration)
+            {
+                hoveredSegment = std::max(0, ms->n_activeSegments - 1);
+            }
+            else
+            {
+                hoveredSegment = Surge::MSEG::timeToSegment(ms, t);
+            }
+
+            if (hoveredSegment != ohs)
+            {
+                repaint();
+            }
+        }
+        else
+        {
+            if (hoveredSegment >= 0)
+            {
+                hoveredSegment = -1;
+                repaint();
+            }
+        }
+
+        bool anyActiveChanged = false;
+
+        for (auto &h : hotzones)
+        {
+            if (h.type != hotzone::MOUSABLE_NODE)
+            {
+                continue;
+            }
+
+            bool nowActive = h.rect.contains(where.toFloat());
+
+            if (nowActive != h.active)
+            {
+                h.active = nowActive;
+                anyActiveChanged = true;
+            }
+        }
+
+        if (anyActiveChanged)
+        {
+            repaint();
+        }
+
+        bool reset = false;
+
+        for (const auto &h : hotzones)
+        {
+            if (!h.rect.contains(event.position))
+            {
+                continue;
+            }
+
+            reset = true;
+
+            switch (h.zoneSubType)
+            {
+            case hotzone::SEGMENT_CONTROL:
+            {
+                auto nextCursor = juce::MouseCursor::NormalCursor;
+
+                switch (h.segmentDirection)
+                {
+                case hotzone::VERTICAL_ONLY:
+                    nextCursor = juce::MouseCursor::UpDownResizeCursor;
+                    break;
+                case hotzone::HORIZONTAL_ONLY:
+                    nextCursor = juce::MouseCursor::LeftRightResizeCursor;
+                    break;
+                case hotzone::BOTH_DIRECTIONS:
+                    nextCursor = juce::MouseCursor::UpDownLeftRightResizeCursor;
+                    break;
+                }
+
+                setMouseCursor(nextCursor);
+
+                break;
+            }
+            case hotzone::SEGMENT_ENDPOINT:
+            {
+                setMouseCursor(juce::MouseCursor::UpDownLeftRightResizeCursor);
+                break;
+            }
+            case hotzone::LOOP_START:
+            case hotzone::LOOP_END:
+            {
+                setMouseCursor(juce::MouseCursor::LeftRightResizeCursor);
+                break;
+            }
+            default:
+                break;
+            }
+        }
+
+        if (!reset)
+        {
+            setMouseCursor(juce::MouseCursor::NormalCursor);
+        }
+    }
+
+    void mouseDrag(const juce::MouseEvent &event) override
+    {
+        if (inFreehandDrag)
+        {
+            const auto drawArea = getDrawArea();
+            const auto tf = pxToTime();
+            const auto pv = pxToVal();
+            const float tMin = tf(drawArea.getX());
+            const float tMax = tf(drawArea.getRight());
+            const float pixelInTime = (tMax - tMin) / drawArea.getWidth();
+            const float minTimeDelta = pixelInTime * 2.f; // at least 2 pixels apart in time
+
+            float t = std::clamp(tf(event.position.x), 0.f, ms->totalDuration);
+            float v = limit_range(pv(event.position.y), -1.f, 1.f);
+
+            freehandSamples.push_back({t, v});
+
+            std::sort(freehandSamples.begin(), freehandSamples.end(),
+                      [](const auto &a, const auto &b) { return a.first < b.first; });
+
+            // Remove samples that are too close in time to their predecessor
+            for (auto it = freehandSamples.begin() + 1; it != freehandSamples.end();)
+            {
+                if (fabs(it->first - std::prev(it)->first) < minTimeDelta)
+                    it = freehandSamples.erase(it);
+                else
+                    ++it;
+            }
+
+            repaint();
+
+            return;
+        }
+
+        if (lasso)
+        {
+            lasso->dragLasso(event);
+
+            // Force lasso component to full draw area height
+            if (inZoomLasso)
+            {
+                const auto drawArea = getDrawArea();
+                auto b = lasso->getBounds();
+                lasso->setBounds(b.withY(drawArea.getY()).withHeight(drawArea.getHeight()));
+            }
+
+            /*
+             * You may think 'hey you can repaint locally' and try something like
+             * this
+             * auto lassoR = juce::Rectangle<float>(event.mouseDownPosition, event.position);
+             * auto repaintR = lassoR.toNearestIntEdges().expanded(20);
+             * repaint(repaintR);
+             *
+             * but control points can be arbitrarily far away. We could just
+             * repaint the boxes of all points selected and their control points but
+             * that is a hard list to find. So instead, when the lasso changes, we just:
+             */
+            repaint();
+            return;
+        }
+
+        if (inDrawDrag)
+        {
+            // Activate temporary snap in vdirection only
+            bool a = event.mods.isAltDown();
+            if (a)
+            {
+                bool wasSnapGuard = true;
+                if (!snapGuard)
+                {
+                    wasSnapGuard = false;
+                    snapGuard = std::make_shared<SnapGuard>(this);
+                }
+
+                if (a)
+                    ms->vSnap = ms->vSnapDefault;
+                else if (wasSnapGuard)
+                    ms->vSnap = snapGuard->vSnapO;
+            }
+            else if (!a && snapGuard)
+            {
+                snapGuard = nullptr;
+            }
+
+            auto tf = pxToTime();
+            auto t = tf(event.position.x);
+            auto pv = pxToVal();
+            auto v = limit_range(pv(event.position.y), -1.f, 1.f);
+
+            if (ms->vSnap > 0)
+            {
+                v = limit_range(round(v / ms->vSnap) * ms->vSnap, -1.f, 1.f);
+            }
+
+            int seg = Surge::MSEG::timeToSegment(this->ms, t);
+
+            auto doAdjust = [this](int seg) {
+                if (lassoSelector && lassoSelector->items.getNumSelected() > 0)
+                    return lassoSelector->contains(seg);
+                else
+                    return true;
+            };
+
+            if (seg >= 0 && seg < ms->n_activeSegments &&
+                t <= ms->totalDuration + MSEGStorage::minimumDuration)
+            {
+                bool ch = false;
+                // OK are we near the endpoint of that segment
+                if (t - ms->segmentStart[seg] <
+                    std::max(ms->totalDuration * 0.05, 0.1 * ms->segments[seg].duration))
+                {
+                    if (doAdjust(seg))
+                    {
+                        ms->segments[seg].v0 = v;
+                        ch = true;
+                    }
+                }
+                else if (ms->segmentEnd[seg] - t <
+                         std::max(ms->totalDuration * 0.05, 0.1 * ms->segments[seg].duration))
+                {
+                    int nx = seg + 1;
+                    if (ms->endpointMode == MSEGStorage::EndpointMode::FREE)
+                    {
+                        if (nx == ms->n_activeSegments)
+                        {
+                            if (doAdjust(seg))
+                            {
+                                ms->segments[seg].nv1 = v;
+                                ch = true;
+                            }
+                        }
+                        else
+                        {
+                            if (doAdjust(nx))
+                            {
+                                ms->segments[nx].v0 = v;
+                                ch = true;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (nx >= ms->n_activeSegments)
+                            nx = 0;
+                        if (doAdjust(nx))
+                        {
+                            ms->segments[nx].v0 = v;
+                            ch = true;
+                        }
+                    }
+                }
+                if (ch)
+                {
+                    modelChanged(seg);
+                }
+            }
+
+            repaint();
+
+            return;
+        }
+
+        bool gotOne = false;
+        int idx = 0, draggingIdx = -1;
+        bool foundDrag = false;
+        auto where = event.position.toInt();
+        std::set<int> modifyIndices;
+        auto draggingType = hotzone::SEGMENT_ENDPOINT;
+        for (auto &h : hotzones)
+            if (h.dragging)
+                draggingType = h.zoneSubType;
+
+        for (auto &h : hotzones)
+        {
+            if (h.dragging || (lassoSelector && lassoSelector->contains(h.associatedSegment) &&
+                               h.type == hotzone::MOUSABLE_NODE && h.zoneSubType == draggingType))
+            {
+                modifyIndices.insert(idx);
+                foundDrag = true;
+            }
+            if (h.dragging)
+                draggingIdx = idx;
+
+            idx++;
+        }
+
+        if (foundDrag)
+        {
+            gotOne = true;
+            // FIXME replace with distance APIs
+            float dragX = where.getX() - mouseDownOrigin.x;
+            float dragY = where.getY() - mouseDownOrigin.y;
+            if (event.mods.isShiftDown())
+            {
+                dragX *= 0.2;
+                dragY *= 0.2;
+            }
+            bool sep = false;
+            holdOffOnModelChanged = true;
+            for (auto idx : modifyIndices)
+            {
+                hotzones[idx].onDrag(dragX, dragY, juce::Point<float>(where.getX(), where.getY()));
+                if (hotzones[idx].dragging)
+                {
+                    hoveredSegment = hotzones[idx].associatedSegment;
+                    sep = hotzones[idx].specialEndpoint;
+                }
+            }
+            holdOffOnModelChanged = false;
+            modelChanged(hoveredSegment, sep, false);
+
+            mouseDownOrigin = where;
+        }
+
+        if (gotOne)
+        {
+            Surge::MSEG::rebuildCache(ms);
+            recalcHotZones(where);
+            if (draggingIdx >= 0)
+                hotzones[draggingIdx].dragging = true;
+
+            repaint();
+        }
+        else if (event.mods.isLeftButtonDown() || event.mods.isMiddleButtonDown())
+        {
+            float x = where.x - mouseDownOrigin.x;
+            float y = where.y - mouseDownOrigin.y;
+            float r = sqrt(x * x + y * y);
+            if (r > 3)
+            {
+                if (fabs(x) > fabs(y))
+                {
+                    float dx = where.x - lastPanZoomMousePos.x;
+                    float panScale = 1.0 / getDrawArea().getWidth();
+                    pan(where.toFloat(), -dx * panScale);
+                }
+                else
+                {
+                    float dy = where.y - lastPanZoomMousePos.y;
+                    float zoomScale = 2. / getDrawArea().getHeight();
+                    zoom(where.toInt(), -dy * zoomScale);
+                }
+
+                lastPanZoomMousePos = where;
+                mouseDownOrigin = where;
+            }
+        }
+
+        /*
+         * Activate temporary snap. Note this is also checked in onMouseDown
+         * so if you change ctrl/alt here change it there too
+         */
+        bool c = event.mods.isCommandDown();
+        bool a = event.mods.isAltDown();
+
+        if ((c || a))
+        {
+            bool wasSnapGuard = true;
+
+            if (!snapGuard)
+            {
+                wasSnapGuard = false;
+                snapGuard = std::make_shared<SnapGuard>(this);
+            }
+            if (c)
+                ms->hSnap = ms->hSnapDefault;
+            else if (wasSnapGuard)
+                ms->hSnap = snapGuard->hSnapO;
+
+            if (a)
+                ms->vSnap = ms->vSnapDefault;
+            else if (wasSnapGuard)
+                ms->vSnap = snapGuard->vSnapO;
+        }
+        else if (!(c || a) && snapGuard)
+        {
+            snapGuard = nullptr;
+        }
+    }
+
+    void cycleSegmentTypeAt(int direction)
+    {
+        if (hoveredSegment < 0 || hoveredSegment >= ms->n_activeSegments)
+        {
+            return;
+        }
+
+        auto &layout = segmentTypeMenuLayout();
+        auto curType = ms->segments[hoveredSegment].type;
+        int idx = -1;
+
+        for (int i = 0; i < (int)layout.size(); i++)
+        {
+            if (layout[i].type == curType)
+            {
+                idx = i;
+                break;
+            }
+        }
+
+        if (idx < 0)
+        {
+            idx = 0;
+        }
+
+        int n = (int)layout.size();
+        int step = idx;
+
+        do
+        {
+            step = (step + direction + n) % n;
+        } while (layout[step].type == segType::NONE);
+
+        auto t = ms->segmentStart[hoveredSegment];
+
+        Surge::MSEG::changeTypeAt(ms, t, layout[step].type);
+
+        pushToUndo();
+        modelChanged();
+    }
+
+    void mouseWheelMove(const juce::MouseEvent &event,
+                        const juce::MouseWheelDetails &wheel) override
+    {
+        if (wheel.isInertial)
+        {
+            return;
+        }
+
+        if (wheel.deltaX == 0 && wheel.deltaY == 0)
+        {
+            return;
+        }
+
+        if (event.mods.isShiftDown())
+        {
+            auto delta = (wheel.isReversed ? -1 : 1) * wheel.deltaY;
+
+            if (delta != 0)
+            {
+                cycleSegmentTypeAt(delta > 0 ? -1 : 1);
+            }
+
+            return;
+        }
+
+        const float wheelFac = 1.0;
+        auto where = event.position.toInt();
+
+        if (fabs(wheel.deltaX) > fabs(wheel.deltaY))
+        {
+            pan(where.toFloat(), -wheelFac * wheel.deltaX);
+        }
+        else
+        {
+            zoom(where, (wheel.isReversed ? -1 : 1) * wheelFac * 1.3 * wheel.deltaY);
+        }
+    }
+
+    void zoom(const juce::Point<int> &where, float amount)
+    {
+        if (fabs(amount) < 1e-4)
+            return;
+        float dWidth = amount * ms->axisWidth;
+        auto pxt = pxToTime();
+        float t = pxt(where.x);
+
+        ms->axisWidth = ms->axisWidth - dWidth;
+
+        /*
+         * OK so we want to adjust pan so the mouse position is basically the same
+         * - this is pxToTime
+           auto drawArea = getDrawArea();
+           float maxt = drawDuration();
+           float tscale = 1.f * drawArea.getWidth() / maxt;
+
+           // So px = t * tscale + drawarea;
+           // So t = ( px - drawarea ) / tscale;
+           return [tscale, drawArea, this ](float px) {
+             return (px - drawArea.getX()) / tscale + ms->axisStart;
+           };
+
+         * so we want ms->axisStart to mean that (where.x - drawArea.getX() ) * drawDuration() /
+         drawArea.width + as to be constant
+         *
+         * t = (WX-DAL) * DD / DAW + AS
+         * AS = t - (WX_DAL) * DD / DAW
+         *
+         */
+        auto DD = drawDuration();
+        auto DA = getDrawArea();
+        auto DAW = DA.getWidth();
+        auto DAL = DA.getX();
+        auto WX = where.x;
+        ms->axisStart = std::max(t - (WX - DAL) * DD / DAW, 0.f);
+        applyZoomPanConstraints();
+
+        // BOOKMARK
+        recalcHotZones(where);
+        repaint();
+        // std::cout << "ZOOM by " << amount <<  " AT " << where.x << " " << t << std::endl;
+    }
+
+    bool shouldDirty{true};
+    struct SkipDirtyGuard
+    {
+        MSEGCanvas &canvas;
+        bool osd;
+        SkipDirtyGuard(MSEGCanvas &c) : canvas(c)
+        {
+            osd = canvas.shouldDirty;
+            canvas.shouldDirty = false;
+        }
+        ~SkipDirtyGuard() { canvas.shouldDirty = osd; }
+    };
+
+    void zoomToFull()
+    {
+        auto g = SkipDirtyGuard(*this);
+        zoomOutTo(ms->totalDuration);
+    }
+
+    void zoomOutTo(float duration)
+    {
+        auto g = SkipDirtyGuard(*this);
+        ms->axisStart = 0.f;
+        ms->axisWidth =
+            (ms->editMode == MSEGStorage::EditMode::ENVELOPE) ? std::max(1.0f, duration) : 1.f;
+        modelChanged(0, false);
+    }
+
+    void pan(const juce::Point<float> &where, float amount)
+    {
+        // std::cout << "PAN " << ms->axisStart << " " << ms->axisWidth << std::endl;
+        ms->axisStart += ms->axisWidth * amount;
+        ms->axisStart = std::max(ms->axisStart, 0.f);
+        applyZoomPanConstraints();
+
+        recalcHotZones(where.toInt());
+        repaint();
+    }
+
+    // see if it can be done in a cleaner way
+    // TODO: once we have more than 6 voice/scene LFOs, this condition will need tweaking,
+    // because new LFOs will need to be appended at the end of the list of modsources
+    // OR, we break compatibility in a major version update and have all LFOs in a block
+    bool isSceneMSEG() const { return lfodata->shape.ctrlgroup_entry >= ms_slfo1; }
+
+    void showSegmentTypein(int i, SegmentProps prop, const juce::Point<int> at)
+    {
+        using type = MSEGStorage::segment::Type;
+
+        const bool is2Dcp = ms->segments[i].type == type::QUAD_BEZIER ||
+                            ms->segments[i].type == type::BROWNIAN ||
+                            (ms->segments[i].type >= MSEGStorage::segment::RATCHET_1 &&
+                             ms->segments[i].type <= MSEGStorage::segment::RATCHET_8);
+
+        float *propValue = nullptr;
+        std::string propName;
+
+        switch (prop)
+        {
+        case SegmentProps::duration:
+            propValue = &ms->segments[i].duration;
+            propName = "Duration";
+            break;
+        case SegmentProps::value:
+            propValue = &ms->segments[i].v0;
+            propName = "Value";
+            break;
+        case SegmentProps::cp_duration:
+            propValue = &ms->segments[i].cpduration;
+            propName = "Control Point X";
+            break;
+        case SegmentProps::cp_value:
+            propValue = &ms->segments[i].cpv;
+            propName = fmt::format("Control Point{}", is2Dcp ? " Y" : "");
+            break;
+
+        default:
+            return;
+        }
+
+        const int detailedMode = Surge::Storage::getValueDisplayPrecision(storage);
+
+        auto handleTypein = [this, i, prop, propValue, propName](const std::string &s) {
+            auto divPos = s.find('/');
+            float v = 0.f;
+
+            if (divPos != std::string::npos)
+            {
+                auto n = s.substr(0, divPos);
+                auto d = s.substr(divPos + 1);
+                auto nv = std::atof(n.c_str());
+                auto dv = std::atof(d.c_str());
+
+                if (dv == 0)
+                {
+                    return false;
+                }
+
+                v = (nv / dv);
+            }
+            else
+            {
+                v = std::atof(s.c_str());
+            }
+
+            const float lowClamp =
+                (prop == SegmentProps::duration || prop == SegmentProps::cp_duration) ? 0.f : -1.f;
+            const float highClamp = (prop == SegmentProps::duration) ? 1000.f : 1.f;
+
+            *propValue = std::clamp(v, lowClamp, highClamp);
+
+            pushToUndo();
+            modelChanged();
+
+            return true;
+        };
+
+        if (!typeinEditor)
+        {
+            typeinEditor = std::make_unique<Surge::Overlays::TypeinLambdaEditor>(handleTypein);
+            getParentComponent()->addChildComponent(*typeinEditor);
+        }
+
+        typeinEditor->callback = handleTypein;
+        typeinEditor->setMainLabel(
+            fmt::format("Edit Segment {} {}", std::to_string(i + 1), propName));
+        typeinEditor->setValueLabels(fmt::format("current: {:.{}f}", *propValue, detailedMode), "");
+        typeinEditor->setSkin(skin, associatedBitmapStore);
+        typeinEditor->setEditableText(fmt::format("{:.{}f}", *propValue, detailedMode));
+        typeinEditor->setReturnFocusTarget(this);
+
+        auto r = typeinEditor->getRequiredSize();
+
+        typeinEditor->setBounds(r.withCentre(at).constrainedWithin(getDrawArea()));
+        typeinEditor->setVisible(true);
+        typeinEditor->grabFocus();
+    }
+
+    void openPopup(const juce::Point<float> &iw)
+    {
+        using type = MSEGStorage::segment::Type;
+
+        auto contextMenu = juce::PopupMenu();
+        auto tf = pxToTime();
+        auto t = tf(iw.x);
+        auto tts = Surge::MSEG::timeToSegment(ms, t);
+
+        if (hoveredSegment >= 0 && tts != hoveredSegment)
+        {
+            tts = hoveredSegment;
+            t = ms->segmentStart[tts];
+        }
+
+        auto msurl =
+            storage ? SurgeGUIEditor::helpURLForSpecial(storage, "mseg-editor") : std::string();
+        auto hurl = SurgeGUIEditor::fullyResolvedHelpURL(msurl);
+
+        auto tcomp = std::make_unique<Surge::Widgets::MenuTitleHelpComponent>("MSEG Segment", hurl);
+        tcomp->setSkin(skin, associatedBitmapStore);
+        auto hment = tcomp->getTitle();
+
+        contextMenu.addCustomItem(-1, std::move(tcomp), nullptr, hment);
+
+        contextMenu.addSeparator();
+
+        auto typeTo = [this, &contextMenu, t, tts](std::string n, MSEGStorage::segment::Type type) {
+            contextMenu.addItem(
+                n, true, (tts >= 0 && this->ms->segments[tts].type == type), [this, t, type]() {
+                    // ADJUST HERE
+                    Surge::MSEG::changeTypeAt(this->ms, t, type);
+
+                    for (auto &h : hotzones)
+                    {
+                        if (lassoSelector && lassoSelector->contains(h.associatedSegment) &&
+                            h.type == hotzone::MOUSABLE_NODE &&
+                            h.zoneSubType == hotzone::SEGMENT_ENDPOINT)
+                        {
+                            this->ms->segments[h.associatedSegment].type = type;
+                        }
+                    }
+
+                    pushToUndo();
+                    modelChanged();
+                });
+        };
+
+        for (auto &entry : segmentTypeMenuLayout())
+        {
+            if (entry.type == type::NONE)
+            {
+                contextMenu.addSeparator();
+                continue;
+            }
+
+            typeTo(entry.label, entry.type);
+        }
+
+        contextMenu.addColumnBreak();
+
+        auto ecomp = std::make_unique<Surge::Widgets::MenuTitleHelpComponent>("", hurl);
+
+        contextMenu.addCustomItem(-1, std::move(ecomp), nullptr, "");
+
+        contextMenu.addSeparator();
+
+        const int detailedMode = Surge::Storage::getValueDisplayPrecision(storage);
+
+        contextMenu.addItem(
+            fmt::format("Duration: {:.{}f}", ms->segments[tts].duration, detailedMode), true, false,
+            [this, iw, tts]() { showSegmentTypein(tts, SegmentProps::duration, iw.toInt()); });
+        contextMenu.addItem(
+            fmt::format("Value: {:.{}f}", ms->segments[tts].v0, detailedMode), true, false,
+            [this, iw, tts]() { showSegmentTypein(tts, SegmentProps::value, iw.toInt()); });
+
+        const bool is2Dcp = ms->segments[tts].type == type::QUAD_BEZIER ||
+                            ms->segments[tts].type == type::BROWNIAN ||
+                            (ms->segments[tts].type >= MSEGStorage::segment::RATCHET_1 &&
+                             ms->segments[tts].type <= MSEGStorage::segment::RATCHET_8);
+
+        if (ms->segments[tts].type != type::HOLD)
+        {
+            if (is2Dcp)
+            {
+                auto curveStr = fmt::format("Control Point X: {:.{}f}",
+                                            ms->segments[tts].cpduration, detailedMode);
+
+                contextMenu.addItem(curveStr, true, false, [this, iw, tts]() {
+                    showSegmentTypein(tts, SegmentProps::cp_duration, iw.toInt());
+                });
+            }
+
+            auto curveStr = fmt::format("Control Point{}: {:.{}f}", is2Dcp ? " Y" : "",
+                                        ms->segments[tts].cpv, detailedMode);
+
+            contextMenu.addItem(curveStr, true, false, [this, iw, tts]() {
+                showSegmentTypein(tts, SegmentProps::cp_value, iw.toInt());
+            });
+        }
+
+        contextMenu.addSeparator();
+
+        if (ms->editMode != MSEGStorage::LFO && ms->loopMode != MSEGStorage::LoopMode::ONESHOT)
+        {
+            if (keyboardMenuNode >= 0)
+            {
+                // the accessible keyboard cursor sits on a node, so the intent
+                // is exact: the loop starts or ends at this node
+                auto node = keyboardMenuNode;
+
+                if (node < ms->n_activeSegments && node != ms->loop_start)
+                {
+                    contextMenu.addItem(toOSCase("Set Loop Start"), [this, node]() {
+                        Surge::MSEG::setLoopStart(ms, node);
+                        pushToUndo();
+                        modelChanged();
+                        if (sge)
+                            sge->enqueueImmediateAccessibleAnnouncement(
+                                fmt::format("Loop starts at node {}", node + 1));
+                    });
+                }
+
+                if (node > 0 && node - 1 != ms->loop_end)
+                {
+                    contextMenu.addItem(toOSCase("Set Loop End"), [this, node]() {
+                        Surge::MSEG::setLoopEnd(ms, node - 1);
+                        pushToUndo();
+                        modelChanged();
+                        if (sge)
+                            sge->enqueueImmediateAccessibleAnnouncement(
+                                fmt::format("Loop ends at node {}", node + 1));
+                    });
+                }
+            }
+            else
+            {
+                if (tts <= ms->loop_end + 1 && tts != ms->loop_start)
+                {
+                    contextMenu.addItem(toOSCase("Set Loop Start"), [this, tts]() {
+                        Surge::MSEG::setLoopStart(ms, tts);
+                        pushToUndo();
+                        modelChanged();
+                    });
+                }
+
+                if (tts >= ms->loop_start - 1 && tts != ms->loop_end)
+                {
+                    contextMenu.addItem(toOSCase("Set Loop End"), [this, tts, t]() {
+                        auto along = t - ms->segmentStart[tts];
+
+                        if (ms->segments[tts].duration == 0)
+                        {
+                            along = 0;
+                        }
+                        else
+                        {
+                            along = along / ms->segments[tts].duration;
+                        }
+
+                        int target = tts;
+
+                        if (along < 0.1 && tts > 0)
+                        {
+                            target = tts - 1;
+                        }
+
+                        Surge::MSEG::setLoopEnd(ms, target);
+                        pushToUndo();
+                        modelChanged();
+                    });
+                }
+            }
+
+            contextMenu.addSeparator();
+        }
+
+        if (tts >= 0)
+        {
+            auto actionsMenu = juce::PopupMenu();
+
+            auto pv = pxToVal();
+            auto v = pv(iw.y);
+
+            bool isActive = (ms->editMode == MSEGStorage::ENVELOPE);
+
+            actionsMenu.addItem("Split", [this, t, v]() {
+                Surge::MSEG::splitSegment(this->ms, t, v);
+                pushToUndo();
+                modelChanged();
+            });
+
+            actionsMenu.addItem("Delete", (ms->n_activeSegments > 1), false, [this, t]() {
+                Surge::MSEG::deleteSegment(this->ms, t);
+                pushToUndo();
+                modelChanged();
+            });
+
+            actionsMenu.addSeparator();
+
+            actionsMenu.addItem(toOSCase("Double Duration"), isActive, false, [this]() {
+                Surge::MSEG::scaleDurations(this->ms, 2.0, max_msegs);
+                pushToUndo();
+                modelChanged();
+                zoomToFull();
+            });
+
+            actionsMenu.addItem(toOSCase("Half Duration"), isActive, false, [this]() {
+                Surge::MSEG::scaleDurations(this->ms, 0.5, max_msegs);
+                pushToUndo();
+                modelChanged();
+                zoomToFull();
+            });
+
+            actionsMenu.addSeparator();
+
+            actionsMenu.addItem(toOSCase("Flip Vertically"), [this]() {
+                Surge::MSEG::scaleValues(this->ms, -1);
+                pushToUndo();
+                modelChanged();
+            });
+
+            actionsMenu.addItem(toOSCase("Flip Horizontally"), [this]() {
+                Surge::MSEG::mirrorMSEG(this->ms);
+                pushToUndo();
+                modelChanged();
+            });
+
+            actionsMenu.addSeparator();
+
+            actionsMenu.addItem(toOSCase("Quantize Nodes to Snap Divisions"), isActive, false,
+                                [this]() {
+                                    Surge::MSEG::setAllDurationsTo(this->ms, ms->hSnapDefault);
+                                    pushToUndo();
+                                    modelChanged();
+                                });
+
+            actionsMenu.addItem(toOSCase("Quantize Nodes to Whole Units"), isActive, false,
+                                [this]() {
+                                    Surge::MSEG::setAllDurationsTo(this->ms, 1.0);
+                                    pushToUndo();
+                                    modelChanged();
+                                });
+
+            actionsMenu.addItem(toOSCase("Distribute Nodes Evenly"), [this]() {
+                Surge::MSEG::setAllDurationsTo(this->ms,
+                                               ms->totalDuration / this->ms->n_activeSegments);
+                pushToUndo();
+                modelChanged();
+            });
+
+            contextMenu.addSubMenu("Actions", actionsMenu);
+
+            auto createMenu = juce::PopupMenu();
+
+            createMenu.addItem(toOSCase("Minimal MSEG"), [this]() {
+                Surge::MSEG::clearMSEG(this->ms);
+                this->zoomToFull();
+                if (controlregion)
+                    controlregion->rebuild();
+                pushToUndo();
+                modelChanged();
+            });
+
+            createMenu.addSeparator();
+
+            createMenu.addItem(toOSCase("Default Voice MSEG"), [this]() {
+                Surge::MSEG::createInitVoiceMSEG(this->ms);
+                this->zoomToFull();
+                if (controlregion)
+                    controlregion->rebuild();
+                pushToUndo();
+                modelChanged();
+            });
+
+            createMenu.addItem(toOSCase("Default Scene MSEG"), [this]() {
+                Surge::MSEG::createInitSceneMSEG(this->ms);
+                this->zoomToFull();
+                if (controlregion)
+                    controlregion->rebuild();
+                pushToUndo();
+                modelChanged();
+            });
+
+            createMenu.addSeparator();
+
+            int stepCounts[] = {8, 16, 32, 64, 128};
+
+            for (int i : stepCounts)
+            {
+                createMenu.addItem(toOSCase(std::to_string(i) + " Step Sequencer"), [this, i]() {
+                    Surge::MSEG::createStepseqMSEG(this->ms, i);
+                    this->zoomToFull();
+                    if (controlregion)
+                        controlregion->rebuild();
+                    pushToUndo();
+                    modelChanged();
+                });
+            }
+
+            createMenu.addSeparator();
+
+            for (int i : stepCounts)
+            {
+                createMenu.addItem(toOSCase(std::to_string(i) + " Lines Sine"), [this, i] {
+                    Surge::MSEG::createSinLineMSEG(this->ms, i);
+                    this->zoomToFull();
+                    if (controlregion)
+                        controlregion->rebuild();
+                    pushToUndo();
+                    modelChanged();
+                });
+            }
+
+            createMenu.addSeparator();
+
+            for (int i : stepCounts)
+            {
+                // we're fine with a max of 32 sawtooth plucks methinks - ED
+                if (i <= 32)
+                {
+                    createMenu.addItem(toOSCase(std::to_string(i) + " Sawtooth Plucks"),
+                                       [this, i]() {
+                                           Surge::MSEG::createSawMSEG(this->ms, i, 0.5);
+                                           this->zoomToFull();
+                                           if (controlregion)
+                                               controlregion->rebuild();
+                                           pushToUndo();
+                                           modelChanged();
+                                       });
+                }
+            }
+
+            contextMenu.addSubMenu("Create", createMenu);
+
+            if (!isSceneMSEG())
+            {
+                auto triggerMenu = juce::PopupMenu();
+
+                triggerMenu.addItem(toOSCase("Filter EG"), true, (ms->segments[tts].retriggerFEG),
+                                    [this, tts]() {
+                                        this->ms->segments[tts].retriggerFEG =
+                                            !this->ms->segments[tts].retriggerFEG;
+                                        pushToUndo();
+                                        modelChanged();
+                                        if (controlregion)
+                                            controlregion->refreshNodeControls();
+                                    });
+
+                triggerMenu.addItem(toOSCase("Amp EG"), true, (ms->segments[tts].retriggerAEG),
+                                    [this, tts]() {
+                                        this->ms->segments[tts].retriggerAEG =
+                                            !this->ms->segments[tts].retriggerAEG;
+                                        pushToUndo();
+                                        modelChanged();
+                                        if (controlregion)
+                                            controlregion->refreshNodeControls();
+                                    });
+
+                triggerMenu.addSeparator();
+
+                triggerMenu.addItem(toOSCase("Nothing"), [this, tts]() {
+                    this->ms->segments[tts].retriggerFEG = false;
+                    this->ms->segments[tts].retriggerAEG = false;
+                    pushToUndo();
+                    modelChanged();
+                    if (controlregion)
+                        controlregion->refreshNodeControls();
+                });
+
+                triggerMenu.addItem(toOSCase("All"), [this, tts]() {
+                    this->ms->segments[tts].retriggerFEG = true;
+                    this->ms->segments[tts].retriggerAEG = true;
+                    pushToUndo();
+                    modelChanged();
+                    if (controlregion)
+                        controlregion->refreshNodeControls();
+                });
+
+                contextMenu.addSubMenu("Trigger", triggerMenu);
+            }
+
+            auto settingsMenu = juce::PopupMenu();
+
+            settingsMenu.addItem(
+                toOSCase("Link Edge Nodes"), true,
+                (ms->endpointMode == MSEGStorage::EndpointMode::LOCKED), [this]() {
+                    pushToUndo();
+                    if (this->ms->endpointMode == MSEGStorage::EndpointMode::LOCKED)
+                    {
+                        this->ms->endpointMode = MSEGStorage::EndpointMode::FREE;
+                    }
+                    else
+                    {
+                        this->ms->endpointMode = MSEGStorage::EndpointMode::LOCKED;
+                        this->ms->segments[ms->n_activeSegments - 1].nv1 = this->ms->segments[0].v0;
+                        modelChanged();
+                    }
+                });
+
+            settingsMenu.addSeparator();
+
+            settingsMenu.addItem(toOSCase("Use Deform for Segment"), true,
+                                 ms->segments[tts].useDeform, [this, tts]() {
+                                     this->ms->segments[tts].useDeform =
+                                         !this->ms->segments[tts].useDeform;
+                                     pushToUndo();
+                                     modelChanged();
+                                     if (controlregion)
+                                         controlregion->refreshNodeControls();
+                                 });
+
+            settingsMenu.addItem(toOSCase("Invert Deform Value"), true,
+                                 ms->segments[tts].invertDeform, [this, tts]() {
+                                     this->ms->segments[tts].invertDeform =
+                                         !this->ms->segments[tts].invertDeform;
+                                     pushToUndo();
+                                     modelChanged();
+                                     if (controlregion)
+                                         controlregion->refreshNodeControls();
+                                 });
+
+            contextMenu.addSubMenu("Settings", settingsMenu);
+
+            contextMenu.showMenuAsync(sge->popupMenuOptions());
+        }
+    }
+
+    bool holdOffOnModelChanged{false};
+
+    void modelChanged(int activeSegment = -1, bool specialEndpoint = false,
+                      bool recalcHotzones = true, float editedAtTime = -1.f)
+    {
+        if (holdOffOnModelChanged)
+        {
+            return;
+        }
+
+        Surge::MSEG::rebuildCache(ms);
+        applyZoomPanConstraints(activeSegment, specialEndpoint);
+
+        if (recalcHotzones)
+        {
+            recalcHotZones(mouseDownOrigin);
+        }
+
+        if (editedAtTime >= 0.f && kbdHandler)
+        {
+            kbdHandler->rememberedTime = editedAtTime;
+        }
+
+        if (shouldDirty)
+        {
+            storage->getPatch().isDirty = true;
+            tagForUndo();
+        }
+
+        this->sge->forceLfoDisplayRepaint();
+
+        onModelChanged();
+
+        kbdHandler->revalidateCursor(!kbdHandler->inFlightEdit);
+
+        if (controlregion)
+        {
+            controlregion->refreshNodeControls();
+        }
+
+        repaint();
+    }
+
+    static constexpr int longestSmallZoom = 32;
+
+    void applyZoomPanConstraints(int activeSegment = -1, bool specialEndpoint = false)
+    {
+        if (ms->editMode == MSEGStorage::LFO)
+        {
+            // Reset axis bounds
+            if (ms->axisWidth > 1)
+                ms->axisWidth = 1;
+            if (ms->axisStart + ms->axisWidth > 1)
+                ms->axisStart = 1.0 - ms->axisWidth;
+            if (ms->axisStart < 0)
+                ms->axisStart = 0;
+        }
+        else
+        {
+            auto bd = std::max(ms->totalDuration, 1.f);
+            auto longest = bd * 2;
+            if (longest > max_msegs)
+                longest = max_msegs;
+            if (longest < longestSmallZoom)
+                longest = longestSmallZoom;
+            if (ms->axisWidth > longest)
+            {
+                ms->axisWidth = longest;
+            }
+            else if (ms->axisStart + ms->axisWidth > longest)
+            {
+                ms->axisStart = longest - ms->axisWidth;
+            }
+
+            // This is how we pan as we stretch
+            if (activeSegment >= 0)
+            {
+                if (specialEndpoint)
+                {
+                    if (ms->segmentEnd[activeSegment] >= ms->axisStart + ms->axisWidth)
+                    {
+                        // In this case we are dragging the endpoint
+                        ms->axisStart = ms->segmentEnd[activeSegment] - ms->axisWidth;
+                    }
+                    else if (ms->segmentEnd[activeSegment] <= ms->axisStart)
+                    {
+                        ms->axisStart = ms->segmentEnd[activeSegment];
+                    }
+                }
+                else if (ms->segmentStart[activeSegment] >= ms->axisStart + ms->axisWidth)
+                {
+                    ms->axisStart = ms->segmentStart[activeSegment] - ms->axisWidth;
+                }
+                else if (ms->segmentStart[activeSegment] <= ms->axisStart)
+                {
+                    ms->axisStart = ms->segmentStart[activeSegment];
+                }
+            }
+        }
+        ms->axisWidth = std::max(ms->axisWidth, 0.05f);
+    }
+
+    using MSEGLassoItem = int;
+
+    struct MSEGLassoSelector : public juce::LassoSource<MSEGLassoItem>
+    {
+
+        MSEGLassoSelector(MSEGCanvas *c) : canvas(c), items() {}
+
+        void findLassoItemsInArea(juce::Array<MSEGLassoItem> &itemsFound,
+                                  const juce::Rectangle<int> &area) override
+        {
+            for (auto h : canvas->hotzones)
+            {
+                if (h.type == hotzone::MOUSABLE_NODE && h.zoneSubType == hotzone::SEGMENT_ENDPOINT)
+                {
+                    if (h.rect.toNearestInt().intersects(area))
+                        itemsFound.add(h.associatedSegment);
+                }
+            }
+        }
+
+        juce::SelectedItemSet<MSEGLassoItem> &getLassoSelection() override { return items; }
+
+        bool contains(int msegIndex) const
+        {
+            auto res = items.isSelected(msegIndex);
+            return res;
+        }
+
+        juce::SelectedItemSet<MSEGLassoItem> items;
+        MSEGCanvas *canvas;
+
+        JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MSEGLassoSelector);
+    };
+
+    std::unique_ptr<juce::LassoComponent<MSEGLassoItem>> lasso;
+    std::unique_ptr<MSEGLassoSelector> lassoSelector;
+
+    int hoveredSegment = -1;
+    MSEGStorage *ms;
+    MSEGEditor::State *eds;
+    LFOStorage *lfodata;
+    MSEGControlRegion *controlregion = nullptr;
+    SurgeStorage *storage = nullptr;
+    float loopDragTime = -1, loopDragEnd = -1;
+    bool loopDragIsStart = false;
+    SurgeGUIEditor *sge;
+
+    SurgeImage *handleDrawable{nullptr};
+
+    bool shouldPostUndo{false};
+    MSEGStorage pushThisToUndoStorage;
+    void prepareForUndo()
+    {
+        pushThisToUndoStorage = *(this->ms);
+        shouldPostUndo = false;
+    }
+    void tagForUndo() { shouldPostUndo = true; }
+    void pushToUndo()
+    {
+        shouldPostUndo = false;
+        sge->undoManager()->pushMSEG(sge->getCurrentScene(), sge->getCurrentLFOIDInEditor(),
+                                     pushThisToUndoStorage);
+    }
+    void pushToUndoIfDirty()
+    {
+        if (shouldPostUndo)
+        {
+            pushToUndo();
+        }
+    }
+
+    /*
+     * The accessible keyboard model: the canvas takes keyboard focus and forwards
+     * keys to a handler which edits the storage through the same Surge::MSEG API
+     * the mouse uses.
+     */
+    std::unique_ptr<MSEGAccessibleKeyboardHandler> kbdHandler;
+
+    // >= 0 while openPopup runs for the accessible keyboard cursor: the node
+    // the menu was invoked on, so position-inferred items (the loop points)
+    // can act on the exact node instead of guessing from pixel coordinates
+    int keyboardMenuNode{-1};
+
+    void setupAccessibleKeyboard()
+    {
+        setWantsKeyboardFocus(true);
+
+        kbdHandler = std::make_unique<MSEGAccessibleKeyboardHandler>();
+        kbdHandler->storage = storage;
+        kbdHandler->ms = ms;
+        kbdHandler->lfodata = lfodata;
+
+        auto &cbk = kbdHandler->cb;
+
+        cbk.announce = [this](const std::string &s) {
+            if (sge)
+                sge->enqueueImmediateAccessibleAnnouncement(s);
+        };
+        cbk.prepareForUndo = [this]() { prepareForUndo(); };
+        cbk.pushToUndo = [this]() { pushToUndo(); };
+        cbk.modelChanged = [this](int seg) { modelChanged(seg, false); };
+        cbk.openContextMenuForSegment = [this](int seg) {
+            hoveredSegment = seg;
+            keyboardMenuNode = kbdHandler->index;
+            // the mouse path snapshots undo state on mouseDown before the popup
+            prepareForUndo();
+            auto pos = kbdHandler->cursorPosition();
+            openPopup(juce::Point<float>(timeToPx()(pos.first), valToPx()(pos.second)));
+            keyboardMenuNode = -1;
+        };
+        cbk.showTypein = [this](int seg, int prop) {
+            auto pos = kbdHandler->cursorPosition();
+            auto at = juce::Point<int>((int)timeToPx()(pos.first), (int)valToPx()(pos.second));
+
+            if (prop < 0)
+            {
+                // 2D control point: let the user pick which axis to type in
+                auto m = juce::PopupMenu();
+                m.addItem("Control Point X", [this, seg, at]() {
+                    showSegmentTypein(seg, SegmentProps::cp_duration, at);
+                });
+                m.addItem("Control Point Y", [this, seg, at]() {
+                    showSegmentTypein(seg, SegmentProps::cp_value, at);
+                });
+                m.showMenuAsync(sge->popupMenuOptions());
+            }
+            else
+            {
+                showSegmentTypein(seg, (SegmentProps)prop, at);
+            }
+        };
+        cbk.getTimeEditMode = [this]() { return (int)timeEditMode; };
+        cbk.getSelection = [this]() {
+            std::vector<int> r;
+            if (lassoSelector)
+            {
+                for (auto i : lassoSelector->items)
+                {
+                    r.push_back(i);
+                }
+            }
+            return r;
+        };
+        cbk.setSelection = [this](const std::vector<int> &sel) {
+            if (!lassoSelector)
+            {
+                lassoSelector = std::make_unique<MSEGLassoSelector>(this);
+            }
+            lassoSelector->items.deselectAll();
+            for (auto i : sel)
+            {
+                lassoSelector->items.addToSelection(i);
+            }
+            repaint();
+        };
+        cbk.repaint = [this]() {
+            repaint();
+            if (controlregion)
+                controlregion->refreshNodeControls();
+        };
+        cbk.toggleOrRotate = [this](int tag) -> std::string {
+            if (!controlregion)
+                return "";
+
+            bool toggleState = false;
+
+            switch (tag)
+            {
+            case tag_segment_movement_mode:
+            {
+                int m = (timeEditMode + 1) % 3;
+
+                timeEditMode = (TimeEdit)m;
+                eds->timeEditMode = m;
+                controlregion->movementMode->setValue(float(m) / 2.f);
+
+                recalcHotZones(juce::Point<int>(0, 0));
+
+                controlregion->repaint();
+                repaint();
+
+                return controlregion->movementMode->accessibleCellLabels[m];
+            }
+            case tag_edit_mode:
+            {
+                int m = ms->editMode;
+                const auto editMode = (MSEGStorage::EditMode)!m;
+
+                prepareForUndo();
+                pushToUndo();
+
+                Surge::MSEG::modifyEditMode(this->ms, editMode);
+
+                controlregion->editMode->setValue(!m);
+
+                // zoom to fit
+                ms->axisStart = 0.f;
+                ms->axisWidth = editMode ? 1.f : ms->envelopeModeDuration;
+
+                modelChanged(0, false);
+
+                controlregion->repaint();
+
+                return controlregion->editMode->accessibleCellLabels[!m];
+            }
+            case tag_loop_mode:
+            {
+                prepareForUndo();
+                pushToUndo();
+
+                if (ms->loopMode == MSEGStorage::LoopMode::ONESHOT)
+                    ms->loopMode = MSEGStorage::LoopMode::LOOP;
+                else if (ms->loopMode == MSEGStorage::LoopMode::LOOP)
+                    ms->loopMode = MSEGStorage::LoopMode::GATED_LOOP;
+                else
+                    ms->loopMode = MSEGStorage::LoopMode::ONESHOT;
+
+                const auto m = (float)ms->loopMode - 1.f;
+                controlregion->loopMode->setValue(m / 2.f);
+
+                modelChanged();
+
+                controlregion->repaint();
+
+                return controlregion->loopMode->accessibleCellLabels[(int)m];
+            }
+            case tag_deform_use:
+            {
+                toggleState = !controlregion->deformUseButton->getToggleState();
+                controlregion->deformUseButton->setToggleState(toggleState,
+                                                               juce::dontSendNotification);
+                controlregion->toggleButtonClicked(tag);
+                controlregion->repaint();
+                break;
+            }
+            case tag_deform_invert:
+            {
+                toggleState = !controlregion->deformInvertButton->getToggleState();
+                controlregion->deformInvertButton->setToggleState(toggleState,
+                                                                  juce::dontSendNotification);
+                controlregion->toggleButtonClicked(tag);
+                controlregion->repaint();
+                break;
+            }
+            case tag_trigger_filter_eg:
+            {
+                if (!controlregion->triggerFilterButton)
+                    return "";
+
+                toggleState = !controlregion->triggerFilterButton->getToggleState();
+                controlregion->triggerFilterButton->setToggleState(toggleState,
+                                                                   juce::dontSendNotification);
+                controlregion->toggleButtonClicked(tag);
+                controlregion->repaint();
+                break;
+            }
+            case tag_trigger_amp_eg:
+            {
+                if (!controlregion->triggerAmpButton)
+                    return "";
+
+                toggleState = !controlregion->triggerAmpButton->getToggleState();
+                controlregion->triggerAmpButton->setToggleState(toggleState,
+                                                                juce::dontSendNotification);
+                controlregion->toggleButtonClicked(tag);
+                controlregion->repaint();
+                break;
+            }
+            break;
+            }
+
+            // multibuttons return early so this is fine for toggles
+            return toggleState ? "enabled" : "disabled";
+        };
+    }
+
+    bool keyPressed(const juce::KeyPress &key) override
+    {
+        if (hasKeyboardFocus(false))
+        {
+            return kbdHandler->processKey(key);
+        }
+        return false;
+    }
+
+    void focusGained(juce::Component::FocusChangeType cause) override
+    {
+        kbdHandler->revalidateCursor(false);
+        kbdHandler->announceFocus();
+        if (controlregion)
+            controlregion->refreshNodeControls();
+        repaint();
+    }
+
+    void focusLost(juce::Component::FocusChangeType cause) override
+    {
+        kbdHandler->cancelModes();
+        repaint();
+    }
+
+    std::unique_ptr<juce::AccessibilityHandler> createAccessibilityHandler() override
+    {
+        return std::make_unique<juce::AccessibilityHandler>(
+            *this, juce::AccessibilityRole::group,
+            juce::AccessibilityActions().addAction(
+                juce::AccessibilityActionType::showMenu, [this]() {
+                    auto seg = kbdHandler->segmentForCursor();
+                    hoveredSegment = seg;
+                    keyboardMenuNode = kbdHandler->index;
+                    prepareForUndo();
+                    auto pos = kbdHandler->cursorPosition();
+                    openPopup(juce::Point<float>(timeToPx()(pos.first), valToPx()(pos.second)));
+                    keyboardMenuNode = -1;
+                }));
+    }
+};
+
+bool MSEGControlRegion::keyPressed(const juce::KeyPress &key)
+{
+    if (!canvas || !canvas->kbdHandler || !key.getModifiers().isAltDown())
+    {
+        return false;
+    }
+
+    return canvas->kbdHandler->processKey(key);
+}
+
+void MSEGControlRegion::valueChanged(Surge::GUI::IComponentTagValue *p)
+{
+    auto tag = p->getTag();
+    auto val = p->getValue();
+
+    switch (tag)
+    {
+    case tag_edit_mode:
+    {
+        canvas->prepareForUndo();
+        canvas->pushToUndo();
+        int m = val > 0.5 ? 1 : 0;
+        auto editMode = (MSEGStorage::EditMode)m;
+        Surge::MSEG::modifyEditMode(this->ms, editMode);
+
+        // zoom to fit
+        canvas->ms->axisStart = 0.f;
+        canvas->ms->axisWidth = editMode ? 1.f : ms->envelopeModeDuration;
+
+        canvas->modelChanged(0, false);
+
+        repaint();
+        break;
+    }
+    case tag_loop_mode:
+    {
+        canvas->prepareForUndo();
+        canvas->pushToUndo();
+        int m = floor((val * 2) + 0.1) + 1;
+        ms->loopMode = (MSEGStorage::LoopMode)m;
+        canvas->modelChanged();
+        repaint();
+        break;
+    }
+    case tag_segment_movement_mode:
+    {
+        int m = floor((val * 2) + 0.5);
+
+        eds->timeEditMode = m;
+
+        if (canvas)
+        {
+            canvas->timeEditMode = (MSEGCanvas::TimeEdit)m;
+            canvas->recalcHotZones(juce::Point<int>(0, 0));
+            canvas->repaint();
+        }
+        repaint();
+        break;
+    }
+    case tag_horizontal_snap:
+    {
+        ms->hSnap = (val < 0.5) ? 0.f : ms->hSnap = ms->hSnapDefault;
+        if (canvas)
+            canvas->repaint();
+
+        break;
+    }
+    case tag_vertical_snap:
+    {
+        ms->vSnap = (val < 0.5) ? 0.f : ms->vSnap = ms->vSnapDefault;
+        if (canvas)
+            canvas->repaint();
+
+        break;
+    }
+    case tag_vertical_value:
+    {
+        auto fv = 1.f / std::max(1, vSnapSize->getIntValue());
+        ms->vSnapDefault = fv;
+        if (ms->vSnap > 0)
+            ms->vSnap = ms->vSnapDefault;
+        if (canvas)
+            canvas->repaint();
+        break;
+    }
+    case tag_horizontal_value:
+    {
+        auto fv = 1.f / std::max(1, hSnapSize->getIntValue());
+        ms->hSnapDefault = fv;
+        if (ms->hSnap > 0)
+            ms->hSnap = ms->hSnapDefault;
+        if (canvas)
+            canvas->repaint();
+        break;
+    }
+    case tag_node_select:
+    {
+        if (canvas && canvas->kbdHandler)
+        {
+            int v = nodeSelect->getIntValue();
+
+            // top value (== nodeCount) is the "Multi" slot: dragging into it
+            // has no node to select, so just leave the existing selection
+            // (if any) alone and refresh the display back to whatever it
+            // should read.
+            if (v < nodeSelect->nodeCount)
+            {
+                canvas->kbdHandler->setCursorNode(v, false);
+                canvas->repaint();
+            }
+        }
+        refreshNodeControls();
+        break;
+    }
+    default:
+        break;
+    }
+}
+
+int32_t MSEGControlRegion::controlModifierClicked(Surge::GUI::IComponentTagValue *pControl,
+                                                  const juce::ModifierKeys &button,
+                                                  bool isDoubleClick)
+{
+    int tag = pControl->getTag();
+
+    // Basically all the menus are a list of options with values
+    std::vector<std::pair<std::string, float>> options;
+
+    bool isOnOff = false;
+    bool hasTypein = false;
+    std::string menuName = "";
+
+    switch (tag)
+    {
+    case tag_segment_movement_mode:
+        menuName = "MSEG Movement Mode";
+        options.push_back(std::make_pair("Single", 0));
+        options.push_back(std::make_pair("Shift", 0.5));
+        options.push_back(std::make_pair("Draw", 1.0));
+        break;
+
+    case tag_loop_mode:
+        menuName = "MSEG Loop Mode";
+        options.push_back(std::make_pair("Off", 0));
+        options.push_back(std::make_pair("Loop", 0.5));
+        options.push_back(std::make_pair(toOSCase("Gate (Loop Until Release)").c_str(), 1.0));
+        break;
+
+    case tag_edit_mode:
+        menuName = "MSEG Edit Mode";
+        options.push_back(std::make_pair("Envelope", 0));
+        options.push_back(std::make_pair("LFO", 1.0));
+        break;
+
+    case tag_vertical_snap:
+        menuName = "MSEG Vertical Snap";
+    case tag_horizontal_snap:
+        if (menuName == "")
+        {
+            menuName = "MSEG Horizontal Snap";
+        }
+
+        isOnOff = true;
+        break;
+
+    case tag_vertical_value:
+        menuName = "MSEG Vertical Snap Grid";
+    case tag_horizontal_value:
+    {
+        hasTypein = true;
+
+        if (menuName == "")
+        {
+            menuName = "MSEG Horizontal Snap Grid";
+        }
+
+        auto addStop = [&options](int v) {
+            options.push_back(
+                std::make_pair(std::to_string(v), Parameter::intScaledToFloat(v, 100, 1)));
+        };
+
+        addStop(1);
+        addStop(2);
+        addStop(3);
+        addStop(4);
+        addStop(5);
+        addStop(6);
+        addStop(7);
+        addStop(8);
+        addStop(9);
+        addStop(10);
+        addStop(12);
+        addStop(16);
+        addStop(24);
+        addStop(32);
+
+        break;
+    }
+    default:
+        break;
+    }
+
+    if (!options.empty() || isOnOff)
+    {
+        auto contextMenu = juce::PopupMenu();
+
+        auto msurl = SurgeGUIEditor::helpURLForSpecial(storage, "mseg-editor");
+        auto hurl = SurgeGUIEditor::fullyResolvedHelpURL(msurl);
+        auto tcomp = std::make_unique<Surge::Widgets::MenuTitleHelpComponent>(menuName, hurl);
+
+        tcomp->setSkin(skin, associatedBitmapStore);
+        auto hment = tcomp->getTitle();
+
+        contextMenu.addCustomItem(-1, std::move(tcomp), nullptr, hment);
+
+        contextMenu.addSeparator();
+
+        if (!isOnOff)
+        {
+            for (auto op : options)
+            {
+                auto val = op.second;
+
+                contextMenu.addItem(op.first, true, (val == pControl->getValue()),
+                                    [val, pControl, this]() {
+                                        pControl->setValue(val);
+                                        valueChanged(pControl);
+
+                                        auto iv = pControl->asJuceComponent();
+
+                                        if (iv)
+                                        {
+                                            iv->repaint();
+                                        }
+                                    });
+            }
+        }
+
+        if (hasTypein)
+        {
+            contextMenu.addSeparator();
+
+            auto c = pControl->asJuceComponent();
+
+            auto handleTypein = [c, pControl, this](const std::string &s) {
+                auto i = std::atoi(s.c_str());
+
+                if (i >= 1 && i <= 100)
+                {
+                    pControl->setValue(Parameter::intScaledToFloat(i, 100, 1));
+                    valueChanged(pControl);
+
+                    if (c)
+                    {
+                        c->repaint();
+                    }
+
+                    return true;
+                }
+                return false;
+            };
+
+            auto val =
+                std::to_string(Parameter::intUnscaledFromFloat(pControl->getValue(), 100, 1));
+
+            auto showTypein = [this, c, handleTypein, menuName, pControl, val]() {
+                if (!typeinEditor)
+                {
+                    typeinEditor =
+                        std::make_unique<Surge::Overlays::TypeinLambdaEditor>(handleTypein);
+                    getParentComponent()->addChildComponent(*typeinEditor);
+                }
+
+                typeinEditor->callback = handleTypein;
+                typeinEditor->setMainLabel(menuName);
+                typeinEditor->setValueLabels("current: " + val, "");
+                typeinEditor->setSkin(skin, associatedBitmapStore);
+                typeinEditor->setEditableText(val);
+                typeinEditor->setReturnFocusTarget(c);
+
+                auto topOfControl = c->getParentComponent()->getY();
+                auto pb = c->getBounds();
+                auto cx = pb.getCentreX();
+
+                auto r = typeinEditor->getRequiredSize();
+                cx -= r.getWidth() / 2;
+                r = r.withBottomY(topOfControl).withX(cx);
+                typeinEditor->setBounds(r);
+
+                typeinEditor->setVisible(true);
+                typeinEditor->grabFocus();
+            };
+
+            contextMenu.addItem(toOSCase("Edit Value: ") + val, true, false, showTypein);
+        }
+
+        contextMenu.showMenuAsync(sge->popupMenuOptions(),
+                                  Surge::GUI::makeEndHoverCallback(pControl));
+    }
+    return 1;
+}
+
+void MSEGControlRegion::hvSnapTypein(bool isH)
+{
+    // So gross that this is copied from the menu handler partly above, but different enough that I
+    // can't quite make it one thing. Ahh well. Will all get redone one day anyway
+    if (!typeinEditor)
+    {
+        typeinEditor = std::make_unique<TypeinLambdaEditor>([](auto c) { return false; });
+        getParentComponent()->addChildComponent(*typeinEditor);
+    }
+    typeinEditor->setReturnFocusTarget(isH ? hSnapSize.get() : vSnapSize.get());
+    typeinEditor->setSkin(skin, associatedBitmapStore);
+
+    typeinEditor->setMainLabel(std::string() + "MSEG " + (isH ? "Horizontal" : "Vertical") +
+                               " Snap Grid");
+    typeinEditor->setValueLabels(
+        "current: " + std::to_string(isH ? hSnapSize->getIntValue() : vSnapSize->getIntValue()),
+        "");
+    typeinEditor->setEditableText(
+        std::to_string(isH ? hSnapSize->getIntValue() : vSnapSize->getIntValue()));
+
+    auto c = isH ? hSnapSize.get() : vSnapSize.get();
+    auto topOfControl = c->getParentComponent()->getY();
+    auto pb = c->getBounds();
+    auto cx = pb.getCentreX();
+
+    auto r = typeinEditor->getRequiredSize();
+    cx -= r.getWidth() / 2;
+    r = r.withBottomY(topOfControl).withX(cx);
+    typeinEditor->setBounds(r);
+
+    typeinEditor->setVisible(true);
+    Surge::GUI::grabKeyboardFocusIfAllowed(typeinEditor.get());
+
+    typeinEditor->callback = [w = juce::Component::SafePointer(this), isH](auto s) {
+        auto sn = std::clamp(std::atoi(s.c_str()), 1, 32);
+        if (w)
+        {
+            w->typeinEditor->setVisible(false);
+            if (isH)
+                w->hSnapSize->setIntValue(sn);
+            else
+                w->vSnapSize->setIntValue(sn);
+        }
+        return true;
+    };
+}
+
+std::vector<int> MSEGControlRegion::activeNodeSelection() const
+{
+    if (canvas && canvas->kbdHandler)
+    {
+        auto sel = canvas->kbdHandler->cb.getSelection();
+        if (!sel.empty())
+            return sel;
+
+        return {canvas->kbdHandler->index};
+    }
+    return {0};
+}
+
+int MSEGControlRegion::representativeNodeForSelection(const std::vector<int> &sel) const
+{
+    // Lassos never produce disjoint selections (a new shift+drag replaces
+    // rather than extends one), so picking the node with the longest segment
+    // duration is a stable proxy for "the node most recently touched."
+    int best = sel.empty() ? 0 : sel.front();
+    float bestDuration = -1.f;
+
+    for (auto i : sel)
+    {
+        if (i < 0 || i >= ms->n_activeSegments)
+            continue;
+
+        if (ms->segments[i].duration > bestDuration)
+        {
+            bestDuration = ms->segments[i].duration;
+            best = i;
+        }
+    }
+    return best;
+}
+
+void MSEGControlRegion::toggleButtonClicked(int tag)
+{
+    if (!canvas)
+        return;
+
+    auto sel = activeNodeSelection();
+
+    canvas->prepareForUndo();
+
+    for (auto i : sel)
+    {
+        if (i < 0 || i >= ms->n_activeSegments)
+            continue;
+
+        switch (tag)
+        {
+        case tag_deform_use:
+            ms->segments[i].useDeform = deformUseButton->getToggleState();
+            break;
+        case tag_deform_invert:
+            ms->segments[i].invertDeform = deformInvertButton->getToggleState();
+            break;
+        case tag_trigger_filter_eg:
+            ms->segments[i].retriggerFEG = triggerFilterButton->getToggleState();
+            break;
+        case tag_trigger_amp_eg:
+            ms->segments[i].retriggerAEG = triggerAmpButton->getToggleState();
+            break;
+        default:
+            break;
+        }
+    }
+
+    canvas->pushToUndo();
+    canvas->modelChanged();
+}
+
+void MSEGControlRegion::refreshNodeControls()
+{
+    bool haveCanvas = (canvas && canvas->kbdHandler);
+    int nodeCount = haveCanvas ? canvas->kbdHandler->numNodes() : ms->n_activeSegments;
+
+    if (nodeSelect)
+    {
+        nodeSelect->setNodeCount(nodeCount);
+
+        auto sel = haveCanvas ? canvas->kbdHandler->cb.getSelection() : std::vector<int>();
+
+        if (sel.size() > 1)
+        {
+            // dragging past the last real node reads as "Multi"; land exactly
+            // on that slot to reflect an existing multi-node selection
+            nodeSelect->setIntValue(nodeCount, true);
+        }
+        else
+        {
+            int cur = haveCanvas ? canvas->kbdHandler->index : 0;
+            nodeSelect->setIntValue(cur, true);
+        }
+    }
+
+    auto sel = activeNodeSelection();
+    int rep = representativeNodeForSelection(sel);
+
+    bool haveRep = (rep >= 0 && rep < ms->n_activeSegments);
+
+    if (!isSceneMSEG())
+    {
+        if (triggerFilterButton)
+        {
+            triggerFilterButton->setToggleState(haveRep && ms->segments[rep].retriggerFEG,
+                                                juce::dontSendNotification);
+        }
+        if (triggerAmpButton)
+        {
+            triggerAmpButton->setToggleState(haveRep && ms->segments[rep].retriggerAEG,
+                                             juce::dontSendNotification);
+        }
+    }
+
+    if (deformUseButton)
+    {
+        deformUseButton->setToggleState(haveRep && ms->segments[rep].useDeform,
+                                        juce::dontSendNotification);
+    }
+
+    if (deformInvertButton)
+    {
+        deformInvertButton->setToggleState(haveRep && ms->segments[rep].invertDeform,
+                                           juce::dontSendNotification);
+    }
+}
+
+void MSEGControlRegion::rebuild()
+{
+    removeAllChildren();
+    labels.clear();
+
+    auto labelFont = skin->fontManager->getLatoAtSize(9, juce::Font::bold);
+    auto editFont = skin->fontManager->getLatoAtSize(9);
+
+    int height = getHeight();
+    int margin = 2;
+    int labelHeight = 12;
+    int buttonHeight = 14;
+    int numfieldHeight = 12;
+    int xpos = 10;
+
+    // movement modes
+    {
+        int segWidth = 104;
+        int marginPos = xpos + margin;
+        int btnWidth = 94;
+        int ypos = 1;
+
+        // label
+        auto mml = std::make_unique<juce::Label>();
+        mml->setText("Movement Mode", juce::dontSendNotification);
+        mml->setFont(labelFont);
+        mml->setColour(juce::Label::textColourId, skin->getColor(Colors::MSEGEditor::Text));
+        mml->setBounds(marginPos, ypos, btnWidth, labelHeight);
+        addAndMakeVisible(*mml);
+        labels.push_back(std::move(mml));
+
+        ypos += margin + labelHeight;
+
+        // button
+        auto btnrect = juce::Rectangle<int>(marginPos, ypos - 1, btnWidth, buttonHeight);
+
+        movementMode = std::make_unique<Surge::Widgets::MultiSwitch>();
+        movementMode->setBounds(btnrect);
+        movementMode->setStorage(storage);
+        movementMode->addListener(this);
+        movementMode->setTag(tag_segment_movement_mode);
+        movementMode->setHeightOfOneImage(buttonHeight);
+        movementMode->setRows(1);
+        movementMode->setColumns(3);
+        movementMode->setDraggable(true);
+        movementMode->setSkin(skin, associatedBitmapStore);
+
+        auto dbl =
+            skin->standardHoverAndHoverOnForIDB(IDB_MSEG_MOVEMENT_MODE, associatedBitmapStore);
+        movementMode->setSwitchDrawable(std::get<0>(dbl));
+        movementMode->setHoverSwitchDrawable(std::get<1>(dbl));
+        movementMode->setHoverOnSwitchDrawable(std::get<2>(dbl));
+
+        // canvas is nullptr in rebuild call in constructor, use state in this case
+        if (canvas)
+        {
+            movementMode->setValue(float(canvas->timeEditMode) / 2.f);
+        }
+        else
+        {
+            movementMode->setValue(eds->timeEditMode / 2.f);
+        }
+        movementMode->setTitle("Movement Mode");
+        movementMode->setDescription("Movement Mode");
+        movementMode->setAccessibleCellLabels({"Single", "Shift", "Draw"});
+        movementMode->setExplicitFocusOrder(10);
+        addAndMakeVisible(*movementMode);
+        movementMode->setupAccessibility();
+        // this value centers the loop mode and snap sections against the MSEG editor width
+        // if more controls are to be added to that center section, reduce this value
+        xpos += segWidth;
+    }
+
+    // edit mode
+    {
+        int segWidth = 100;
+        int btnWidth = 90;
+        int ypos = 1;
+
+        auto mml = std::make_unique<juce::Label>();
+        mml->setText("Edit Mode", juce::dontSendNotification);
+        mml->setFont(labelFont);
+        mml->setColour(juce::Label::textColourId, skin->getColor(Colors::MSEGEditor::Text));
+        mml->setBounds(xpos, ypos, segWidth, labelHeight);
+        addAndMakeVisible(*mml);
+        labels.push_back(std::move(mml));
+
+        ypos += margin + labelHeight;
+
+        // button
+        auto btnrect = juce::Rectangle<int>(xpos, ypos - 1, btnWidth, buttonHeight);
+
+        editMode = std::make_unique<Surge::Widgets::MultiSwitch>();
+        editMode->setBounds(btnrect);
+        editMode->setStorage(storage);
+        editMode->addListener(this);
+        editMode->setTag(tag_edit_mode);
+        editMode->setHeightOfOneImage(buttonHeight);
+        editMode->setRows(1);
+        editMode->setColumns(2);
+        editMode->setDraggable(true);
+        editMode->setSkin(skin, associatedBitmapStore);
+
+        auto dbl = skin->standardHoverAndHoverOnForIDB(IDB_MSEG_EDIT_MODE, associatedBitmapStore);
+        editMode->setSwitchDrawable(std::get<0>(dbl));
+        editMode->setHoverSwitchDrawable(std::get<1>(dbl));
+        editMode->setHoverOnSwitchDrawable(std::get<2>(dbl));
+
+        editMode->setValue(ms->editMode);
+        editMode->setTitle("Edit Mode");
+        editMode->setDescription("Edit Mode");
+        editMode->setAccessibleCellLabels({"Envelope", "LFO"});
+        editMode->setExplicitFocusOrder(20);
+        addAndMakeVisible(*editMode);
+        editMode->setupAccessibility();
+
+        xpos += segWidth;
+    }
+
+    // loop mode
+    {
+        int segWidth = 104;
+        int btnWidth = 94;
+        int ypos = 1;
+
+        auto mml = std::make_unique<juce::Label>();
+        mml->setText("Loop Mode", juce::dontSendNotification);
+        mml->setFont(labelFont);
+        mml->setColour(juce::Label::textColourId, skin->getColor(Colors::MSEGEditor::Text));
+        mml->setBounds(xpos, ypos, segWidth, labelHeight);
+        addAndMakeVisible(*mml);
+        labels.push_back(std::move(mml));
+
+        ypos += margin + labelHeight;
+
+        // button
+        auto btnrect = juce::Rectangle<int>(xpos, ypos - 1, btnWidth, buttonHeight);
+        loopMode = std::make_unique<Surge::Widgets::MultiSwitch>();
+        loopMode->setBounds(btnrect);
+        loopMode->setStorage(storage);
+        loopMode->addListener(this);
+        loopMode->setTag(tag_loop_mode);
+        loopMode->setHeightOfOneImage(buttonHeight);
+        loopMode->setRows(1);
+        loopMode->setColumns(3);
+        loopMode->setDraggable(true);
+        loopMode->setSkin(skin, associatedBitmapStore);
+
+        auto dbl = skin->standardHoverAndHoverOnForIDB(IDB_MSEG_LOOP_MODE, associatedBitmapStore);
+        loopMode->setSwitchDrawable(std::get<0>(dbl));
+        loopMode->setHoverSwitchDrawable(std::get<1>(dbl));
+        loopMode->setHoverOnSwitchDrawable(std::get<2>(dbl));
+
+        loopMode->setValue((ms->loopMode - 1) / 2.f);
+        loopMode->setTitle("Loop Mode");
+        loopMode->setDescription("Loop Mode");
+        loopMode->setAccessibleCellLabels({"Off", "Loop", "Gated Loop"});
+        loopMode->setExplicitFocusOrder(30);
+        addAndMakeVisible(*loopMode);
+        loopMode->setupAccessibility();
+
+        xpos += segWidth;
+    }
+
+    // snap to grid
+    {
+        int btnWidth = 49, editWidth = 32;
+        int margin = 2;
+        int segWidth = btnWidth + editWidth + 10;
+        int ypos = 1;
+        std::string svt;
+
+        auto mml = std::make_unique<juce::Label>();
+        mml->setText("Snap to Grid", juce::dontSendNotification);
+        mml->setFont(labelFont);
+        mml->setColour(juce::Label::textColourId, skin->getColor(Colors::MSEGEditor::Text));
+        mml->setBounds(xpos, ypos, segWidth * 2 - 5, labelHeight);
+        addAndMakeVisible(*mml);
+        labels.push_back(std::move(mml));
+
+        ypos += margin + labelHeight;
+
+        hSnapButton = std::make_unique<Surge::Widgets::Switch>();
+        hSnapButton->setSkin(skin, associatedBitmapStore);
+        hSnapButton->setStorage(storage);
+        hSnapButton->addListener(this);
+        hSnapButton->setBounds(xpos, ypos - 1, btnWidth, buttonHeight);
+        hSnapButton->setTag(tag_horizontal_snap);
+        hSnapButton->setValue(ms->hSnap < 0.001 ? 0 : 1);
+        auto hsbmp = associatedBitmapStore->getImage(IDB_MSEG_HORIZONTAL_SNAP);
+        hSnapButton->setSwitchDrawable(hsbmp);
+        auto hoverBmp = skin->hoverBitmapOverlayForBackgroundBitmap(
+            nullptr, dynamic_cast<SurgeImage *>(hsbmp), associatedBitmapStore,
+            Surge::GUI::Skin::HoverType::HOVER);
+        hSnapButton->setHoverSwitchDrawable(hoverBmp);
+        hSnapButton->setTitle("Horizontal Snap");
+        hSnapButton->setDescription("Horizontal Snap");
+        hSnapButton->setExplicitFocusOrder(40);
+        addAndMakeVisible(*hSnapButton);
+
+        svt = fmt::format("{:d}", (int)round(1.f / ms->hSnapDefault));
+
+        hSnapSize = std::make_unique<Surge::Widgets::NumberField>();
+        hSnapSize->setControlMode(Surge::Skin::Parameters::MSEG_SNAP_H);
+        hSnapSize->addListener(this);
+        hSnapSize->setTag(tag_horizontal_value);
+        hSnapSize->setStorage(storage);
+        hSnapSize->setSkin(skin, associatedBitmapStore);
+        hSnapSize->setIntValue(round(1.f / ms->hSnapDefault));
+        hSnapSize->setBounds(xpos + 52 + margin, ypos, editWidth, numfieldHeight);
+        auto images =
+            skin->standardHoverAndHoverOnForIDB(IDB_MSEG_SNAPVALUE_NUMFIELD, associatedBitmapStore);
+        hSnapSize->setBackgroundDrawable(images[0]);
+        hSnapSize->setHoverBackgroundDrawable(images[1]);
+        hSnapSize->setTextColour(skin->getColor(Colors::MSEGEditor::NumberField::Text));
+        hSnapSize->setHoverTextColour(skin->getColor(Colors::MSEGEditor::NumberField::TextHover));
+        hSnapSize->onReturnPressed = [w = juce::Component::SafePointer(this)](auto tag, auto nf) {
+            if (w)
+            {
+                w->hvSnapTypein(true);
+                return true;
+            }
+            return false;
+        };
+        hSnapSize->setTitle("Horizontal Snap Grid");
+        hSnapSize->setDescription("Horizontal Snap Grid, divisions per unit");
+        hSnapSize->setExplicitFocusOrder(50);
+        addAndMakeVisible(*hSnapSize);
+
+        xpos += segWidth;
+
+        vSnapButton = std::make_unique<Surge::Widgets::Switch>();
+        vSnapButton->setSkin(skin, associatedBitmapStore);
+        vSnapButton->setStorage(storage);
+        vSnapButton->addListener(this);
+        vSnapButton->setBounds(xpos, ypos - 1, btnWidth, buttonHeight);
+        vSnapButton->setTag(tag_vertical_snap);
+        vSnapButton->setValue(ms->vSnap < 0.001 ? 0 : 1);
+        auto vsbmp = associatedBitmapStore->getImage(IDB_MSEG_VERTICAL_SNAP);
+        vSnapButton->setSwitchDrawable(vsbmp);
+        hoverBmp = skin->hoverBitmapOverlayForBackgroundBitmap(
+            nullptr, vsbmp, associatedBitmapStore, Surge::GUI::Skin::HoverType::HOVER);
+        vSnapButton->setHoverSwitchDrawable(hoverBmp);
+        vSnapButton->setTitle("Vertical Snap");
+        vSnapButton->setDescription("Vertical Snap");
+        vSnapButton->setExplicitFocusOrder(60);
+        addAndMakeVisible(*vSnapButton);
+
+        svt = fmt::format("{:d}", (int)round(1.f / ms->vSnapDefault));
+
+        vSnapSize = std::make_unique<Surge::Widgets::NumberField>();
+        vSnapSize->setTag(tag_vertical_value);
+        vSnapSize->setControlMode(Surge::Skin::Parameters::MSEG_SNAP_V);
+        vSnapSize->addListener(this);
+        vSnapSize->setStorage(storage);
+        vSnapSize->setSkin(skin, associatedBitmapStore);
+        vSnapSize->setIntValue(round(1.f / ms->vSnapDefault));
+        vSnapSize->setBounds(xpos + 52 + margin, ypos, editWidth, numfieldHeight);
+        images =
+            skin->standardHoverAndHoverOnForIDB(IDB_MSEG_SNAPVALUE_NUMFIELD, associatedBitmapStore);
+        vSnapSize->setBackgroundDrawable(images[0]);
+        vSnapSize->setHoverBackgroundDrawable(images[1]);
+        vSnapSize->setTextColour(skin->getColor(Colors::MSEGEditor::NumberField::Text));
+        vSnapSize->setHoverTextColour(skin->getColor(Colors::MSEGEditor::NumberField::TextHover));
+        vSnapSize->onReturnPressed = [w = juce::Component::SafePointer(this)](auto tag, auto nf) {
+            if (w)
+            {
+                w->hvSnapTypein(false);
+                return true;
+            }
+            return false;
+        };
+        vSnapSize->setTitle("Vertical Snap Grid");
+        vSnapSize->setDescription("Vertical Snap Grid, divisions per unit");
+        vSnapSize->setExplicitFocusOrder(70);
+        addAndMakeVisible(*vSnapSize);
+
+        xpos += segWidth;
+    }
+
+    // selected node
+    {
+        int segWidth = 46;
+        int editWidth = 32;
+        int ypos = 1;
+
+        auto mml = std::make_unique<juce::Label>();
+        mml->setText("Selected", juce::dontSendNotification);
+        mml->setFont(labelFont);
+        mml->setColour(juce::Label::textColourId, skin->getColor(Colors::MSEGEditor::Text));
+        mml->setBounds(xpos - 1, ypos, segWidth, labelHeight);
+        addAndMakeVisible(*mml);
+        labels.push_back(std::move(mml));
+
+        ypos += margin + labelHeight;
+
+        nodeSelect = std::make_unique<Surge::Widgets::NumberField>();
+        nodeSelect->setTag(tag_node_select);
+        nodeSelect->setControlMode(Surge::Skin::Parameters::MSEG_NODE_SELECT);
+        nodeSelect->addListener(this);
+        nodeSelect->setStorage(storage);
+        nodeSelect->setSkin(skin, associatedBitmapStore);
+        nodeSelect->setBounds(xpos + 5, ypos, editWidth, numfieldHeight);
+        auto nsImages =
+            skin->standardHoverAndHoverOnForIDB(IDB_MSEG_SNAPVALUE_NUMFIELD, associatedBitmapStore);
+        nodeSelect->setBackgroundDrawable(nsImages[0]);
+        nodeSelect->setHoverBackgroundDrawable(nsImages[1]);
+        nodeSelect->setTextColour(skin->getColor(Colors::MSEGEditor::NumberField::Text));
+        nodeSelect->setHoverTextColour(skin->getColor(Colors::MSEGEditor::NumberField::TextHover));
+        nodeSelect->setTitle("Selected Node");
+        nodeSelect->setDescription("Selected Node");
+        nodeSelect->setExplicitFocusOrder(80);
+        addAndMakeVisible(*nodeSelect);
+
+        xpos += segWidth;
+    }
+
+    // checkboxes
+    const bool showTrigger = !isSceneMSEG();
+    const int boxW = 12, boxH = 12;
+    const int rowH = 14;
+    int ypos = 1;
+
+    auto makeToggleRow = [&](std::unique_ptr<juce::ToggleButton> &btn,
+                             std::unique_ptr<juce::Label> &lbl, const std::string &title,
+                             const std::string &accessibleName, int tag, int colXOffset,
+                             int colWidth, int focusOrder) {
+        auto boxRect = juce::Rectangle<int>(xpos + colXOffset, ypos, boxW + 2, boxH);
+        auto labelRect =
+            juce::Rectangle<int>(xpos + colXOffset + boxW + 1, ypos - 1, colWidth - boxW, rowH);
+
+        lbl = std::make_unique<juce::Label>();
+        lbl->setText(toOSCase(title), juce::dontSendNotification);
+        lbl->setFont(editFont);
+        lbl->setColour(juce::Label::textColourId, skin->getColor(Colors::MSEGEditor::Text));
+        lbl->setColour(juce::Label::backgroundColourId, juce::Colours::transparentBlack);
+        lbl->setBounds(labelRect);
+        addAndMakeVisible(*lbl);
+
+        btn = std::make_unique<juce::ToggleButton>();
+        btn->setButtonText("");
+        btn->setTitle(accessibleName);
+        btn->setDescription(accessibleName);
+        btn->setBounds(boxRect);
+        btn->setAlwaysOnTop(true);
+        btn->setExplicitFocusOrder(focusOrder);
+        btn->onClick = [this, tag]() { this->toggleButtonClicked(tag); };
+        addAndMakeVisible(*btn);
+    };
+
+    // deform
+    {
+        int segWidth = 87;
+
+        auto mml = std::make_unique<juce::Label>();
+        mml->setText("Deform", juce::dontSendNotification);
+        mml->setFont(labelFont);
+        mml->setColour(juce::Label::textColourId, skin->getColor(Colors::MSEGEditor::Text));
+        mml->setBounds(xpos, ypos, segWidth, labelHeight);
+        addAndMakeVisible(*mml);
+        labels.push_back(std::move(mml));
+
+        ypos += margin + labelHeight;
+
+        int useColWidth = 40, invertColWidth = segWidth - useColWidth;
+
+        makeToggleRow(deformUseButton, deformUseLabel, "Use", "Use Deform", tag_deform_use, 0,
+                      useColWidth, 90);
+        makeToggleRow(deformInvertButton, deformInvertLabel, "Invert", "Invert Deform",
+                      tag_deform_invert, useColWidth - 3, invertColWidth, 100);
+
+        xpos += segWidth;
+    }
+
+    // trigger EG
+    if (showTrigger)
+    {
+        int segWidth = 94;
+        ypos = 1;
+
+        auto mml = std::make_unique<juce::Label>();
+        mml->setText("Trigger EG", juce::dontSendNotification);
+        mml->setFont(labelFont);
+        mml->setColour(juce::Label::textColourId, skin->getColor(Colors::MSEGEditor::Text));
+        mml->setBounds(xpos, ypos, segWidth, labelHeight);
+        addAndMakeVisible(*mml);
+        labels.push_back(std::move(mml));
+
+        ypos += margin + labelHeight;
+
+        const int filterColWidth = 44, ampColWidth = segWidth - filterColWidth;
+
+        makeToggleRow(triggerFilterButton, triggerFilterLabel, "Filter", "Trigger Filter EG",
+                      tag_trigger_filter_eg, 0, filterColWidth, 110);
+        makeToggleRow(triggerAmpButton, triggerAmpLabel, "Amp", "Trigger Amp EG",
+                      tag_trigger_amp_eg, filterColWidth - 1, ampColWidth, 120);
+
+        xpos += segWidth;
+    }
+
+    refreshNodeControls();
+}
+
+MSEGEditor::MSEGEditor(SurgeStorage *storage, LFOStorage *lfodata, MSEGStorage *ms, State *eds,
+                       Surge::GUI::Skin::ptr_t skin, std::shared_ptr<SurgeImageStore> bmp,
+                       SurgeGUIEditor *sge)
+    : OverlayComponent("MSEG Editor")
+{
+    this->sge = sge;
+
+    // Leave these in for now
+    if (ms->n_activeSegments <= 0) // This is an error state! Compensate
+    {
+        Surge::MSEG::createInitVoiceMSEG(ms);
+    }
+    setSkin(skin, bmp);
+
+    canvas = std::make_unique<MSEGCanvas>(storage, lfodata, ms, eds, skin, bmp, sge);
+    controls =
+        std::make_unique<MSEGControlRegion>(nullptr, storage, lfodata, ms, eds, skin, bmp, sge);
+
+    canvas->controlregion = controls.get();
+    controls->canvas = canvas.get();
+
+    canvas->onModelChanged = [this]() { this->onModelChanged(); };
+
+    addAndMakeVisible(*controls);
+    addAndMakeVisible(*canvas);
+}
+
+MSEGEditor::~MSEGEditor() = default;
+
+void MSEGEditor::forceRefresh()
+{
+    for (auto *kid : getChildren())
+    {
+        auto ed = dynamic_cast<MSEGCanvas *>(kid);
+        if (ed)
+        {
+            ed->modelChanged();
+        }
+        auto cr = dynamic_cast<MSEGControlRegion *>(kid);
+        if (cr)
+            cr->rebuild();
+    }
+}
+
+std::vector<juce::Component *> MSEGEditor::getGroupNavigationComponents()
+{
+    return {canvas.get(), controls.get()};
+}
+
+void MSEGEditor::paint(juce::Graphics &g) { g.fillAll(juce::Colours::black); }
+
+void MSEGEditor::resized()
+{
+    int controlHeight = 35;
+
+    auto t = getTransform().inverted();
+    auto h = getHeight();
+    auto w = getWidth();
+    t.transformPoint(w, h);
+    auto r = getLocalBounds().withWidth(w).withHeight(h);
+
+    auto cvr = r.withTrimmedBottom(controlHeight);
+    auto ctr = r.withTop(cvr.getBottom());
+
+    canvas->setBounds(cvr);
+    canvas->recalcHotZones(juce::Point<int>(0, 0));
+    controls->setBounds(ctr);
+    // mained setbounds
+}
+
+} // namespace Overlays
+} // namespace Surge

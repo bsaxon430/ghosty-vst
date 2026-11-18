@@ -1,0 +1,4 @@
+SHARDS=16
+ONLY=.
+# build 8: every Surge XT factory + third-party patch (run 3: a fresh process per patch, upstream rendered twice)
+# build 10 (layers): b10 branch, Surge hooks inert with layers off

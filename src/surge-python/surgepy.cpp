@@ -1,0 +1,2671 @@
+/*
+ * Surge XT - a free and open source hybrid synthesizer,
+ * built by Surge Synth Team
+ *
+ * Learn more at https://surge-synthesizer.github.io/
+ *
+ * Copyright 2018-2024, various authors, as described in the GitHub
+ * transaction log.
+ *
+ * Surge XT is released under the GNU General Public Licence v3
+ * or later (GPL-3.0-or-later). The license is found in the "LICENSE"
+ * file in the root of this repository, or at
+ * https://www.gnu.org/licenses/gpl-3.0.en.html
+ *
+ * Surge was a commercial product from 2004-2018, copyright and ownership
+ * held by Claes Johanson at Vember Audio during that period.
+ * Claes made Surge open source in September 2018.
+ *
+ * All source for Surge XT is available at
+ * https://github.com/surge-synthesizer/surge
+ */
+#include <pybind11/pybind11.h>
+#include <tuple>
+#include <pybind11/numpy.h>
+#include <pybind11/stl.h>
+
+#include <cmath>
+#include <optional>
+#include <sstream>
+#include <thread>
+#include <utility>
+
+#include "SurgeSynthesizer.h"
+#include "SurgeStorage.h"
+#include "GhostEngine.h"
+#include "GhostPatchTools.h"  // GHOST BASS
+#include "MSEGModulationHelper.h"
+#include "FormulaModulationHelper.h"
+#include "version.h"
+#include "filesystem/import.h"
+
+namespace py = pybind11;
+
+/*
+ * Generate stub types by running `pip install pybind11-stubgen && pybind11-stubgen surgepy`
+ * and copy `out/` folder contents to `./surgepy`.
+ */
+
+class PythonPluginLayerProxy : public SurgeSynthesizer::PluginLayer
+{
+  public:
+    void surgeParameterUpdated(const SurgeSynthesizer::ID &id, float d) override {}
+    void surgeMacroUpdated(long macroNum, float d) override {}
+};
+
+static std::unique_ptr<PythonPluginLayerProxy> spysetup_parent = nullptr;
+static std::mutex spysetup_mutex;
+
+/*
+ * The way we've decided to expose to python is through some wrapper objects
+ * which give us the control group / control group entry / param hierarchy.
+ * So here's some small helper objects
+ */
+
+struct SurgePyNamedParam
+{
+    std::string name;
+    SurgeSynthesizer::ID id;
+    std::string getName() const { return name; }
+    SurgeSynthesizer::ID getID() const { return id; }
+    std::string toString() const { return std::string("<SurgeNamedParam '") + name + "'>"; }
+};
+
+struct SurgePyControlGroupEntry
+{
+    std::vector<SurgePyNamedParam> params;
+    int entry = -1;
+    int scene = -1;
+    std::string groupName;
+
+    int getEntry() const { return entry; }
+    int getScene() const { return scene; }
+    std::vector<SurgePyNamedParam> getParams() const { return params; }
+
+    std::string toString() const
+    {
+        auto res = std::string("<SurgeControlGroupEntry entry=") + std::to_string(entry);
+        switch (scene)
+        {
+        case 0:
+            break;
+        case 1:
+            res += "/sceneA";
+            break;
+        case 2:
+            res += "/sceneB";
+            break;
+        }
+        res += " in " + groupName + ">";
+        return res;
+    }
+};
+
+struct SurgePyControlGroup
+{
+    std::vector<SurgePyControlGroupEntry> entries;
+    ControlGroup id = endCG;
+    std::string name;
+
+    SurgePyControlGroup() = default;
+    SurgePyControlGroup(ControlGroup id, std::string name) : id(id), name(std::move(name)) {};
+
+    int getControlGroupId() const { return (int)id; }
+    std::string getControlGroupName() const { return name; }
+    std::vector<SurgePyControlGroupEntry> getEntries() const { return entries; }
+
+    std::string toString() const
+    {
+        return std::string("<SurgeControlGroup cg=") + std::to_string(id) + ", " + name + ">";
+    }
+};
+
+struct SurgePyModSource
+{
+    modsources ms = ms_original;
+    std::string name;
+
+    SurgePyModSource() = default;
+    explicit SurgePyModSource(modsources ms) : ms(ms) { name = modsource_names[(int)ms]; }
+
+    int getModSource() const { return ms; }
+    std::string getName() const { return name; }
+    std::string toString() const { return std::string("<SurgeModSource ") + name + ">"; }
+};
+
+struct SurgePyModRouting
+{
+    SurgePyModSource source;
+    SurgePyNamedParam dest;
+    int source_scene;
+    int source_index;
+    float depth;
+    float normalizedDepth;
+};
+
+/*
+ * An MSEG is a structure rather than a set of parameters, so rather than copying it in and out of
+ * Python we hand back a live reference into the patch: an edit through one of these wrappers lands
+ * in the patch directly, the way the MSEG editor's edits do. The MSEG array is a plain member of
+ * SurgePatch, so the pointer stays good for the life of the synth, and py::keep_alive ties the
+ * wrapper's lifetime to the synth which owns it.
+ *
+ * Every write rebuilds the cached segment start/end times, since leaving those stale is what
+ * separates an MSEG which plays back as asked from one which doesn't. Writes are checked where a
+ * bad value has a single meaning - a segment type outside the enum, a loop point off the ends - but
+ * the invariants which span the whole structure are left to validateMSEG(), because a structure in
+ * the middle of being rewritten is legitimately inconsistent.
+ */
+struct SurgePyMSEGSegment
+{
+    /*
+     * The MSEG this came from, held as a reference rather than through py::keep_alive, because the
+     * segments arrive in a list and pybind can't make a list keep anything alive. Through it the
+     * synth which owns the storage outlives the segment.
+     */
+    py::object owner;
+    MSEGStorage *ms{nullptr};
+    int idx{-1};
+
+    SurgePyMSEGSegment() = default;
+    SurgePyMSEGSegment(py::object owner, MSEGStorage *ms, int idx)
+        : owner(std::move(owner)), ms(ms), idx(idx)
+    {
+    }
+
+    MSEGStorage::segment &seg() const { return ms->segments[idx]; }
+
+    static float checkedValue(float f, float lo, float hi, const std::string &what)
+    {
+        if (!std::isfinite(f) || f < lo || f > hi)
+        {
+            std::ostringstream oss;
+
+            oss << what << " must be between " << lo << " and " << hi << "!";
+
+            throw std::invalid_argument(oss.str());
+        }
+
+        return f;
+    }
+
+    void touch() const { Surge::MSEG::rebuildCache(ms); }
+
+    int getIndex() const { return idx; }
+
+    float getDuration() const { return seg().duration; }
+    void setDuration(float f)
+    {
+        if (!std::isfinite(f) || f < MSEGStorage::minimumDuration)
+        {
+            throw std::invalid_argument("Segment duration cannot be negative!");
+        }
+
+        seg().duration = f;
+        touch();
+    }
+
+    float getV0() const { return seg().v0; }
+    void setV0(float f)
+    {
+        seg().v0 = checkedValue(f, -1.f, 1.f, "Segment value");
+        touch();
+    }
+
+    float getCPDuration() const { return seg().cpduration; }
+    void setCPDuration(float f)
+    {
+        seg().cpduration = checkedValue(f, 0.f, 1.f, "Segment control point duration");
+        touch();
+    }
+
+    float getCPV() const { return seg().cpv; }
+    void setCPV(float f)
+    {
+        seg().cpv = checkedValue(f, -1.f, 1.f, "Segment control point value");
+        touch();
+    }
+
+    // NONE is a hole in the middle of the enum - the MSEG editor uses it as a menu separator, and
+    // no segment is ever meant to carry it
+    static bool isSegmentType(int t)
+    {
+        return t >= MSEGStorage::segment::LINEAR && t <= MSEGStorage::segment::RATCHET_8 &&
+               t != MSEGStorage::segment::NONE;
+    }
+
+    int getType() const { return (int)seg().type; }
+    void setType(int t)
+    {
+        if (!isSegmentType(t))
+        {
+            throw std::invalid_argument("Unknown segment type - use one of the mseg_seg_ constants "
+                                        "from surgepy.constants!");
+        }
+
+        seg().type = (MSEGStorage::segment::Type)t;
+        touch();
+    }
+
+    bool getUseDeform() const { return seg().useDeform; }
+    void setUseDeform(bool b)
+    {
+        seg().useDeform = b;
+        touch();
+    }
+
+    bool getInvertDeform() const { return seg().invertDeform; }
+    void setInvertDeform(bool b)
+    {
+        seg().invertDeform = b;
+        touch();
+    }
+
+    bool getRetriggerFEG() const { return seg().retriggerFEG; }
+    void setRetriggerFEG(bool b)
+    {
+        seg().retriggerFEG = b;
+        touch();
+    }
+
+    bool getRetriggerAEG() const { return seg().retriggerAEG; }
+    void setRetriggerAEG(bool b)
+    {
+        seg().retriggerAEG = b;
+        touch();
+    }
+
+    std::string toString() const
+    {
+        std::ostringstream oss;
+
+        oss << "<SurgeMSEGSegment " << idx << " duration=" << seg().duration << " v0=" << seg().v0
+            << " type=" << (int)seg().type << ">";
+
+        return oss.str();
+    }
+};
+
+struct SurgePyMSEG
+{
+    MSEGStorage *ms{nullptr};
+    int scene{-1}, lfo{-1};
+
+    SurgePyMSEG() = default;
+    SurgePyMSEG(MSEGStorage *ms, int scene, int lfo) : ms(ms), scene(scene), lfo(lfo) {}
+
+    void rebuildCache() const { Surge::MSEG::rebuildCache(ms); }
+
+    int getSegmentCount() const { return ms->n_activeSegments; }
+
+    static std::vector<SurgePyMSEGSegment> getSegments(const py::object &self)
+    {
+        const auto &mseg = self.cast<const SurgePyMSEG &>();
+        std::vector<SurgePyMSEGSegment> res;
+
+        for (int i = 0; i < mseg.ms->n_activeSegments; ++i)
+        {
+            res.emplace_back(self, mseg.ms, i);
+        }
+
+        return res;
+    }
+
+    int checkedIndex(int idx, int onePast) const
+    {
+        if (idx < 0 || idx >= ms->n_activeSegments + (onePast ? 1 : 0))
+        {
+            throw std::invalid_argument(std::string("Segment index ") + std::to_string(idx) +
+                                        " is out of range!");
+        }
+
+        return idx;
+    }
+
+    void insertSegment(int idx)
+    {
+        if (ms->n_activeSegments >= max_msegs)
+        {
+            throw std::invalid_argument(std::string("An MSEG can hold at most ") +
+                                        std::to_string(max_msegs) + " segments!");
+        }
+
+        // insertAtIndex takes the index the new segment lands on, so one past the end is the
+        // perfectly reasonable "append" and has to be allowed through
+        Surge::MSEG::insertAtIndex(ms, checkedIndex(idx, true));
+        rebuildCache();
+    }
+
+    void deleteSegment(int idx)
+    {
+        if (ms->n_activeSegments <= 1)
+        {
+            throw std::invalid_argument("An MSEG must keep at least one segment!");
+        }
+
+        Surge::MSEG::deleteSegment(ms, checkedIndex(idx, false));
+        rebuildCache();
+    }
+
+    int getEndpointMode() const { return (int)ms->endpointMode; }
+    void setEndpointMode(int m)
+    {
+        if (m != MSEGStorage::LOCKED && m != MSEGStorage::FREE)
+        {
+            throw std::invalid_argument("Endpoint mode must be mseg_endpoint_locked or "
+                                        "mseg_endpoint_free from surgepy.constants!");
+        }
+
+        ms->endpointMode = (MSEGStorage::EndpointMode)m;
+        rebuildCache();
+    }
+
+    int getEditMode() const { return (int)ms->editMode; }
+    void setEditMode(int m)
+    {
+        if (m != MSEGStorage::ENVELOPE && m != MSEGStorage::LFO)
+        {
+            throw std::invalid_argument("Edit mode must be mseg_editmode_env or mseg_editmode_lfo "
+                                        "from surgepy.constants!");
+        }
+
+        // LFO edit mode requires the durations to sum to one, so this goes through the engine's
+        // mode switch, which rescales them, rather than assigning the field and leaving the
+        // structure in a state rebuildCache() has no answer for
+        Surge::MSEG::modifyEditMode(ms, (MSEGStorage::EditMode)m);
+    }
+
+    int getLoopMode() const { return (int)ms->loopMode; }
+    void setLoopMode(int m)
+    {
+        if (m < MSEGStorage::ONESHOT || m > MSEGStorage::GATED_LOOP)
+        {
+            throw std::invalid_argument("Loop mode must be one of mseg_loop_off, mseg_loop_on or "
+                                        "mseg_loop_gated from surgepy.constants!");
+        }
+
+        ms->loopMode = (MSEGStorage::LoopMode)m;
+        rebuildCache();
+    }
+
+    int getLoopStart() const { return ms->loop_start; }
+    void setLoopStart(int p)
+    {
+        if (p != MSEGStorage::kLoopPointUnset && (p < 0 || p > ms->n_activeSegments))
+        {
+            throw std::invalid_argument("Loop start must be a point from 0 to the segment count, "
+                                        "or mseg_unset!");
+        }
+
+        ms->loop_start = p;
+        rebuildCache();
+    }
+
+    int getLoopEnd() const { return ms->loop_end; }
+    void setLoopEnd(int p)
+    {
+        if (p != MSEGStorage::kLoopPointUnset && (p < -1 || p >= ms->n_activeSegments))
+        {
+            throw std::invalid_argument("Loop end must be a point from -1 to one less than the "
+                                        "segment count, or mseg_unset!");
+        }
+
+        ms->loop_end = p;
+        rebuildCache();
+    }
+
+    /*
+     * Every segment carries the value its successor starts on, which rebuildCache() recomputes, so
+     * there's nothing for Python to set there. The exception is the final segment in free endpoint
+     * mode, where that value is the MSEG's own end point and nothing else determines it, so it
+     * surfaces here as a property of the MSEG rather than of a segment.
+     */
+    float getEndValue() const { return ms->segments[ms->n_activeSegments - 1].nv1; }
+    void setEndValue(float f)
+    {
+        if (ms->endpointMode != MSEGStorage::FREE)
+        {
+            throw std::invalid_argument("End value can only be set in free endpoint mode - in "
+                                        "locked mode it follows the first segment's value!");
+        }
+
+        ms->segments[ms->n_activeSegments - 1].nv1 =
+            SurgePyMSEGSegment::checkedValue(f, -1.f, 1.f, "End value");
+        rebuildCache();
+    }
+
+    float getTotalDuration() const { return ms->totalDuration; }
+
+    float getHSnap() const { return ms->hSnap; }
+    void setHSnap(float f) { ms->hSnap = SurgePyMSEGSegment::checkedValue(f, 0.f, 1.f, "Snap"); }
+
+    float getVSnap() const { return ms->vSnap; }
+    void setVSnap(float f) { ms->vSnap = SurgePyMSEGSegment::checkedValue(f, 0.f, 1.f, "Snap"); }
+
+    float getHSnapDefault() const { return ms->hSnapDefault; }
+    void setHSnapDefault(float f)
+    {
+        ms->hSnapDefault = SurgePyMSEGSegment::checkedValue(f, 0.f, 1.f, "Snap");
+    }
+
+    float getVSnapDefault() const { return ms->vSnapDefault; }
+    void setVSnapDefault(float f)
+    {
+        ms->vSnapDefault = SurgePyMSEGSegment::checkedValue(f, 0.f, 1.f, "Snap");
+    }
+
+    std::string toString() const
+    {
+        std::ostringstream oss;
+
+        oss << "<SurgeMSEG scene=" << (scene == 0 ? "A" : "B") << " lfo=" << (lfo + 1)
+            << " segments=" << ms->n_activeSegments << " duration=" << ms->totalDuration << ">";
+
+        return oss.str();
+    }
+};
+
+/*
+ * The structural invariants an MSEG has to satisfy for the engine to evaluate it. A loaded patch,
+ * or a structure part way through being rewritten from Python, can violate these, so this reports
+ * everything wrong with one rather than raising on the first problem.
+ */
+std::vector<std::string> validateMSEG(const SurgePyMSEG &mseg)
+{
+    auto *ms = mseg.ms;
+    std::vector<std::string> res;
+
+    if (ms->n_activeSegments < 1)
+    {
+        res.emplace_back("MSEG has no segments - it must have at least one");
+
+        // Everything below reads the segments, and there's nothing trustworthy to read
+        return res;
+    }
+
+    if (ms->n_activeSegments > max_msegs)
+    {
+        res.emplace_back("MSEG has " + std::to_string(ms->n_activeSegments) +
+                         " segments, more than the maximum of " + std::to_string(max_msegs));
+        return res;
+    }
+
+    const auto check = [&res](bool ok, const std::string &msg) {
+        if (!ok)
+        {
+            res.emplace_back(msg);
+        }
+    };
+
+    const auto inRange = [](float f, float lo, float hi) {
+        return std::isfinite(f) && f >= lo && f <= hi;
+    };
+
+    float totalDuration = 0;
+
+    for (int i = 0; i < ms->n_activeSegments; ++i)
+    {
+        const auto &seg = ms->segments[i];
+        const auto at = " on segment " + std::to_string(i);
+
+        check(std::isfinite(seg.duration) && seg.duration >= MSEGStorage::minimumDuration,
+              "Duration" + at + " is negative or not a number");
+        check(inRange(seg.v0, -1.f, 1.f), "Value" + at + " is outside -1 to 1");
+        check(inRange(seg.cpv, -1.f, 1.f), "Control point value" + at + " is outside -1 to 1");
+        check(inRange(seg.cpduration, 0.f, 1.f),
+              "Control point duration" + at + " is outside 0 to 1");
+        check(SurgePyMSEGSegment::isSegmentType((int)seg.type),
+              "Type" + at + " is not a known segment type");
+
+        if (std::isfinite(seg.duration))
+        {
+            totalDuration += seg.duration;
+        }
+    }
+
+    check(ms->endpointMode == MSEGStorage::LOCKED || ms->endpointMode == MSEGStorage::FREE,
+          "Endpoint mode is not a known mode");
+    check(ms->editMode == MSEGStorage::ENVELOPE || ms->editMode == MSEGStorage::LFO,
+          "Edit mode is not a known mode");
+    check(ms->loopMode >= MSEGStorage::ONESHOT && ms->loopMode <= MSEGStorage::GATED_LOOP,
+          "Loop mode is not a known mode");
+
+    if (ms->endpointMode == MSEGStorage::FREE)
+    {
+        check(inRange(ms->segments[ms->n_activeSegments - 1].nv1, -1.f, 1.f),
+              "End value is outside -1 to 1");
+    }
+
+    // LFO edit mode constrains the MSEG to a single phase unit, and the engine has no recovery for
+    // durations which don't add up to one - it just plays the wrong shape
+    if (ms->editMode == MSEGStorage::LFO && std::fabs(totalDuration - 1.f) > 1e-5)
+    {
+        std::ostringstream oss;
+
+        oss << "Durations sum to " << totalDuration
+            << " rather than 1, which LFO edit mode requires";
+
+        res.emplace_back(oss.str());
+    }
+
+    const auto loopPoint = [&](int p, int lo, int hi, const std::string &which) {
+        if (p != MSEGStorage::kLoopPointUnset && (p < lo || p > hi))
+        {
+            res.emplace_back("Loop " + which + " point " + std::to_string(p) + " is outside " +
+                             std::to_string(lo) + " to " + std::to_string(hi));
+            return false;
+        }
+
+        return true;
+    };
+
+    const auto startOK = loopPoint(ms->loop_start, 0, ms->n_activeSegments, "start");
+    const auto endOK = loopPoint(ms->loop_end, -1, ms->n_activeSegments - 1, "end");
+
+    if (startOK && endOK && ms->loop_start != MSEGStorage::kLoopPointUnset &&
+        ms->loop_end != MSEGStorage::kLoopPointUnset && ms->loop_start > ms->loop_end + 1)
+    {
+        res.emplace_back("Loop start point " + std::to_string(ms->loop_start) +
+                         " comes after loop end point " + std::to_string(ms->loop_end));
+    }
+
+    return res;
+}
+
+class SurgePyPatchConverter
+{
+  public:
+    explicit SurgePyPatchConverter(SurgeSynthesizer *synth) : synth(synth) {};
+    ~SurgePyPatchConverter() = default;
+
+    void addParam(py::dict &to, const std::string &at, const Parameter &from) const
+    {
+        auto id = synth->idForParameter(&from);
+        char txt[256];
+        synth->getParameterName(id, txt);
+        auto newp = SurgePyNamedParam();
+        newp.name = txt;
+        newp.id = id;
+        to[at.c_str()] = newp;
+    }
+
+    void addParam(py::list &to, const Parameter &from) const
+    {
+        auto id = synth->idForParameter(&from);
+        char txt[256];
+        synth->getParameterName(id, txt);
+        auto newp = SurgePyNamedParam();
+        newp.name = txt;
+        newp.id = id;
+        to.append(newp);
+    }
+    py::dict makeFX(const SurgePatch &patch, int s)
+    {
+        auto res = py::dict();
+        auto fxi = &(patch.fx[s]);
+#define ADD(x) addParam(res, #x, fxi->x);
+        ADD(type);
+        ADD(return_level);
+#undef ADD
+
+        auto pars = py::list();
+        for (int i = 0; i < n_fx_params; ++i)
+            addParam(pars, fxi->p[i]);
+        res["p"] = pars;
+
+        return res;
+    }
+
+    py::dict makeFU(const SurgePatch &patch, int sc, int fuI)
+    {
+        auto fu = &(patch.scene[sc].filterunit[fuI]);
+        auto res = py::dict();
+#define ADD(x) addParam(res, #x, fu->x);
+        ADD(type);
+        ADD(subtype);
+        ADD(cutoff);
+        ADD(resonance);
+        ADD(envmod);
+        ADD(keytrack);
+#undef ADD
+        return res;
+    }
+    py::dict makeOsc(const SurgePatch &patch, int sc, int oscI)
+    {
+        auto osc = &(patch.scene[sc].osc[oscI]);
+        auto res = py::dict();
+#define ADD(x) addParam(res, #x, osc->x);
+        ADD(type);
+        ADD(pitch);
+        ADD(octave);
+        ADD(keytrack);
+        ADD(retrigger);
+#undef ADD
+
+        auto pars = py::list();
+        for (int i = 0; i < n_osc_params; ++i)
+            addParam(pars, osc->p[i]);
+        res["p"] = pars;
+
+        return res;
+    }
+    py::dict makeScene(const SurgePatch &patch, int scI)
+    {
+        auto res = py::dict();
+
+        auto sc = &(patch.scene[scI]);
+
+        auto osc = py::list();
+        for (int i = 0; i < n_oscs; ++i)
+            osc.append(makeOsc(patch, scI, i));
+        res["osc"] = osc;
+
+        auto fu = py::list();
+        fu.append(makeFU(patch, scI, 0));
+        fu.append(makeFU(patch, scI, 1));
+        res["filterunit"] = fu;
+
+        auto ws = py::dict();
+        addParam(ws, "type", sc->wsunit.type);
+        addParam(ws, "drive", sc->wsunit.drive);
+        res["wsunit"] = ws;
+
+        // ADSRSTORAGE
+        py::dict e0, e1;
+#define ADSRADD(x)                                                                                 \
+    addParam(e0, #x, sc->adsr[0].x);                                                               \
+    addParam(e1, #x, sc->adsr[1].x);
+
+        ADSRADD(a);
+        ADSRADD(d);
+        ADSRADD(s);
+        ADSRADD(r);
+
+        ADSRADD(a_s);
+        ADSRADD(d_s);
+        ADSRADD(r_s);
+        ADSRADD(mode);
+
+#undef ADSRADD
+        auto adsr = py::list();
+        adsr.append(e0);
+        adsr.append(e1);
+        res["adsr"] = adsr;
+
+        // LFOSTORAGE
+        auto lfos = py::list();
+        for (int i = 0; i < n_lfos; ++i)
+        {
+            auto lfo = py::dict();
+#define ADD(x) addParam(lfo, #x, sc->lfo[i].x);
+
+            ADD(rate);
+            ADD(shape);
+            ADD(start_phase);
+            ADD(magnitude);
+            ADD(deform);
+            ADD(trigmode);
+            ADD(unipolar);
+            ADD(delay);
+            ADD(hold);
+            ADD(attack);
+            ADD(decay);
+            ADD(sustain);
+            ADD(release);
+#undef ADD
+            lfos.append(lfo);
+        }
+        res["lfo"] = lfos;
+
+#define ADD(x) addParam(res, #x, sc->x);
+        ADD(pitch);
+        ADD(octave);
+        ADD(fm_depth);
+        ADD(fm_switch);
+        ADD(drift);
+        ADD(noise_colour);
+        ADD(keytrack_root);
+
+#define ADDMIX(x)                                                                                  \
+    ADD(level_##x);                                                                                \
+    ADD(mute_##x);                                                                                 \
+    ADD(solo_##x);                                                                                 \
+    ADD(route_##x);
+
+        ADDMIX(o1);
+        ADDMIX(o2);
+        ADDMIX(o3);
+        ADDMIX(ring_12);
+        ADDMIX(ring_23);
+        ADDMIX(noise);
+#undef ADDMIX
+
+        ADD(level_pfg);
+        ADD(vca_level);
+        ADD(pbrange_dn);
+        ADD(pbrange_up);
+        ADD(vca_velsense);
+        ADD(polymode);
+        ADD(portamento);
+        ADD(volume);
+        ADD(pan);
+        ADD(width);
+
+        py::list sl;
+        addParam(sl, sc->send_level[0]);
+        addParam(sl, sc->send_level[1]);
+        res["send_level"] = sl;
+
+        ADD(f2_cutoff_is_offset);
+        ADD(f2_link_resonance);
+        ADD(feedback);
+        ADD(filterblock_configuration);
+        ADD(filter_balance);
+        ADD(lowcut);
+#undef ADD
+
+        return res;
+    }
+    py::dict asDict(const SurgePatch &patch)
+    {
+        auto res = py::dict();
+        auto scenes = py::list();
+        for (int i = 0; i < n_scenes; ++i)
+            scenes.append(makeScene(patch, i));
+        res["scene"] = scenes;
+
+        auto fxs = py::list();
+        for (int i = 0; i < n_fx_slots; ++i)
+            fxs.append(makeFX(patch, i));
+        res["fx"] = fxs;
+
+#define ADD(x) addParam(res, #x, patch.x);
+        ADD(scene_active);
+        ADD(scenemode);
+        ADD(splitpoint);
+        ADD(volume);
+        ADD(polylimit);
+        ADD(fx_bypass);
+        ADD(fx_disable);
+        ADD(character);
+#undef ADD
+
+        return res;
+    }
+
+    SurgeSynthesizer *synth = nullptr;
+};
+
+static std::unordered_map<ControlGroup, SurgePyControlGroup> spysetup_cgMap;
+static std::unordered_map<modsources, SurgePyModSource> spysetup_msMap;
+
+class SurgeSynthesizerWithPythonExtensions : public SurgeSynthesizer
+{
+  public:
+    explicit SurgeSynthesizerWithPythonExtensions(PluginLayer *sparent) : SurgeSynthesizer(sparent)
+    {
+        std::lock_guard<std::mutex> lg(spysetup_mutex);
+        if (spysetup_cgMap.empty())
+        {
+            // First time setup
+#define CGM(c) spysetup_cgMap[c] = SurgePyControlGroup(c, #c);
+
+            CGM(cg_GLOBAL);
+            CGM(cg_OSC);
+            CGM(cg_MIX);
+            CGM(cg_LFO);
+            CGM(cg_FX);
+            CGM(cg_FILTER);
+            CGM(cg_ENV);
+
+            for (auto &me : spysetup_cgMap)
+            {
+                auto cg = me.first;
+                auto pc = me.second;
+
+                // Populate with a lazy multi pass
+                std::set<std::pair<int, int>> entrySet;
+                for (auto pa : storage.getPatch().param_ptr)
+                {
+                    if (pa && pa->ctrlgroup == cg)
+                    {
+                        entrySet.insert(std::make_pair(pa->ctrlgroup_entry, pa->scene));
+                    }
+                }
+
+                for (auto ent : entrySet)
+                {
+                    auto entO = SurgePyControlGroupEntry();
+                    entO.groupName = me.second.name;
+                    entO.entry = ent.first;
+                    entO.scene = ent.second;
+                    for (auto pa : storage.getPatch().param_ptr)
+                    {
+                        if (pa && pa->ctrlgroup == cg && pa->ctrlgroup_entry == ent.first &&
+                            pa->scene == ent.second)
+                        {
+                            auto paO = SurgePyNamedParam();
+                            paO.name = pa->get_full_name();
+                            paO.id = idForParameter(pa);
+                            entO.params.push_back(paO);
+                        }
+                    }
+                    me.second.entries.push_back(entO);
+                }
+            }
+
+#define CMS(c) spysetup_msMap[c] = SurgePyModSource(c);
+
+            CMS(ms_velocity);
+            CMS(ms_releasevelocity);
+            CMS(ms_keytrack);
+            CMS(ms_lowest_key);
+            CMS(ms_highest_key);
+            CMS(ms_latest_key);
+            CMS(ms_polyaftertouch);
+            CMS(ms_aftertouch);
+            CMS(ms_modwheel);
+            CMS(ms_breath);
+            CMS(ms_expression);
+            CMS(ms_sustain);
+            CMS(ms_pitchbend);
+            CMS(ms_timbre);
+            CMS(ms_alternate_bipolar);
+            CMS(ms_alternate_unipolar);
+            CMS(ms_random_bipolar);
+            CMS(ms_random_unipolar);
+            CMS(ms_filtereg);
+            CMS(ms_ampeg);
+            CMS(ms_lfo1);
+            CMS(ms_lfo2);
+            CMS(ms_lfo3);
+            CMS(ms_lfo4);
+            CMS(ms_lfo5);
+            CMS(ms_lfo6);
+            CMS(ms_slfo1);
+            CMS(ms_slfo2);
+            CMS(ms_slfo3);
+            CMS(ms_slfo4);
+            CMS(ms_slfo5);
+            CMS(ms_slfo6);
+            CMS(ms_ctrl1);
+            CMS(ms_ctrl2);
+            CMS(ms_ctrl3);
+            CMS(ms_ctrl4);
+            CMS(ms_ctrl5);
+            CMS(ms_ctrl6);
+            CMS(ms_ctrl7);
+            CMS(ms_ctrl8);
+        }
+    }
+
+    SurgePyControlGroup getControlGroup(int cg) const
+    {
+        if (spysetup_cgMap.find((ControlGroup)cg) == spysetup_cgMap.end())
+        {
+            throw std::out_of_range("getControlGroup called with invalid control group value");
+        }
+        return spysetup_cgMap[(ControlGroup)cg];
+    }
+
+    SurgePyModSource getModSource(int ms) const
+    {
+        if (spysetup_msMap.find((modsources)ms) == spysetup_msMap.end())
+        {
+            throw std::out_of_range("getModSource called with invalid mod source group value");
+        }
+        return spysetup_msMap[(modsources)ms];
+    }
+
+    std::string getParameterName_py(const SurgeSynthesizer::ID &id)
+    {
+        char txt[256];
+        getParameterName(id, txt);
+        return std::string(txt);
+    }
+
+    SurgeSynthesizer::ID createSynthSideId(int id)
+    {
+        SurgeSynthesizer::ID idr;
+        fromSynthSideId(id, idr);
+        return idr;
+    }
+
+    void playNoteWithInts(int ch, int note, int vel, int detune)
+    {
+        playNote(ch, note, vel, detune);
+    }
+
+    void pitchBendWithInts(int ch, int bend) { pitchBend(ch, bend); }
+
+    void polyAftertouchWithInts(int channel, int key, int value)
+    {
+        polyAftertouch(channel, key, value);
+    }
+
+    void channelAftertouchWithInts(int channel, int value) { channelAftertouch(channel, value); }
+
+    void channelControllerWithInts(int channel, int cc, int value)
+    {
+        channelController(channel, cc, value);
+    }
+
+    float getv(Parameter *p, const pdata &v)
+    {
+        if (p->valtype == vt_float)
+            return v.f;
+        if (p->valtype == vt_int)
+            return v.i;
+        if (p->valtype == vt_bool)
+            return v.b;
+        return 0;
+    }
+
+    float getParamMin(const SurgePyNamedParam &id)
+    {
+        auto p = storage.getPatch().param_ptr[id.getID().getSynthSideId()];
+        if (p)
+            return getv(p, p->val_min);
+        return 0;
+    }
+
+    float getParamMax(const SurgePyNamedParam &id)
+    {
+        auto p = storage.getPatch().param_ptr[id.getID().getSynthSideId()];
+        if (p)
+            return getv(p, p->val_max);
+        return 0;
+    }
+
+    float getParamDef(const SurgePyNamedParam &id)
+    {
+        auto p = storage.getPatch().param_ptr[id.getID().getSynthSideId()];
+        if (p)
+            return getv(p, p->val_default);
+        return 0;
+    }
+
+    float getParamVal(const SurgePyNamedParam &id)
+    {
+        auto p = storage.getPatch().param_ptr[id.getID().getSynthSideId()];
+        if (p)
+            return getv(p, p->val);
+        return 0;
+    }
+
+    std::string getParamDisplay(const SurgePyNamedParam &id)
+    {
+        auto p = storage.getPatch().param_ptr[id.getID().getSynthSideId()];
+
+        if (p)
+        {
+            return p->get_display();
+        }
+
+        return "<error>";
+    }
+
+    std::string getParamValType(const SurgePyNamedParam &id)
+    {
+        auto p = storage.getPatch().param_ptr[id.getID().getSynthSideId()];
+        if (!p)
+            return "<error>";
+        switch (p->valtype)
+        {
+        case vt_float:
+            return "float";
+        case vt_int:
+            return "int";
+        case vt_bool:
+            return "bool";
+        }
+        return "<error>";
+    }
+
+    std::string getParamInfo(const SurgePyNamedParam &id)
+    {
+        const auto val = getParamVal(id);
+        const auto min = getParamMin(id);
+        const auto max = getParamMax(id);
+        const auto def = getParamDef(id);
+        const auto val_type = getParamValType(id);
+        const auto display = getParamDisplay(id);
+
+        std::ostringstream oss;
+        oss << "Parameter name: " << id.getName() << std::endl;
+        oss << "Parameter value: " << val << std::endl;
+        oss << "Parameter min: " << min << std::endl;
+        oss << "Parameter max: " << max << std::endl;
+        oss << "Parameter default: " << def << std::endl;
+        oss << "Parameter value type: " << val_type << std::endl;
+        oss << "Parameter display value: " << display << std::endl;
+
+        // Only report the features which actually apply to this parameter
+        const auto p = paramPtr(id);
+        const auto onOff = [](bool b) { return b ? "on" : "off"; };
+
+        if (p->can_extend_range())
+        {
+            oss << "Parameter extended range: " << onOff(p->extend_range) << std::endl;
+        }
+
+        if (p->can_temposync())
+        {
+            oss << "Parameter temposync: " << onOff(p->temposync) << std::endl;
+        }
+
+        if (p->can_be_absolute())
+        {
+            oss << "Parameter absolute mode: " << onOff(p->absolute) << std::endl;
+        }
+
+        if (p->can_deactivate())
+        {
+            oss << "Parameter deactivated: " << onOff(p->deactivated) << std::endl;
+        }
+
+        if (p->has_deformoptions())
+        {
+            oss << "Parameter deform type: " << p->deform_type << std::endl;
+        }
+
+        if (p->has_portaoptions())
+        {
+            oss << "Parameter portamento constant rate: " << onOff(p->porta_constrate) << std::endl;
+            oss << "Parameter portamento glissando: " << onOff(p->porta_gliss) << std::endl;
+            oss << "Parameter portamento retrigger: " << onOff(p->porta_retrigger) << std::endl;
+            oss << "Parameter portamento curve: " << p->porta_curve << std::endl;
+        }
+
+        return oss.str();
+    }
+
+    void setParamVal(const SurgePyNamedParam &id, float f)
+    {
+        auto p = storage.getPatch().param_ptr[id.getID().getSynthSideId()];
+        if (!p)
+            return;
+
+        setParameter01(id.getID(), p->value_to_normalized(f));
+    }
+
+    /*
+     * Parameter features are the per-parameter flags which sit alongside a value and stream with
+     * the patch: extended range, temposync, absolute mode, the deform type, and the portamento
+     * options. Each of them is only meaningful on the parameters which support it, so every feature
+     * pairs its accessors with a query, and the setters raise rather than quietly writing a flag
+     * the engine will never read back.
+     */
+    Parameter *paramPtr(const SurgePyNamedParam &id)
+    {
+        auto p = storage.getPatch().param_ptr[id.getID().getSynthSideId()];
+
+        if (!p)
+        {
+            throw std::invalid_argument(std::string("Unknown parameter '") + id.getName() + "'!");
+        }
+
+        return p;
+    }
+
+    void requireFeature(Parameter *p, bool supported, const std::string &feature)
+    {
+        if (!supported)
+        {
+            throw std::invalid_argument(std::string("Parameter '") + p->get_name() +
+                                        "' does not support " + feature + "!");
+        }
+    }
+
+    bool canExtend(const SurgePyNamedParam &id) { return paramPtr(id)->can_extend_range(); }
+
+    bool getExtend(const SurgePyNamedParam &id) { return paramPtr(id)->extend_range; }
+
+    void setExtend(const SurgePyNamedParam &id, bool b)
+    {
+        auto p = paramPtr(id);
+
+        requireFeature(p, p->can_extend_range(), "extended range");
+        // set_extend_range also rescales the current value, so never assign the flag directly
+        p->set_extend_range(b);
+        storage.getPatch().isDirty = true;
+    }
+
+    bool canTempoSync(const SurgePyNamedParam &id) { return paramPtr(id)->can_temposync(); }
+
+    bool getTempoSync(const SurgePyNamedParam &id) { return paramPtr(id)->temposync; }
+
+    void setTempoSync(const SurgePyNamedParam &id, bool b)
+    {
+        auto p = paramPtr(id);
+
+        requireFeature(p, p->can_temposync(), "temposync");
+        p->temposync = b;
+        storage.getPatch().isDirty = true;
+    }
+
+    bool canBeAbsolute(const SurgePyNamedParam &id) { return paramPtr(id)->can_be_absolute(); }
+
+    bool getAbsolute(const SurgePyNamedParam &id) { return paramPtr(id)->absolute; }
+
+    void setAbsolute(const SurgePyNamedParam &id, bool b)
+    {
+        auto p = paramPtr(id);
+
+        requireFeature(p, p->can_be_absolute(), "absolute mode");
+        p->absolute = b;
+        storage.getPatch().isDirty = true;
+    }
+
+    bool canDeform(const SurgePyNamedParam &id) { return paramPtr(id)->has_deformoptions(); }
+
+    int getDeform(const SurgePyNamedParam &id) { return paramPtr(id)->deform_type; }
+
+    void setDeform(const SurgePyNamedParam &id, int deformType)
+    {
+        auto p = paramPtr(id);
+
+        requireFeature(p, p->has_deformoptions(), "deform types");
+        // What a deform type means is up to the control type, so there's no range to check here
+        p->deform_type = deformType;
+        storage.getPatch().isDirty = true;
+    }
+
+    bool canDeactivate(const SurgePyNamedParam &id) { return paramPtr(id)->can_deactivate(); }
+
+    bool getDeactivated(const SurgePyNamedParam &id) { return paramPtr(id)->deactivated; }
+
+    void setDeactivated(const SurgePyNamedParam &id, bool b)
+    {
+        auto p = paramPtr(id);
+
+        requireFeature(p, p->can_deactivate(), "deactivation");
+        p->deactivated = b;
+        storage.getPatch().isDirty = true;
+    }
+
+    bool canPortamento(const SurgePyNamedParam &id) { return paramPtr(id)->has_portaoptions(); }
+
+    py::dict getPortamentoOptions(const SurgePyNamedParam &id)
+    {
+        auto p = paramPtr(id);
+
+        requireFeature(p, p->has_portaoptions(), "portamento options");
+
+        py::dict res;
+
+        res["constantRate"] = p->porta_constrate;
+        res["glissando"] = p->porta_gliss;
+        res["retrigger"] = p->porta_retrigger;
+        res["curve"] = p->porta_curve;
+
+        return res;
+    }
+
+    void setPortamentoOptions(const SurgePyNamedParam &id, std::optional<bool> constantRate,
+                              std::optional<bool> glissando, std::optional<bool> retrigger,
+                              std::optional<int> curve)
+    {
+        auto p = paramPtr(id);
+
+        requireFeature(p, p->has_portaoptions(), "portamento options");
+
+        if (constantRate.has_value())
+        {
+            p->porta_constrate = *constantRate;
+        }
+
+        if (glissando.has_value())
+        {
+            p->porta_gliss = *glissando;
+        }
+
+        if (retrigger.has_value())
+        {
+            p->porta_retrigger = *retrigger;
+        }
+
+        if (curve.has_value())
+        {
+            if (*curve < porta_log || *curve > porta_exp)
+            {
+                throw std::invalid_argument("Portamento curve must be one of porta_log, porta_lin "
+                                            "or porta_exp from surgepy.constants!");
+            }
+
+            p->porta_curve = *curve;
+        }
+
+        storage.getPatch().isDirty = true;
+    }
+
+    void requireSceneLFO(int scene, int lfo, const char *what)
+    {
+        if (scene < 0 || scene >= n_scenes || lfo < 0 || lfo >= n_lfos)
+        {
+            throw std::invalid_argument(std::string("SCENE and LFO out of range in ") + what);
+        }
+    }
+
+    SurgePyMSEG getMSEGPy(int scene, int lfo)
+    {
+        requireSceneLFO(scene, lfo, "getMSEG");
+
+        return SurgePyMSEG(&storage.getPatch().msegs[scene][lfo], scene, lfo);
+    }
+
+    void setMSEGPy(int scene, int lfo, const SurgePyMSEG &from)
+    {
+        requireSceneLFO(scene, lfo, "setMSEG");
+
+        auto problems = validateMSEG(from);
+
+        if (!problems.empty())
+        {
+            std::ostringstream oss;
+
+            oss << "Refusing to assign an invalid MSEG:";
+
+            for (const auto &p : problems)
+            {
+                oss << std::endl << "  - " << p;
+            }
+
+            throw std::invalid_argument(oss.str());
+        }
+
+        auto *to = &storage.getPatch().msegs[scene][lfo];
+
+        if (to != from.ms)
+        {
+            *to = *from.ms;
+        }
+
+        Surge::MSEG::rebuildCache(to);
+        storage.getPatch().isDirty = true;
+    }
+
+    std::string getFormulaPy(int scene, int lfo)
+    {
+        requireSceneLFO(scene, lfo, "getFormula");
+
+        return storage.getPatch().formulamods[scene][lfo].formulaString;
+    }
+
+    void setFormulaPy(int scene, int lfo, const std::string &formula)
+    {
+        requireSceneLFO(scene, lfo, "setFormula");
+
+        // Deliberately unvalidated, exactly as the Lua editor's Apply is: a patch can legitimately
+        // carry a formula which doesn't compile, and the engine reports that at evaluation time.
+        // Use checkFormula() to find out whether this one will run.
+        storage.getPatch().formulamods[scene][lfo].setFormula(formula);
+        storage.getPatch().isDirty = true;
+    }
+
+    std::string checkFormulaPy(int scene, int lfo)
+    {
+        requireSceneLFO(scene, lfo, "checkFormula");
+
+#if HAS_LUA
+        auto *fs = &storage.getPatch().formulamods[scene][lfo];
+
+        Surge::Formula::EvaluatorState es;
+        Surge::Formula::prepareForEvaluation(&storage, fs, es, true);
+
+        std::string res;
+
+        if (!es.isvalid)
+        {
+            res = es.error ? *es.error : "Formula did not compile!";
+        }
+
+        // The evaluator parks a table in the Lua state under its own name, so hand it back rather
+        // than leaving one behind on every check
+        Surge::Formula::cleanEvaluatorState(es);
+
+        return res;
+#else
+        throw std::runtime_error(
+            "This build of Surge XT has no Lua interpreter, so formulas cannot be checked!");
+#endif
+    }
+
+    void releaseNoteWithInts(int ch, int note, int vel) { releaseNote(ch, note, vel); }
+
+    bool loadWavetablePy(int scene, int osc, const std::string &s)
+    {
+        auto path = string_to_path(s);
+
+        if (scene < 0 || scene >= n_scenes || osc < 0 || osc >= n_oscs)
+        {
+            throw std::invalid_argument("OSC and SCENE out of range in loadWavetable");
+        }
+        if (!fs::exists(path))
+        {
+            throw std::invalid_argument((std::string("File not found: ") + s).c_str());
+        }
+        auto os = &(storage.getPatch().scene[scene].osc[osc]);
+        auto wt = &(os->wt);
+        storage.load_wt(s, wt, os);
+
+        return true;
+    }
+
+    bool saveWavetablePy(int scene, int osc, const std::string &s)
+    {
+        if (scene < 0 || scene >= n_scenes || osc < 0 || osc >= n_oscs)
+        {
+            throw std::invalid_argument("OSC and SCENE out of range in saveWavetable");
+        }
+
+        auto os = &(storage.getPatch().scene[scene].osc[osc]);
+
+        // Every oscillator carries a wavetable buffer, but only the wavetable and window types
+        // actually have one which means anything, so don't hand back an init table for the rest.
+        if (!uses_wavetabledata(os->type.val.i))
+        {
+            throw std::invalid_argument("This oscillator type has no wavetable to save!");
+        }
+
+        if (!os->wt.everBuilt || os->wt.n_tables <= 0 || os->wt.size <= 0)
+        {
+            throw std::invalid_argument("This oscillator has no wavetable to save!");
+        }
+
+        auto path = string_to_path(s);
+
+        if (path.extension() != ".wt")
+        {
+            path.replace_extension(".wt");
+        }
+
+        // Copy the live wavetable under waveTableDataMutex so the write can't race a rebuild, then
+        // export the copy lock-free, exactly as the editor's wavetable export does.
+        Wavetable copy;
+
+        {
+            std::lock_guard<std::mutex> lock(storage.waveTableDataMutex);
+            copy.Copy(&os->wt);
+        }
+
+        return storage.export_wt_wt_portable(path, &copy, storage.make_wt_metadata(os));
+    }
+    bool loadPatchPy(const std::string &s)
+    {
+        auto path = string_to_path(s);
+
+        if (!fs::exists(path))
+        {
+            throw std::invalid_argument((std::string("File not found: ") + s).c_str());
+        }
+
+        bool result = loadPatchByPath(s.c_str(), -1, path.filename().u8string().c_str());
+
+        // update tempo if we want to change it on patch load
+        if (storage.unstreamedTempo > -1.f)
+        {
+            time_data.tempo = storage.unstreamedTempo;
+        }
+
+        return result;
+    }
+
+    void savePatchPy(const std::string &s) { savePatchToPath(string_to_path(s)); }
+
+    // ---------------- GHOST BASS extensions ----------------
+    void ghostSetMacroName(int i, const std::string &n)
+    {
+        if (i < 0 || i >= n_customcontrollers)
+            throw std::invalid_argument("macro index");
+        strncpy(storage.getPatch().CustomControllerLabel[i], n.c_str(),
+                CUSTOM_CONTROLLER_LABEL_SIZE - 1);
+        storage.getPatch().CustomControllerLabel[i][CUSTOM_CONTROLLER_LABEL_SIZE - 1] = 0;
+    }
+    std::string ghostGetMacroName(int i) { return storage.getPatch().CustomControllerLabel[i]; }
+    void ghostSetMacro(int i, float v) { setMacroParameter01(i, v); }
+    float ghostGetMacro(int i) { return getMacroParameter01(i); }
+    void ghostSetMeta(const std::string &name, const std::string &category,
+                      const std::string &author, const std::string &comment)
+    {
+        auto &p = storage.getPatch();
+        p.name = name;
+        p.category = category;
+        p.author = author;
+        p.comment = comment;
+        ghost->category = category;
+    }
+    void ghostSetInfo(const std::string &tags, const std::string &subOsc)
+    {
+        ghost->tags = tags;
+        ghost->subOsc = subOsc;
+    }
+    void ghostSetMapping(const std::vector<std::tuple<std::string, std::string, float>> &m)
+    {
+        std::vector<ghost::MapEntry> v;
+        for (auto &[g, p, d] : m)
+        {
+            int gi = ghost::gestureFromName(g);
+            if (gi < 0)
+                throw std::invalid_argument("unknown gesture " + g);
+            v.push_back({gi, p, d});
+        }
+        ghost->setMapping(v);
+    }
+    std::vector<std::tuple<std::string, std::string, float>> ghostGetMapping()
+    {
+        std::vector<std::tuple<std::string, std::string, float>> r;
+        for (auto &e : ghost->getMapping())
+            r.emplace_back(ghost::gestureName(e.gesture), e.param, e.depth);
+        return r;
+    }
+    std::vector<std::tuple<std::string, std::string, float>> ghostAutoMapping()
+    {
+        std::vector<std::tuple<std::string, std::string, float>> r;
+        for (auto &e : ghost->autoMapping())
+            r.emplace_back(ghost::gestureName(e.gesture), e.param, e.depth);
+        return r;
+    }
+    void ghostSetAxes(float a, float b, float c) { ghost->setAxes(a, b, c); }
+    std::tuple<float, float, float> ghostGetAxes()
+    {
+        auto a = ghost->getAxes();
+        return {a.shape, a.twist, a.stretch};
+    }
+    void ghostSetTerritory(float x, float y) { ghost->setTerritory(x, y, true); }
+    void ghostShake(float amount, uint32_t seed) { ghost->shake(amount, seed); }
+    void ghostClearSculpt() { ghost->clearSculpt(); }
+    // GHOST BASS sequencer (for tests and demo renders)
+    void ghostSeqGenerate(int scale, float density, uint32_t seed, int style, int length, int root)
+    {
+        ghost->seq.length.store(length);
+        ghost->seq.root.store(root);
+        ghost->seq.generate(scale, density, seed, style);
+    }
+    std::string ghostSeqGet() { return ghost->seq.serialise(); }
+    bool ghostSeqSet(const std::string &s) { return ghost->seq.deserialise(s); }
+    std::string ghostArpGet() { return ghost->arp.serialise(); }
+    bool ghostArpSet(const std::string &s) { return ghost->arp.deserialise(s); }
+    void ghostSeqConfig(int groove, float amount, float gate, bool chord)
+    {
+        ghost->seq.groove.store(groove);
+        ghost->seq.swing.store(amount);
+        ghost->seq.gate.store(gate);
+        ghost->seq.chordMode.store(chord);
+    }
+    void ghostSeqPlay(bool p) { ghost->seq.playing.store(p); }
+    void ghostSeqHold(int note, bool on) { ghost->seq.hold(note, on); }
+    // one 32-sample block of sequencer at song position ppq: call before processMultiBlock
+    void ghostSeqTick(double ppq, double bpm)
+    {
+        ghost->seq.tick(
+            ppq, bpm / (60.0 * storage.samplerate), BLOCK_SIZE,
+            [this](int n, int v) { playNote(0, n, v, 0, -1); }, [this](int n) { releaseNote(0, n, 0); });
+    }
+    std::vector<std::tuple<double, double, int, int>> ghostSeqEvents(int bars)
+    {
+        std::vector<std::tuple<double, double, int, int>> r;
+        for (auto &e : ghost->seq.events(bars))
+            r.emplace_back(e.start, e.len, e.note, e.vel);
+        return r;
+    }
+    std::vector<std::tuple<std::string, std::string, std::string, std::string>> ghostReadout()
+    {
+        std::vector<std::tuple<std::string, std::string, std::string, std::string>> r;
+        for (auto &q : ghost->readout())
+            r.emplace_back(q.param, q.label, q.from, q.to);
+        return r;
+    }
+    // TERRAIN: the landscape on the bass, as its compact text form (ghost/terrain/TerrainSerial.h)
+    bool ghostSetTerrain(const std::string &s)
+    {
+        ghost::terrain::Terrain t;
+        if (!s.empty() && !ghost::terrain::fromString(s, t))
+            return false;
+        ghost->terrain.set(t);
+        return true;
+    }
+    std::string ghostGetTerrain() { return ghost::terrain::toString(ghost->terrain.get()); }
+    // build 9: MOVEMENT (0..1), its rate (0 = 1/16 .. 6 = 4 bars, 7 = FREE) and the FREE speed in Hz
+    void ghostSetMovement(float amount, int rate, float hz)
+    {
+        ghost->terrain.setMovement(amount);
+        ghost->terrain.setMoveRate(rate);
+        ghost->terrain.setMoveFreeHz(hz);
+    }
+    // every control's value now (0..1) by its storage name: scripts / tests watch what the land moved
+    std::vector<std::pair<std::string, float>> ghostParamValues()
+    {
+        std::vector<std::pair<std::string, float>> r;
+        for (auto *q : storage.getPatch().param_ptr)
+            if (q)
+                r.emplace_back(q->get_storage_name(), q->get_value_f01());
+        return r;
+    }
+    // every control and what TERRAIN does with it: (id, storage name, kind, reason it is not moved)
+    std::vector<std::tuple<int, std::string, int, std::string>> ghostTerrainCoverage()
+    {
+        std::vector<std::tuple<int, std::string, int, std::string>> r;
+        for (auto &c : ghost->terrainCoverage())
+            r.emplace_back(c.id, c.storage, (int)c.kind, c.why);
+        return r;
+    }
+    // a landscape from parts: peaks as (hz, height -1..1, q, depthZ 0..1, depthLen, rough) tuples
+    std::string ghostMakeTerrain(const std::vector<std::tuple<float, float, float, float, float, float>> &peaks, float grit,
+                                 float evolve, bool frozen, float freezeZ, uint32_t seed)
+    {
+        ghost::terrain::Terrain t;
+        const auto &r = ghost->terrain.getRange();
+        for (auto &p : peaks)
+        {
+            ghost::terrain::Peak k;
+            k.x = ghost::terrain::hzToX(std::get<0>(p), r);
+            k.height = std::get<1>(p);
+            k.width = ghost::terrain::widthFromQ(std::get<2>(p), r);
+            k.z = std::get<3>(p);
+            k.depth = std::get<4>(p);
+            k.rough = std::get<5>(p);
+            t.add(k);
+        }
+        t.grit = grit;
+        t.evolve = evolve;
+        t.frozen = frozen;
+        t.freezeZ = freezeZ;
+        t.seed = seed;
+        t.clampAll();
+        return ghost::terrain::toString(t);
+    }
+    // one of the shared SHAPE PRESETS ("SPIRE FOREST" ...) as text, for scripts and demos
+    std::string ghostShapeTerrain(const std::string &name, uint32_t seed)
+    {
+        return ghost::terrain::toString(ghost::terrain::shapePreset(name.c_str(), seed));
+    }
+    std::vector<std::string> ghostShapeNames()
+    {
+        std::vector<std::string> r;
+        for (int i = 0; i < ghost::terrain::shapePresetCount(); ++i)
+            r.push_back(ghost::terrain::shapePresetName(i));
+        return r;
+    }
+    bool ghostTerrainActive() { return ghost->terrain.active(); }
+    float ghostTerrainDepth() { return ghost->terrain.depth(); }
+    float ghostTerrainPhase() { return ghost->terrain.phase(); }
+    void ghostSculptEnable(bool on) { ghost->sculptEnabled = on; }
+    bool ghostBreed(const std::string &a, const std::string &b, float mix, uint32_t seed,
+                    const std::string &name, const std::string &out)
+    {
+        ghost::Blob ba, bb;
+        if (!ghost::dna::readFxp(a, ba) || !ghost::dna::readFxp(b, bb))
+            return false;
+        auto c = ghost::dna::breed(this, ba, bb, mix, seed, name);
+        return ghost::dna::writeFxp(out, c, name);
+    }
+    // MORPH: build the morph of two .fxp files into out; returns (mode, why) - mode 0 = could not
+    py::tuple ghostMorphMake(const std::string &a, const std::string &b, const std::string &nameA, const std::string &nameB,
+                             const std::string &out)
+    {
+        ghost::Blob ba, bb;
+        if (!ghost::dna::readFxp(a, ba) || !ghost::dna::readFxp(b, bb))
+            return py::make_tuple(0, std::string("could not read"));
+        int mode = 0;
+        std::string why;
+        auto c = ghost::dna::morphPatch(this, ba, bb, a, nameA, b, nameB, mode, why);
+        if (mode == 0 || c.empty() || !ghost::dna::writeFxp(out, c, nameA + " > " + nameB))
+            return py::make_tuple(0, why);
+        return py::make_tuple(mode, why);
+    }
+    void ghostMorphSet(float blend, bool pend, int rate, int feel, int shape, bool freeRun, float hz, float swing, bool draw,
+                       int bars)
+    {
+        auto &m = ghost->morph;
+        m.blend = blend;
+        m.pendOn = pend;
+        m.pendRate = rate;
+        m.pendFeel = feel;
+        m.pendShape = shape;
+        m.pendFree = freeRun;
+        m.pendHz = hz;
+        m.swing = swing;
+        m.drawOn = draw;
+        m.drawBars = bars;
+    }
+    // DRAW: a freehand curve (t, v pairs, 0..1) through Surge's freehand fit
+    void ghostMorphDraw(const std::vector<std::pair<float, float>> &pts)
+    {
+        ghost->morph.setCurve(ghost::Morph::curveFromDrawing(pts));
+    }
+    py::tuple ghostMorphInfo()
+    {
+        auto &m = ghost->morph;
+        return py::make_tuple(m.mode(), m.now(), m.phase());
+    }
+    void ghostSetTransport(bool playing, double songposBeats, float bpm)
+    {
+        storage.isPlaying = playing;
+        storage.songpos = songposBeats;
+        time_data.isPlaying = playing;
+        time_data.ppqPos = songposBeats;
+        time_data.tempo = bpm;
+        storage.temposyncratio = bpm / 120.f;
+        storage.temposyncratio_inv = 120.f / bpm;
+    }
+    bool ghostMutate(const std::string &a, float amount, uint32_t seed, const std::string &name,
+                     const std::string &out)
+    {
+        ghost::Blob ba;
+        if (!ghost::dna::readFxp(a, ba))
+            return false;
+        auto c = ghost::dna::mutate(this, ba, amount, seed, name);
+        return ghost::dna::writeFxp(out, c, name);
+    }
+
+    std::string factoryDataPath() const { return storage.datapath.u8string(); }
+
+    std::string userDataPath() const { return storage.userDataPath.u8string(); }
+
+    py::array_t<float> getOutput()
+    {
+        return py::array_t<float>({2, BLOCK_SIZE}, {BLOCK_SIZE * sizeof(float), sizeof(float)},
+                                  (const float *)(&output[0][0]));
+    }
+
+    void setModulationPy(const SurgePyNamedParam &to, SurgePyModSource const &from, float amt,
+                         int scene, int index)
+    {
+        setModDepth01(to.getID().getSynthSideId(), (modsources)from.getModSource(), scene, index,
+                      amt);
+    }
+
+    float getModulationPy(const SurgePyNamedParam &to, const SurgePyModSource &from, int scene,
+                          int index)
+    {
+        return getModDepth01(to.getID().getSynthSideId(), (modsources)from.getModSource(), scene,
+                             index);
+    }
+
+    bool isValidModulationPy(const SurgePyNamedParam &to, const SurgePyModSource &from)
+    {
+        return isValidModulation(to.getID().getSynthSideId(), (modsources)from.getModSource());
+    }
+
+    bool isActiveModulationPy(const SurgePyNamedParam &to, const SurgePyModSource &from, int scene,
+                              int index)
+    {
+        return isActiveModulation(to.getID().getSynthSideId(), (modsources)from.getModSource(),
+                                  scene, index);
+    }
+
+    bool isBipolarModulationPy(const SurgePyModSource &from)
+    {
+        return isBipolarModulation((modsources)from.getModSource());
+    }
+
+    py::array_t<float> createMultiBlock(int nBlocks)
+    {
+        auto res = py::array_t<float>({2, nBlocks * BLOCK_SIZE},
+                                      {nBlocks * BLOCK_SIZE * sizeof(float), sizeof(float)});
+        auto buf = res.request(true);
+        memset(buf.ptr, 0, 2 * BLOCK_SIZE * nBlocks * sizeof(float));
+        return res;
+    }
+
+    void processMultiBlock(const py::array_t<float> &arr, int startBlock = 0, int nBlocks = -1)
+    {
+        auto buf = arr.request(true);
+
+        /*
+         * Error condition checks
+         */
+        if (buf.itemsize != sizeof(float))
+        {
+            std::ostringstream oss;
+            oss << "Input numpy array must have dtype float; you provided an array with "
+                << buf.format << "/" << buf.size;
+            throw std::invalid_argument(oss.str().c_str());
+        }
+
+        if (buf.ndim != 2)
+        {
+            std::ostringstream oss;
+            oss << "Input numpy array must have 2 dimensions (2, m*BLOCK_SIZE); you provided an "
+                   "array with "
+                << buf.ndim << " dimensions";
+            throw std::invalid_argument(oss.str().c_str());
+        }
+
+        if (buf.shape[0] != 2 || buf.shape[1] % BLOCK_SIZE != 0)
+        {
+            std::ostringstream oss;
+            oss << "Input numpy array must have dimensions (2, m*BLOCK_SIZE); you provided an "
+                   "array with "
+                << buf.shape[0] << "x" << buf.shape[1];
+            throw std::invalid_argument(oss.str().c_str());
+        }
+
+        size_t maxBlockStorage = buf.shape[1] / BLOCK_SIZE;
+
+        if (startBlock >= maxBlockStorage)
+        {
+            std::ostringstream oss;
+            oss << "Start block of " << startBlock << " is beyond the end of input storage with "
+                << maxBlockStorage << " blocks";
+            throw std::invalid_argument(oss.str().c_str());
+        }
+
+        int blockIterations = maxBlockStorage - startBlock;
+
+        if (nBlocks > 0)
+        {
+            blockIterations = nBlocks;
+        }
+
+        if (startBlock + blockIterations > maxBlockStorage)
+        {
+            std::ostringstream oss;
+            oss << "Start block / nBlock combo " << startBlock << " " << nBlocks
+                << " is beyond the end of input storage with " << maxBlockStorage << " blocks";
+            throw std::invalid_argument(oss.str().c_str());
+        }
+
+        auto ptr = static_cast<float *>(buf.ptr);
+        float *dL = ptr + startBlock * BLOCK_SIZE;
+        float *dR = ptr + buf.shape[1] + startBlock * BLOCK_SIZE;
+
+        process_input = false;
+
+        for (auto i = 0; i < blockIterations; ++i)
+        {
+            process();
+            time_data.ppqPos += (double)BLOCK_SIZE * time_data.tempo / (60. * storage.samplerate);
+            memcpy((void *)dL, (void *)(output[0]), BLOCK_SIZE * sizeof(float));
+            memcpy((void *)dR, (void *)(output[1]), BLOCK_SIZE * sizeof(float));
+
+            dL += BLOCK_SIZE;
+            dR += BLOCK_SIZE;
+        }
+    }
+
+    void processMultiBlockWithInput(const py::array_t<float> &in_arr,
+                                    const py::array_t<float> &out_arr, int startBlock = 0,
+                                    int nBlocks = -1)
+    {
+        auto in_buf = in_arr.request();
+        auto out_buf = out_arr.request(true);
+
+        /*
+         * Error condition checks
+         */
+        if (in_buf.itemsize != sizeof(float))
+        {
+            std::ostringstream oss;
+            oss << "Input numpy array must have dtype float; you provided an array with "
+                << in_buf.format << "/" << in_buf.size;
+            throw std::invalid_argument(oss.str().c_str());
+        }
+
+        if (out_buf.itemsize != sizeof(float))
+        {
+            std::ostringstream oss;
+            oss << "Output numpy array must have dtype float; you provided an array with "
+                << out_buf.format << "/" << out_buf.size;
+            throw std::invalid_argument(oss.str().c_str());
+        }
+
+        if (out_buf.ndim != 2)
+        {
+            std::ostringstream oss;
+            oss << "Output numpy array must have 2 dimensions (2, m*BLOCK_SIZE); you provided an "
+                   "array with "
+                << out_buf.ndim << " dimensions";
+            throw std::invalid_argument(oss.str().c_str());
+        }
+
+        if (out_buf.shape[0] != 2 || out_buf.shape[1] % BLOCK_SIZE != 0)
+        {
+            std::ostringstream oss;
+            oss << "Output numpy array must have dimensions (2, m*BLOCK_SIZE); you provided an "
+                   "array with "
+                << out_buf.shape[0] << "x" << out_buf.shape[1];
+            throw std::invalid_argument(oss.str().c_str());
+        }
+
+        if (in_buf.shape != out_buf.shape)
+        {
+            std::ostringstream oss;
+            oss << "Input numpy array dimensions must match output; you provided an "
+                   "array with "
+                << in_buf.shape[0] << "x" << in_buf.shape[1];
+            throw std::invalid_argument(oss.str().c_str());
+        }
+
+        size_t maxBlockStorage = out_buf.shape[1] / BLOCK_SIZE;
+
+        if (startBlock >= maxBlockStorage)
+        {
+            std::ostringstream oss;
+            oss << "Start block of " << startBlock << " is beyond the end of input storage with "
+                << maxBlockStorage << " blocks";
+            throw std::invalid_argument(oss.str().c_str());
+        }
+
+        int blockIterations = maxBlockStorage - startBlock;
+
+        if (nBlocks > 0)
+        {
+            blockIterations = nBlocks;
+        }
+
+        if (startBlock + blockIterations > maxBlockStorage)
+        {
+            std::ostringstream oss;
+            oss << "Start block / nBlock combo " << startBlock << " " << nBlocks
+                << " is beyond the end of input storage with " << maxBlockStorage << " blocks";
+            throw std::invalid_argument(oss.str().c_str());
+        }
+
+        process_input = true;
+
+        auto in_ptr = static_cast<float *>(in_buf.ptr);
+        float *iL = in_ptr + startBlock * BLOCK_SIZE;
+        float *iR = in_ptr + in_buf.shape[1] + startBlock * BLOCK_SIZE;
+        auto out_ptr = static_cast<float *>(out_buf.ptr);
+        float *oL = out_ptr + startBlock * BLOCK_SIZE;
+        float *oR = out_ptr + out_buf.shape[1] + startBlock * BLOCK_SIZE;
+
+        for (auto i = 0; i < blockIterations; ++i)
+        {
+            memcpy((void *)(input[0]), (void *)iL, BLOCK_SIZE * sizeof(float));
+            memcpy((void *)(input[1]), (void *)iR, BLOCK_SIZE * sizeof(float));
+            process();
+            time_data.ppqPos += (double)BLOCK_SIZE * time_data.tempo / (60. * storage.samplerate);
+            memcpy((void *)oL, (void *)(output[0]), BLOCK_SIZE * sizeof(float));
+            memcpy((void *)oR, (void *)(output[1]), BLOCK_SIZE * sizeof(float));
+
+            iL += BLOCK_SIZE;
+            iR += BLOCK_SIZE;
+            oL += BLOCK_SIZE;
+            oR += BLOCK_SIZE;
+        }
+    }
+
+    py::dict getPatchAsPy()
+    {
+        auto pc = SurgePyPatchConverter(this);
+        return pc.asDict(storage.getPatch());
+    }
+
+    SurgePyNamedParam surgePyNamedParamById(int id)
+    {
+        auto s = SurgePyNamedParam();
+        SurgeSynthesizer::ID ido;
+        fromSynthSideId(id, ido);
+        s.id = ido;
+        char txt[256];
+        getParameterName(ido, txt);
+        s.name = txt;
+        return s;
+    }
+
+    py::dict getAllModRoutings()
+    {
+        auto res = py::dict();
+        auto sv = [](auto s) {
+            auto r = s;
+            std::sort(r.begin(), r.end(), [](const auto &a, const auto &b) {
+                if (a.source_id == b.source_id)
+                    return a.destination_id < b.destination_id;
+                else
+                    return a.source_id < b.source_id;
+            });
+            return r;
+        };
+
+        auto gmr = py::list();
+        auto t = sv(storage.getPatch().modulation_global);
+
+        for (auto gm : t)
+        {
+            auto r = SurgePyModRouting();
+
+            r.source = SurgePyModSource((modsources)gm.source_id);
+            r.dest = surgePyNamedParamById(gm.destination_id);
+            r.depth = gm.depth;
+            r.source_scene = gm.source_scene;
+            r.source_index = gm.source_index;
+            r.normalizedDepth = getModDepth01(gm.destination_id, (modsources)gm.source_id,
+                                              gm.source_scene, gm.source_index);
+            gmr.append(r);
+        }
+
+        res["global"] = gmr;
+
+        auto scm = py::list();
+
+        for (int sc = 0; sc < n_scenes; sc++)
+        {
+            auto ts = py::dict();
+            auto sms = py::list();
+            auto st = sv(storage.getPatch().scene[sc].modulation_scene);
+
+            for (auto gm : st)
+            {
+                auto r = SurgePyModRouting();
+
+                r.source = SurgePyModSource((modsources)gm.source_id);
+                r.dest =
+                    surgePyNamedParamById(gm.destination_id + storage.getPatch().scene_start[sc]);
+                r.depth = gm.depth;
+                r.source_scene = gm.source_scene;
+                r.source_index = gm.source_index;
+                r.normalizedDepth =
+                    getModDepth01(gm.destination_id + storage.getPatch().scene_start[sc],
+                                  (modsources)gm.source_id, r.source_scene, r.source_index);
+                sms.append(r);
+            }
+
+            ts["scene"] = sms;
+
+            auto smv = py::list();
+            auto vt = sv(storage.getPatch().scene[sc].modulation_voice);
+
+            for (auto gm : vt)
+            {
+                auto r = SurgePyModRouting();
+
+                r.source = SurgePyModSource((modsources)gm.source_id);
+                r.dest =
+                    surgePyNamedParamById(gm.destination_id + storage.getPatch().scene_start[sc]);
+                r.depth = gm.depth;
+                r.source_scene = gm.source_scene;
+                r.source_index = gm.source_index;
+                r.normalizedDepth =
+                    getModDepth01(gm.destination_id + storage.getPatch().scene_start[sc],
+                                  (modsources)gm.source_id, gm.source_scene, gm.source_index);
+                smv.append(r);
+            }
+
+            ts["voice"] = smv;
+            scm.append(ts);
+        }
+
+        res["scene"] = scm;
+
+        return res;
+    }
+
+    void loadSCLFile(const std::string &s)
+    {
+        try
+        {
+            storage.retuneToScale(Tunings::readSCLFile(s));
+        }
+        catch (Tunings::TuningError &e)
+        {
+            throw std::invalid_argument(e.what()); // convert so python sees it
+        }
+    }
+
+    void loadKBMFile(const std::string &s)
+    {
+        try
+        {
+            storage.remapToKeyboard(Tunings::readKBMFile(s));
+        }
+        catch (Tunings::TuningError &e)
+        {
+            throw std::invalid_argument(e.what()); // convert so python sees it
+        }
+    }
+
+    void retuneToStandardTuning() { storage.retuneTo12TETScaleC261Mapping(); }
+
+    void remapToStandardKeyboard() { storage.remapToConcertCKeyboard(); }
+
+    void retuneToStandardScale() { storage.retuneTo12TETScale(); }
+
+    void setTuningApplicationMode(SurgeStorage::TuningApplicationMode m)
+    {
+        storage.tuningApplicationMode = m;
+    }
+
+    SurgeStorage::TuningApplicationMode getTuningApplicationMode() const
+    {
+        return storage.tuningApplicationMode;
+    }
+
+    void setMPEEnabled(bool m) { storage.mpeEnabled = m; }
+
+    bool getMPEEnabled() const { return storage.mpeEnabled; }
+};
+
+SurgeSynthesizer *createSurge(float sr)
+{
+    if (spysetup_parent == nullptr)
+        spysetup_parent = std::make_unique<PythonPluginLayerProxy>();
+    auto surge = new SurgeSynthesizerWithPythonExtensions(spysetup_parent.get());
+    surge->setSamplerate(sr);
+    surge->time_data.tempo = 120;
+    surge->time_data.ppqPos = 0;
+    return surge;
+}
+
+// Prefix _ if using shared object within a Python package built with scikit-build
+#ifdef SKBUILD
+PYBIND11_MODULE(_surgepy, m)
+#else
+PYBIND11_MODULE(surgepy, m)
+#endif
+{
+    m.doc() = "Python bindings for Surge XT Synthesizer";
+    m.def("createSurge", &createSurge, "Create a Surge XT instance", py::arg("sampleRate"));
+    m.def(
+        "getVersion", []() { return Surge::Build::FullVersionStr; }, "Get the version of Surge XT");
+    py::class_<SurgeSynthesizer::ID>(m, "SurgeSynthesizer_ID")
+        .def(py::init<>())
+        .def("getSynthSideId", &SurgeSynthesizer::ID::getSynthSideId)
+        .def("__repr__", &SurgeSynthesizer::ID::toString);
+
+    py::class_<SurgeSynthesizerWithPythonExtensions>(m, "SurgeSynthesizer")
+        .def("__repr__",
+             [](SurgeSynthesizerWithPythonExtensions &s) {
+                 return std::string("<SurgeSynthesizer samplerate=") +
+                        std::to_string((int)s.storage.samplerate) + "Hz>";
+             })
+        .def("getControlGroup", &SurgeSynthesizerWithPythonExtensions::getControlGroup,
+             "Gather the parameters groups for a surge.constants.cg_ control group",
+             py::arg("entry"))
+
+        .def("getNumInputs", &SurgeSynthesizer::getNumInputs)
+        .def("getNumOutputs", &SurgeSynthesizer::getNumOutputs)
+        .def("getBlockSize", &SurgeSynthesizer::getBlockSize)
+        .def("getFactoryDataPath", &SurgeSynthesizerWithPythonExtensions::factoryDataPath)
+        .def("getUserDataPath", &SurgeSynthesizerWithPythonExtensions::userDataPath)
+        .def("getSampleRate",
+             [](SurgeSynthesizerWithPythonExtensions &s) { return s.storage.samplerate; })
+
+        .def("fromSynthSideId", &SurgeSynthesizer::fromSynthSideId)
+        .def("createSynthSideId", &SurgeSynthesizerWithPythonExtensions::createSynthSideId)
+
+        .def("getParameterName", &SurgeSynthesizerWithPythonExtensions::getParameterName_py,
+             "Given a parameter, return its name as displayed by the synth.")
+
+        .def("playNote", &SurgeSynthesizerWithPythonExtensions::playNoteWithInts,
+             "Trigger a note on this Surge XT instance.", py::arg("channel"), py::arg("midiNote"),
+             py::arg("velocity"), py::arg("detune") = 0)
+        .def("releaseNote", &SurgeSynthesizerWithPythonExtensions::releaseNoteWithInts,
+             "Release a note on this Surge XT instance.", py::arg("channel"), py::arg("midiNote"),
+             py::arg("releaseVelocity") = 0)
+        .def("pitchBend", &SurgeSynthesizerWithPythonExtensions::pitchBendWithInts,
+             "Set the pitch bend value on channel ch", py::arg("channel"), py::arg("bend"))
+        .def("allNotesOff", &SurgeSynthesizer::allNotesOff, "Turn off all playing notes")
+        .def("polyAftertouch", &SurgeSynthesizerWithPythonExtensions::polyAftertouchWithInts,
+             "Send the poly aftertouch MIDI message", py::arg("channel"), py::arg("key"),
+             py::arg("value"))
+        .def("channelAftertouch", &SurgeSynthesizerWithPythonExtensions::channelAftertouchWithInts,
+             "Send the channel aftertouch MIDI message", py::arg("channel"), py::arg("value"))
+        .def("channelController", &SurgeSynthesizerWithPythonExtensions::channelControllerWithInts,
+             "Set MIDI controller on channel to value", py::arg("channel"), py::arg("cc"),
+             py::arg("value"))
+
+        .def("getParamMin", &SurgeSynthesizerWithPythonExtensions::getParamMin,
+             "Parameter minimum value, as a float.")
+        .def("getParamMax", &SurgeSynthesizerWithPythonExtensions::getParamMax,
+             "Parameter maximum value, as a float")
+        .def("getParamDef", &SurgeSynthesizerWithPythonExtensions::getParamDef,
+             "Parameter default value, as a float")
+        .def("getParamVal", &SurgeSynthesizerWithPythonExtensions::getParamVal,
+             "Parameter current value in this Surge XT instance, as a float")
+        .def("getParamValType", &SurgeSynthesizerWithPythonExtensions::getParamValType,
+             "Parameter types float, int or bool are supported")
+
+        .def("getParamDisplay", &SurgeSynthesizerWithPythonExtensions::getParamDisplay,
+             "Parameter value display (stringified and formatted)")
+        .def("getParamInfo", &SurgeSynthesizerWithPythonExtensions::getParamInfo,
+             "Parameter value info (formatted)")
+
+        .def("setParamVal", &SurgeSynthesizerWithPythonExtensions::setParamVal,
+             "Set a parameter value", py::arg("param"), py::arg("toThis"))
+
+        .def("canExtend", &SurgeSynthesizerWithPythonExtensions::canExtend,
+             "Can this parameter have an extended range?", py::arg("param"))
+        .def("getExtend", &SurgeSynthesizerWithPythonExtensions::getExtend,
+             "Is this parameter in extended range mode?", py::arg("param"))
+        .def("setExtend", &SurgeSynthesizerWithPythonExtensions::setExtend,
+             "Set the extended range mode of a parameter, rescaling its value to the new range.",
+             py::arg("param"), py::arg("toThis"))
+
+        .def("canTempoSync", &SurgeSynthesizerWithPythonExtensions::canTempoSync,
+             "Can this parameter be tempo synced?", py::arg("param"))
+        .def("getTempoSync", &SurgeSynthesizerWithPythonExtensions::getTempoSync,
+             "Is this parameter tempo synced?", py::arg("param"))
+        .def("setTempoSync", &SurgeSynthesizerWithPythonExtensions::setTempoSync,
+             "Set the tempo sync mode of a parameter.", py::arg("param"), py::arg("toThis"))
+
+        .def("canBeAbsolute", &SurgeSynthesizerWithPythonExtensions::canBeAbsolute,
+             "Can this parameter be switched to absolute mode?", py::arg("param"))
+        .def("getAbsolute", &SurgeSynthesizerWithPythonExtensions::getAbsolute,
+             "Is this parameter in absolute mode?", py::arg("param"))
+        .def("setAbsolute", &SurgeSynthesizerWithPythonExtensions::setAbsolute,
+             "Set the absolute mode of a parameter.", py::arg("param"), py::arg("toThis"))
+
+        .def("canDeactivate", &SurgeSynthesizerWithPythonExtensions::canDeactivate,
+             "Can this parameter be deactivated?", py::arg("param"))
+        .def("getDeactivated", &SurgeSynthesizerWithPythonExtensions::getDeactivated,
+             "Is this parameter deactivated?", py::arg("param"))
+        .def("setDeactivated", &SurgeSynthesizerWithPythonExtensions::setDeactivated,
+             "Set the deactivated state of a parameter.", py::arg("param"), py::arg("toThis"))
+
+        .def("canDeform", &SurgeSynthesizerWithPythonExtensions::canDeform,
+             "Does this parameter have deform options?", py::arg("param"))
+        .def("getDeform", &SurgeSynthesizerWithPythonExtensions::getDeform,
+             "The deform type of this parameter, as an integer whose meaning depends on the "
+             "parameter.",
+             py::arg("param"))
+        .def("setDeform", &SurgeSynthesizerWithPythonExtensions::setDeform,
+             "Set the deform type of a parameter.", py::arg("param"), py::arg("toThis"))
+
+        .def("canPortamento", &SurgeSynthesizerWithPythonExtensions::canPortamento,
+             "Does this parameter have portamento options?", py::arg("param"))
+        .def("getPortamentoOptions", &SurgeSynthesizerWithPythonExtensions::getPortamentoOptions,
+             "The portamento options of this parameter, as a dictionary with the keys "
+             "'constantRate', 'glissando', 'retrigger' and 'curve'.",
+             py::arg("param"))
+        .def("setPortamentoOptions", &SurgeSynthesizerWithPythonExtensions::setPortamentoOptions,
+             "Set the portamento options of a parameter. Options which are not given are left "
+             "alone. The curve is one of surgepy.constants.porta_log, porta_lin or porta_exp.",
+             py::arg("param"), py::arg("constantRate") = py::none(),
+             py::arg("glissando") = py::none(), py::arg("retrigger") = py::none(),
+             py::arg("curve") = py::none())
+
+
+        // GHOST BASS
+        .def("ghostSetMacroName", &SurgeSynthesizerWithPythonExtensions::ghostSetMacroName)
+        .def("ghostGetMacroName", &SurgeSynthesizerWithPythonExtensions::ghostGetMacroName)
+        .def("ghostSetMacro", &SurgeSynthesizerWithPythonExtensions::ghostSetMacro)
+        .def("ghostGetMacro", &SurgeSynthesizerWithPythonExtensions::ghostGetMacro)
+        .def("ghostSetMeta", &SurgeSynthesizerWithPythonExtensions::ghostSetMeta)
+        .def("ghostSetInfo", &SurgeSynthesizerWithPythonExtensions::ghostSetInfo)
+        .def("ghostSetMapping", &SurgeSynthesizerWithPythonExtensions::ghostSetMapping)
+        .def("ghostGetMapping", &SurgeSynthesizerWithPythonExtensions::ghostGetMapping)
+        .def("ghostAutoMapping", &SurgeSynthesizerWithPythonExtensions::ghostAutoMapping)
+        .def("ghostSetAxes", &SurgeSynthesizerWithPythonExtensions::ghostSetAxes)
+        .def("ghostGetAxes", &SurgeSynthesizerWithPythonExtensions::ghostGetAxes)
+        .def("ghostSetTerritory", &SurgeSynthesizerWithPythonExtensions::ghostSetTerritory)
+        .def("ghostShake", &SurgeSynthesizerWithPythonExtensions::ghostShake)
+        .def("ghostSeqGenerate", &SurgeSynthesizerWithPythonExtensions::ghostSeqGenerate)
+        .def("ghostSeqGet", &SurgeSynthesizerWithPythonExtensions::ghostSeqGet)
+        .def("ghostSeqSet", &SurgeSynthesizerWithPythonExtensions::ghostSeqSet)
+        .def("ghostArpGet", &SurgeSynthesizerWithPythonExtensions::ghostArpGet)
+        .def("ghostArpSet", &SurgeSynthesizerWithPythonExtensions::ghostArpSet)
+        .def("ghostSeqConfig", &SurgeSynthesizerWithPythonExtensions::ghostSeqConfig)
+        .def("ghostSeqPlay", &SurgeSynthesizerWithPythonExtensions::ghostSeqPlay)
+        .def("ghostSeqHold", &SurgeSynthesizerWithPythonExtensions::ghostSeqHold)
+        .def("ghostSeqTick", &SurgeSynthesizerWithPythonExtensions::ghostSeqTick)
+        .def("ghostSeqEvents", &SurgeSynthesizerWithPythonExtensions::ghostSeqEvents)
+        .def("ghostClearSculpt", &SurgeSynthesizerWithPythonExtensions::ghostClearSculpt)
+        .def("ghostReadout", &SurgeSynthesizerWithPythonExtensions::ghostReadout)
+        .def("ghostSetTerrain", &SurgeSynthesizerWithPythonExtensions::ghostSetTerrain)
+        .def("ghostGetTerrain", &SurgeSynthesizerWithPythonExtensions::ghostGetTerrain)
+        .def("ghostSetMovement", &SurgeSynthesizerWithPythonExtensions::ghostSetMovement)
+        .def("ghostTerrainCoverage", &SurgeSynthesizerWithPythonExtensions::ghostTerrainCoverage)
+        .def("ghostParamValues", &SurgeSynthesizerWithPythonExtensions::ghostParamValues)
+        .def("ghostMakeTerrain", &SurgeSynthesizerWithPythonExtensions::ghostMakeTerrain)
+        .def("ghostShapeTerrain", &SurgeSynthesizerWithPythonExtensions::ghostShapeTerrain)
+        .def("ghostTerrainActive", &SurgeSynthesizerWithPythonExtensions::ghostTerrainActive)
+        .def("ghostShapeNames", &SurgeSynthesizerWithPythonExtensions::ghostShapeNames)
+        .def("ghostTerrainDepth", &SurgeSynthesizerWithPythonExtensions::ghostTerrainDepth)
+        .def("ghostTerrainPhase", &SurgeSynthesizerWithPythonExtensions::ghostTerrainPhase)
+        .def("ghostSculptEnable", &SurgeSynthesizerWithPythonExtensions::ghostSculptEnable)
+        .def("ghostBreed", &SurgeSynthesizerWithPythonExtensions::ghostBreed)
+        .def("ghostMutate", &SurgeSynthesizerWithPythonExtensions::ghostMutate)
+        .def("ghostMorphMake", &SurgeSynthesizerWithPythonExtensions::ghostMorphMake)
+        .def("ghostMorphSet", &SurgeSynthesizerWithPythonExtensions::ghostMorphSet)
+        .def("ghostMorphDraw", &SurgeSynthesizerWithPythonExtensions::ghostMorphDraw)
+        .def("ghostMorphInfo", &SurgeSynthesizerWithPythonExtensions::ghostMorphInfo)
+        .def("ghostSetTransport", &SurgeSynthesizerWithPythonExtensions::ghostSetTransport)
+        .def("loadPatch", &SurgeSynthesizerWithPythonExtensions::loadPatchPy,
+             "Load a Surge XT .fxp patch from the file system.", py::arg("path"))
+        .def("savePatch", &SurgeSynthesizerWithPythonExtensions::savePatchPy,
+             "Save the current state of Surge XT to an .fxp file.", py::arg("path"))
+
+        .def("loadWavetable", &SurgeSynthesizerWithPythonExtensions::loadWavetablePy,
+             "Load a wavetable file directly into a scene and oscillator immediately on this "
+             "thread.",
+             py::arg("scene"), py::arg("osc"), py::arg("path"))
+
+        .def("saveWavetable", &SurgeSynthesizerWithPythonExtensions::saveWavetablePy,
+             "Save the wavetable of a scene and oscillator to a .wt file, immediately on this "
+             "thread.",
+             py::arg("scene"), py::arg("osc"), py::arg("path"))
+
+        .def("getMSEG", &SurgeSynthesizerWithPythonExtensions::getMSEGPy,
+             "The MSEG of an LFO in a scene, as a live reference: editing the object returned here "
+             "edits the patch. Every LFO has one, but it is only saved with the patch while that "
+             "LFO's shape is surgepy.constants.lt_mseg.",
+             py::arg("scene"), py::arg("lfo"), py::keep_alive<0, 1>())
+        .def("setMSEG", &SurgeSynthesizerWithPythonExtensions::setMSEGPy,
+             "Copy an MSEG onto the MSEG of an LFO in a scene, raising if the source doesn't pass "
+             "validateMSEG().",
+             py::arg("scene"), py::arg("lfo"), py::arg("mseg"))
+
+        .def("getFormula", &SurgeSynthesizerWithPythonExtensions::getFormulaPy,
+             "The Lua body of the formula modulator of an LFO in a scene.", py::arg("scene"),
+             py::arg("lfo"))
+        .def("setFormula", &SurgeSynthesizerWithPythonExtensions::setFormulaPy,
+             "Set the Lua body of the formula modulator of an LFO in a scene. The formula is not "
+             "compiled here - use checkFormula() for that - and is only saved with the patch while "
+             "that LFO's shape is surgepy.constants.lt_formula.",
+             py::arg("scene"), py::arg("lfo"), py::arg("formula"))
+        .def("checkFormula", &SurgeSynthesizerWithPythonExtensions::checkFormulaPy,
+             "Compile the formula modulator of an LFO in a scene, returning the error it reports, "
+             "or an empty string if it runs.",
+             py::arg("scene"), py::arg("lfo"))
+
+        .def("getModSource", &SurgeSynthesizerWithPythonExtensions::getModSource,
+             "Given a constant from surge.constants.ms_*, provide a modulator object",
+             py::arg("modId"))
+        .def("setModDepth01", &SurgeSynthesizerWithPythonExtensions::setModulationPy,
+             "Set a modulation to a given depth", py::arg("targetParameter"),
+             py::arg("modulationSource"), py::arg("depth"), py::arg("scene") = 0,
+             py::arg("index") = 0)
+        .def("getModDepth01", &SurgeSynthesizerWithPythonExtensions::getModulationPy,
+             "Get the modulation depth from a source to a parameter.", py::arg("targetParameter"),
+             py::arg("modulationSource"), py::arg("scene") = 0, py::arg("index") = 0)
+        .def("isValidModulation", &SurgeSynthesizerWithPythonExtensions::isValidModulationPy,
+             "Is it possible to modulate between target and source?", py::arg("targetParameter"),
+             py::arg("modulationSource"))
+        .def("isActiveModulation", &SurgeSynthesizerWithPythonExtensions::isActiveModulationPy,
+             "Is there an established modulation between target and source?",
+             py::arg("targetParameter"), py::arg("modulationSource"), py::arg("scene") = 0,
+             py::arg("index") = 0)
+        .def("isBipolarModulation", &SurgeSynthesizerWithPythonExtensions::isBipolarModulationPy,
+             "Is the given modulation source bipolar?", py::arg("modulationSource"))
+
+        .def("getAllModRoutings", &SurgeSynthesizerWithPythonExtensions::getAllModRoutings,
+             "Get the entire modulation matrix for this instance.")
+
+        .def("process", &SurgeSynthesizer::process,
+             "Run Surge XT for one block and update the internal output buffer.")
+        .def("getOutput", &SurgeSynthesizerWithPythonExtensions::getOutput,
+             "Retrieve the internal output buffer as a 2 * BLOCK_SIZE numpy array.")
+
+        .def("createMultiBlock", &SurgeSynthesizerWithPythonExtensions::createMultiBlock,
+             "Create a numpy array suitable to hold up to b blocks of Surge XT processing in "
+             "processMultiBlock",
+             py::arg("blockCapacity"))
+        .def("processMultiBlock", &SurgeSynthesizerWithPythonExtensions::processMultiBlock,
+             "Run the Surge XT engine for multiple blocks, updating the value in the numpy array. "
+             "Either populate the\n"
+             "entire array, or starting at startBlock position in the output, populate nBlocks.",
+             py::arg("val"), py::arg("startBlock") = 0, py::arg("nBlocks") = -1)
+        .def("processMultiBlockWithInput",
+             &SurgeSynthesizerWithPythonExtensions::processMultiBlockWithInput,
+             "Run the Surge XT engine for multiple blocks using the input numpy array, "
+             "updating the value in the output numpy array. "
+             "Either populate the\n"
+             "entire array, or starting at startBlock position in the output, populate nBlocks.",
+             py::arg("inVal"), py::arg("outVal"), py::arg("startBlock") = 0,
+             py::arg("nBlocks") = -1)
+
+        .def("getPatch", &SurgeSynthesizerWithPythonExtensions::getPatchAsPy,
+             "Get a Python dictionary with the Surge XT parameters laid out in the logical patch "
+             "format")
+
+        .def("loadSCLFile", &SurgeSynthesizerWithPythonExtensions::loadSCLFile,
+             "Load an SCL tuning file and apply tuning to this instance")
+        .def("retuneToStandardTuning",
+             &SurgeSynthesizerWithPythonExtensions::retuneToStandardTuning,
+             "Return this instance to 12-TET Concert Keyboard Mapping")
+        .def("retuneToStandardScale", &SurgeSynthesizerWithPythonExtensions::retuneToStandardScale,
+             "Return this instance to 12-TET Scale")
+        .def("loadKBMFile", &SurgeSynthesizerWithPythonExtensions::loadKBMFile,
+             "Load a KBM mapping file and apply tuning to this instance")
+        .def("remapToStandardKeyboard",
+             &SurgeSynthesizerWithPythonExtensions::remapToStandardKeyboard,
+             "Return to standard C-centered keyboard mapping")
+        .def_property("mpeEnabled", &SurgeSynthesizerWithPythonExtensions::getMPEEnabled,
+                      &SurgeSynthesizerWithPythonExtensions::setMPEEnabled)
+        .def_property("tuningApplicationMode",
+                      &SurgeSynthesizerWithPythonExtensions::getTuningApplicationMode,
+                      &SurgeSynthesizerWithPythonExtensions::setTuningApplicationMode);
+
+    py::class_<SurgePyControlGroup>(m, "SurgeControlGroup")
+        .def("getId", &SurgePyControlGroup::getControlGroupId)
+        .def("getName", &SurgePyControlGroup::getControlGroupName)
+        .def("getEntries", &SurgePyControlGroup::getEntries)
+        .def("__repr__", &SurgePyControlGroup::toString);
+
+    py::class_<SurgePyControlGroupEntry>(m, "SurgeControlGroupEntry")
+        .def("getEntry", &SurgePyControlGroupEntry::getEntry)
+        .def("getScene", &SurgePyControlGroupEntry::getScene)
+        .def("getParams", &SurgePyControlGroupEntry::getParams)
+        .def("__repr__", &SurgePyControlGroupEntry::toString);
+
+    py::class_<SurgePyNamedParam>(m, "SurgeNamedParamId")
+        .def("getName", &SurgePyNamedParam::getName)
+        .def("getId", &SurgePyNamedParam::getID)
+        .def("__repr__", &SurgePyNamedParam::toString);
+
+    py::class_<SurgePyModSource>(m, "SurgeModSource")
+        .def("getModSource", &SurgePyModSource::getModSource)
+        .def("getName", &SurgePyModSource::getName)
+        .def("__repr__", &SurgePyModSource::toString);
+
+    py::class_<SurgePyModRouting>(m, "SurgeModRouting")
+        .def("getSource", [](const SurgePyModRouting &r) { return r.source; })
+        .def("getDest", [](const SurgePyModRouting &r) { return r.dest; })
+        .def("getSourceScene", [](const SurgePyModRouting &r) { return r.source_scene; })
+        .def("getSourceIndex", [](const SurgePyModRouting &r) { return r.source_index; })
+        .def("getDepth", [](const SurgePyModRouting &r) { return r.depth; })
+        .def("getNormalizedDepth", [](const SurgePyModRouting &r) { return r.normalizedDepth; })
+        .def("__repr__", [](const SurgePyModRouting &r) {
+            std::ostringstream oss;
+            oss << "<SurgeModRouting src='" << r.source.name << "' dest='" << r.dest.name
+                << "' depth=" << r.depth << " normdepth=" << r.normalizedDepth << ">";
+            return oss.str();
+        });
+
+    py::class_<SurgePyMSEGSegment>(m, "SurgeMSEGSegment")
+        .def_property_readonly("index", &SurgePyMSEGSegment::getIndex,
+                               "Position of this segment in its MSEG.")
+        .def_property("duration", &SurgePyMSEGSegment::getDuration,
+                      &SurgePyMSEGSegment::setDuration,
+                      "Length of this segment, in beats when the LFO is tempo synced and in "
+                      "seconds otherwise.")
+        .def_property("v0", &SurgePyMSEGSegment::getV0, &SurgePyMSEGSegment::setV0,
+                      "Value this segment starts at, from -1 to 1. A segment ends at the value the "
+                      "next one starts at, or at the MSEG's endValue for the last one.")
+        .def_property("cpduration", &SurgePyMSEGSegment::getCPDuration,
+                      &SurgePyMSEGSegment::setCPDuration,
+                      "Control point position along this segment, from 0 to 1.")
+        .def_property("cpv", &SurgePyMSEGSegment::getCPV, &SurgePyMSEGSegment::setCPV,
+                      "Control point value, from -1 to 1. What it does depends on the segment "
+                      "type.")
+        .def_property("type", &SurgePyMSEGSegment::getType, &SurgePyMSEGSegment::setType,
+                      "Curve of this segment, one of the surgepy.constants.mseg_seg_ values.")
+        .def_property("useDeform", &SurgePyMSEGSegment::getUseDeform,
+                      &SurgePyMSEGSegment::setUseDeform,
+                      "Does the LFO's Deform parameter apply to this segment?")
+        .def_property("invertDeform", &SurgePyMSEGSegment::getInvertDeform,
+                      &SurgePyMSEGSegment::setInvertDeform,
+                      "Is the LFO's Deform parameter inverted on this segment?")
+        .def_property("retriggerFEG", &SurgePyMSEGSegment::getRetriggerFEG,
+                      &SurgePyMSEGSegment::setRetriggerFEG,
+                      "Does reaching this segment retrigger the filter envelope?")
+        .def_property("retriggerAEG", &SurgePyMSEGSegment::getRetriggerAEG,
+                      &SurgePyMSEGSegment::setRetriggerAEG,
+                      "Does reaching this segment retrigger the amplitude envelope?")
+        .def("__repr__", &SurgePyMSEGSegment::toString);
+
+    py::class_<SurgePyMSEG>(m, "SurgeMSEG")
+        .def_property_readonly("segments", &SurgePyMSEG::getSegments,
+                               "The active segments, in order. Each one is a live reference into "
+                               "this MSEG.")
+        .def_property_readonly("segmentCount", &SurgePyMSEG::getSegmentCount,
+                               "How many segments this MSEG has.")
+        .def_property_readonly("totalDuration", &SurgePyMSEG::getTotalDuration,
+                               "Length of every segment added up. Always 1 in LFO edit mode.")
+        .def_property("endpointMode", &SurgePyMSEG::getEndpointMode, &SurgePyMSEG::setEndpointMode,
+                      "surgepy.constants.mseg_endpoint_locked to make the MSEG end where it "
+                      "starts, or mseg_endpoint_free to give it its own endValue.")
+        .def_property("editMode", &SurgePyMSEG::getEditMode, &SurgePyMSEG::setEditMode,
+                      "surgepy.constants.mseg_editmode_env for an MSEG of any length, or "
+                      "mseg_editmode_lfo to constrain it to a single cycle. Switching rescales the "
+                      "durations.")
+        .def_property("loopMode", &SurgePyMSEG::getLoopMode, &SurgePyMSEG::setLoopMode,
+                      "One of surgepy.constants.mseg_loop_off, mseg_loop_on or mseg_loop_gated.")
+        .def_property("loopStart", &SurgePyMSEG::getLoopStart, &SurgePyMSEG::setLoopStart,
+                      "Point the loop returns to, from 0 to segmentCount, or "
+                      "surgepy.constants.mseg_unset to loop the whole MSEG.")
+        .def_property("loopEnd", &SurgePyMSEG::getLoopEnd, &SurgePyMSEG::setLoopEnd,
+                      "Point the loop runs to, from -1 to segmentCount - 1, or "
+                      "surgepy.constants.mseg_unset to loop the whole MSEG.")
+        .def_property("endValue", &SurgePyMSEG::getEndValue, &SurgePyMSEG::setEndValue,
+                      "Value the MSEG finishes on. Only settable in free endpoint mode - in locked "
+                      "mode it follows the first segment's value.")
+        .def_property("hSnap", &SurgePyMSEG::getHSnap, &SurgePyMSEG::setHSnap,
+                      "Horizontal snap currently in force in the MSEG editor, 0 for none.")
+        .def_property("vSnap", &SurgePyMSEG::getVSnap, &SurgePyMSEG::setVSnap,
+                      "Vertical snap currently in force in the MSEG editor, 0 for none.")
+        .def_property("hSnapDefault", &SurgePyMSEG::getHSnapDefault, &SurgePyMSEG::setHSnapDefault,
+                      "Horizontal snap the MSEG editor returns to when snap is toggled on.")
+        .def_property("vSnapDefault", &SurgePyMSEG::getVSnapDefault, &SurgePyMSEG::setVSnapDefault,
+                      "Vertical snap the MSEG editor returns to when snap is toggled on.")
+        .def("insertSegment", &SurgePyMSEG::insertSegment,
+             "Insert a segment at an index, or at segmentCount to append one.", py::arg("index"))
+        .def("deleteSegment", &SurgePyMSEG::deleteSegment, "Delete the segment at an index.",
+             py::arg("index"))
+        .def("rebuildCache", &SurgePyMSEG::rebuildCache,
+             "Recompute the derived segment times. Editing through this object does this already, "
+             "so this is only needed after the patch has been changed some other way.")
+        .def("__repr__", &SurgePyMSEG::toString);
+
+    m.def("validateMSEG", &validateMSEG,
+          "Everything structurally wrong with an MSEG, as a list of descriptions which is empty "
+          "when it is valid.",
+          py::arg("mseg"));
+
+    py::module m_const =
+        m.def_submodule("constants", "Constants which are used to navigate Surge XT");
+
+#define C(x) m_const.attr(#x) = py::int_((int)(x));
+// For the enums which are nested in a struct, so can't be named by the C++ identifier alone
+#define CN(n, x) m_const.attr(n) = py::int_((int)(x));
+    C(porta_log);
+    C(porta_lin);
+    C(porta_exp);
+
+    {
+        using MS = MSEGStorage;
+        using segType = MSEGStorage::segment;
+
+        CN("mseg_endpoint_locked", MS::LOCKED);
+        CN("mseg_endpoint_free", MS::FREE);
+
+        CN("mseg_editmode_env", MS::ENVELOPE);
+        CN("mseg_editmode_lfo", MS::LFO);
+
+        CN("mseg_loop_off", MS::ONESHOT);
+        CN("mseg_loop_on", MS::LOOP);
+        CN("mseg_loop_gated", MS::GATED_LOOP);
+
+        // The loopStart / loopEnd value meaning "no loop point here, use the whole MSEG"
+        CN("mseg_unset", MS::kLoopPointUnset);
+
+        CN("mseg_seg_linear", segType::LINEAR);
+        CN("mseg_seg_quad_bezier", segType::QUAD_BEZIER);
+        CN("mseg_seg_scurve", segType::SCURVE);
+        CN("mseg_seg_sine", segType::SINE);
+        CN("mseg_seg_stairs", segType::STAIRS);
+        CN("mseg_seg_smooth_stairs", segType::SMOOTH_STAIRS);
+        CN("mseg_seg_brownian", segType::BROWNIAN);
+        CN("mseg_seg_square", segType::SQUARE);
+        CN("mseg_seg_triangle", segType::TRIANGLE);
+        CN("mseg_seg_sawtooth", segType::SAWTOOTH);
+        CN("mseg_seg_hold", segType::HOLD);
+        CN("mseg_seg_bump", segType::BUMP);
+        CN("mseg_seg_ratchet_1", segType::RATCHET_1);
+        CN("mseg_seg_ratchet_2", segType::RATCHET_2);
+        CN("mseg_seg_ratchet_3", segType::RATCHET_3);
+        CN("mseg_seg_ratchet_4", segType::RATCHET_4);
+        CN("mseg_seg_ratchet_5", segType::RATCHET_5);
+        CN("mseg_seg_ratchet_6", segType::RATCHET_6);
+        CN("mseg_seg_ratchet_7", segType::RATCHET_7);
+        CN("mseg_seg_ratchet_8", segType::RATCHET_8);
+    }
+
+    C(cg_GLOBAL);
+    C(cg_OSC);
+    C(cg_MIX);
+    C(cg_FILTER);
+    C(cg_ENV);
+    C(cg_LFO);
+    C(cg_FX);
+
+    C(ms_velocity);
+    C(ms_releasevelocity);
+    C(ms_keytrack);
+    C(ms_lowest_key);
+    C(ms_highest_key);
+    C(ms_latest_key);
+    C(ms_polyaftertouch);
+    C(ms_aftertouch);
+    C(ms_modwheel);
+    C(ms_breath);
+    C(ms_expression);
+    C(ms_sustain);
+    C(ms_pitchbend);
+    C(ms_timbre);
+    C(ms_alternate_bipolar);
+    C(ms_alternate_unipolar);
+    C(ms_random_bipolar);
+    C(ms_random_unipolar);
+    C(ms_filtereg);
+    C(ms_ampeg);
+    C(ms_lfo1);
+    C(ms_lfo2);
+    C(ms_lfo3);
+    C(ms_lfo4);
+    C(ms_lfo5);
+    C(ms_lfo6);
+    C(ms_slfo1);
+    C(ms_slfo2);
+    C(ms_slfo3);
+    C(ms_slfo4);
+    C(ms_slfo5);
+    C(ms_slfo6);
+    C(ms_ctrl1);
+    C(ms_ctrl2);
+    C(ms_ctrl3);
+    C(ms_ctrl4);
+    C(ms_ctrl5);
+    C(ms_ctrl6);
+    C(ms_ctrl7);
+    C(ms_ctrl8);
+
+    C(ot_classic);
+    C(ot_sine);
+    C(ot_wavetable);
+    C(ot_shnoise);
+    C(ot_audioinput);
+    C(ot_FM3);
+    C(ot_FM2);
+    C(ot_window);
+
+    C(adsr_ampeg);
+    C(adsr_filteg);
+
+    C(fxt_off);
+    C(fxt_delay);
+    C(fxt_reverb);
+    C(fxt_phaser);
+    C(fxt_rotaryspeaker);
+    C(fxt_distortion);
+    C(fxt_eq);
+    C(fxt_freqshift);
+    C(fxt_conditioner);
+    C(fxt_chorus4);
+    C(fxt_vocoder);
+    C(fxt_reverb2);
+    C(fxt_flanger);
+    C(fxt_ringmod);
+    C(fxt_airwindows);
+    C(fxt_neuron);
+
+    C(fxslot_ains1);
+    C(fxslot_ains2);
+    C(fxslot_bins1);
+    C(fxslot_bins2);
+    C(fxslot_send1);
+    C(fxslot_send2);
+    C(fxslot_global1);
+    C(fxslot_global2);
+
+    C(pm_poly);
+    C(pm_mono);
+    C(pm_mono_st);
+    C(pm_mono_fp);
+    C(pm_mono_st_fp);
+    C(pm_latch);
+
+    C(sm_single);
+    C(sm_split);
+    C(sm_dual);
+    C(sm_chsplit);
+
+    C(fc_serial1);
+    C(fc_serial2);
+    C(fc_serial3);
+    C(fc_dual1);
+    C(fc_dual2);
+    C(fc_stereo);
+    C(fc_ring);
+    C(fc_wide);
+
+    C(fm_off);
+    C(fm_2to1);
+    C(fm_3to2to1);
+    C(fm_2and3to1);
+
+    C(lt_sine);
+    C(lt_tri);
+    C(lt_square);
+    C(lt_ramp);
+    C(lt_noise);
+    C(lt_snh);
+    C(lt_envelope);
+    C(lt_mseg);
+    C(lt_formula);
+
+    {
+        using sst::waveshapers::WaveshaperType;
+        C(WaveshaperType::wst_none);
+        C(WaveshaperType::wst_soft);
+        C(WaveshaperType::wst_hard);
+        C(WaveshaperType::wst_asym);
+        C(WaveshaperType::wst_sine);
+        C(WaveshaperType::wst_digital);
+    }
+
+    {
+        using sst::filters::FilterType;
+        C(FilterType::fut_none);
+        C(FilterType::fut_lp12);
+        C(FilterType::fut_lp24);
+        C(FilterType::fut_lpmoog);
+        C(FilterType::fut_hp12);
+        C(FilterType::fut_hp24);
+        C(FilterType::fut_bp12);
+        C(FilterType::fut_notch12);
+        C(FilterType::fut_comb_pos);
+        C(FilterType::fut_SNH);
+        C(FilterType::fut_vintageladder);
+        C(FilterType::fut_obxd_2pole_lp);
+        C(FilterType::fut_obxd_4pole);
+        C(FilterType::fut_k35_lp);
+        C(FilterType::fut_k35_hp);
+        C(FilterType::fut_diode);
+        C(FilterType::fut_cutoffwarp_lp);
+        C(FilterType::fut_cutoffwarp_hp);
+        C(FilterType::fut_cutoffwarp_n);
+        C(FilterType::fut_cutoffwarp_bp);
+        C(FilterType::fut_obxd_2pole_hp);
+        C(FilterType::fut_obxd_2pole_n);
+        C(FilterType::fut_obxd_2pole_bp);
+        C(FilterType::fut_bp24);
+        C(FilterType::fut_notch24);
+        C(FilterType::fut_comb_neg);
+        C(FilterType::fut_apf);
+        C(FilterType::fut_cutoffwarp_ap);
+        C(FilterType::fut_resonancewarp_lp);
+        C(FilterType::fut_resonancewarp_hp);
+        C(FilterType::fut_resonancewarp_n);
+        C(FilterType::fut_resonancewarp_bp);
+        C(FilterType::fut_resonancewarp_ap);
+        C(FilterType::fut_tripole);
+    }
+
+    py::enum_<SurgeStorage::TuningApplicationMode>(m, "TuningApplicationMode")
+        .value("RETUNE_ALL", SurgeStorage::TuningApplicationMode::RETUNE_ALL)
+        .value("RETUNE_MIDI_ONLY", SurgeStorage::TuningApplicationMode::RETUNE_MIDI_ONLY);
+}

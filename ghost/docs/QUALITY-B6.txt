@@ -1,0 +1,127 @@
+Ghost Bass build 6 - quality gate (gb_quality.py) on the 14 new presets, on a quiet Mac (GitHub macos-15, Apple M2),
+Mac gate run 41981949434, commit 59d054b. PHYSICAL: Flues runs at 48 kHz (its own rate) and is resampled to Surge's
+oscillator rate with Surge's Lanczos resampler; its aliasing measure is n/a (random excitation: a 48 / 96 kHz pair can only
+differ at random), the median 48/96 difference is printed. STRETCH: PaulXStretch, held silent for the aliasing and macro checks.
+Output guard on (build 6's default). Result: 13 of 14 pass; STRETCH PLUCK HALO failed DEAD-MACRO:WIDTH and was rebuilt (below).
+
+PHYSICAL           BOWED LOW STRING       TP -10.20  DC -168.8  MONO 0.00  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP  -1.49 MONO 0.01 CLICK -99.0  GR  0.0 PASS
+      PHYSICAL (Flues, random excitation): 48 / 96 kHz difference between the harmonics, median of 3 renders, C5 / C6: -3.8 / 7.6 dB
+      macro SUB     0 -> 100%: level +14.3 dB, bright -34%, side/mid -60 -> -60 dB, motion -23%, picture 6.9 dB (TP -5.4)
+      macro GRIT    0 -> 100%: level +11.4 dB, bright +8%, side/mid -60 -> -60 dB, motion +1%, picture 14.0 dB (TP -1.5)
+      macro BITE    0 -> 100%: level +0.1 dB, bright +19%, side/mid -60 -> -60 dB, motion +11%, picture 14.1 dB (TP -9.6)
+      macro MOTION  0 -> 100%: level +3.9 dB, bright +0%, side/mid -60 -> -60 dB, motion +7%, picture 12.5 dB (TP -1.5)
+      macro WIDTH   0 -> 100%: level +0.8 dB, bright +15%, side/mid -60 -> -24 dB, motion +21%, picture 30.0 dB (TP -6.9)
+      macro SPACE   0 -> 100%: level +0.3 dB, bright +3%, side/mid -60 -> -27 dB, motion -32%, picture 30.0 dB (TP -9.9)
+      WIDTH side/mid -60.0 -> -16.2 dB   SPACE tail -76.6 -> -16.3 dB
+PHYSICAL           PLUCKED UPRIGHT        TP  -4.25  DC -171.7  MONO 0.00  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP  -1.49 MONO 0.01 CLICK -99.0  GR  0.0 PASS
+      PHYSICAL (Flues, random excitation): 48 / 96 kHz difference between the harmonics, median of 3 renders, C5 / C6: 4.2 / 11.1 dB
+      macro SUB     0 -> 100%: level +13.3 dB, bright -54%, side/mid -60 -> -60 dB, motion -56%, picture 6.4 dB (TP -3.3)
+      macro GRIT    0 -> 100%: level +10.9 dB, bright +7%, side/mid -60 -> -60 dB, motion -0%, picture 15.8 dB (TP -1.5)
+      macro BITE    0 -> 100%: level -0.3 dB, bright -17%, side/mid -60 -> -60 dB, motion -23%, picture 11.9 dB (TP -8.5)
+      macro MOTION  0 -> 100%: level +3.5 dB, bright +0%, side/mid -60 -> -60 dB, motion +3%, picture 10.1 dB (TP -1.5)
+      macro WIDTH   0 -> 100%: level +0.9 dB, bright +14%, side/mid -60 -> -24 dB, motion +6%, picture 30.0 dB (TP -6.1)
+      macro SPACE   0 -> 100%: level +0.3 dB, bright +4%, side/mid -60 -> -24 dB, motion +148%, picture 30.0 dB (TP -6.4)
+      WIDTH side/mid -60.0 -> -16.1 dB   SPACE tail -119.6 -> -13.2 dB
+PHYSICAL           STRUCK BAR BASS        TP  -7.56  DC -158.2  MONO 0.00  ALIAS    n/a  CLICK  -2.3  RATES ok  SCULPT TP  -1.49 MONO 0.01 CLICK   0.5  GR  0.0 PASS
+      PHYSICAL (Flues, random excitation): 48 / 96 kHz difference between the harmonics, median of 3 renders, C5 / C6: -35.6 / -120.0 dB
+      macro SUB     0 -> 100%: level +12.6 dB, bright -78%, side/mid -60 -> -60 dB, motion -70%, picture 6.3 dB (TP -4.6)
+      macro GRIT    0 -> 100%: level +10.7 dB, bright -2%, side/mid -60 -> -60 dB, motion -3%, picture 13.7 dB (TP -1.5)
+      macro BITE    0 -> 100%: level +0.1 dB, bright +101%, side/mid -60 -> -60 dB, motion +71%, picture 14.8 dB (TP -7.0)
+      macro MOTION  0 -> 100%: level +3.8 dB, bright +13%, side/mid -60 -> -60 dB, motion +6%, picture 13.2 dB (TP -1.5)
+      macro WIDTH   0 -> 100%: level +0.9 dB, bright +1%, side/mid -60 -> -24 dB, motion -6%, picture 30.0 dB (TP -5.8)
+      macro SPACE   0 -> 100%: level +0.4 dB, bright +18%, side/mid -60 -> -17 dB, motion +736%, picture 30.0 dB (TP -6.7)
+      WIDTH side/mid -60.0 -> -32.1 dB   SPACE tail -29.8 -> -5.4 dB
+STRETCH            STRETCH PLUCK HALO     TP  -2.66  DC -161.4  MONO 0.01  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP  -1.49 MONO 0.01 CLICK -99.0  GR  0.0 FAIL DEAD-MACRO:WIDTH
+      PHYSICAL (Flues, random excitation): 48 / 96 kHz difference between the harmonics, median of 3 renders, C5 / C6: 4.9 / 11.2 dB
+      macro SUB     0 -> 100%: level +13.0 dB, bright -52%, side/mid -60 -> -60 dB, motion -51%, picture 6.2 dB (TP -5.3)
+      macro GRIT    0 -> 100%: level +12.8 dB, bright +7%, side/mid -60 -> -60 dB, motion +4%, picture 17.9 dB (TP -1.5)
+      macro BITE    0 -> 100%: level -0.4 dB, bright -19%, side/mid -60 -> -60 dB, motion -27%, picture 12.1 dB (TP -10.3)
+      macro MOTION  0 -> 100%: level +3.6 dB, bright +2%, side/mid -60 -> -60 dB, motion -0%, picture 10.3 dB (TP -1.5)
+      macro WIDTH   0 -> 100%: level +0.2 dB, bright +2%, side/mid -60 -> -24 dB, motion +1%, picture 30.0 dB (TP -7.8)
+      macro SPACE   0 -> 100%: level +0.5 dB, bright +6%, side/mid -60 -> -23 dB, motion -27%, picture 30.0 dB (TP -7.9)
+PHYSICAL           BRASS LIPS BASS        TP  -9.82  DC -155.0  MONO 0.00  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP  -1.49 MONO 0.01 CLICK -99.0  GR  0.0 PASS
+      PHYSICAL (Flues, random excitation): 48 / 96 kHz difference between the harmonics, median of 3 renders, C5 / C6: -103.9 / -100.9 dB
+      macro SUB     0 -> 100%: level +13.8 dB, bright +12%, side/mid -60 -> -60 dB, motion -2%, picture 14.5 dB (TP -5.6)
+      macro GRIT    0 -> 100%: level +3.4 dB, bright +28%, side/mid -60 -> -60 dB, motion +29%, picture 20.9 dB (TP -1.5)
+      macro BITE    0 -> 100%: level +0.0 dB, bright +0%, side/mid -60 -> -60 dB, motion +0%, picture 1.6 dB (TP -9.7)
+      macro MOTION  0 -> 100%: level +2.5 dB, bright -2%, side/mid -60 -> -60 dB, motion -10%, picture 8.7 dB (TP -3.0)
+      macro WIDTH   0 -> 100%: level +0.9 dB, bright +20%, side/mid -60 -> -24 dB, motion +10%, picture 30.0 dB (TP -6.7)
+      macro SPACE   0 -> 100%: level +0.3 dB, bright +2%, side/mid -60 -> -46 dB, motion -32%, picture 30.0 dB (TP -9.4)
+      WIDTH side/mid -60.0 -> -18.9 dB   SPACE tail -62.8 -> -9.2 dB
+PHYSICAL           REED DRONE BASS        TP  -3.25  DC -168.2  MONO 0.00  ALIAS    n/a  CLICK  -5.0  RATES ok  SCULPT TP  -1.49 MONO 0.01 CLICK  -0.7  GR  0.0 PASS
+      PHYSICAL (Flues, random excitation): 48 / 96 kHz difference between the harmonics, median of 3 renders, C5 / C6: -60.6 / 20.5 dB
+      macro SUB     0 -> 100%: level +8.9 dB, bright -74%, side/mid -60 -> -60 dB, motion -74%, picture 9.1 dB (TP -2.2)
+      macro GRIT    0 -> 100%: level +4.7 dB, bright +80%, side/mid -60 -> -60 dB, motion +98%, picture 22.7 dB (TP -1.5)
+      macro BITE    0 -> 100%: level -1.5 dB, bright -46%, side/mid -60 -> -60 dB, motion -33%, picture 22.3 dB (TP -3.8)
+      macro MOTION  0 -> 100%: level +1.4 dB, bright -7%, side/mid -60 -> -60 dB, motion +12%, picture 16.1 dB (TP -1.5)
+      macro WIDTH   0 -> 100%: level +0.8 dB, bright -6%, side/mid -60 -> -25 dB, motion -9%, picture 30.0 dB (TP -3.7)
+      macro SPACE   0 -> 100%: level +0.3 dB, bright +21%, side/mid -60 -> -12 dB, motion +9%, picture 30.0 dB (TP -3.2)
+      WIDTH side/mid -60.0 -> -19.6 dB   SPACE tail -18.9 -> -6.3 dB
+STRETCH            STRETCH CATHEDRAL SUB  TP  -8.50  DC -159.2  MONO 0.00  ALIAS -103.5  CLICK  -0.2  RATES ok  SCULPT TP  -5.19 MONO 0.00 CLICK   2.0  GR  0.0 PASS
+      macro SUB     0 -> 100%: level +6.6 dB, bright +2%, side/mid -60 -> -60 dB, motion -4%, picture 17.4 dB (TP -10.4)
+      macro GRIT    0 -> 100%: level +5.2 dB, bright +54%, side/mid -60 -> -60 dB, motion -5%, picture 26.8 dB (TP -6.6)
+      macro BITE    0 -> 100%: level -2.1 dB, bright -1%, side/mid -60 -> -60 dB, motion +2%, picture 5.4 dB (TP -14.4)
+      macro MOTION  0 -> 100%: level +1.0 dB, bright +6%, side/mid -60 -> -60 dB, motion +5%, picture 13.0 dB (TP -8.1)
+      macro WIDTH   0 -> 100%: level +1.2 dB, bright +50%, side/mid -60 -> -22 dB, motion +60%, picture 30.0 dB (TP -5.2)
+      macro SPACE   0 -> 100%: level +0.3 dB, bright +2%, side/mid -60 -> -50 dB, motion -21%, picture 30.0 dB (TP -12.8)
+      WIDTH side/mid -60.0 -> -18.2 dB   SPACE tail -16.8 -> -5.5 dB
+STRETCH            STRETCH SLOW BLOOM     TP  -5.58  DC -178.5  MONO 0.00  ALIAS -116.2  CLICK -99.0  RATES ok  SCULPT TP  -1.49 MONO 0.00 CLICK  -1.4  GR  0.0 PASS
+      macro SUB     0 -> 100%: level +7.0 dB, bright -59%, side/mid -60 -> -60 dB, motion -3%, picture 2.6 dB (TP -6.8)
+      macro GRIT    0 -> 100%: level +8.9 dB, bright +17%, side/mid -60 -> -60 dB, motion +18%, picture 20.6 dB (TP -1.5)
+      macro BITE    0 -> 100%: level -2.1 dB, bright +73%, side/mid -60 -> -60 dB, motion +23%, picture 12.7 dB (TP -8.8)
+      macro MOTION  0 -> 100%: level +2.6 dB, bright +8%, side/mid -60 -> -60 dB, motion +19%, picture 15.7 dB (TP -1.5)
+      macro WIDTH   0 -> 100%: level +0.1 dB, bright +12%, side/mid -60 -> -18 dB, motion +9%, picture 30.0 dB (TP -7.3)
+      macro SPACE   0 -> 100%: level +0.3 dB, bright +2%, side/mid -60 -> -25 dB, motion -12%, picture 30.0 dB (TP -8.5)
+PHYSICAL           BREATHY PIPE BASS      TP  -5.75  DC -182.2  MONO 0.00  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP  -1.49 MONO 0.01 CLICK -99.0  GR  0.0 PASS
+      PHYSICAL (Flues, random excitation): 48 / 96 kHz difference between the harmonics, median of 3 renders, C5 / C6: -17.1 / 7.3 dB
+      macro SUB     0 -> 100%: level +11.1 dB, bright -67%, side/mid -60 -> -60 dB, motion -62%, picture 5.9 dB (TP -3.7)
+      macro GRIT    0 -> 100%: level +9.8 dB, bright +2%, side/mid -60 -> -60 dB, motion +12%, picture 17.5 dB (TP -1.5)
+      macro BITE    0 -> 100%: level +0.1 dB, bright +20%, side/mid -60 -> -60 dB, motion +14%, picture 14.1 dB (TP -6.9)
+      macro MOTION  0 -> 100%: level +3.1 dB, bright -7%, side/mid -60 -> -60 dB, motion -2%, picture 11.6 dB (TP -1.5)
+      macro WIDTH   0 -> 100%: level +0.7 dB, bright +2%, side/mid -60 -> -24 dB, motion -2%, picture 30.0 dB (TP -6.3)
+      macro SPACE   0 -> 100%: level +0.4 dB, bright +6%, side/mid -60 -> -19 dB, motion -23%, picture 30.0 dB (TP -6.0)
+      WIDTH side/mid -60.0 -> -16.3 dB   SPACE tail -109.0 -> -20.9 dB
+PHYSICAL           SLAP THUMB             TP  -4.61  DC -202.2  MONO 0.00  ALIAS    n/a  CLICK  -2.5  RATES ok  SCULPT TP  -1.49 MONO 0.01 CLICK  -2.2  GR  0.0 PASS
+      PHYSICAL (Flues, random excitation): 48 / 96 kHz difference between the harmonics, median of 3 renders, C5 / C6: -22.5 / -34.4 dB
+      macro SUB     0 -> 100%: level +11.8 dB, bright -77%, side/mid -60 -> -60 dB, motion -72%, picture 6.3 dB (TP -3.8)
+      macro GRIT    0 -> 100%: level +10.5 dB, bright -3%, side/mid -60 -> -60 dB, motion +9%, picture 14.5 dB (TP -1.5)
+      macro BITE    0 -> 100%: level +0.1 dB, bright +29%, side/mid -60 -> -60 dB, motion +29%, picture 12.5 dB (TP -6.4)
+      macro MOTION  0 -> 100%: level +3.6 dB, bright +23%, side/mid -60 -> -60 dB, motion +38%, picture 14.6 dB (TP -1.5)
+      macro WIDTH   0 -> 100%: level +0.8 dB, bright +1%, side/mid -60 -> -25 dB, motion -3%, picture 30.0 dB (TP -5.3)
+      macro SPACE   0 -> 100%: level +0.2 dB, bright +16%, side/mid -60 -> -17 dB, motion +922%, picture 30.0 dB (TP -5.2)
+      WIDTH side/mid -17.9 -> -17.8 dB   SPACE tail -16.9 -> -5.4 dB
+STRETCH            STRETCH DEEP FOG       TP  -5.33  DC -190.2  MONO 0.00  ALIAS  -88.9  CLICK -99.0  RATES ok  SCULPT TP  -1.49 MONO 0.00 CLICK  -1.7  GR  0.0 PASS
+      macro SUB     0 -> 100%: level +9.3 dB, bright -51%, side/mid -14 -> -24 dB, motion +1%, picture 1.8 dB (TP -5.0)
+      macro GRIT    0 -> 100%: level +8.5 dB, bright +35%, side/mid -19 -> -16 dB, motion +32%, picture 21.3 dB (TP -1.5)
+      macro BITE    0 -> 100%: level -2.1 dB, bright +57%, side/mid -20 -> -16 dB, motion +6%, picture 13.9 dB (TP -7.4)
+      macro MOTION  0 -> 100%: level +2.9 dB, bright +11%, side/mid -19 -> -19 dB, motion +28%, picture 15.6 dB (TP -1.5)
+      macro WIDTH   0 -> 100%: level -0.2 dB, bright -1%, side/mid -19 -> -19 dB, motion +11%, picture 7.0 dB (TP -8.5)
+      macro SPACE   0 -> 100%: level +0.3 dB, bright +2%, side/mid -19 -> -19 dB, motion +3%, picture 5.8 dB (TP -7.0)
+PHYSICAL           FINGER PLUCK           TP  -3.80  DC -168.1  MONO 0.00  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP  -1.49 MONO 0.01 CLICK -99.0  GR  0.0 PASS
+      PHYSICAL (Flues, random excitation): 48 / 96 kHz difference between the harmonics, median of 3 renders, C5 / C6: 3.4 / 2.9 dB
+      macro SUB     0 -> 100%: level +11.2 dB, bright -64%, side/mid -60 -> -60 dB, motion -58%, picture 6.0 dB (TP -2.7)
+      macro GRIT    0 -> 100%: level +10.6 dB, bright -5%, side/mid -60 -> -60 dB, motion +15%, picture 17.6 dB (TP -1.5)
+      macro BITE    0 -> 100%: level -1.1 dB, bright -36%, side/mid -60 -> -60 dB, motion -38%, picture 11.5 dB (TP -7.1)
+      macro MOTION  0 -> 100%: level +3.2 dB, bright -7%, side/mid -60 -> -60 dB, motion +1%, picture 9.3 dB (TP -1.5)
+      macro WIDTH   0 -> 100%: level +0.8 dB, bright +6%, side/mid -60 -> -25 dB, motion +1%, picture 30.0 dB (TP -5.6)
+      macro SPACE   0 -> 100%: level +0.3 dB, bright +9%, side/mid -60 -> -20 dB, motion +188%, picture 30.0 dB (TP -5.2)
+      WIDTH side/mid -60.0 -> -17.8 dB   SPACE tail -67.4 -> -18.0 dB
+PHYSICAL           SOFT MALLET SUB        TP  -3.70  DC -190.0  MONO 0.00  ALIAS    n/a  CLICK -99.0  RATES ok  SCULPT TP  -1.49 MONO 0.01 CLICK -99.0  GR  0.0 PASS
+      PHYSICAL (Flues, random excitation): 48 / 96 kHz difference between the harmonics, median of 3 renders, C5 / C6: -59.6 / -6.9 dB
+      macro SUB     0 -> 100%: level +7.2 dB, bright -51%, side/mid -60 -> -60 dB, motion -53%, picture 4.6 dB (TP -3.2)
+      macro GRIT    0 -> 100%: level +5.6 dB, bright +55%, side/mid -60 -> -60 dB, motion +77%, picture 22.6 dB (TP -1.5)
+      macro BITE    0 -> 100%: level +0.3 dB, bright +74%, side/mid -60 -> -60 dB, motion +72%, picture 15.1 dB (TP -4.6)
+      macro MOTION  0 -> 100%: level +1.2 dB, bright +0%, side/mid -60 -> -60 dB, motion +5%, picture 9.9 dB (TP -1.5)
+      macro WIDTH   0 -> 100%: level +0.5 dB, bright +0%, side/mid -60 -> -26 dB, motion -0%, picture 30.0 dB (TP -5.2)
+      macro SPACE   0 -> 100%: level +0.0 dB, bright +2%, side/mid -60 -> -21 dB, motion +57%, picture 30.0 dB (TP -5.5)
+      WIDTH side/mid -18.2 -> -17.1 dB   SPACE tail -21.6 -> -7.6 dB
+STRETCH            STRETCH GLASS DRONE    TP  -4.40  DC -164.4  MONO 0.00  ALIAS  -98.6  CLICK -99.0  RATES ok  SCULPT TP  -1.49 MONO 0.00 CLICK  -1.1  GR  0.0 PASS
+      macro SUB     0 -> 100%: level +8.3 dB, bright -51%, side/mid -15 -> -24 dB, motion -15%, picture 1.0 dB (TP -5.1)
+      macro GRIT    0 -> 100%: level +7.4 dB, bright +46%, side/mid -20 -> -16 dB, motion +7%, picture 21.5 dB (TP -1.5)
+      macro BITE    0 -> 100%: level -2.3 dB, bright +27%, side/mid -21 -> -17 dB, motion -3%, picture 11.9 dB (TP -7.1)
+      macro MOTION  0 -> 100%: level +2.6 dB, bright +13%, side/mid -20 -> -20 dB, motion +3%, picture 14.7 dB (TP -1.5)
+      macro WIDTH   0 -> 100%: level -0.4 dB, bright +5%, side/mid -20 -> -16 dB, motion +2%, picture 8.1 dB (TP -7.6)
+      macro SPACE   0 -> 100%: level +0.3 dB, bright +2%, side/mid -20 -> -19 dB, motion -32%, picture 6.9 dB (TP -6.7)
+
+STRETCH PLUCK HALO, rebuilt with a stricter WIDTH check (Mac gate run 41983037797): WIDTH side/mid -60 -> -26 dB, still
+under the gate's -24 dB with the texture held still - DROPPED. Library: 13 new presets (PHYSICAL 9, STRETCH 4), all pass.

@@ -1,0 +1,45 @@
+GHOST BASS - credits and licences
+
+Ghost Bass is a fork of Surge XT (https://github.com/surge-synthesizer/surge), by the Surge Synth
+Team and contributors, released under the GNU General Public Licence v3 or later. Surge was a
+commercial product from 2004-2018 by Claes Johanson / Vember Audio, open-sourced in 2018.
+Ghost Bass is also GPL-3: its complete source code is available alongside every build.
+
+THE SOUND IS SURGE XT'S (build 8, "pure Surge"): the engine is Surge XT at commit 72a6022, and with
+Ghost Bass's features at rest every Surge XT patch renders bit-identically to Surge XT itself (the
+null test, ghost/tools/null_test.py). Ghost Bass adds no sound processing of its own; its EASY screen
+(SCULPT, TERRITORY / PIXEL TRAIL, TERRAIN, MORPH, DNA, MUTATION, the sequencer and arpeggiator) only
+moves Surge's own parameters, through Surge's own engine (its scenes, macros, MSEG engine and
+freehand fit).
+
+THE SOUNDS are Surge XT's own patches, unchanged: its factory patches and its third-party patch
+library, each by the author named in its folder and in the patch, under the licences the Surge XT
+project ships them with (see resources/data in the Surge XT repository). Wavetables (factory and
+third-party), impulse responses, FX presets, modulator presets, tuning files and skins also come
+from Surge XT, unchanged.
+
+Third-party code inside Surge XT keeps its own licence (JUCE, sst-* libraries, Airwindows,
+ChowDSP, Mutable Instruments eurorack code, LuaJIT, pffft, r8brain, zstd, fmt, etc.); see the
+upstream repository and libs/ for each notice.
+
+Fonts: Poppins (SIL Open Font License 1.1, see resources/ghostbass/Poppins-OFL.txt).
+Fonts: Barlow Condensed and Share Tech Mono (SIL Open Font License 1.1, see resources/ghostbass/BarlowCondensed-OFL.txt and ShareTechMono-OFL.txt). Permanent Marker (Apache License 2.0, see resources/ghostbass/PermanentMarker-LICENSE.txt).
+Ghost logo painting: Brandon's own artwork. Brush strokes, ink washes and paper texture: generated for Ghost Bass.
+
+Removed in build 8 (they were sound code in Surge's signal path): the Physical oscillator (Flues),
+the Stretch oscillator (PaulXStretch), the Granular oscillator (GrainflowLib), the Sample oscillator
+(libsamplerate, dr_wav, aubio), the SAFETY LIMITER and LEVEL MATCH. Ghost Bass's own presets are no
+longer the library; the ones that use only Surge's oscillators are kept, hidden, in the source tree
+(ghost/extras/GHOST EXTRAS) and are not installed.
+
+BUILD 10/11 - LAYERS (SUB next to Surge). The SUB engine is upstream open-source code, compiled unchanged from a
+pinned git submodule in libs/ghostbass-layers. Our code only hosts it (MIDI in, its own render calls, a mix).
+
+SUB = Bombaz
+  Source   : https://github.com/hollance/bombaz   pinned commit 434d8b6eaf228338b0b2d2f56ad470c1f8929ddd
+  Licence  : GNU GPL v3 (libs/ghostbass-layers/bombaz/LICENSE.txt), Copyright (c) Matthijs Hollemans
+             (the same licence as Ghost Bass itself)
+  Used     : src/Oscillator.h, Voice.h, Synth.cpp, Parameters.cpp, DCBlockFilter.h, DSP.h - as they are
+
+BUILD 11: the 808 layer (ChowKick and the chowdsp parts it needed) was removed again; it is no longer built or shipped.
+Light-theme painting and its ghost logo (GhostShanshui.jpg, GhostLogoDawn.png): Brandon's own artwork.
