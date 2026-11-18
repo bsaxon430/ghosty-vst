@@ -606,7 +606,7 @@ struct PadPanel : juce::Component {
 // the version shown in the header + tab bar tooltip (the plugin's JucePlugin_VersionString; the test build has none)
 static juce::String spectrumVersion() {
 #ifdef JucePlugin_VersionString
-    return JucePlugin_VersionString;
+    return "1 beta";
 #else
     return "3.0.0";
 #endif
