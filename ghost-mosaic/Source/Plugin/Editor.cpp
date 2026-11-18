@@ -960,12 +960,12 @@ void Editor::showSessionMenu()
 // The one place the open-source projects are named (GPL "appropriate legal notices"): who, which licence, where the source is.
 juce::String creditsText()
 {
-    return "Ghost Mosaic " + juce::String (GHOSTMOSAIC_VERSION) + " by GhostBlock. Free software, GNU General Public License v2 or later.\n\n"
+    return juce::String ("Ghost Mosaic v1 beta by GhostBlock. Free software, GNU General Public License v2 or later.\n\n"
            "Its sound engine is Samplebrain by Then Try This and contributors (GPL-2.0-or-later). Source: https://gitlab.com/then-try-this/samplebrain\n"
            "Source of this program: https://github.com/bsaxon430/ghosty-vst (folder ghost-mosaic)\n\n"
            "Also inside: FFTW (GPL-2.0-or-later, Matteo Frigo and MIT), Aquila DSP (MIT, Zbigniew Siciarz), JUCE (AGPLv3), "
            "Bencho's Particles and Heat map (MIT), Poppins font (SIL OFL 1.1).\n"
-           "Full licences: the Licenses folder that came with this plug-in.";
+           "Full licences: the Licenses folder that came with this plug-in.");
 }
 
 void Editor::openSession()
