@@ -26,7 +26,7 @@ jobs:
           - { key: ghostbreak,  ref: src/ghostbreak,  src: phantom-fx, flags: "-DPHANTOM_BUILD_AU=OFF -DPHANTOM_WITH_GHOST_BREAK=ON -DPHANTOM_LIMITER_ENGINE=ZL -DPHANTOM_WARP_ENGINE=SIGNALSMITH", targets: "GhostBreak_VST3", names: "Ghost Break.vst3" }
           - { key: ghostatlas,  ref: src/ghostatlas,  src: phantom-fx, flags: "-DPHANTOM_BUILD_AU=OFF -DPHANTOM_WITH_GHOST_ATLAS=ON -DPHANTOM_LIMITER_ENGINE=ZL -DPHANTOM_WARP_ENGINE=SIGNALSMITH -DGHOSTATLAS_FFTW_DIR=FFTWDIR", targets: "GhostAtlas_VST3", names: "Ghost Atlas.vst3", fftw: ghost-atlas }
           - { key: ghostmosaic, ref: src/ghostmosaic, src: ghost-mosaic, flags: "-DGHOSTMOSAIC_FFTW_DIR=FFTWDIR", targets: "GhostMosaic_VST3 GhostMosaicFX_VST3", names: "Ghost Mosaic.vst3|Ghost Mosaic FX.vst3", fftw: ghost-mosaic }
-          - { key: ghostlab,    ref: src/ghostlab,    src: ghost-lab, flags: "-DGHOSTLAB_CDP_DEV_DIR=CDPDIR", targets: "GhostLab_VST3 GhostLabFX_VST3", names: "Ghost Lab.vst3|Ghost Lab FX.vst3", prep: ghostlab, split: true }
+          - { key: ghostlab,    ref: src/ghostlab,    src: ghost-lab, flags: "-DGHOSTLAB_CDP_DEV_DIR=CDPDIR -DCMAKE_POLICY_VERSION_MINIMUM=3.5", targets: "GhostLab_VST3 GhostLabFX_VST3", names: "Ghost Lab.vst3|Ghost Lab FX.vst3", prep: ghostlab, split: true }
           - { key: ghostvoice,  ref: src/ghostvoice,  src: ghost-voice, flags: "", targets: "GhostVoice_VST3", names: "Ghost Voice.vst3" }
           - { key: ghostypro2,  ref: src/ghostypro2,  src: ".", flags: "", targets: "GhostyPro_VST3", names: "Ghosty Pro 2.vst3" }
           - { key: ghostbass,   ref: src/ghostbass,   src: ".", flags: "-DSURGE_BUILD_CLAP=OFF -DSURGE_SKIP_LUA=FALSE", targets: "surge-xt_VST3", names: "Ghost Bass.vst3", subs: recursive }
