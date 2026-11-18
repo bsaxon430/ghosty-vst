@@ -9,3 +9,7 @@ namespace lsp
     namespace avx2 { void dsp_init (const cpuid_t*) {} }
     namespace avx512 { void dsp_init (const cpuid_t*) {} }
 }
+#if defined(__aarch64__) || defined(__arm64__)
+// GhostBlock universal build: the arm64 slice uses lsp-dsp-lib's generic functions (its aarch64 NEON files are not compiled here)
+namespace lsp { namespace aarch64 { void dsp_init (const cpuid_t*) {} } }
+#endif
