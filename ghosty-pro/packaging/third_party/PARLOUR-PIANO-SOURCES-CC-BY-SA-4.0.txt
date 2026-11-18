@@ -1,0 +1,23 @@
+Ghost Slice - PARLOUR PIANO style group: where its model comes from
+
+The PARLOUR PIANO styles (WISTFUL, STILL NIGHT) play from a small statistical model (n-grams: which chord, left-hand rhythm and
+melody step usually comes next). The model was learned from 12 piano scores typeset by volunteers of the Mutopia Project
+(https://www.mutopiaproject.org). No score, recording or passage of any piece is included; every take is generated anew.
+
+11 of the 12 scores are in the public domain (Mutopia "Public Domain" licence).
+
+One score is licensed under Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0):
+
+  Title:        Gnossienne No. 2 (E. Satie, 1890; the composition is in the public domain)
+  Typesetter:   Frederic Duperray (Mutopia contributor / maintainer)
+  Source:       Mutopia Project, piece Mutopia-2016/08/17-2130
+                https://www.mutopiaproject.org/cgibin/piece-info.cgi?id=2130
+  Edition:      Paris: Rouart, Lerolle & Cie., 1913
+  Licence:      CC BY-SA 4.0 - https://creativecommons.org/licenses/by-sa/4.0/
+  Changes:      the score was not copied or redistributed; note, chord and rhythm statistics were counted from it (together with
+                the 11 public-domain scores) to make the model.
+
+To the extent the PARLOUR PIANO model data (GhostSlice/data/brain_satie.json in the source, embedded in the plug-in) is an
+adaptation of that score, the model data is shared under the same licence, CC BY-SA 4.0
+(https://creativecommons.org/licenses/by-sa/4.0/). This applies to the model data only, not to the rest of Ghost Slice.
+No warranties are given by the licensor.

@@ -1,0 +1,5 @@
+Ghost Mosaic is built with the JUCE framework 8.0.4 (https://juce.com), whose modules are
+dual-licensed under the GNU AGPLv3 (https://www.gnu.org/licenses/agpl-3.0.en.html) and the
+commercial JUCE licence. Ghost Mosaic as a whole is free software under the GNU GPL (version 2
+or later of the Samplebrain code, taken as version 3 where it is combined with JUCE under the
+AGPLv3); its complete source code is in the GhostBlock repository, folder ghost-mosaic/.

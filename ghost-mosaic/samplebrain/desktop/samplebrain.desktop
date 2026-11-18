@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Samplebrain
+Comment=A custom sample mashing app designed by Aphex Twin
+Icon=samplebrain
+Exec=samplebrain
+Categories=AudioVideo;Music
+StartupNotify=true

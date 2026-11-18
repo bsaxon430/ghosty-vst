@@ -1,0 +1,9 @@
+GHOSTY BEATS - test build for Mac
+
+1. Double-click "Install Ghosty Beats.command" (if macOS blocks it: right-click > Open).
+2. In FL Studio: Options > Manage plugins > Find more plugins.
+3. Add Ghosty Beats from the Channel Rack (+).
+
+This replaces the Ghosty Beats from the full GhostBlock installer; the other plugins are not touched.
+Its built-in drum sounds are called GHOST KIT.
+The pixel font in the buttons is Press Start 2P (SIL Open Font License 1.1): see Font-License-PressStart2P.txt.

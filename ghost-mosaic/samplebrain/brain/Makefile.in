@@ -1,0 +1,73 @@
+TARGET  := samplebrain
+TARGET_LIB := libsamplebrain.a
+
+SRCS :=   	src/block.cpp \
+			src/block_stream.cpp \
+			src/brain.cpp \
+			src/fft.cpp \
+			src/main.cpp \
+			src/mfcc.cpp \
+			src/renderer.cpp \
+			src/search_params.cpp \
+			src/status.cpp \
+			src/window.cpp \
+			src/aquila/filter/MelFilterBank.cpp \
+			src/aquila/filter/MelFilter.cpp \
+			src/aquila/transform/Dct.cpp \
+			src/spiralcore/allocator.cpp \
+			src/spiralcore/audio.cpp \
+			src/spiralcore/command_ring_buffer.cpp \
+			src/spiralcore/OSC_server.cpp \
+			src/spiralcore/portaudio_client.cpp \
+			src/spiralcore/ring_buffer.cpp \
+			src/spiralcore/sample.cpp \
+			src/spiralcore/stream.cpp 
+
+
+TARGET_SRCS    := src/main.cpp
+
+# @CFLAGS@
+CCFLAGS = -g -Ofast -march=native -mtune=native -std=c++11 -ffast-math -Wno-unused -Isrc -I/opt/local/include
+LDFLAGS = @LDFLAGS@
+LIBS    = @LIBS@
+
+CC = @CXX@
+AR = ar
+OBJS      := ${SRCS:.cpp=.o}
+MAIN_OBJS := ${MAIN_SRCS:.cpp=.o}
+DEPS      := ${SRCS:.cpp=.dep}
+MAIN_DEPS := ${MAIN_SRCS:.cpp=.dep}
+XDEPS     := $(wildcard ${DEPS})
+.PHONY: all clean distclean
+all:: ${TARGET}
+
+ifneq (${XDEPS},)
+include ${XDEPS}
+endif
+
+${TARGET}: ${MAIN_OBJS} ${OBJS} ${COBJS}
+	${CC} ${LDFLAGS} -o $@ $^ ${LIBS}
+
+${OBJS}: %.o: %.cpp %.dep
+	${CC} ${CCFLAGS} -o $@ -c $<
+
+${DEPS}: %.dep: %.cpp Makefile
+	${CC} ${CCFLAGS} -MM $< > $@
+
+${MAIN_OBJS}: %.o: %.cpp %.dep
+	${CC} ${CCFLAGS} -o $@ -c $<
+
+${MAIN_DEPS}: %.dep: %.cpp Makefile
+	${CC} ${CCFLAGS} -MM $< > $@
+
+library: ${OBJS} ${COBJS}
+	$(AR) $(ARFLAGS) ${TARGET_LIB} ${OBJS} ${COBJS}
+
+clean:: cleandeps
+	-rm -f *~ src/*.o src/*/*.o ${TARGET}
+
+cleandeps::
+	-rm -f src/*.dep src/*/*.dep
+
+distclean:: clean
+	-rm -rf config.status autom4te.cache config.log Makefile

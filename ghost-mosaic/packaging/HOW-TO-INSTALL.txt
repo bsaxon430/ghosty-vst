@@ -1,0 +1,23 @@
+GHOST MOSAIC - test build for Mac (Apple Silicon and Intel)
+
+Rebuild any sound out of your own sounds. Drop sounds on SOURCE SOUNDS, drop the sound to
+rebuild on TARGET, press GENERATE.
+
+1. Double-click "Install Ghost Mosaic.command" (if macOS blocks it: right-click > Open; or
+   System Settings > Privacy & Security > Open Anyway).
+2. In FL Studio: Options > Manage plugins > Find more plugins.
+   - Ghost Mosaic is an INSTRUMENT: add it in the Channel rack (+ > Ghost Mosaic). Press
+     GENERATE, then PLAY - or set PLAY BY (UNDER THE HOOD) to MIDI keys or DAW play.
+   - Ghost Mosaic FX is an EFFECT: put it on a Mixer insert. Whatever plays on that track is
+     the target, rebuilt live from your SOURCE SOUNDS. DRY mixes the untouched track back in.
+   In Logic / GarageBand they are Audio Units (an instrument and an effect).
+3. Or open "Ghost Mosaic" from Applications (a standalone app).
+
+DRAG WAV: click it to make a WAV of one pass, then drag it into your project.
+RECORD records what you hear; DRAG WAV then drags the recording.
+Your sounds, target and settings are saved inside your project. Files go in
+Documents/GhostBlock/Ghost Mosaic (Recordings, Exports).
+Sessions and library files open in the original Samplebrain app too, and the other way round.
+
+Ghost Mosaic is free software (GNU GPL), a fork of Samplebrain by Then Try This.
+Licences and credits: the Licenses folder and NOTICE.md.
