@@ -26,7 +26,7 @@ static double nowMs() { return juce::Time::getMillisecondCounterHiRes(); }
 static juce::String versionText()
 {
 #ifdef POLTERGEIST2_VERSION
-    return juce::String("v") + POLTERGEIST2_VERSION;
+    return "v1 beta";
 #else
     return "v-dev";
 #endif
