@@ -1,0 +1,13 @@
+GHOST SLICE 1.0 - test build for Mac
+
+Drop a vocal or any sound. Press GENERATE. Play it.
+
+1. Double-click "Install Ghost Slice.command" (if macOS blocks it: right-click > Open; or System Settings > Privacy & Security > Open Anyway).
+2. In FL Studio: Options > Manage plugins > Find more plugins. Ghost Slice is an INSTRUMENT: add it in the Channel rack (+ > Ghost Slice).
+   Drag a vocal from FL's browser (or Finder) onto it, press GENERATE, and play it from the piano roll or your keyboard.
+   DRAG WAV / DRAG MIDI drag the take straight into your project. In Logic / GarageBand it is an Audio Unit instrument.
+3. Or open "Ghost Slice" from Applications. The first time you press RECORD, macOS asks to use the microphone - say yes.
+
+The old Ghost Slice screen (EDIT / FLEX / PITCH / PLAY) is gone; an old project opens with its sound on the new screen.
+Nothing else on your computer is touched. Your takes are saved with your project; SAVE TAKE puts WAV + MIDI in
+Documents/Ghosty/Ghost Slice/Takes, and recordings are kept in Documents/Ghosty/Ghost Slice/Recordings.

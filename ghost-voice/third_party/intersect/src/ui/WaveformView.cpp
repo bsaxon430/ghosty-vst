@@ -1,0 +1,1568 @@
+#include "WaveformView.h"
+#include "UIHelpers.h"
+#include "IntersectLookAndFeel.h"
+#include "LinuxDesktopSupport.h"
+#include "../AppFiles.h"
+#include "../Constants.h"
+#include "../PluginProcessor.h"
+#include "../audio/AudioAnalysis.h"
+
+namespace
+{
+const SampleData::SessionSample* findSessionSampleById (const SampleData::SnapshotPtr& sampleSnap, int sampleId)
+{
+    if (sampleSnap == nullptr)
+        return nullptr;
+
+    for (const auto& sample : sampleSnap->sessionSamples)
+        if (sample.sampleId == sampleId)
+            return &sample;
+
+    return sampleSnap->sessionSamples.empty() ? nullptr : &sampleSnap->sessionSamples.front();
+}
+
+// Slices of a missing-sample placeholder are parked: kept, but not drawn or editable.
+bool isEditableSlice (const Slice& s)
+{
+    return s.active && ! s.parked;
+}
+
+struct LoopDisplayState
+{
+    bool active = false;
+    int mode = 0;
+    int startSample = 0;
+    int endSample = 0;
+};
+
+LoopDisplayState resolveLoopDisplayState (const Slice& slice,
+                                          const SampleParams& sampleLevel,   // the slice's own sample
+                                          int sliceStartSample,
+                                          int sliceEndSample,
+                                          bool usePreview = false,
+                                          int previewStartSample = 0,
+                                          int previewEndSample = 0)
+{
+    LoopDisplayState state;
+    const int boundedSliceEnd = juce::jmax (sliceStartSample + 1, sliceEndSample);
+
+    state.mode = (slice.lockMask & kLockLoop) != 0 ? slice.loopMode : sampleLevel.loopMode;
+    if (state.mode == 0)
+        return state;
+
+    state.active = true;
+
+    if (usePreview)
+    {
+        state.startSample = juce::jlimit (sliceStartSample, boundedSliceEnd - 1, previewStartSample);
+        state.endSample = juce::jlimit (state.startSample + 1, boundedSliceEnd, previewEndSample);
+        return state;
+    }
+
+    const int loopStartOffset = (slice.lockMask & kLockLoopStart) != 0 ? slice.loopStartOffset : 0;
+    const int loopLength = (slice.lockMask & kLockLoopLength) != 0 ? slice.loopLength : 0;
+
+    state.startSample = juce::jlimit (sliceStartSample, boundedSliceEnd - 1,
+                                      sliceStartSample + loopStartOffset);
+    state.endSample = (loopLength > 0)
+        ? juce::jlimit (state.startSample + 1, boundedSliceEnd, state.startSample + loopLength)
+        : boundedSliceEnd;
+    return state;
+}
+
+juce::Rectangle<float> makeSliceHandleBounds (int x, int componentHeight, bool isLeft, bool highlighted)
+{
+    const float handleHeight = highlighted ? 30.0f : 24.0f;
+    const float handleY = (float) componentHeight - handleHeight;
+    return { (float) x - (isLeft ? 2.0f : 3.0f), handleY, 5.0f, handleHeight };
+}
+
+juce::Rectangle<float> makeLoopHandleBounds (int x, bool isLeft, bool highlighted)
+{
+    const float handleHeight = highlighted ? 22.0f : 18.0f;
+    return { (float) x - (isLeft ? 2.0f : 3.0f), 2.0f, 5.0f, handleHeight };
+}
+
+juce::String getEmptyWaveformPrompt()
+{
+    return Intersect::LinuxDesktopSupport::shouldUseWaylandDndFallbackMessaging()
+        ? "OPEN FILES TO LOAD AUDIO"
+        : "DROP AUDIO FILE OR OPEN FILES";
+}
+
+juce::String getWaylandEmptyStateHint()
+{
+    return "Wayland/XWayland session: drag-and-drop may be unavailable";
+}
+
+void paintHintBanner (juce::Graphics& g, const juce::String& text, int componentWidth, int componentHeight)
+{
+    if (text.isEmpty())
+        return;
+
+    g.setFont (IntersectLookAndFeel::makeFont (12.0f));
+    juce::GlyphArrangement ga;
+    ga.addLineOfText (g.getCurrentFont(), text, 0.0f, 0.0f);
+    const int textW = juce::roundToInt (ga.getBoundingBox (0, -1, true).getWidth()) + 24;
+    const int maxW = juce::jmax (120, componentWidth - 16);
+    const int bannerW = juce::jlimit (120, maxW, textW);
+    const int bannerH = 24;
+    const int bannerX = juce::jmax (4, (componentWidth - bannerW) / 2);
+    const int bannerY = juce::jmax (4, componentHeight - bannerH - 6);
+    auto banner = juce::Rectangle<float> ((float) bannerX, (float) bannerY, (float) bannerW, (float) bannerH);
+
+    g.setColour (getTheme().surface2.withAlpha (0.94f));
+    g.fillRoundedRectangle (banner, 4.0f);
+    g.setColour (getTheme().surface5.withAlpha (0.85f));
+    g.drawRoundedRectangle (banner.reduced (0.5f), 4.0f, 1.0f);
+    g.setColour (getTheme().text2.withAlpha (0.9f));
+    g.drawFittedText (text, banner.toNearestInt().reduced (8, 2), juce::Justification::centred, 1);
+}
+} // namespace
+
+WaveformView::WaveformView (IntersectProcessor& p) : processor (p)
+{
+    if (Intersect::LinuxDesktopSupport::shouldUseWaylandDndFallbackMessaging())
+    {
+        waylandHintHideTimeMs = juce::Time::getMillisecondCounterHiRes() + 5000.0;
+        juce::Timer::callAfterDelay (5100, [safe = juce::Component::SafePointer<WaveformView> (this)]
+        {
+            if (safe != nullptr)
+                safe->repaint();
+        });
+    }
+}
+
+void WaveformView::setSliceDrawMode (bool active)
+{
+    sliceDrawMode = active;
+    setMouseCursor (active ? juce::MouseCursor::IBeamCursor : juce::MouseCursor::NormalCursor);
+    if (! active && overlayHintSticky)
+        clearOverlayHint();
+}
+
+void WaveformView::showOverlayHint (const juce::String& text, int durationMs, bool stickyUntilAction)
+{
+    overlayHintText = text.trim();
+    overlayHintSticky = stickyUntilAction;
+
+    stopTimer();
+    if (overlayHintText.isNotEmpty() && ! overlayHintSticky)
+        startTimer (juce::jmax (100, durationMs));
+
+    repaint();
+}
+
+void WaveformView::clearOverlayHint()
+{
+    overlayHintText.clear();
+    overlayHintSticky = false;
+    stopTimer();
+    repaint();
+}
+
+void WaveformView::timerCallback()
+{
+    clearOverlayHint();
+}
+
+bool WaveformView::hasActiveSlicePreview() const noexcept
+{
+    if (dragSliceIdx >= 0)
+        return dragMode == DragEdgeLeft || dragMode == DragEdgeRight || dragMode == MoveSlice;
+
+    IntersectProcessor::MidiBoundaryPreviewState preview;
+    return processor.getMidiBoundaryPreviewState (preview);
+}
+
+bool WaveformView::getActiveSlicePreview (int& sliceIdx, int& startSample, int& endSample) const
+{
+    if (dragSliceIdx >= 0
+        && (dragMode == DragEdgeLeft || dragMode == DragEdgeRight || dragMode == MoveSlice))
+    {
+        sliceIdx = dragSliceIdx;
+        startSample = dragPreviewStart;
+        endSample = dragPreviewEnd;
+        return true;
+    }
+
+    IntersectProcessor::MidiBoundaryPreviewState preview;
+    if (! processor.getMidiBoundaryPreviewState (preview))
+        return false;
+
+    sliceIdx = preview.sliceIdx;
+    startSample = preview.startSample;
+    endSample = preview.endSample;
+    return true;
+}
+
+bool WaveformView::isInteracting() const noexcept
+{
+    IntersectProcessor::MidiBoundaryPreviewState preview;
+    return dragMode != None || midDragging || shiftPreviewActive
+        || processor.getMidiBoundaryPreviewState (preview);
+}
+
+WaveformView::ViewState WaveformView::buildViewState (const SampleData::SnapshotPtr& sampleSnap) const
+{
+    ViewState state;
+    if (sampleSnap == nullptr)
+        return state;
+
+    const int numFrames = sampleSnap->buffer.getNumSamples();
+    const int width = getWidth();
+    if (numFrames <= 0 || width <= 0)
+        return state;
+
+    const float z = std::max (1.0f, processor.zoom.load());
+    const float sc = processor.scroll.load();
+    const int visibleLen = juce::jlimit (1, numFrames, (int) (numFrames / z));
+    const int maxStart = juce::jmax (0, numFrames - visibleLen);
+    const int visibleStart = juce::jlimit (0, maxStart, (int) (sc * (float) maxStart));
+
+    state.numFrames = numFrames;
+    state.visibleStart = visibleStart;
+    state.visibleLen = visibleLen;
+    state.width = width;
+    state.samplesPerPixel = (float) visibleLen / (float) width;
+    state.valid = true;
+    return state;
+}
+
+int WaveformView::pixelToSample (int px) const
+{
+    if (paintViewStateActive && cachedPaintViewState.valid)
+    {
+        return cachedPaintViewState.visibleStart
+            + (int) ((float) px / (float) cachedPaintViewState.width * cachedPaintViewState.visibleLen);
+    }
+
+    const auto state = buildViewState (processor.sampleData.getSnapshot());
+    if (! state.valid)
+        return 0;
+    return state.visibleStart + (int) ((float) px / (float) state.width * state.visibleLen);
+}
+
+int WaveformView::sampleToPixel (int sample) const
+{
+    if (paintViewStateActive && cachedPaintViewState.valid)
+    {
+        return (int) ((float) (sample - cachedPaintViewState.visibleStart)
+                      / (float) cachedPaintViewState.visibleLen
+                      * (float) cachedPaintViewState.width);
+    }
+
+    const auto state = buildViewState (processor.sampleData.getSnapshot());
+    if (! state.valid)
+        return 0;
+    return (int) ((float) (sample - state.visibleStart) / (float) state.visibleLen * (float) state.width);
+}
+
+void WaveformView::rebuildCacheIfNeeded()
+{
+    auto sampleSnap = processor.sampleData.getSnapshot();
+    const auto view = buildViewState (sampleSnap);
+    if (! view.valid)
+        return;
+
+    const CacheKey key { view.visibleStart, view.visibleLen, view.width, view.numFrames, sampleSnap.get() };
+    if (key == prevCacheKey)
+        return;
+
+    cache.rebuild (sampleSnap->buffer, sampleSnap->peakMipmaps,
+                   view.numFrames, processor.zoom.load(), processor.scroll.load(), view.width);
+    prevCacheKey = key;
+}
+
+void WaveformView::paint (juce::Graphics& g)
+{
+    auto sampleSnap = processor.sampleData.getSnapshot();
+    g.fillAll (getTheme().surface0);
+
+    int cy = getHeight() / 2;
+    g.setColour (getTheme().surface4.withAlpha (0.5f));
+    g.drawHorizontalLine (cy, 0.0f, (float) getWidth());
+    g.setColour (getTheme().surface4.withAlpha (0.2f));
+    g.drawHorizontalLine (getHeight() / 4, 0.0f, (float) getWidth());
+    g.drawHorizontalLine (getHeight() * 3 / 4, 0.0f, (float) getWidth());
+
+    if (sampleSnap != nullptr)
+    {
+        cachedPaintViewState = buildViewState (sampleSnap);
+        paintViewStateActive = cachedPaintViewState.valid;
+        if (cachedPaintViewState.valid)
+        {
+            for (size_t i = 0; i < sampleSnap->sessionSamples.size(); ++i)
+            {
+                const auto& sample = sampleSnap->sessionSamples[i];
+                int x1 = (int) ((float) (sample.startFrame - cachedPaintViewState.visibleStart)
+                                / (float) cachedPaintViewState.visibleLen * (float) getWidth());
+                int x2 = (int) ((float) (sample.startFrame + sample.numFrames - cachedPaintViewState.visibleStart)
+                                / (float) cachedPaintViewState.visibleLen * (float) getWidth());
+                x1 = juce::jlimit (0, getWidth(), x1);
+                x2 = juce::jlimit (0, getWidth(), x2);
+                if (x2 > x1)
+                {
+                    g.setColour ((i % 2 == 0 ? getTheme().surface1 : getTheme().surface2).withAlpha (0.22f));
+                    g.fillRect (x1, 0, x2 - x1, getHeight());
+                }
+            }
+        }
+        rebuildCacheIfNeeded();
+        drawWaveform (g);
+        paintPlaceholders (g, sampleSnap);
+        drawSlices (g);
+        drawFadeRegions (g);
+        paintDrawSlicePreview (g);
+        paintLazyChopOverlay (g);
+        paintTransientMarkers (g);
+        drawPlaybackCursors (g);
+        paintViewStateActive = false;
+    }
+    else
+    {
+        paintViewStateActive = false;
+        g.setColour (getTheme().text2.withAlpha (0.25f));
+        const auto prompt = getEmptyWaveformPrompt();
+        g.setFont (IntersectLookAndFeel::fitFontToWidth (prompt, 22.0f, 12.0f, getWidth() - 24, true));
+        g.drawFittedText (prompt, getLocalBounds().reduced (12, 0), juce::Justification::centred, 1);
+
+        if (overlayHintText.isEmpty()
+            && waylandHintHideTimeMs > 0.0
+            && juce::Time::getMillisecondCounterHiRes() < waylandHintHideTimeMs)
+            paintHintBanner (g, getWaylandEmptyStateHint(), getWidth(), getHeight());
+    }
+
+    paintOverlayHint (g);
+}
+
+std::vector<WaveformView::PlaceholderSlot> WaveformView::getPlaceholderSlots (const SampleData::SnapshotPtr& sampleSnap) const
+{
+    std::vector<PlaceholderSlot> slots;
+    if (sampleSnap == nullptr)
+        return slots;
+
+    const auto view = buildViewState (sampleSnap);
+    if (! view.valid)
+        return slots;
+
+    const int w = getWidth();
+    auto toPixel = [&] (int frame)
+    {
+        return (int) ((float) (frame - view.visibleStart) / (float) view.visibleLen * (float) w);
+    };
+
+    for (const auto& sample : sampleSnap->sessionSamples)
+    {
+        if (! sample.isPlaceholder())
+            continue;
+
+        const int x1 = juce::jlimit (0, w, toPixel (sample.startFrame));
+        const int x2 = juce::jlimit (0, w, toPixel (sample.startFrame + sample.numFrames));
+        if (x2 <= x1)
+            continue;
+
+        PlaceholderSlot slot;
+        slot.sampleId = sample.sampleId;
+        slot.bounds = { x1, 0, x2 - x1, getHeight() };
+
+        const int buttonW = juce::jmin (72, slot.bounds.getWidth() - 8);
+        if (buttonW >= 28)
+            slot.relinkButton = juce::Rectangle<int> (buttonW, 20).withCentre (slot.bounds.getCentre().translated (0, 8));
+        slots.push_back (slot);
+    }
+    return slots;
+}
+
+const WaveformView::PlaceholderSlot* WaveformView::findPlaceholderAt (const std::vector<PlaceholderSlot>& slots, int x) const
+{
+    for (const auto& slot : slots)
+        if (x >= slot.bounds.getX() && x < slot.bounds.getRight())
+            return &slot;
+    return nullptr;
+}
+
+void WaveformView::paintPlaceholders (juce::Graphics& g, const SampleData::SnapshotPtr& sampleSnap)
+{
+    const auto slots = getPlaceholderSlots (sampleSnap);
+    if (slots.empty())
+        return;
+
+    const auto& ui = processor.getUiSliceSnapshot();
+    const auto missingColour = getTheme().color5;
+
+    for (const auto& slot : slots)
+    {
+        const IntersectProcessor::UiSliceSnapshot::UiSessionSample* info = nullptr;
+        for (int i = 0; i < ui.numSessionSamples; ++i)
+            if (ui.sessionSamples[(size_t) i].sampleId == slot.sampleId)
+                info = &ui.sessionSamples[(size_t) i];
+
+        const auto area = slot.bounds;
+        g.setColour (getTheme().surface0);
+        g.fillRect (area);
+
+        // Diagonal hatching marks the slot as empty rather than silent audio.
+        {
+            juce::Graphics::ScopedSaveState clip (g);
+            g.reduceClipRegion (area);
+            g.setColour (missingColour.withAlpha (0.10f));
+            for (int x = area.getX() - area.getHeight(); x < area.getRight(); x += 12)
+                g.drawLine ((float) x, (float) area.getBottom(), (float) (x + area.getHeight()), (float) area.getY(), 1.0f);
+        }
+        g.setColour (missingColour.withAlpha (0.55f));
+        g.drawRect (area.reduced (1, 1), 1);
+
+        if (area.getWidth() < 28)
+            continue;
+
+        const bool unreadable = info != nullptr
+            && info->availability == SampleData::SessionSample::Availability::unreadable;
+        const auto textArea = area.reduced (6, 0);
+        const int centreY = area.getCentreY();
+
+        g.setColour (missingColour.brighter (0.15f));
+        g.setFont (IntersectLookAndFeel::makeFont (10.0f, true));
+        g.drawFittedText (unreadable ? "CAN'T READ" : "MISSING",
+                          textArea.withY (centreY - 44).withHeight (14), juce::Justification::centred, 1, 0.8f);
+
+        if (info != nullptr)
+        {
+            g.setColour (getTheme().text1);
+            g.setFont (IntersectLookAndFeel::makeFont (11.0f));
+            g.drawFittedText (info->fileName.toString(),
+                              textArea.withY (centreY - 28).withHeight (16), juce::Justification::centred, 1, 0.7f);
+        }
+
+        if (! slot.relinkButton.isEmpty())
+        {
+            g.setColour (missingColour);
+            g.fillRoundedRectangle (slot.relinkButton.toFloat(), 3.0f);
+            g.setColour (juce::Colours::white);
+            g.setFont (IntersectLookAndFeel::makeFont (10.0f, true));
+            g.drawFittedText ("RELINK", slot.relinkButton, juce::Justification::centred, 1, 0.8f);
+        }
+
+        if (info != nullptr && info->parkedSlices > 0)
+        {
+            g.setColour (getTheme().text2);
+            g.setFont (IntersectLookAndFeel::makeFont (10.0f));
+            g.drawFittedText (juce::String (info->parkedSlices) + (info->parkedSlices == 1 ? " slice waiting" : " slices waiting"),
+                              textArea.withY (centreY + 24).withHeight (14), juce::Justification::centred, 1, 0.7f);
+        }
+    }
+}
+
+void WaveformView::paintDrawSlicePreview (juce::Graphics& g)
+{
+    // Draw active slice region while dragging in +SLC mode
+    if (dragMode == DrawSlice)
+    {
+        int x1 = sampleToPixel (std::min (drawStart, drawEnd));
+        int x2 = sampleToPixel (std::max (drawStart, drawEnd));
+        if (x2 > x1)
+        {
+            g.setColour (getTheme().accent.withAlpha (0.2f));
+            g.fillRect (x1, 0, x2 - x1, getHeight());
+            g.setColour (getTheme().accent.withAlpha (0.6f));
+            g.drawVerticalLine (x1, 0.0f, (float) getHeight());
+            g.drawVerticalLine (x2, 0.0f, (float) getHeight());
+        }
+    }
+
+    // Draw ghost overlay for Ctrl-drag duplicate
+    if (dragMode == DuplicateSlice)
+    {
+        int gx1 = sampleToPixel (ghostStart);
+        int gx2 = sampleToPixel (ghostEnd);
+        if (gx2 > gx1)
+        {
+            g.setColour (getTheme().accent.withAlpha (0.15f));
+            g.fillRect (gx1, 0, gx2 - gx1, getHeight());
+            juce::Path p;
+            p.addRectangle ((float) gx1, 0.5f, (float)(gx2 - gx1), (float) getHeight() - 1.0f);
+            float dl[] = { 4.0f, 4.0f };
+            juce::PathStrokeType pst (1.0f);
+            juce::Path dashed;
+            pst.createDashedStroke (dashed, p, dl, 2);
+            g.setColour (getTheme().accent.withAlpha (0.75f));
+            g.strokePath (dashed, pst);
+        }
+    }
+}
+
+void WaveformView::paintLazyChopOverlay (juce::Graphics& g)
+{
+    if (! (processor.lazyChop.isActive() && processor.lazyChop.isPlaying()
+           && processor.lazyChop.getChopPos() >= 0))
+        return;
+
+    int previewIdx = LazyChopEngine::getPreviewVoiceIndex();
+    const auto previewIndex = static_cast<size_t> (previewIdx);
+    float playhead = processor.voicePool.voicePositions[previewIndex].load (std::memory_order_relaxed);
+    if (playhead <= 0.0f)
+        return;
+
+    int chopSample = processor.lazyChop.getChopPos();
+    int headSample = (int) playhead;
+    int x1 = sampleToPixel (std::min (chopSample, headSample));
+    int x2 = sampleToPixel (std::max (chopSample, headSample));
+    if (x2 > x1)
+    {
+        g.setColour (getTheme().color5.withAlpha (0.15f));
+        g.fillRect (x1, 0, x2 - x1, getHeight());
+        g.setColour (getTheme().color5.withAlpha (0.5f));
+        g.drawVerticalLine (sampleToPixel (chopSample), 0.0f, (float) getHeight());
+    }
+}
+
+void WaveformView::paintTransientMarkers (juce::Graphics& g)
+{
+    if (transientPreviewPositions.empty())
+        return;
+
+    g.setColour (getTheme().accent.withAlpha (0.6f));
+    float dashLengths[] = { 4.0f, 3.0f };
+    for (int pos : transientPreviewPositions)
+    {
+        int px = sampleToPixel (pos);
+        if (px >= 0 && px < getWidth())
+        {
+            juce::Path dashPath;
+            dashPath.startNewSubPath ((float) px, 0.0f);
+            dashPath.lineTo ((float) px, (float) getHeight());
+            juce::PathStrokeType stroke (1.0f);
+            juce::Path dashedPath;
+            stroke.createDashedStroke (dashedPath, dashPath, dashLengths, 2);
+            g.fillPath (dashedPath);
+        }
+    }
+}
+
+void WaveformView::paintOverlayHint (juce::Graphics& g)
+{
+    if (overlayHintText.isEmpty())
+        return;
+
+    paintHintBanner (g, overlayHintText, getWidth(), getHeight());
+}
+
+void WaveformView::drawWaveform (juce::Graphics& g)
+{
+    int cy = getHeight() / 2;
+    float scale = getHeight() * UILayout::waveformVerticalScale;
+
+    auto& peaks = cache.getPeaks();
+    int numPeaks = std::min (cache.getNumPeaks(), getWidth());
+
+    if (numPeaks <= 0)
+        return;
+
+    float samplesPerPixel = 1.0f;
+    if (paintViewStateActive && cachedPaintViewState.valid)
+    {
+        samplesPerPixel = cachedPaintViewState.samplesPerPixel;
+    }
+    else
+    {
+        const auto view = buildViewState (processor.sampleData.getSnapshot());
+        if (view.valid)
+            samplesPerPixel = view.samplesPerPixel;
+    }
+
+    if (samplesPerPixel < 1.0f)
+    {
+        // Sub-sample zoom: draw connected lines between sample points
+        g.setColour (getTheme().waveform.withAlpha (0.9f));
+        juce::Path path;
+        bool pathStarted = false;
+
+        for (int px = 0; px < numPeaks; ++px)
+        {
+            float y = (float) cy - peaks[(size_t) px].maxVal * scale;
+            if (! pathStarted)
+            {
+                path.startNewSubPath ((float) px, y);
+                pathStarted = true;
+            }
+            else
+            {
+                path.lineTo ((float) px, y);
+            }
+        }
+
+        g.strokePath (path, juce::PathStrokeType (1.5f));
+
+        // Draw sample dots when zoomed in very far (> 8 pixels per sample)
+        if (samplesPerPixel < 0.125f)
+        {
+            float dotR = 2.5f;
+            for (int px = 0; px < numPeaks; ++px)
+            {
+                float exactPos = (float) pixelToSample (0) + px * samplesPerPixel;
+                float fractional = exactPos - std::floor (exactPos);
+                if (fractional < samplesPerPixel)
+                {
+                    float y = (float) cy - peaks[(size_t) px].maxVal * scale;
+                    g.fillEllipse ((float) px - dotR, y - dotR, dotR * 2.0f, dotR * 2.0f);
+                }
+            }
+        }
+    }
+    else
+    {
+        // Normal zoom: filled path waveform
+        g.setColour (getTheme().waveform);
+
+        juce::Path fillPath;
+
+        // Top envelope (max peaks, left to right)
+        fillPath.startNewSubPath (0.0f, (float) cy - peaks[0].maxVal * scale);
+        for (int px = 1; px < numPeaks; ++px)
+        {
+            fillPath.lineTo ((float) px, (float) cy - peaks[(size_t) px].maxVal * scale);
+        }
+
+        // Bottom envelope (min peaks, right to left)
+        for (int px = numPeaks - 1; px >= 0; --px)
+        {
+            fillPath.lineTo ((float) px, (float) cy - peaks[(size_t) px].minVal * scale);
+        }
+
+        fillPath.closeSubPath();
+        g.fillPath (fillPath);
+
+        // When zoomed in close (few samples per pixel), the fill becomes
+        // sub-pixel thin and disappears. Draw a centre-line to keep the
+        // waveform visible through the transition zone.
+        if (samplesPerPixel < 8.0f)
+        {
+            juce::Path midPath;
+            float midY0 = (float) cy - (peaks[0].maxVal + peaks[0].minVal) * 0.5f * scale;
+            midPath.startNewSubPath (0.0f, midY0);
+            for (int px = 1; px < numPeaks; ++px)
+            {
+                float mid = (peaks[(size_t) px].maxVal + peaks[(size_t) px].minVal) * 0.5f;
+                midPath.lineTo ((float) px, (float) cy - mid * scale);
+            }
+            g.strokePath (midPath, juce::PathStrokeType (1.5f));
+        }
+    }
+}
+
+void WaveformView::drawSlices (juce::Graphics& g)
+{
+    const auto& ui = processor.getUiSliceSnapshot();
+    int sel = ui.selectedSlice;
+    int num = ui.numSlices;
+    int previewIdx = -1;
+    int previewStart = 0;
+    int previewEnd = 0;
+    const bool previewActive = getActiveSlicePreview (previewIdx, previewStart, previewEnd);
+
+    for (int i = 0; i < num; ++i)
+    {
+        const auto& s = ui.slices[(size_t) i];
+        if (! isEditableSlice (s)) continue;
+
+        int drawStartSample = s.startSample;
+        int drawEndSample = s.endSample;
+        if (previewActive && previewIdx == i)
+        {
+            drawStartSample = previewStart;
+            drawEndSample = previewEnd;
+        }
+
+        int x1 = std::max (0, sampleToPixel (drawStartSample));
+        int x2 = std::min (getWidth(), sampleToPixel (drawEndSample));
+        int sw = x2 - x1;
+        if (sw <= 0) continue;
+
+        if (i == sel || (previewActive && previewIdx == i))
+        {
+            g.setColour (s.colour.withAlpha (0.05f));
+            g.fillRect (x1, 0, sw, getHeight());
+
+            g.setColour (s.colour.withAlpha (0.42f));
+            g.drawVerticalLine (x1, 0.0f, (float) getHeight());
+            g.drawVerticalLine (x2 - 1, 0.0f, (float) getHeight());
+
+            const bool sliceLeftHighlighted = (hoveredHandle == HoveredHandle::SliceLeft)
+                || (dragMode == DragEdgeLeft && dragSliceIdx == i);
+            const bool sliceRightHighlighted = (hoveredHandle == HoveredHandle::SliceRight)
+                || (dragMode == DragEdgeRight && dragSliceIdx == i);
+            g.fillRoundedRectangle (makeSliceHandleBounds (x1, getHeight(), true, sliceLeftHighlighted), 2.0f);
+            g.fillRoundedRectangle (makeSliceHandleBounds (x2, getHeight(), false, sliceRightHighlighted), 2.0f);
+
+            if (i == sel)
+            {
+                const bool useLoopPreview = dragSliceIdx == i
+                    && (dragMode == DragLoopLeft || dragMode == DragLoopRight);
+                const auto loopState = resolveLoopDisplayState (s, ui.sampleParamsFor (s.sampleId),
+                                                                drawStartSample, drawEndSample,
+                                                                useLoopPreview,
+                                                                dragLoopPreviewStart, dragLoopPreviewEnd);
+                if (loopState.active)
+                {
+                    const int loopX1 = sampleToPixel (loopState.startSample);
+                    const int loopX2 = sampleToPixel (loopState.endSample);
+
+                    g.setColour (s.colour.withAlpha (0.7f));
+                    g.drawVerticalLine (loopX1, 0.0f, (float) getHeight());
+                    g.drawVerticalLine (loopX2 - 1, 0.0f, (float) getHeight());
+
+                    const bool loopLeftHighlighted = (hoveredHandle == HoveredHandle::LoopLeft)
+                        || (dragMode == DragLoopLeft && dragSliceIdx == i);
+                    const bool loopRightHighlighted = (hoveredHandle == HoveredHandle::LoopRight)
+                        || (dragMode == DragLoopRight && dragSliceIdx == i);
+                    g.fillRoundedRectangle (makeLoopHandleBounds (loopX1, true, loopLeftHighlighted), 2.0f);
+                    g.fillRoundedRectangle (makeLoopHandleBounds (loopX2, false, loopRightHighlighted), 2.0f);
+                }
+            }
+
+            g.setColour (s.colour.withAlpha (0.92f));
+            g.setFont (IntersectLookAndFeel::makeFont (9.0f, true));
+            g.drawText ("Slice " + juce::String (i + 1), x1, 7, sw, 12, juce::Justification::centredTop);
+        }
+        else
+        {
+            g.setColour (s.colour.withAlpha (0.12f));
+            g.drawVerticalLine (x1, 0.0f, (float) getHeight());
+            g.drawVerticalLine (x2 - 1, 0.0f, (float) getHeight());
+        }
+    }
+}
+
+void WaveformView::drawFadeRegions (juce::Graphics& g)
+{
+    const auto& ui = processor.getUiSliceSnapshot();
+    const int sel = ui.selectedSlice;
+    if (sel < 0 || sel >= ui.numSlices) return;
+
+    const auto& s = ui.slices[(size_t) sel];
+    if (! isEditableSlice (s)) return;
+
+    // Also only show if loop mode is active
+    const auto& sampleLevel = ui.sampleParamsFor (s.sampleId);
+
+    const float resolvedCrossfade = (s.lockMask & kLockCrossfade) ? s.crossfadePct : sampleLevel.crossfadePct;
+    if (resolvedCrossfade <= 0.0f) return;
+
+    const bool useLoopPreview = dragSliceIdx == sel
+        && (dragMode == DragLoopLeft || dragMode == DragLoopRight);
+    const auto loopState = resolveLoopDisplayState (s, ui.sampleParamsFor (s.sampleId),
+                                                    s.startSample, s.endSample,
+                                                    useLoopPreview,
+                                                    dragLoopPreviewStart, dragLoopPreviewEnd);
+    if (! loopState.active) return;
+
+    const int loopLen = loopState.endSample - loopState.startSample;
+    if (loopLen <= 0) return;
+
+    const bool reverse = (s.lockMask & kLockReverse) ? s.reverse : sampleLevel.reverse;
+    const bool pingPong = (loopState.mode == 2);
+    const int bufferEnd = processor.sampleData.getNumFrames();
+
+    int fadeLen = crossfadePercentToSamples (resolvedCrossfade, loopLen, pingPong);
+    if (pingPong)
+        fadeLen = clampPingPongCrossfadeLengthSamples (fadeLen, loopState.startSample, loopState.endSample, bufferEnd);
+    else
+        fadeLen = clampLoopCrossfadeLengthSamples (fadeLen, loopState.startSample, loopState.endSample, bufferEnd, reverse);
+
+    if (fadeLen <= 0) return;
+
+    const float h = (float) getHeight();
+    const auto fadeColour = s.colour.withAlpha (0.18f);
+    const auto fillFadeTriangle = [&] (int sampleA, int sampleB, int boundarySample)
+    {
+        const int x1 = sampleToPixel (sampleA);
+        const int x2 = sampleToPixel (sampleB);
+        const int xb = sampleToPixel (boundarySample);
+        if (x2 <= x1 || x2 <= 0 || x1 >= getWidth())
+            return;
+
+        juce::Path triangle;
+        triangle.startNewSubPath ((float) x1, h);
+        triangle.lineTo ((float) x2, h);
+        triangle.lineTo ((float) xb, 0.0f);
+        triangle.closeSubPath();
+
+        g.setColour (fadeColour);
+        g.fillPath (triangle);
+    };
+
+    if (pingPong)
+    {
+        fillFadeTriangle (loopState.startSample - fadeLen, loopState.startSample, loopState.startSample);
+        fillFadeTriangle (loopState.startSample, loopState.startSample + fadeLen, loopState.startSample);
+        fillFadeTriangle (loopState.endSample - fadeLen, loopState.endSample, loopState.endSample);
+        fillFadeTriangle (loopState.endSample, loopState.endSample + fadeLen, loopState.endSample);
+        return;
+    }
+
+    if (reverse)
+    {
+        fillFadeTriangle (loopState.startSample, loopState.startSample + fadeLen, loopState.startSample);
+        fillFadeTriangle (loopState.endSample, loopState.endSample + fadeLen, loopState.endSample);
+        return;
+    }
+
+    fillFadeTriangle (loopState.startSample - fadeLen, loopState.startSample, loopState.startSample);
+    fillFadeTriangle (loopState.endSample - fadeLen, loopState.endSample, loopState.endSample);
+}
+
+void WaveformView::drawPlaybackCursors (juce::Graphics& g)
+{
+    int previewIdx = LazyChopEngine::getPreviewVoiceIndex();
+    for (int i = 0; i < VoicePool::kMaxVoices; ++i)
+    {
+        const auto voiceIndex = static_cast<size_t> (i);
+        float pos = processor.voicePool.voicePositions[voiceIndex].load (std::memory_order_relaxed);
+        if (pos > 0.0f)
+        {
+            int px = sampleToPixel ((int) pos);
+            if (px >= 0 && px < getWidth())
+            {
+                if (i == previewIdx && processor.lazyChop.isActive())
+                    g.setColour (getTheme().color5);
+                else
+                    g.setColour (getTheme().accent.withAlpha (0.7f));  // yellow
+
+                g.drawVerticalLine (px, 0.0f, (float) getHeight());
+            }
+        }
+    }
+
+    // Draw crossfade source cursor for selected slice voices
+    const auto& ui = processor.getUiSliceSnapshot();
+    const int sel = ui.selectedSlice;
+    if (sel >= 0 && sel < ui.numSlices)
+    {
+        const auto& s = ui.slices[(size_t) sel];
+        if (isEditableSlice (s))
+        {
+            for (int i = 0; i < VoicePool::kMaxVoices; ++i)
+            {
+                if (processor.voicePool.getVoice (i).sliceIdx != sel) continue;
+                const auto voiceIndex = static_cast<size_t> (i);
+                float xfPos = processor.voicePool.xfadeSourcePositions[voiceIndex].load (std::memory_order_relaxed);
+                if (xfPos > 0.0f)
+                {
+                    int px = sampleToPixel ((int) xfPos);
+                    if (px >= 0 && px < getWidth())
+                    {
+                        g.setColour (s.colour);
+                        g.drawVerticalLine (px, 0.0f, (float) getHeight());
+                    }
+                }
+            }
+        }
+    }
+}
+
+void WaveformView::resized()
+{
+    prevCacheKey = {};  // force cache rebuild
+}
+
+void WaveformView::syncAltStateFromMods (const juce::ModifierKeys& mods)
+{
+    const bool alt = mods.isAltDown();
+    if (alt == altModeActive)
+        return;
+
+    altModeActive = alt;
+    hoveredHandle = HoveredHandle::None;
+
+    if (alt)
+        setMouseCursor (juce::MouseCursor::IBeamCursor);
+    else if (dragMode != DrawSlice)
+        setMouseCursor (juce::MouseCursor::NormalCursor);
+
+    repaint();
+}
+
+void WaveformView::mouseMove (const juce::MouseEvent& e)
+{
+    syncAltStateFromMods (e.mods);
+
+    auto sampleSnap = processor.sampleData.getSnapshot();
+    if (sampleSnap == nullptr) return;
+
+    {
+        const auto slots = getPlaceholderSlots (sampleSnap);
+        if (const auto* slot = findPlaceholderAt (slots, e.x))
+        {
+            if (hoveredHandle != HoveredHandle::None)
+            {
+                hoveredHandle = HoveredHandle::None;
+                repaint();
+            }
+            setMouseCursor (slot->relinkButton.contains (e.getPosition()) ? juce::MouseCursor::PointingHandCursor
+                                                                         : juce::MouseCursor::NormalCursor);
+            return;
+        }
+    }
+    const auto& ui = processor.getUiSliceSnapshot();
+    int sel = ui.selectedSlice;
+    int num = ui.numSlices;
+    HoveredHandle newHandle = HoveredHandle::None;
+
+    if (sel >= 0 && sel < num && ! sliceDrawMode && ! altModeActive)
+    {
+        const auto& s = ui.slices[(size_t) sel];
+        if (isEditableSlice (s))
+        {
+            const bool useLoopPreview = dragSliceIdx == sel
+                && (dragMode == DragLoopLeft || dragMode == DragLoopRight);
+            const auto loopState = resolveLoopDisplayState (s, ui.sampleParamsFor (s.sampleId),
+                                                            s.startSample, s.endSample,
+                                                            useLoopPreview,
+                                                            dragLoopPreviewStart, dragLoopPreviewEnd);
+            const auto mousePos = e.position;
+
+            if (loopState.active)
+            {
+                const auto loopLeftHit = makeLoopHandleBounds (sampleToPixel (loopState.startSample), true, true)
+                    .expanded (4.0f, 3.0f);
+                const auto loopRightHit = makeLoopHandleBounds (sampleToPixel (loopState.endSample), false, true)
+                    .expanded (4.0f, 3.0f);
+
+                if (loopLeftHit.contains (mousePos))
+                    newHandle = HoveredHandle::LoopLeft;
+                else if (loopRightHit.contains (mousePos))
+                    newHandle = HoveredHandle::LoopRight;
+            }
+
+            if (newHandle == HoveredHandle::None)
+            {
+                const int sliceLeftX = sampleToPixel (s.startSample);
+                const int sliceRightX = sampleToPixel (s.endSample);
+
+                if (std::abs (e.x - sliceLeftX) < 6)
+                    newHandle = HoveredHandle::SliceLeft;
+                else if (std::abs (e.x - sliceRightX) < 6)
+                    newHandle = HoveredHandle::SliceRight;
+            }
+        }
+    }
+    if (altModeActive)
+        setMouseCursor (juce::MouseCursor::IBeamCursor);
+    else if (sliceDrawMode)
+        setMouseCursor (juce::MouseCursor::IBeamCursor);
+    else
+        setMouseCursor (newHandle != HoveredHandle::None
+            ? juce::MouseCursor::LeftRightResizeCursor
+            : juce::MouseCursor::NormalCursor);
+
+    if (newHandle != hoveredHandle) { hoveredHandle = newHandle; repaint(); }
+}
+
+void WaveformView::mouseEnter (const juce::MouseEvent& e) { mouseMove (e); }
+
+void WaveformView::mouseExit (const juce::MouseEvent&)
+{
+    if (hoveredHandle != HoveredHandle::None) { hoveredHandle = HoveredHandle::None; repaint(); }
+}
+
+void WaveformView::modifierKeysChanged (const juce::ModifierKeys& mods)
+{
+    syncAltStateFromMods (mods);
+}
+
+void WaveformView::mouseDown (const juce::MouseEvent& e)
+{
+    if (onInteraction != nullptr)
+        onInteraction();
+
+    syncAltStateFromMods (e.mods);
+
+    auto sampleSnap = processor.sampleData.getSnapshot();
+    if (sampleSnap == nullptr)
+        return;
+
+    // Middle-mouse drag: scroll+zoom (like ScrollZoomBar)
+    if (e.mods.isMiddleButtonDown())
+    {
+        midDragging = true;
+        midDragStartZoom = processor.zoom.load();
+        midDragStartX = e.x;
+        midDragStartY = e.y;
+
+        int w = getWidth();
+        float z = midDragStartZoom;
+        float sc = processor.scroll.load();
+        float viewFrac = 1.0f / z;
+        float viewStart = sc * (1.0f - viewFrac);
+
+        midDragAnchorPixelFrac = (w > 0) ? (float) e.x / (float) w : 0.5f;
+        midDragAnchorFrac = juce::jlimit (0.0f, 1.0f, viewStart + midDragAnchorPixelFrac * viewFrac);
+        return;
+    }
+
+    // A placeholder slot holds no audio: its only action is RELINK.
+    {
+        const auto slots = getPlaceholderSlots (sampleSnap);
+        if (const auto* slot = findPlaceholderAt (slots, e.x))
+        {
+            if (slot->relinkButton.contains (e.getPosition()) && onRelinkRequested != nullptr)
+                onRelinkRequested (slot->sampleId);
+            return;
+        }
+    }
+
+    int samplePos = std::max (0, std::min (pixelToSample (e.x), sampleSnap->buffer.getNumSamples()));
+
+    // Shift+click: preview audio from pointer position
+    if (e.mods.isShiftDown() && ! sliceDrawMode && ! altModeActive
+        && ! processor.lazyChop.isActive())
+    {
+        shiftPreviewActive = true;
+        processor.shiftPreviewRequest.store (samplePos, std::memory_order_relaxed);
+        return;
+    }
+
+    if (sliceDrawMode || altModeActive)
+    {
+        if (overlayHintSticky)
+            clearOverlayHint();
+
+        drawStart = samplePos;
+        drawEnd = samplePos;
+        drawStartedFromAlt = (! sliceDrawMode && e.mods.isAltDown());
+        dragMode = DrawSlice;
+        return;
+    }
+
+    const auto& ui = processor.getUiSliceSnapshot();
+    int sel = ui.selectedSlice;
+    int num = ui.numSlices;
+
+    if (sel >= 0 && sel < num)
+    {
+        const auto& s = ui.slices[(size_t) sel];
+        if (isEditableSlice (s))
+        {
+            auto tryBeginMouseBoundsDrag = [&] (DragMode newMode) -> bool
+            {
+                int expectedOwner = 0;
+                if (! processor.liveDragOwner.compare_exchange_strong (expectedOwner, 1,
+                                                                       std::memory_order_acq_rel,
+                                                                       std::memory_order_acquire)
+                    && expectedOwner != 1)
+                {
+                    return false;
+                }
+
+                processor.liveDragBoundsStart.store (s.startSample, std::memory_order_relaxed);
+                processor.liveDragBoundsEnd.store   (s.endSample,   std::memory_order_relaxed);
+                processor.liveDragSliceIdx.store    (sel,           std::memory_order_release);
+
+                IntersectProcessor::Command gestureCmd;
+                gestureCmd.type = IntersectProcessor::CmdBeginGesture;
+                processor.pushCommand (gestureCmd);
+                dragMode = newMode;
+                dragSliceIdx = sel;
+                dragPreviewStart = s.startSample;
+                dragPreviewEnd = s.endSample;
+                return true;
+            };
+
+            auto beginLoopHandleDrag = [&] (DragMode newMode, const LoopDisplayState& loopState)
+            {
+                IntersectProcessor::Command gestureCmd;
+                gestureCmd.type = IntersectProcessor::CmdBeginGesture;
+                processor.pushCommand (gestureCmd);
+
+                dragMode = newMode;
+                dragSliceIdx = sel;
+                dragLoopPreviewStart = loopState.startSample;
+                dragLoopPreviewEnd = loopState.endSample;
+            };
+
+            const auto loopState = resolveLoopDisplayState (s, ui.sampleParamsFor (s.sampleId), s.startSample, s.endSample);
+            const auto mousePos = e.position;
+            if (loopState.active)
+            {
+                const auto loopLeftHit = makeLoopHandleBounds (sampleToPixel (loopState.startSample), true, true)
+                    .expanded (4.0f, 3.0f);
+                const auto loopRightHit = makeLoopHandleBounds (sampleToPixel (loopState.endSample), false, true)
+                    .expanded (4.0f, 3.0f);
+
+                if (loopLeftHit.contains (mousePos))
+                {
+                    beginLoopHandleDrag (DragLoopLeft, loopState);
+                    return;
+                }
+                if (loopRightHit.contains (mousePos))
+                {
+                    beginLoopHandleDrag (DragLoopRight, loopState);
+                    return;
+                }
+            }
+
+            int x1 = sampleToPixel (s.startSample);
+            int x2 = sampleToPixel (s.endSample);
+
+            if (std::abs (e.x - x1) < 6)
+            {
+                if (tryBeginMouseBoundsDrag (DragEdgeLeft))
+                    return;
+            }
+            if (std::abs (e.x - x2) < 6)
+            {
+                if (tryBeginMouseBoundsDrag (DragEdgeRight))
+                    return;
+            }
+
+            if (e.x > x1 && e.x < x2)
+            {
+                dragSliceIdx = sel;
+                dragOffset   = samplePos - s.startSample;
+                dragSliceLen = s.endSample - s.startSample;
+
+                if (e.mods.isCtrlDown())
+                {
+                    IntersectProcessor::Command gestureCmd;
+                    gestureCmd.type = IntersectProcessor::CmdBeginGesture;
+                    processor.pushCommand (gestureCmd);
+                    dragMode   = DuplicateSlice;
+                    ghostStart = s.startSample;
+                    ghostEnd   = s.endSample;
+                }
+                else
+                {
+                    int expectedOwner = 0;
+                    if (! processor.liveDragOwner.compare_exchange_strong (expectedOwner, 1,
+                                                                           std::memory_order_acq_rel,
+                                                                           std::memory_order_acquire)
+                        && expectedOwner != 1)
+                    {
+                        return;
+                    }
+
+                    IntersectProcessor::Command gestureCmd;
+                    gestureCmd.type = IntersectProcessor::CmdBeginGesture;
+                    processor.pushCommand (gestureCmd);
+
+                    dragMode = MoveSlice;
+                    dragPreviewStart = s.startSample;
+                    dragPreviewEnd = s.endSample;
+                    processor.liveDragBoundsStart.store (dragPreviewStart, std::memory_order_relaxed);
+                    processor.liveDragBoundsEnd.store   (dragPreviewEnd,   std::memory_order_relaxed);
+                    processor.liveDragSliceIdx.store    (dragSliceIdx,     std::memory_order_release);
+                }
+                return;
+            }
+        }
+    }
+}
+
+void WaveformView::mouseDrag (const juce::MouseEvent& e)
+{
+    syncAltStateFromMods (e.mods);
+
+    auto sampleSnap = processor.sampleData.getSnapshot();
+    if (sampleSnap == nullptr)
+        return;
+
+    // Middle-mouse drag: scroll+zoom
+    if (midDragging)
+    {
+        int w = getWidth();
+        if (w <= 0) return;
+
+        float deltaY = (float) (e.y - midDragStartY);
+        float newZoom = juce::jlimit (1.0f, 16384.0f, midDragStartZoom * UIHelpers::computeZoomFactor (deltaY));
+        processor.zoom.store (newZoom);
+
+        float newViewFrac = 1.0f / newZoom;
+        float hDragFrac = -(float) (e.x - midDragStartX) / (float) w * newViewFrac;
+        float newViewStart = midDragAnchorFrac - midDragAnchorPixelFrac * newViewFrac + hDragFrac;
+
+        float maxScroll = 1.0f - newViewFrac;
+        if (maxScroll > 0.0f)
+            processor.scroll.store (juce::jlimit (0.0f, 1.0f, newViewStart / maxScroll));
+
+        prevCacheKey = {};
+        return;
+    }
+
+    int samplePos = std::max (0, std::min (pixelToSample (e.x), sampleSnap->buffer.getNumSamples()));
+
+    if (dragMode == DrawSlice)
+    {
+        drawEnd = samplePos;
+        if (! sampleSnap->sessionSamples.empty())
+        {
+            const SampleData::SessionSample* owner = nullptr;
+            for (const auto& sample : sampleSnap->sessionSamples)
+            {
+                const int sampleEnd = sample.startFrame + sample.numFrames;
+                if (drawStart >= sample.startFrame && drawStart < sampleEnd)
+                {
+                    owner = &sample;
+                    break;
+                }
+            }
+            if (owner != nullptr)
+                drawEnd = juce::jlimit (owner->startFrame, owner->startFrame + owner->numFrames, drawEnd);
+        }
+        return;
+    }
+
+    const auto& ui = processor.getUiSliceSnapshot();
+
+    if (dragMode == DragEdgeLeft && dragSliceIdx >= 0)
+    {
+        const auto& s = ui.slices[(size_t) dragSliceIdx];
+        if (processor.snapToZeroCrossing.load())
+            samplePos = AudioAnalysis::findNearestZeroCrossing (sampleSnap->buffer, samplePos);
+        if (const auto* owner = findSessionSampleById (sampleSnap, s.sampleId))
+            samplePos = juce::jlimit (owner->startFrame, dragPreviewEnd - kMinSliceLengthSamples, samplePos);
+        dragPreviewStart = std::min (samplePos, dragPreviewEnd - kMinSliceLengthSamples);
+    }
+    else if (dragMode == DragEdgeRight && dragSliceIdx >= 0)
+    {
+        const auto& s = ui.slices[(size_t) dragSliceIdx];
+        if (processor.snapToZeroCrossing.load())
+            samplePos = AudioAnalysis::findNearestZeroCrossing (sampleSnap->buffer, samplePos);
+        if (const auto* owner = findSessionSampleById (sampleSnap, s.sampleId))
+            samplePos = juce::jlimit (dragPreviewStart + kMinSliceLengthSamples, owner->startFrame + owner->numFrames, samplePos);
+        dragPreviewEnd = std::max (samplePos, dragPreviewStart + kMinSliceLengthSamples);
+    }
+    else if (dragMode == DragLoopLeft && dragSliceIdx >= 0 && dragSliceIdx < ui.numSlices)
+    {
+        const auto& s = ui.slices[(size_t) dragSliceIdx];
+        if (processor.snapToZeroCrossing.load())
+            samplePos = AudioAnalysis::findNearestZeroCrossing (sampleSnap->buffer, samplePos);
+        dragLoopPreviewStart = juce::jlimit (s.startSample, dragLoopPreviewEnd - 1, samplePos);
+    }
+    else if (dragMode == DragLoopRight && dragSliceIdx >= 0 && dragSliceIdx < ui.numSlices)
+    {
+        const auto& s = ui.slices[(size_t) dragSliceIdx];
+        if (processor.snapToZeroCrossing.load())
+            samplePos = AudioAnalysis::findNearestZeroCrossing (sampleSnap->buffer, samplePos);
+        dragLoopPreviewEnd = juce::jlimit (dragLoopPreviewStart + 1, s.endSample, samplePos);
+    }
+    else if (dragMode == MoveSlice && dragSliceIdx >= 0)
+    {
+        const auto& s = ui.slices[(size_t) dragSliceIdx];
+        const auto* owner = findSessionSampleById (sampleSnap, s.sampleId);
+        int newStart = samplePos - dragOffset;
+        int newEnd = newStart + dragSliceLen;
+
+        // Clamp to sample bounds
+        const int minStart = owner != nullptr ? owner->startFrame : 0;
+        const int maxEnd = owner != nullptr ? owner->startFrame + owner->numFrames : sampleSnap->buffer.getNumSamples();
+        if (newStart < minStart) { newStart = minStart; newEnd = minStart + dragSliceLen; }
+        if (newEnd > maxEnd) { newEnd = maxEnd; newStart = maxEnd - dragSliceLen; }
+
+        dragPreviewStart = newStart;
+        dragPreviewEnd = newEnd;
+    }
+
+    // Push live bounds to the audio engine so note-ons during drag use the
+    // current edge position. Written before the idx store (release) so the
+    // audio thread sees consistent values after its acquire load on idx.
+    if ((dragMode == DragEdgeLeft || dragMode == DragEdgeRight || dragMode == MoveSlice)
+        && dragSliceIdx >= 0)
+    {
+        if (processor.liveDragOwner.load (std::memory_order_acquire) == 2)
+            return;
+
+        processor.liveDragBoundsStart.store (dragPreviewStart, std::memory_order_relaxed);
+        processor.liveDragBoundsEnd.store   (dragPreviewEnd,   std::memory_order_relaxed);
+        processor.liveDragOwner.store       (1,                std::memory_order_release);
+        processor.liveDragSliceIdx.store    (dragSliceIdx,     std::memory_order_release);
+    }
+
+    if (dragMode == DuplicateSlice && dragSliceIdx >= 0)
+    {
+        int maxLen   = sampleSnap->buffer.getNumSamples();
+        int newStart = juce::jlimit (0, maxLen - dragSliceLen, samplePos - dragOffset);
+        ghostStart   = newStart;
+        ghostEnd     = newStart + dragSliceLen;
+    }
+}
+
+void WaveformView::mouseUp (const juce::MouseEvent& e)
+{
+    syncAltStateFromMods (e.mods);
+
+    auto sampleSnap = processor.sampleData.getSnapshot();
+    const auto& ui = processor.getUiSliceSnapshot();
+
+    // Stop shift preview
+    if (shiftPreviewActive)
+    {
+        shiftPreviewActive = false;
+        processor.shiftPreviewRequest.store (-1, std::memory_order_relaxed);
+        return;
+    }
+
+    if (midDragging)
+    {
+        midDragging = false;
+        return;
+    }
+
+    if (dragMode == DrawSlice)
+    {
+        const bool altStillDown = e.mods.isAltDown();
+        const int maxFrames = sampleSnap ? sampleSnap->buffer.getNumSamples() : 0;
+        int endPos = std::max (0, std::min (pixelToSample (e.x), maxFrames));
+        if (sampleSnap != nullptr && ! sampleSnap->sessionSamples.empty())
+        {
+            const SampleData::SessionSample* owner = nullptr;
+            for (const auto& sample : sampleSnap->sessionSamples)
+            {
+                const int sampleEnd = sample.startFrame + sample.numFrames;
+                if (drawStart >= sample.startFrame && drawStart < sampleEnd)
+                {
+                    owner = &sample;
+                    break;
+                }
+            }
+            if (owner != nullptr)
+                endPos = juce::jlimit (owner->startFrame, owner->startFrame + owner->numFrames, endPos);
+        }
+        if (sampleSnap != nullptr && processor.snapToZeroCrossing.load())
+        {
+            drawStart = AudioAnalysis::findNearestZeroCrossing (sampleSnap->buffer, drawStart);
+            endPos = AudioAnalysis::findNearestZeroCrossing (sampleSnap->buffer, endPos);
+        }
+        if (std::abs (endPos - drawStart) >= kMinSliceLengthSamples)
+        {
+            IntersectProcessor::Command cmd;
+            cmd.type = IntersectProcessor::CmdCreateSlice;
+            cmd.intParam1 = drawStart;
+            cmd.intParam2 = endPos;
+            processor.pushCommand (cmd);
+            if (! altModeActive)
+                setSliceDrawMode (false);
+        }
+
+        if (drawStartedFromAlt && ! altStillDown)
+            setSliceDrawMode (false);
+
+        // If click without dragging (< min slice length), keep draw mode active
+    }
+    else if (dragMode == DragEdgeLeft || dragMode == DragEdgeRight || dragMode == MoveSlice)
+    {
+        if (dragSliceIdx >= 0)
+        {
+            IntersectProcessor::Command cmd;
+            cmd.type = IntersectProcessor::CmdSetSliceBounds;
+            cmd.intParam1 = dragSliceIdx;
+            cmd.intParam2 = dragPreviewStart;
+            cmd.positions[0] = dragPreviewEnd;
+            cmd.numPositions = 1;
+            processor.pushCommand (cmd);
+        }
+    }
+    else if (dragMode == DragLoopLeft || dragMode == DragLoopRight)
+    {
+        if (dragSliceIdx >= 0 && dragSliceIdx < ui.numSlices)
+        {
+            const auto& s = ui.slices[(size_t) dragSliceIdx];
+            const auto currentLoopState = resolveLoopDisplayState (s, ui.sampleParamsFor (s.sampleId), s.startSample, s.endSample);
+
+            if (currentLoopState.startSample != dragLoopPreviewStart
+                || currentLoopState.endSample != dragLoopPreviewEnd)
+            {
+                const int loopStartOffset = juce::jlimit (0, juce::jmax (0, s.endSample - s.startSample - 1),
+                                                          dragLoopPreviewStart - s.startSample);
+                const int loopLength = (dragLoopPreviewEnd >= s.endSample)
+                    ? 0
+                    : juce::jmax (1, dragLoopPreviewEnd - dragLoopPreviewStart);
+
+                IntersectProcessor::Command startCmd;
+                startCmd.type = IntersectProcessor::CmdSetSliceParam;
+                startCmd.intParam1 = IntersectProcessor::FieldLoopStart;
+                startCmd.floatParam1 = (float) loopStartOffset;
+                startCmd.sliceIdx = dragSliceIdx;
+                processor.pushCommand (startCmd);
+
+                IntersectProcessor::Command lengthCmd;
+                lengthCmd.type = IntersectProcessor::CmdSetSliceParam;
+                lengthCmd.intParam1 = IntersectProcessor::FieldLoopLength;
+                lengthCmd.floatParam1 = (float) loopLength;
+                lengthCmd.sliceIdx = dragSliceIdx;
+                processor.pushCommand (lengthCmd);
+            }
+        }
+
+        processor.pendingEndGesture.store (true, std::memory_order_release);
+    }
+    else if (dragMode == DuplicateSlice)
+    {
+        if (sampleSnap != nullptr && processor.snapToZeroCrossing.load())
+        {
+            ghostStart = AudioAnalysis::findNearestZeroCrossing (sampleSnap->buffer, ghostStart);
+            ghostEnd   = ghostStart + dragSliceLen;
+        }
+        if (sampleSnap != nullptr && dragSliceIdx >= 0 && dragSliceIdx < ui.numSlices)
+        {
+            const auto& s = ui.slices[(size_t) dragSliceIdx];
+            if (const auto* owner = findSessionSampleById (sampleSnap, s.sampleId))
+            {
+                ghostStart = juce::jlimit (owner->startFrame, owner->startFrame + owner->numFrames - dragSliceLen, ghostStart);
+                ghostEnd = ghostStart + dragSliceLen;
+            }
+        }
+        IntersectProcessor::Command cmd;
+        cmd.type      = IntersectProcessor::CmdDuplicateSlice;
+        cmd.intParam1 = ghostStart;
+        cmd.intParam2 = ghostEnd;
+        cmd.sliceIdx  = dragSliceIdx;
+        processor.pushCommand (cmd);
+    }
+
+    // Deactivate live drag so the audio thread stops overriding slice bounds.
+    // Must happen before dragSliceIdx is cleared so there's no window where
+    // a stale idx could re-activate on the next block.
+    processor.liveDragSliceIdx.store (-1, std::memory_order_release);
+    processor.liveDragOwner.store    (0,  std::memory_order_release);
+
+    dragMode = None;
+    dragSliceIdx = -1;
+    dragPreviewStart = 0;
+    dragPreviewEnd = 0;
+    dragLoopPreviewStart = 0;
+    dragLoopPreviewEnd = 0;
+    drawStartedFromAlt = false;
+}
+
+void WaveformView::mouseWheelMove (const juce::MouseEvent& e, const juce::MouseWheelDetails& w)
+{
+    constexpr float kHorizontalWheelEpsilon = 1.0e-6f;
+    if (w.deltaX > kHorizontalWheelEpsilon || w.deltaX < -kHorizontalWheelEpsilon)
+    {
+        float sc = processor.scroll.load();
+        sc -= w.deltaX * 0.05f;
+        processor.scroll.store (juce::jlimit (0.0f, 1.0f, sc));
+        prevCacheKey = {};
+        return;
+    }
+
+    if (e.mods.isShiftDown())
+    {
+        // Scroll
+        float sc = processor.scroll.load();
+        sc -= w.deltaY * 0.05f;
+        processor.scroll.store (juce::jlimit (0.0f, 1.0f, sc));
+    }
+    else
+    {
+        // Cursor-anchored zoom
+        int width = getWidth();
+        float oldZoom = processor.zoom.load();
+        float oldViewFrac = 1.0f / oldZoom;
+        float oldScroll = processor.scroll.load();
+
+        // Sample fraction under cursor
+        float cursorPixelFrac = (width > 0) ? (float) e.x / (float) width : 0.5f;
+
+        // Apply zoom change
+        float newZoom = (w.deltaY > 0)
+            ? std::min (16384.0f, oldZoom * 1.2f)
+            : std::max (1.0f, oldZoom / 1.2f);
+        processor.zoom.store (newZoom);
+
+        // Recompute scroll so anchorFrac stays at same pixel position
+        float newViewFrac = 1.0f / newZoom;
+        float maxScroll = 1.0f - newViewFrac;
+        if (maxScroll > 0.0f)
+        {
+            float oldViewStart = oldScroll * (1.0f - oldViewFrac);
+            float anchorFrac = oldViewStart + cursorPixelFrac * oldViewFrac;
+            float newViewStart = anchorFrac - cursorPixelFrac * newViewFrac;
+            processor.scroll.store (juce::jlimit (0.0f, 1.0f, newViewStart / maxScroll));
+        }
+        else
+            processor.scroll.store (0.0f);
+    }
+    prevCacheKey = {};  // force cache rebuild
+}
+
+bool WaveformView::isInterestedInFileDrag (const juce::StringArray& files)
+{
+    for (const auto& path : files)
+    {
+        const juce::File file (path);
+        if (AppFiles::isSupportedAudioFile (file) || AppFiles::isPresetFile (file))
+            return true;
+    }
+    return false;
+}
+
+void WaveformView::filesDropped (const juce::StringArray& files, int x, int)
+{
+    loadDroppedFiles (files, x);
+}
+
+bool WaveformView::isInterestedInDragSource (const juce::DragAndDropTarget::SourceDetails& dragSourceDetails)
+{
+    return dragSourceDetails.description.toString().startsWith ("INTERSECT_BROWSER_FILES\n");
+}
+
+void WaveformView::itemDropped (const juce::DragAndDropTarget::SourceDetails& dragSourceDetails)
+{
+    const auto text = dragSourceDetails.description.toString();
+    if (! text.startsWith ("INTERSECT_BROWSER_FILES\n"))
+        return;
+
+    loadDroppedFiles (juce::StringArray::fromLines (text.fromFirstOccurrenceOf ("\n", false, false)),
+                      dragSourceDetails.localPosition.x);
+}
+
+// Shared by OS and browser drops. A preset replaces the whole kit, so the first one in a drop
+// wins and everything else is ignored; otherwise audio files follow the usual replace/append rule.
+void WaveformView::loadDroppedFiles (const juce::StringArray& paths, int dropX)
+{
+    std::vector<juce::File> audioFiles;
+    audioFiles.reserve ((size_t) paths.size());
+
+    for (const auto& path : paths)
+    {
+        const auto trimmed = path.trim();
+        if (! juce::File::isAbsolutePath (trimmed))
+            continue;
+
+        const juce::File file (trimmed);
+        if (! file.existsAsFile())
+            continue;
+
+        if (AppFiles::isPresetFile (file))
+        {
+            processor.loadPresetAsync (file);
+            prevCacheKey = {};
+            return;
+        }
+
+        if (AppFiles::isSupportedAudioFile (file))
+            audioFiles.push_back (file);
+    }
+
+    if (audioFiles.empty())
+        return;
+
+    // Dropping a file onto a placeholder slot relinks that sample.
+    const auto slots = getPlaceholderSlots (processor.sampleData.getSnapshot());
+    if (const auto* slot = findPlaceholderAt (slots, dropX); slot != nullptr && onRelinkFileDropped != nullptr)
+    {
+        onRelinkFileDropped (slot->sampleId, audioFiles.front());
+        prevCacheKey = {};
+        return;
+    }
+
+    const bool append = processor.sampleData.isLoaded();
+    processor.loadFilesAsync (audioFiles, append);
+    if (! append)
+    {
+        processor.zoom.store (1.0f);
+        processor.scroll.store (0.0f);
+    }
+    prevCacheKey = {};
+}

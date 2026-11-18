@@ -1,0 +1,1074 @@
+#include "StemSeparation.h"
+#include <algorithm>
+#include <cmath>
+
+namespace
+{
+// intersect-stem-models release series this build follows. The manifest comes from the newest
+// v<series>.N release (found through the GitHub releases API), so model fixes published as patch
+// releases reach this build without a plugin update. The baseline tag is the fallback when the API
+// can't be reached. The cached manifest's file name includes the series, so a cache left by an
+// older build (pointing at older model files) is ignored instead of overriding the built-in entries.
+constexpr auto kStemModelSeries = "0.2";
+constexpr auto kStemModelBaselineTag = "v0.2.1";
+constexpr auto kStemModelManifestAssetName = "intersect_stem_models_manifest.json";
+constexpr auto kStemModelReleaseBaseUrl = "https://github.com/tucktuckg00se/intersect-stem-models/releases/download/";
+constexpr auto kStemModelReleasesApiUrl = "https://api.github.com/repos/tucktuckg00se/intersect-stem-models/releases?per_page=100";
+
+constexpr auto kOrtBundleManifestFileName    = "intersect_ort_bundles_manifest.json";
+constexpr auto kOrtBundleManifestDownloadUrl = "https://github.com/tucktuckg00se/intersect-tools/releases/latest/download/intersect_ort_bundles_manifest.json";
+
+constexpr auto kDefaultStemModelId = "bs-roformer-sw-6stem";
+
+std::vector<StemOutputDesc> makeOutputs (std::initializer_list<const char*> names, const juce::String& group = {})
+{
+    std::vector<StemOutputDesc> outputs;
+    for (const auto* name : names)
+        outputs.push_back ({ name, stemOutputLabelFromName (name), group });
+    return outputs;
+}
+
+std::vector<StemModelCatalogEntry> makeBuiltInCatalog()
+{
+    std::vector<StemModelCatalogEntry> catalog;
+
+    StemModelCatalogEntry sw;
+    sw.id = kDefaultStemModelId;
+    sw.menuLabel = "BS-RoFormer SW 6-Stem";
+    sw.fileName = "bs_roformer_sw_6stem.onnx";
+    sw.downloadUrl = "https://github.com/tucktuckg00se/intersect-stem-models/releases/download/v0.1.0/bs_roformer_sw_6stem.onnx";
+    sw.downloadBytes = 739269627;
+    sw.sha256 = "718c3304a4a051bc8b1adfa776ce0aeab54165e207d0a5f5890d683c16188e5e";
+    sw.license = "MIT";
+    sw.attribution = "jarredou";
+    sw.notes = "Full-size BS-RoFormer, with separate guitar and piano stems.";
+    sw.requirements = { 6.0f, 3.5f, StemGpuAdvice::recommended };
+    sw.outputs = makeOutputs ({ "bass", "drums", "other", "vocals", "guitar", "piano" });
+    sw.runtimeKind = StemRuntimeKind::waveform;
+    sw.sampleRate = 44100.0;
+    sw.chunkSize = 131072;
+    sw.overlapRatio = 0.5f;
+    catalog.push_back (std::move (sw));
+
+    // SCNet (starrytong, MIT; ONNX export by audiojs, pinned revision). The network without its
+    // STFT: the host computes it (StemStft) with SCNet's own settings.
+    StemModelCatalogEntry scnet;
+    scnet.id = "scnet";
+    scnet.menuLabel = "SCNet";
+    // Patched for DirectML by intersect-stem-models (scripts/patch_onnx_for_directml.py): dead
+    // nodes removed, Split rewritten as Slice. CPU output is bit-identical to the original file.
+    scnet.fileName = "scnet_int8_dml.onnx";
+    scnet.downloadUrl = "https://github.com/tucktuckg00se/intersect-stem-models/releases/download/v0.2.1/scnet_int8_dml.onnx";
+    scnet.downloadBytes = 12907957;
+    scnet.sha256 = "86c35a1f513de688149d5a36c16a0bb1c67c60dcdfa01563ffda7e73708676db";
+    scnet.license = "MIT";
+    scnet.attribution = "starrytong, ONNX by audiojs";
+    scnet.notes = "The smallest and fastest model here (8-bit weights).";
+    scnet.requirements = { 3.0f, 0.6f, StemGpuAdvice::notNeeded };
+    scnet.outputs = makeOutputs ({ "drums", "bass", "other", "vocals" });
+    scnet.runtimeKind = StemRuntimeKind::spectral;
+    scnet.spectral = {};   // defaults are SCNet's: 4096 / 1024, rectangular, normalized, 476 frames, 11 s every 2.75 s
+    scnet.sampleRate = 44100.0;
+    catalog.push_back (std::move (scnet));
+
+    // Mini-BS-RoFormer V2.5 (HiDolen, MIT), the author's own ONNX export at a pinned revision. It
+    // estimates complex masks from a 4096-point STFT; the host applies them to a 2048-point STFT.
+    StemModelCatalogEntry mini;
+    mini.id = "mini-bs-roformer-v2.5";
+    mini.menuLabel = "Mini-BS-RoFormer V2.5";
+    // Patched for DirectML by intersect-stem-models (scripts/patch_onnx_for_directml.py): Reshape
+    // allowzero cleared (no target shape has a zero). CPU output is bit-identical to the original file.
+    mini.fileName = "mini_bs_roformer_v25_dml.onnx";
+    mini.downloadUrl = "https://github.com/tucktuckg00se/intersect-stem-models/releases/download/v0.2.1/mini_bs_roformer_v25_dml.onnx";
+    mini.downloadBytes = 96537413;
+    mini.sha256 = "27512ae01eb16a3130911fbd6c811fff255250892d6bbcef2a1ad068a370e174";
+    mini.license = "MIT";
+    mini.attribution = "HiDolen";
+    mini.notes = "Compact BS-RoFormer: much faster than full-size models, slightly lower quality.";
+    mini.requirements = { 5.0f, 0.8f, StemGpuAdvice::optional };
+    mini.outputs = makeOutputs ({ "bass", "drums", "other", "vocals" });
+    mini.runtimeKind = StemRuntimeKind::spectralMask;
+    mini.spectral.nFft = 4096;
+    mini.spectral.hopSize = 512;
+    mini.spectral.hannWindow = true;
+    mini.spectral.normalized = false;
+    mini.spectral.frames = 690;
+    mini.spectral.segmentSamples = 352800;   // 8 s
+    mini.spectral.strideSamples = 176400;
+    mini.spectral.normalizeInput = false;
+    mini.spectral.maskNFft = 2048;
+    mini.sampleRate = 44100.0;
+    catalog.push_back (std::move (mini));
+
+    // MVSep Mega 53 (ZFTurbo / MVSep, MIT per MSST issue #245), exported by intersect-stem-models
+    // v0.2.0. Stems are in the model's (alphabetical) output order; display groups are ours.
+    StemModelCatalogEntry mega;
+    mega.id = "mvsep-mega-53";
+    mega.menuLabel = "MVSep Mega 53";
+    mega.fileName = "mvsep_mega_53.onnx";
+    mega.downloadUrl = "https://github.com/tucktuckg00se/intersect-stem-models/releases/download/v0.2.0/mvsep_mega_53.onnx";
+    mega.downloadBytes = 1415950413;
+    mega.sha256 = "d3b1c838303a44cffdb7358c536ec99ebf8ded1f1c34075144c413839b40101a";
+    mega.license = "MIT";
+    mega.attribution = "ZFTurbo / MVSep";
+    mega.notes = "53 instruments. Stems overlap and don't add up to the mix. Slow to load.";
+    mega.requirements = { 9.0f, 5.0f, StemGpuAdvice::recommended };
+    // { name, group, label override }
+    struct MegaStem { const char* name = nullptr; const char* group = nullptr; const char* label = nullptr; };
+    static constexpr MegaStem megaStems[] = {
+        { "accordion", "Keys" },
+        { "acoustic-guitar", "Guitars & Plucked" },
+        { "back-vocal", "Vocals" },
+        { "banjo", "Guitars & Plucked" },
+        { "bass", "Bass" },
+        { "bassoon", "Woodwinds" },
+        { "bells", "Percussion" },
+        { "bowed_strings", "Strings" },
+        { "brass", "Brass" },
+        { "cello", "Strings" },
+        { "clarinet", "Woodwinds" },
+        { "congas", "Percussion" },
+        { "digital-piano", "Keys" },
+        { "dobro", "Guitars & Plucked" },
+        { "double-bass", "Bass" },
+        { "drums", "Drums" },
+        { "electric-guitar", "Guitars & Plucked" },
+        { "flute", "Woodwinds" },
+        { "french-horn", "Brass" },
+        { "glockenspiel", "Percussion" },
+        { "guitar", "Guitars & Plucked" },
+        { "harmonica", "Woodwinds" },
+        { "harp", "Guitars & Plucked" },
+        { "harpsichord", "Keys" },
+        { "hh", "Drums", "Hi-Hat" },
+        { "keys", "Keys" },
+        { "kick", "Drums" },
+        { "lead-vocal", "Vocals" },
+        { "mandolin", "Guitars & Plucked" },
+        { "marimba", "Percussion" },
+        { "oboe", "Woodwinds" },
+        { "organ", "Keys" },
+        { "percussion", "Percussion" },
+        { "piano", "Keys" },
+        { "saxophone", "Woodwinds" },
+        { "sitar", "Guitars & Plucked" },
+        { "snare", "Drums" },
+        { "strings", "Strings" },
+        { "synth", "Synth" },
+        { "tambourine", "Percussion" },
+        { "timpani", "Percussion" },
+        { "toms", "Drums" },
+        { "triangle", "Percussion" },
+        { "trombone", "Brass" },
+        { "trumpet", "Brass" },
+        { "tuba", "Brass" },
+        { "ukulele", "Guitars & Plucked" },
+        { "viola", "Strings" },
+        { "violin", "Strings" },
+        { "vocal", "Vocals" },
+        { "wind", "Woodwinds" },
+        { "wind-chimes", "Percussion" },
+        { "woodwind", "Woodwinds" },
+    };
+    for (const auto& stem : megaStems)
+        mega.outputs.push_back ({ stem.name, stem.label != nullptr ? juce::String (stem.label) : stemOutputLabelFromName (stem.name), stem.group });
+    mega.groupOrder = { "Vocals", "Drums", "Percussion", "Bass", "Guitars & Plucked", "Keys", "Synth", "Strings", "Brass", "Woodwinds" };
+    mega.runtimeKind = StemRuntimeKind::waveform;
+    mega.sampleRate = 44100.0;
+    mega.chunkSize = 131072;
+    mega.overlapRatio = 0.5f;
+    catalog.push_back (std::move (mega));
+
+    return catalog;
+}
+
+juce::String readManifestModelId (const juce::var& manifestModel)
+{
+    auto* object = manifestModel.getDynamicObject();
+    if (object == nullptr)
+        return {};
+
+    auto idField = object->getProperty ("model_id").toString();
+    if (idField.isEmpty())
+        idField = object->getProperty ("id").toString();
+    return normaliseStemModelId (idField);
+}
+
+bool parseStemOutputs (const juce::var& stemsVar, std::vector<StemOutputDesc>& outputs)
+{
+    auto* stemsArray = stemsVar.getArray();
+    if (stemsArray == nullptr || stemsArray->isEmpty())
+        return false;
+
+    std::vector<StemOutputDesc> parsed;
+    parsed.reserve ((size_t) stemsArray->size());
+    for (const auto& stemVar : *stemsArray)
+    {
+        StemOutputDesc desc;
+        if (auto* stemObject = stemVar.getDynamicObject())
+        {
+            desc.name = stemObject->getProperty ("name").toString().trim();
+            desc.label = stemObject->getProperty ("label").toString().trim();
+            desc.group = stemObject->getProperty ("group").toString().trim();
+        }
+        else
+        {
+            desc.name = stemVar.toString().trim();
+        }
+
+        if (desc.name.isEmpty())
+            return false;
+        if (desc.label.isEmpty())
+            desc.label = stemOutputLabelFromName (desc.name);
+        parsed.push_back (std::move (desc));
+    }
+
+    outputs = std::move (parsed);
+    return true;
+}
+
+bool parseRuntimeKind (const juce::String& text, StemRuntimeKind& kind)
+{
+    const auto trimmed = text.trim();
+    if (trimmed.isEmpty() || trimmed.equalsIgnoreCase ("waveform"))
+    {
+        kind = StemRuntimeKind::waveform;
+        return true;
+    }
+    if (trimmed.equalsIgnoreCase ("spectral"))
+    {
+        kind = StemRuntimeKind::spectral;
+        return true;
+    }
+    if (trimmed.equalsIgnoreCase ("spectral_mask"))
+    {
+        kind = StemRuntimeKind::spectralMask;
+        return true;
+    }
+    return false;
+}
+
+void parseSpectralParams (const juce::DynamicObject& stft, StemSpectralParams& params)
+{
+    auto readInt = [&stft] (const char* key, int& value)
+    {
+        if (stft.hasProperty (key))
+            value = (int) stft.getProperty (key);
+    };
+
+    readInt ("n_fft", params.nFft);
+    readInt ("hop_length", params.hopSize);
+    readInt ("frames", params.frames);
+    readInt ("segment_samples", params.segmentSamples);
+    readInt ("stride_samples", params.strideSamples);
+    readInt ("mask_n_fft", params.maskNFft);
+    if (stft.hasProperty ("normalize_input"))
+        params.normalizeInput = (bool) stft.getProperty ("normalize_input");
+    if (stft.hasProperty ("window"))
+        params.hannWindow = stft.getProperty ("window").toString().equalsIgnoreCase ("hann");
+    if (stft.hasProperty ("normalized"))
+        params.normalized = (bool) stft.getProperty ("normalized");
+}
+
+bool isPowerOfTwoAtLeast16 (int n)
+{
+    return n >= 16 && (n & (n - 1)) == 0;
+}
+
+bool areSpectralParamsUsable (const StemSpectralParams& p, StemRuntimeKind kind)
+{
+    if (! isPowerOfTwoAtLeast16 (p.nFft) || p.hopSize <= 0 || p.hopSize > p.nFft
+        || p.frames <= 1 || p.segmentSamples <= 0 || p.strideSamples <= 0
+        || p.strideSamples > p.segmentSamples)
+        return false;
+
+    // The STFT runs over the segment, zero-padded up to the frame count; both must agree.
+    const int signal = juce::jmax (p.segmentSamples, (p.frames - 1) * p.hopSize);
+    if (1 + signal / p.hopSize != p.frames || signal <= p.nFft / 2)
+        return false;
+
+    return kind != StemRuntimeKind::spectralMask || isPowerOfTwoAtLeast16 (p.maskNFft);
+}
+
+juce::var loadManifestModels (const juce::File& modelFolder)
+{
+    const auto manifestFile = getStemModelManifestFile (modelFolder);
+    if (! manifestFile.existsAsFile())
+        return {};
+
+    const auto parsed = juce::JSON::parse (manifestFile.loadFileAsString());
+    if (auto* rootObject = parsed.getDynamicObject())
+        return rootObject->getProperty ("models");
+    return {};
+}
+}
+
+StemRole stemRoleFromString (const juce::String& text)
+{
+    const auto trimmed = text.trim();
+    if (trimmed.equalsIgnoreCase ("drums")) return StemRole::drums;
+    if (trimmed.equalsIgnoreCase ("bass")) return StemRole::bass;
+    if (trimmed.equalsIgnoreCase ("other")) return StemRole::other;
+    if (trimmed.equalsIgnoreCase ("vocals")) return StemRole::vocals;
+    if (trimmed.equalsIgnoreCase ("guitar")) return StemRole::guitar;
+    if (trimmed.equalsIgnoreCase ("piano")) return StemRole::piano;
+    if (trimmed.equalsIgnoreCase ("instrumental")) return StemRole::instrumental;
+    return StemRole::unknown;
+}
+
+juce::String stemOutputLabelFromName (const juce::String& name)
+{
+    // "lead-vocal" / "bowed_strings" -> "Lead Vocal" / "Bowed Strings"
+    auto words = juce::StringArray::fromTokens (name.trim(), "-_ ", {});
+    words.removeEmptyStrings();
+    for (auto& word : words)
+        word = word.substring (0, 1).toUpperCase() + word.substring (1);
+    return words.joinIntoString (" ");
+}
+
+juce::String getDefaultStemModelId()
+{
+    return kDefaultStemModelId;
+}
+
+StemModelId normaliseStemModelId (const juce::String& text)
+{
+    const auto trimmed = text.trim().toLowerCase();
+
+    // Legacy ids from the 4-stem builds map to the model that replaced them.
+    if (trimmed == "bsroformer4stem_uint8" || trimmed == "bsroformer4stem_fp32")
+        return kDefaultStemModelId;
+
+    return trimmed;
+}
+
+juce::String stemComputeDeviceToString (StemComputeDevice device)
+{
+    switch (device)
+    {
+        case StemComputeDevice::cpu: return "CPU";
+        case StemComputeDevice::gpu: return "GPU";
+    }
+
+    return "CPU";
+}
+
+StemComputeDevice stemComputeDeviceFromString (const juce::String& text)
+{
+    if (text.trim().equalsIgnoreCase ("gpu"))
+        return StemComputeDevice::gpu;
+
+    return StemComputeDevice::cpu;
+}
+
+juce::String getAvailableGpuProviderName()
+{
+    const auto root = getDefaultOrtRootFolder();
+    const auto dirName = readActiveOrtBundleDirectoryName (root);
+    if (dirName.isEmpty())
+        return {};
+
+    for (const auto& entry : getOrtBundleCatalog())
+        if (entry.directoryName == dirName)
+            return entry.providerName;
+
+    return {};
+}
+
+juce::String stemExportModeToString (StemExportMode mode)
+{
+    switch (mode)
+    {
+        case StemExportMode::combine:  return "Combine";
+        case StemExportMode::separate: return "Separate";
+    }
+
+    return "Combine";
+}
+
+StemExportMode stemExportModeFromString (const juce::String& text)
+{
+    if (text.trim().equalsIgnoreCase ("separate"))
+        return StemExportMode::separate;
+
+    return StemExportMode::combine;
+}
+
+const std::vector<StemModelCatalogEntry>& getBuiltInStemModelCatalog()
+{
+    static const auto catalog = makeBuiltInCatalog();
+    return catalog;
+}
+
+juce::String getStemModelManifestFileName()
+{
+    return juce::String ("intersect_stem_models_manifest-v") + kStemModelSeries + ".json";
+}
+
+juce::String getStemModelManifestDownloadUrl()
+{
+    return juce::String (kStemModelReleaseBaseUrl) + kStemModelBaselineTag + "/" + kStemModelManifestAssetName;
+}
+
+juce::String getStemModelReleaseSeries()
+{
+    return kStemModelSeries;
+}
+
+juce::String getStemModelManifestAssetName()
+{
+    return kStemModelManifestAssetName;
+}
+
+juce::String getStemModelReleasesApiUrl()
+{
+    return kStemModelReleasesApiUrl;
+}
+
+juce::String pickLatestSeriesManifestUrl (const juce::var& releases, const juce::String& series, const juce::String& assetName)
+{
+    const auto* list = releases.getArray();
+    if (list == nullptr || series.isEmpty() || assetName.isEmpty())
+        return {};
+
+    const auto prefix = "v" + series + ".";
+    int bestPatch = -1;
+    juce::String bestUrl;
+
+    for (const auto& release : *list)
+    {
+        auto* object = release.getDynamicObject();
+        if (object == nullptr || (bool) object->getProperty ("draft") || (bool) object->getProperty ("prerelease"))
+            continue;
+
+        const auto tag = object->getProperty ("tag_name").toString().trim();
+        const auto patchText = tag.fromFirstOccurrenceOf (prefix, false, false);
+        if (! tag.startsWith (prefix) || patchText.isEmpty() || patchText.length() > 6
+            || ! patchText.containsOnly ("0123456789"))
+            continue;
+
+        const int patch = patchText.getIntValue();
+        if (patch <= bestPatch)
+            continue;
+
+        if (auto* assets = object->getProperty ("assets").getArray())
+        {
+            for (const auto& asset : *assets)
+            {
+                if (asset["name"].toString() != assetName)
+                    continue;
+
+                const auto url = asset["browser_download_url"].toString().trim();
+                if (url.startsWith ("https://"))
+                {
+                    bestPatch = patch;
+                    bestUrl = url;
+                }
+                break;
+            }
+        }
+    }
+
+    return bestUrl;
+}
+
+juce::File getDefaultStemModelFolder()
+{
+#if JUCE_LINUX
+    auto home = juce::File::getSpecialLocation (juce::File::userHomeDirectory);
+    return home.getChildFile (".local")
+               .getChildFile ("share")
+               .getChildFile ("INTERSECT")
+               .getChildFile ("models");
+#else
+    return juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory)
+        .getChildFile ("INTERSECT")
+        .getChildFile ("models");
+#endif
+}
+
+juce::File getStemModelManifestFile (const juce::File& modelFolder)
+{
+    return modelFolder.getChildFile (getStemModelManifestFileName());
+}
+
+StemModelCatalogEntry parseStemModelManifestEntry (const juce::var& manifestModel, const StemModelCatalogEntry& base)
+{
+    auto* object = manifestModel.getDynamicObject();
+    if (object == nullptr)
+        return {};
+
+    auto entry = base;
+    entry.id = readManifestModelId (manifestModel);
+    if (entry.id.isEmpty())
+        return {};
+
+    if (auto text = object->getProperty ("name").toString(); text.isNotEmpty())
+        entry.menuLabel = text;
+    if (auto text = object->getProperty ("license").toString(); text.isNotEmpty())
+        entry.license = text;
+    if (auto text = object->getProperty ("attribution").toString(); text.isNotEmpty())
+        entry.attribution = text;
+    if (auto text = object->getProperty ("notes").toString(); text.isNotEmpty())
+        entry.notes = text;
+
+    // "requirements": { "ram_gb": 5, "cpu_realtime_factor": 3.5, "gpu": "recommended" }; each optional.
+    if (auto* req = object->getProperty ("requirements").getDynamicObject())
+    {
+        if (const auto ram = (float) (double) req->getProperty ("ram_gb"); ram > 0.0f)
+            entry.requirements.ramGb = ram;
+        if (const auto factor = (float) (double) req->getProperty ("cpu_realtime_factor"); factor > 0.0f)
+            entry.requirements.cpuRealtimeFactor = factor;
+        const auto gpu = req->getProperty ("gpu").toString().trim();
+        if (gpu.equalsIgnoreCase ("not_needed"))
+            entry.requirements.gpu = StemGpuAdvice::notNeeded;
+        else if (gpu.equalsIgnoreCase ("optional"))
+            entry.requirements.gpu = StemGpuAdvice::optional;
+        else if (gpu.equalsIgnoreCase ("recommended"))
+            entry.requirements.gpu = StemGpuAdvice::recommended;
+    }
+
+    if (auto* artifacts = object->getProperty ("artifacts").getDynamicObject())
+    {
+        if (auto text = artifacts->getProperty ("release_asset_name").toString(); text.isNotEmpty())
+            entry.fileName = text;
+        if (auto text = artifacts->getProperty ("release_asset_url").toString(); text.isNotEmpty())
+            entry.downloadUrl = text;
+        if (artifacts->hasProperty ("release_asset_bytes"))
+            entry.downloadBytes = (juce::int64) artifacts->getProperty ("release_asset_bytes");
+        if (auto* sha = artifacts->getProperty ("sha256").getDynamicObject())
+            if (auto text = sha->getProperty ("onnx").toString().trim().toLowerCase(); text.length() == 64)
+                entry.sha256 = text;
+
+        // Optional: earlier file names of this model, and a one-line note for the UPDATE button.
+        // Only bare file names are accepted, so a manifest can never point INTERSECT at other files.
+        if (auto* replaces = artifacts->getProperty ("replaces").getArray())
+        {
+            entry.replacesFileNames.clear();
+            for (const auto& name : *replaces)
+            {
+                const auto text = name.toString().trim();
+                if (text.isNotEmpty() && text != entry.fileName && text != "." && text != ".."
+                    && ! text.containsAnyOf ("/\\:") && juce::File::createLegalFileName (text) == text)
+                    entry.replacesFileNames.addIfNotAlreadyThere (text);
+            }
+        }
+        if (auto text = artifacts->getProperty ("update_note").toString().trim(); text.isNotEmpty())
+            entry.updateNote = text;
+    }
+
+    if (auto* runtime = object->getProperty ("runtime").getDynamicObject())
+    {
+        // Unknown runtime kinds come from manifests newer than this build: skip the model.
+        if (! parseRuntimeKind (runtime->getProperty ("kind").toString(), entry.runtimeKind))
+            return {};
+
+        if (runtime->hasProperty ("stems") && ! parseStemOutputs (runtime->getProperty ("stems"), entry.outputs))
+            return {};
+
+        if (auto* groups = runtime->getProperty ("stem_groups").getArray())
+        {
+            entry.groupOrder.clear();
+            for (const auto& group : *groups)
+                entry.groupOrder.addIfNotAlreadyThere (group.toString().trim());
+            entry.groupOrder.removeEmptyStrings();
+        }
+
+        if (runtime->hasProperty ("sample_rate_hz"))
+            entry.sampleRate = (double) runtime->getProperty ("sample_rate_hz");
+        if (runtime->hasProperty ("chunk_size_samples"))
+            entry.chunkSize = (int) runtime->getProperty ("chunk_size_samples");
+        if (runtime->hasProperty ("recommended_overlap_ratio"))
+            entry.overlapRatio = (float) (double) runtime->getProperty ("recommended_overlap_ratio");
+        if (auto* stft = runtime->getProperty ("stft").getDynamicObject())
+            parseSpectralParams (*stft, entry.spectral);
+    }
+
+    if (entry.menuLabel.isEmpty())
+        entry.menuLabel = entry.id;
+
+    const bool runtimeUsable = entry.runtimeKind == StemRuntimeKind::waveform
+                                   ? entry.chunkSize > 0 && entry.overlapRatio >= 0.0f && entry.overlapRatio < 1.0f
+                                   : areSpectralParamsUsable (entry.spectral, entry.runtimeKind);
+    if (! entry.isValid() || ! runtimeUsable || entry.sampleRate <= 0.0)
+        return {};
+
+    return entry;
+}
+
+std::vector<StemModelCatalogEntry> getEffectiveStemModelCatalog (const juce::File& modelFolder)
+{
+    auto catalog = getBuiltInStemModelCatalog();
+
+    const auto models = loadManifestModels (modelFolder);
+    if (auto* modelsArray = models.getArray())
+    {
+        for (const auto& modelVar : *modelsArray)
+        {
+            const auto id = readManifestModelId (modelVar);
+            if (id.isEmpty())
+                continue;
+
+            auto existing = std::find_if (catalog.begin(), catalog.end(),
+                                          [&id] (const StemModelCatalogEntry& e) { return e.id == id; });
+            const auto parsed = parseStemModelManifestEntry (modelVar, existing != catalog.end() ? *existing
+                                                                                                  : StemModelCatalogEntry {});
+            if (! parsed.isValid())
+                continue;   // keep the built-in entry when the manifest's version is unusable
+
+            if (existing != catalog.end())
+                *existing = parsed;
+            else
+                catalog.push_back (parsed);
+        }
+    }
+
+    return catalog;
+}
+
+StemModelCatalogEntry getEffectiveStemModelCatalogEntry (const StemModelId& modelId, const juce::File& modelFolder)
+{
+    const auto id = normaliseStemModelId (modelId);
+    for (auto& entry : getEffectiveStemModelCatalog (modelFolder))
+        if (entry.id == id)
+            return entry;
+
+    return {};
+}
+
+juce::File findInstalledStemModelFile (const StemModelCatalogEntry& entry, const juce::File& modelFolder)
+{
+    const auto current = modelFolder.getChildFile (entry.fileName);
+    if (current.existsAsFile())
+        return current;
+
+    for (const auto& name : entry.replacesFileNames)
+        if (const auto earlier = modelFolder.getChildFile (name); earlier.existsAsFile())
+            return earlier;
+
+    return current;
+}
+
+bool isStemModelUpdateAvailable (const StemModelCatalogEntry& entry, const juce::File& modelFolder)
+{
+    if (! entry.isValid() || modelFolder.getChildFile (entry.fileName).existsAsFile())
+        return false;
+
+    for (const auto& name : entry.replacesFileNames)
+        if (modelFolder.getChildFile (name).existsAsFile())
+            return true;
+
+    return false;
+}
+
+int removeReplacedStemModelFiles (const StemModelCatalogEntry& entry, const juce::File& modelFolder)
+{
+    int removed = 0;
+    for (const auto& name : entry.replacesFileNames)
+    {
+        const auto earlier = modelFolder.getChildFile (name);
+        // A replaced name can only refer to a file directly inside the model folder.
+        if (name != entry.fileName && earlier.getParentDirectory() == modelFolder && earlier.existsAsFile()
+            && earlier.deleteFile())
+            ++removed;
+    }
+    return removed;
+}
+
+int removeAllReplacedStemModelFiles (const juce::File& modelFolder)
+{
+    int removed = 0;
+    for (const auto& entry : getEffectiveStemModelCatalog (modelFolder))
+        if (entry.isValid() && modelFolder.getChildFile (entry.fileName).existsAsFile())
+            removed += removeReplacedStemModelFiles (entry, modelFolder);
+    return removed;
+}
+
+juce::File resolveStemModelFile (const juce::File& modelFolder, const StemModelId& modelId)
+{
+    const auto entry = getEffectiveStemModelCatalogEntry (modelId, modelFolder);
+    return entry.isValid() ? findInstalledStemModelFile (entry, modelFolder) : juce::File();
+}
+
+StemSelection normaliseStemSelection (StemSelection selection, int numOutputs)
+{
+    selection.erase (std::remove_if (selection.begin(), selection.end(),
+                                     [numOutputs] (int index) { return index < 0 || index >= numOutputs; }),
+                     selection.end());
+    std::sort (selection.begin(), selection.end());
+    selection.erase (std::unique (selection.begin(), selection.end()), selection.end());
+    return selection;
+}
+
+std::vector<StemModelId> scanInstalledStemModels (const juce::File& modelFolder)
+{
+    std::vector<StemModelId> installed;
+    for (const auto& entry : getEffectiveStemModelCatalog (modelFolder))
+        if (findInstalledStemModelFile (entry, modelFolder).existsAsFile())
+            installed.push_back (entry.id);
+
+    return installed;
+}
+
+std::vector<StemModelId> scanStemModelUpdates (const juce::File& modelFolder)
+{
+    std::vector<StemModelId> updates;
+    for (const auto& entry : getEffectiveStemModelCatalog (modelFolder))
+        if (isStemModelUpdateAvailable (entry, modelFolder))
+            updates.push_back (entry.id);
+
+    return updates;
+}
+
+juce::String describeStemGpuFailure (const juce::String& modelName, const juce::String& details)
+{
+    const auto lower = details.toLowerCase();
+    const auto has = [&lower] (const char* text) { return lower.contains (text); };
+
+    juce::String reason;
+    if (has ("887a0005") || has ("887a0006") || has ("887a0007"))
+        reason = "Windows reset the graphics driver because a GPU step took too long running " + modelName
+               + ". If INTERSECT offers an UPDATE for this model, install it; otherwise switch DEVICE to CPU.";
+    else if (has ("887a0020"))
+        reason = "The graphics driver hit an internal error running " + modelName
+               + ". Update the graphics driver, or switch DEVICE to CPU.";
+    else if (has ("8007000e") || has ("out of memory") || has ("not enough memory") || has ("failed to allocate"))
+        reason = "The GPU ran out of graphics memory for " + modelName
+               + ". Switch DEVICE to CPU, or try a smaller model.";
+    else if (has ("80070057"))
+        reason = "The GPU runtime rejected " + modelName
+               + ". If INTERSECT offers an UPDATE for this model, install it; otherwise switch DEVICE to CPU.";
+    else
+        reason = "The GPU couldn't run " + modelName + ". Switch DEVICE to CPU to separate on the CPU.";
+
+    return reason + " Details: " + details;
+}
+
+bool isSuspectStemModelOutput (const float* output, size_t count, float inputPeak)
+{
+    if (output == nullptr || count == 0)
+        return true;
+
+    float peak = 0.0f;
+    for (size_t i = 0; i < count; ++i)
+    {
+        const float v = output[i];
+        if (! std::isfinite (v))
+            return true;
+        peak = std::max (peak, std::abs (v));
+    }
+
+    // Exact zeros everywhere, for an input with content, is what a reset GPU hands back.
+    return peak == 0.0f && inputPeak > 1.0e-6f;
+}
+
+// ── ORT bundle catalog ──────────────────────────────────────────────────
+
+juce::String getCurrentPlatformTag()
+{
+    // The runtime must match the plugin's own architecture: an ARM64 process can't load x64 libraries.
+   #if JUCE_WINDOWS
+    #if JUCE_ARM
+     return "win-arm64";
+    #else
+     return "win-x64";
+    #endif
+   #elif JUCE_MAC
+    #if JUCE_ARM
+     return "macos-arm64";
+    #else
+     return "macos-x64";
+    #endif
+   #elif JUCE_LINUX
+    #if JUCE_ARM
+     return "linux-arm64";
+    #else
+     return "linux-x64";
+    #endif
+   #else
+    return {};
+   #endif
+}
+
+static const std::vector<OrtBundleCatalogEntry>& buildOrtBundleCatalog()
+{
+    // libonnxruntime file names inside each bundle. These are the file names
+    // produced by the official ORT 1.24.x packages (Linux ships a versioned
+    // SONAME; macOS ships an unversioned symlink; Windows is just .dll).
+    // Archive files are .zip across platforms so the plugin can use juce::ZipFile
+    // for extraction (no reliance on system tar). The intersect-tools
+    // builder repo repackages upstream tarballs into these zips.
+    static const std::vector<OrtBundleCatalogEntry> catalog =
+    {
+        { OrtBundleId::winX64DirectMl,     "DirectML (GPU)",     "win-x64-directml",     "DML",      "win-x64",     "onnxruntime-win-x64-directml.zip",    "", 0, "onnxruntime.dll" },
+        { OrtBundleId::winX64Cpu,          "CPU only",           "win-x64-cpu",          "",         "win-x64",     "onnxruntime-win-x64-cpu.zip",         "", 0, "onnxruntime.dll" },
+        { OrtBundleId::linuxX64Cpu,        "CPU only",           "linux-x64-cpu",        "",         "linux-x64",   "onnxruntime-linux-x64-cpu.zip",       "", 0, "libonnxruntime.so" },
+        { OrtBundleId::linuxX64Cuda12,     "NVIDIA CUDA 12",     "linux-x64-cuda12",     "CUDA",     "linux-x64",   "onnxruntime-linux-x64-cuda12.zip",    "", 0, "libonnxruntime.so" },
+        { OrtBundleId::linuxX64Cuda13,     "NVIDIA CUDA 13",     "linux-x64-cuda13",     "CUDA",     "linux-x64",   "onnxruntime-linux-x64-cuda13.zip",    "", 0, "libonnxruntime.so" },
+        { OrtBundleId::linuxX64Migraphx,   "AMD MIGraphX",       "linux-x64-migraphx",   "MIGraphX", "linux-x64",   "onnxruntime-linux-x64-migraphx.zip",  "", 0, "libonnxruntime.so" },
+        { OrtBundleId::macosArm64,         "CoreML",             "macos-arm64",          "CoreML",   "macos-arm64", "onnxruntime-macos-arm64.zip",         "", 0, "libonnxruntime.dylib" },
+        { OrtBundleId::linuxArm64Cpu,      "CPU only",           "linux-arm64-cpu",      "",         "linux-arm64", "onnxruntime-linux-arm64-cpu.zip",     "", 0, "libonnxruntime.so" },
+        { OrtBundleId::winArm64Cpu,        "CPU only",           "win-arm64-cpu",        "",         "win-arm64",   "onnxruntime-win-arm64-cpu.zip",       "", 0, "onnxruntime.dll" },
+    };
+    return catalog;
+}
+
+const std::vector<OrtBundleCatalogEntry>& getOrtBundleCatalog()
+{
+    return buildOrtBundleCatalog();
+}
+
+const OrtBundleCatalogEntry* findOrtBundleCatalogEntry (OrtBundleId id)
+{
+    for (const auto& entry : getOrtBundleCatalog())
+        if (entry.id == id)
+            return &entry;
+
+    return nullptr;
+}
+
+std::vector<OrtBundleCatalogEntry> getOrtBundlesForCurrentPlatform()
+{
+    const auto tag = getCurrentPlatformTag();
+    std::vector<OrtBundleCatalogEntry> out;
+    if (tag.isEmpty())
+        return out;
+
+    for (const auto& entry : getOrtBundleCatalog())
+        if (entry.platformTag == tag)
+            out.push_back (entry);
+
+    return out;
+}
+
+juce::File getDefaultOrtRootFolder()
+{
+   #if JUCE_LINUX
+    return juce::File::getSpecialLocation (juce::File::userHomeDirectory)
+        .getChildFile (".local").getChildFile ("share")
+        .getChildFile ("INTERSECT").getChildFile ("ort");
+   #else
+    return juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory)
+        .getChildFile ("INTERSECT").getChildFile ("ort");
+   #endif
+}
+
+juce::File getOrtActiveMarkerFile (const juce::File& ortRoot)
+{
+    return ortRoot.getChildFile ("active");
+}
+
+juce::File getOrtBundleInstallFolder (const juce::File& ortRoot,
+                                      const OrtBundleCatalogEntry& entry,
+                                      const juce::String& ortVersion)
+{
+    return ortRoot.getChildFile (entry.directoryName).getChildFile (ortVersion);
+}
+
+static juce::File findBundleLibraryFile (const juce::File& bundleFolder, const juce::String& baseLibName)
+{
+    // Support both the plain file name and versioned variants (e.g. libonnxruntime.so.1.24.2).
+    if (bundleFolder.getChildFile (baseLibName).existsAsFile())
+        return bundleFolder.getChildFile (baseLibName);
+
+    auto libDir = bundleFolder.getChildFile ("lib");
+    if (libDir.isDirectory())
+    {
+        if (libDir.getChildFile (baseLibName).existsAsFile())
+            return libDir.getChildFile (baseLibName);
+
+        // Look for versioned variants (libonnxruntime.so.1, libonnxruntime.so.1.24.2, ...).
+        juce::Array<juce::File> matches;
+        libDir.findChildFiles (matches, juce::File::findFiles, false, baseLibName + "*");
+        for (const auto& f : matches)
+            if (f.existsAsFile())
+                return f;
+    }
+
+    // Windows: the dll may live at bundle root or under bin/.
+    auto binDir = bundleFolder.getChildFile ("bin");
+    if (binDir.isDirectory() && binDir.getChildFile (baseLibName).existsAsFile())
+        return binDir.getChildFile (baseLibName);
+
+    return {};
+}
+
+std::vector<OrtBundleId> scanInstalledOrtBundles (const juce::File& ortRoot)
+{
+    std::vector<OrtBundleId> installed;
+    if (! ortRoot.isDirectory())
+        return installed;
+
+    for (const auto& entry : getOrtBundleCatalog())
+    {
+        const auto bundleDir = ortRoot.getChildFile (entry.directoryName);
+        if (! bundleDir.isDirectory())
+            continue;
+
+        // Any versioned subfolder that contains the library counts as installed.
+        juce::Array<juce::File> versionDirs;
+        bundleDir.findChildFiles (versionDirs, juce::File::findDirectories, false);
+        for (const auto& versionDir : versionDirs)
+        {
+            if (findBundleLibraryFile (versionDir, entry.libraryFileName).existsAsFile())
+            {
+                installed.push_back (entry.id);
+                break;
+            }
+        }
+    }
+
+    return installed;
+}
+
+juce::String readActiveOrtBundleDirectoryName (const juce::File& ortRoot)
+{
+    const auto marker = getOrtActiveMarkerFile (ortRoot);
+    if (! marker.exists())
+        return {};
+
+    // The marker may be a file containing the directory name or a symlink to
+    // the versioned bundle folder. Handle both.
+    if (marker.existsAsFile())
+    {
+        auto text = marker.loadFileAsString().trim();
+        // If it contains a path separator, take the first path component.
+        text = text.replaceCharacter ('\\', '/');
+        const auto firstSeg = text.upToFirstOccurrenceOf ("/", false, false);
+        return firstSeg.isEmpty() ? text : firstSeg;
+    }
+
+    if (marker.isDirectory())
+    {
+        // Symlink dereferenced by isDirectory(). Use the link target if we can
+        // read it, otherwise fall back to reading the link file name.
+        auto linked = marker.getLinkedTarget();
+        if (linked.exists())
+        {
+            // linked path is like .../ort/<dirname>/<version>
+            auto parent = linked.getParentDirectory();
+            return parent.getFileName();
+        }
+    }
+
+    return {};
+}
+
+bool writeActiveOrtBundleDirectoryName (const juce::File& ortRoot, const juce::String& directoryName)
+{
+    if (directoryName.isEmpty())
+        return false;
+
+    if (! ortRoot.createDirectory())
+        return false;
+
+    const auto marker = getOrtActiveMarkerFile (ortRoot);
+    if (marker.exists())
+        marker.deleteRecursively();
+
+    return marker.replaceWithText (directoryName);
+}
+
+juce::String getOrtBundleManifestFileName()
+{
+    return kOrtBundleManifestFileName;
+}
+
+juce::String getOrtBundleManifestDownloadUrl()
+{
+    return kOrtBundleManifestDownloadUrl;
+}
+
+juce::File getOrtBundleManifestFile (const juce::File& ortRoot)
+{
+    return ortRoot.getChildFile (getOrtBundleManifestFileName());
+}
+
+static bool applyOrtManifestEntryToCatalogEntry (const juce::var& manifestBundle, OrtBundleCatalogEntry& entry)
+{
+    auto* object = manifestBundle.getDynamicObject();
+    if (object == nullptr)
+        return false;
+
+    const auto idField = object->getProperty ("bundle_id").toString().trim();
+    if (idField.isEmpty() || idField != entry.directoryName)
+        return false;
+
+    if (auto text = object->getProperty ("download_url").toString(); text.isNotEmpty())
+        entry.downloadUrl = text;
+    if (object->hasProperty ("download_bytes"))
+        entry.downloadBytes = (juce::int64) (double) object->getProperty ("download_bytes");
+    if (auto text = object->getProperty ("library_file").toString(); text.isNotEmpty())
+        entry.libraryFileName = text;
+
+    return true;
+}
+
+OrtBundleCatalogEntry getEffectiveOrtBundleCatalogEntry (OrtBundleId id, const juce::File& ortRoot)
+{
+    OrtBundleCatalogEntry entry {};
+    if (const auto* builtIn = findOrtBundleCatalogEntry (id))
+        entry = *builtIn;
+    else
+        return entry;
+
+    const auto manifestFile = getOrtBundleManifestFile (ortRoot);
+    if (! manifestFile.existsAsFile())
+        return entry;
+
+    juce::var parsed = juce::JSON::parse (manifestFile.loadFileAsString());
+    auto* root = parsed.getDynamicObject();
+    if (root == nullptr)
+        return entry;
+
+    if (auto* bundlesArray = root->getProperty ("bundles").getArray())
+        for (const auto& bundleVar : *bundlesArray)
+            if (applyOrtManifestEntryToCatalogEntry (bundleVar, entry))
+                break;
+
+    return entry;
+}
+
+juce::File resolveActiveOrtLibraryFile (const juce::File& ortRoot)
+{
+    const auto dirName = readActiveOrtBundleDirectoryName (ortRoot);
+    if (dirName.isEmpty())
+        return {};
+
+    const auto bundleDir = ortRoot.getChildFile (dirName);
+    if (! bundleDir.isDirectory())
+        return {};
+
+    const OrtBundleCatalogEntry* entry = nullptr;
+    for (const auto& e : getOrtBundleCatalog())
+        if (e.directoryName == dirName)
+        {
+            entry = &e;
+            break;
+        }
+
+    if (entry == nullptr)
+        return {};
+
+    // Pick the most-recent version folder inside the bundle directory.
+    juce::Array<juce::File> versionDirs;
+    bundleDir.findChildFiles (versionDirs, juce::File::findDirectories, false);
+
+    juce::File bestMatch;
+    juce::Time bestTime;
+    for (const auto& versionDir : versionDirs)
+    {
+        const auto candidate = findBundleLibraryFile (versionDir, entry->libraryFileName);
+        if (! candidate.existsAsFile())
+            continue;
+
+        const auto mtime = versionDir.getLastModificationTime();
+        if (bestMatch == juce::File() || mtime > bestTime)
+        {
+            bestMatch = candidate;
+            bestTime = mtime;
+        }
+    }
+
+    return bestMatch;
+}

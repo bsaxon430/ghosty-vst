@@ -1,0 +1,505 @@
+#include "SampleData.h"
+#include "Rex2Import.h"
+#include "../AppFiles.h"
+#include <algorithm>
+#include <cmath>
+#include <memory>
+
+namespace
+{
+
+static const juce::AudioBuffer<float> kEmptyBuffer;
+static const std::array<SampleData::PeakMipmap, SampleData::kNumMipmapLevels> kEmptyMipmaps;
+
+void buildMipmapsForBuffer (const juce::AudioBuffer<float>& src,
+                            std::array<SampleData::PeakMipmap, SampleData::kNumMipmapLevels>& outMipmaps)
+{
+    int numFrames = src.getNumSamples();
+    if (numFrames <= 0 || src.getNumChannels() < 1)
+    {
+        for (auto& m : outMipmaps)
+        {
+            m.samplesPerPeak = 0;
+            m.maxPeaks.clear();
+            m.minPeaks.clear();
+        }
+        return;
+    }
+
+    const float* dataL = src.getReadPointer (0);
+    const float* dataR = src.getNumChannels() > 1 ? src.getReadPointer (1) : dataL;
+    if (dataL == nullptr)
+        return;
+
+    static constexpr int kBlockSizes[SampleData::kNumMipmapLevels] = { 64, 512, 4096 };
+
+    for (int level = 0; level < SampleData::kNumMipmapLevels; ++level)
+    {
+        auto& m = outMipmaps[(size_t) level];
+        m.samplesPerPeak = kBlockSizes[level];
+        int numPeaks = (numFrames + m.samplesPerPeak - 1) / m.samplesPerPeak;
+        m.maxPeaks.resize ((size_t) numPeaks);
+        m.minPeaks.resize ((size_t) numPeaks);
+
+        for (int i = 0; i < numPeaks; ++i)
+        {
+            int start = i * m.samplesPerPeak;
+            int end = std::min (start + m.samplesPerPeak, numFrames);
+            float hi = -1.0f;
+            float lo = 1.0f;
+            for (int s = start; s < end; ++s)
+            {
+                float val = (dataL[s] + dataR[s]) * 0.5f;
+                if (val > hi) hi = val;
+                if (val < lo) lo = val;
+            }
+            m.maxPeaks[(size_t) i] = hi;
+            m.minPeaks[(size_t) i] = lo;
+        }
+    }
+}
+} // namespace
+
+SampleData::SampleData() = default;
+
+std::unique_ptr<SampleData::DecodedSample> SampleData::decodeFromFile (const juce::File& file,
+                                                                        double projectSampleRate)
+{
+    return decodeFromFiles (std::vector<juce::File> { file }, projectSampleRate);
+}
+
+std::unique_ptr<SampleData::DecodedSample> SampleData::decodeFromFiles (const std::vector<juce::File>& files,
+                                                                        double projectSampleRate,
+                                                                        const std::vector<int>* sampleIds,
+                                                                        const std::vector<int>* importSliceSampleIds)
+{
+    if (files.empty())
+        return nullptr;
+
+    juce::AudioFormatManager fm;
+    fm.registerBasicFormats();
+
+    auto decoded = std::make_unique<DecodedSample>();
+    int totalFrames = 0;
+    double targetSampleRate = 0.0;
+    int totalSourceFrames = 0;
+    double firstSourceSampleRate = 0.0;
+
+    struct DecodedRegion
+    {
+        juce::AudioBuffer<float> buffer;
+        SessionSample meta;
+        std::vector<DecodedSample::ImportedSlice> importedSlices;   // offsets within this region
+    };
+
+    std::vector<DecodedRegion> regions;
+    regions.reserve (files.size());
+
+    // Placeholders are sized once every real file is decoded, so frame positions are
+    // assigned in a second pass below.
+    auto addPlaceholder = [&regions] (const juce::File& file, int sampleId, SessionSample::Availability availability)
+    {
+        DecodedRegion region;
+        region.meta.sampleId = sampleId;
+        region.meta.fileName = file.getFileName();
+        region.meta.filePath = file.getFullPathName();
+        region.meta.availability = availability;
+        regions.push_back (std::move (region));
+    };
+
+    for (size_t i = 0; i < files.size(); ++i)
+    {
+        const auto& file = files[i];
+
+        const int sampleId = sampleIds != nullptr && i < sampleIds->size() ? (*sampleIds)[i] : (int) i;
+
+        if (! file.existsAsFile())
+        {
+            addPlaceholder (file, sampleId, SessionSample::Availability::missing);
+            continue;
+        }
+
+        // REX2 loops are decoded with VelociLoops. Their slice positions are always kept
+        // as beat anchors; slices themselves are only imported for freshly loaded files.
+        if (AppFiles::isRex2File (file))
+        {
+            // Match the rate every other file in this session is being resampled to.
+            if (targetSampleRate <= 0.0 && projectSampleRate > 0.0)
+                targetSampleRate = projectSampleRate;
+
+            Rex2Import::DecodedLoop loop;
+            if (! Rex2Import::decodeFile (file, targetSampleRate, loop)
+                || loop.stereo.getNumSamples() <= 0
+                || loop.slices.empty())
+            {
+                addPlaceholder (file, sampleId, SessionSample::Availability::unreadable);
+                continue;
+            }
+
+            if (targetSampleRate <= 0.0)
+                targetSampleRate = loop.sampleRate;
+            if (firstSourceSampleRate <= 0.0)
+                firstSourceSampleRate = loop.sourceSampleRate;
+
+            const int numFrames = loop.stereo.getNumSamples();
+
+            DecodedRegion region;
+            region.buffer = std::move (loop.stereo);
+            region.meta.sampleId = sampleId;
+            region.meta.fileName = file.getFileName();
+            region.meta.filePath = file.getFullPathName();
+            region.meta.numFrames = numFrames;
+            region.meta.sourceNumFrames = loop.sourceNumFrames;
+            region.meta.sourceSampleRate = loop.sourceSampleRate;
+            region.meta.anchorTempoBpm = loop.tempoBpm;
+            region.meta.beatAnchors.reserve (loop.slices.size());
+            for (const auto& span : loop.slices)
+                region.meta.beatAnchors.push_back ({ span.startSample, span.beat });
+
+            const bool importSlices = importSliceSampleIds != nullptr
+                && std::find (importSliceSampleIds->begin(), importSliceSampleIds->end(), sampleId)
+                       != importSliceSampleIds->end();
+            if (importSlices)
+            {
+                for (const auto& span : loop.slices)
+                    region.importedSlices.push_back ({ sampleId, span.startSample, span.endSample });
+            }
+
+            totalSourceFrames += loop.sourceNumFrames;
+            regions.push_back (std::move (region));
+            continue;
+        }
+
+        std::unique_ptr<juce::AudioFormatReader> reader (fm.createReaderFor (file));
+        if (reader == nullptr || reader->lengthInSamples <= 0)
+        {
+            addPlaceholder (file, sampleId, SessionSample::Availability::unreadable);
+            continue;
+        }
+
+        auto numFrames = (int) reader->lengthInSamples;
+        auto numChannels = (int) reader->numChannels;
+        const int sourceNumFrames = numFrames;
+        const double sourceSampleRate = reader->sampleRate > 0.0 ? reader->sampleRate : 44100.0;
+        if (targetSampleRate <= 0.0)
+            targetSampleRate = projectSampleRate > 0.0 ? projectSampleRate : sourceSampleRate;
+        if (firstSourceSampleRate <= 0.0)
+            firstSourceSampleRate = sourceSampleRate;
+
+        juce::AudioBuffer<float> sourceBuffer (juce::jmax (1, numChannels), numFrames);
+        reader->read (&sourceBuffer, 0, numFrames, 0, true, true);
+
+        if (std::abs (sourceSampleRate - targetSampleRate) > 0.01)
+        {
+            const double ratio = sourceSampleRate / targetSampleRate;
+            const int resampledLen = (int) std::ceil (numFrames / ratio);
+            juce::AudioBuffer<float> resampledBuffer (juce::jmax (1, numChannels), resampledLen);
+
+            for (int ch = 0; ch < numChannels; ++ch)
+            {
+                juce::LagrangeInterpolator interpolator;
+                interpolator.process (ratio,
+                                      sourceBuffer.getReadPointer (ch),
+                                      resampledBuffer.getWritePointer (ch),
+                                      resampledLen);
+            }
+
+            sourceBuffer = std::move (resampledBuffer);
+            numFrames = resampledLen;
+        }
+
+        juce::AudioBuffer<float> stereoBuffer (2, numFrames);
+        if (numChannels >= 2)
+        {
+            stereoBuffer.copyFrom (0, 0, sourceBuffer, 0, 0, numFrames);
+            stereoBuffer.copyFrom (1, 0, sourceBuffer, 1, 0, numFrames);
+        }
+        else
+        {
+            stereoBuffer.copyFrom (0, 0, sourceBuffer, 0, 0, numFrames);
+            stereoBuffer.copyFrom (1, 0, sourceBuffer, 0, 0, numFrames);
+        }
+
+        DecodedRegion region;
+        region.buffer = std::move (stereoBuffer);
+        region.meta.sampleId = sampleId;
+        region.meta.fileName = file.getFileName();
+        region.meta.filePath = file.getFullPathName();
+        region.meta.numFrames = numFrames;
+        region.meta.sourceNumFrames = sourceNumFrames;
+        region.meta.sourceSampleRate = sourceSampleRate;
+        totalSourceFrames += sourceNumFrames;
+        regions.push_back (std::move (region));
+    }
+
+    if (targetSampleRate <= 0.0)
+        targetSampleRate = projectSampleRate > 0.0 ? projectSampleRate : 44100.0;
+
+    // Every placeholder gets the same silent length: about an average loaded sample
+    // (1-10 s) next to real audio, or 2 s each when nothing loaded so the slots share
+    // the view evenly.
+    {
+        int loadedCount = 0;
+        juce::int64 loadedFrames = 0;
+        for (const auto& region : regions)
+        {
+            if (! region.meta.isPlaceholder())
+            {
+                ++loadedCount;
+                loadedFrames += region.meta.numFrames;
+            }
+        }
+
+        const int placeholderFrames = loadedCount > 0
+            ? juce::jlimit ((int) targetSampleRate, (int) (targetSampleRate * 10.0),
+                            (int) (loadedFrames / loadedCount))
+            : (int) (targetSampleRate * 2.0);
+
+        for (auto& region : regions)
+        {
+            if (region.meta.isPlaceholder())
+            {
+                region.meta.numFrames = placeholderFrames;
+                region.buffer.setSize (2, placeholderFrames);
+                region.buffer.clear();
+            }
+        }
+    }
+
+    for (auto& region : regions)
+    {
+        region.meta.startFrame = totalFrames;
+        totalFrames += region.meta.numFrames;
+    }
+
+    decoded->buffer.setSize (2, totalFrames);
+    for (auto& region : regions)
+    {
+        const int regionFrames = region.buffer.getNumSamples();
+        decoded->buffer.copyFrom (0, region.meta.startFrame, region.buffer, 0, 0, regionFrames);
+        decoded->buffer.copyFrom (1, region.meta.startFrame, region.buffer, 1, 0, regionFrames);
+        for (auto imported : region.importedSlices)
+        {
+            imported.startSample += region.meta.startFrame;
+            imported.endSample += region.meta.startFrame;
+            decoded->importedSlices.push_back (imported);
+        }
+        decoded->sessionSamples.push_back (region.meta);
+    }
+
+    if (! decoded->sessionSamples.empty())
+    {
+        decoded->fileName = decoded->sessionSamples.front().fileName;
+        decoded->filePath = decoded->sessionSamples.front().filePath;
+    }
+    decoded->decodedNumFrames = totalFrames;
+    decoded->decodedSampleRate = targetSampleRate;
+    decoded->sourceNumFrames = totalSourceFrames;
+    decoded->sourceSampleRate = firstSourceSampleRate;
+    if (importSliceSampleIds != nullptr)
+        decoded->importSliceSampleIds = *importSliceSampleIds;
+    buildMipmapsForBuffer (decoded->buffer, decoded->peakMipmaps);
+    return decoded;
+}
+
+bool SampleData::DecodedSample::hasPlaceholders() const
+{
+    return std::any_of (sessionSamples.begin(), sessionSamples.end(),
+                        [] (const SessionSample& sample) { return sample.isPlaceholder(); });
+}
+
+std::unique_ptr<SampleData::DecodedSample> SampleData::rebuildWithSessionSamples (const DecodedSample& source,
+                                                                                  const std::vector<SessionSample>& sessionSamples)
+{
+    auto rebuilt = std::make_unique<DecodedSample>();
+
+    if (sessionSamples.empty())
+        return rebuilt;
+
+    int totalFrames = 0;
+    int totalSourceFrames = 0;
+    for (const auto& sample : sessionSamples)
+    {
+        totalFrames += juce::jmax (0, sample.numFrames);
+        totalSourceFrames += juce::jmax (0, sample.sourceNumFrames);
+    }
+
+    rebuilt->buffer.setSize (2, totalFrames);
+    rebuilt->decodedNumFrames = totalFrames;
+    rebuilt->decodedSampleRate = source.decodedSampleRate;
+    rebuilt->sourceNumFrames = totalSourceFrames;
+    rebuilt->sourceSampleRate = source.sourceSampleRate;
+
+    int writePos = 0;
+    for (const auto& sample : sessionSamples)
+    {
+        const int sourceStart = juce::jlimit (0, source.buffer.getNumSamples(), sample.startFrame);
+        const int availableFrames = juce::jmax (0, source.buffer.getNumSamples() - sourceStart);
+        const int copyFrames = juce::jmin (juce::jmax (0, sample.numFrames), availableFrames);
+
+        SampleData::SessionSample rebuiltSample = sample;
+        rebuiltSample.startFrame = writePos;
+        rebuiltSample.numFrames = copyFrames;
+        rebuilt->sessionSamples.push_back (rebuiltSample);
+
+        if (copyFrames > 0)
+        {
+            rebuilt->buffer.copyFrom (0, writePos, source.buffer, 0, sourceStart, copyFrames);
+            rebuilt->buffer.copyFrom (1, writePos, source.buffer, 1, sourceStart, copyFrames);
+            writePos += copyFrames;
+        }
+    }
+
+    if (! rebuilt->sessionSamples.empty())
+    {
+        rebuilt->fileName = rebuilt->sessionSamples.front().fileName;
+        rebuilt->filePath = rebuilt->sessionSamples.front().filePath;
+    }
+
+    buildMipmapsForBuffer (rebuilt->buffer, rebuilt->peakMipmaps);
+    return rebuilt;
+}
+
+void SampleData::applyDecodedSample (std::unique_ptr<DecodedSample> decoded)
+{
+    if (decoded == nullptr)
+        return;
+
+    const int frames = decoded->decodedNumFrames > 0 ? decoded->decodedNumFrames
+                                                     : decoded->buffer.getNumSamples();
+
+    // Convert to shared_ptr — no buffer copy, no heap allocation.
+    auto shared = std::shared_ptr<const DecodedSample> (decoded.release());
+
+    // Audio-thread reference (non-atomic, only written here on audio thread).
+    activeDecoded = shared;
+    numFrames.store (frames, std::memory_order_release);
+    decodedSampleRate.store (shared->decodedSampleRate, std::memory_order_release);
+    sourceNumFrames.store (shared->sourceNumFrames, std::memory_order_release);
+    sourceSampleRate.store (shared->sourceSampleRate, std::memory_order_release);
+
+    // Publish the same object to UI via atomic snapshot.
+#if INTERSECT_HAS_STD_ATOMIC_SHARED_PTR
+    snapshot.store (shared, std::memory_order_release);
+#else
+    std::atomic_store_explicit (&snapshot, shared, std::memory_order_release);
+#endif
+    loaded.store (true, std::memory_order_release);
+}
+
+void SampleData::clear()
+{
+    activeDecoded.reset();
+    numFrames.store (0, std::memory_order_release);
+#if INTERSECT_HAS_STD_ATOMIC_SHARED_PTR
+    snapshot.store (std::shared_ptr<const DecodedSample> {}, std::memory_order_release);
+#else
+    std::atomic_store_explicit (&snapshot, std::shared_ptr<const DecodedSample> {},
+                                std::memory_order_release);
+#endif
+    loaded.store (false, std::memory_order_release);
+    decodedSampleRate.store (0.0, std::memory_order_release);
+    sourceNumFrames.store (0, std::memory_order_release);
+    sourceSampleRate.store (0.0, std::memory_order_release);
+}
+
+SampleData::SnapshotPtr SampleData::getSnapshot() const
+{
+#if INTERSECT_HAS_STD_ATOMIC_SHARED_PTR
+    return snapshot.load (std::memory_order_acquire);
+#else
+    return std::atomic_load_explicit (&snapshot, std::memory_order_acquire);
+#endif
+}
+
+const juce::AudioBuffer<float>& SampleData::getBuffer() const
+{
+    if (activeDecoded)
+        return activeDecoded->buffer;
+    return kEmptyBuffer;
+}
+
+const std::array<SampleData::PeakMipmap, SampleData::kNumMipmapLevels>& SampleData::getMipmaps() const
+{
+    if (activeDecoded)
+        return activeDecoded->peakMipmaps;
+    return kEmptyMipmaps;
+}
+
+int SampleData::getNumSessionSamples() const
+{
+    return activeDecoded != nullptr ? (int) activeDecoded->sessionSamples.size() : 0;
+}
+
+const SampleData::SessionSample* SampleData::findSessionSampleById (int sampleId) const
+{
+    if (! activeDecoded)
+        return nullptr;
+
+    for (const auto& sample : activeDecoded->sessionSamples)
+        if (sample.sampleId == sampleId)
+            return &sample;
+    return nullptr;
+}
+
+const std::vector<SampleData::SessionSample>& SampleData::getSessionSamples() const
+{
+    static const std::vector<SessionSample> empty;
+    if (activeDecoded)
+        return activeDecoded->sessionSamples;
+    return empty;
+}
+
+const std::vector<SampleData::DecodedSample::ImportedSlice>& SampleData::getImportedSlices() const
+{
+    static const std::vector<DecodedSample::ImportedSlice> empty;
+    if (activeDecoded)
+        return activeDecoded->importedSlices;
+    return empty;
+}
+
+float SampleData::interpolateCubic (float y0, float y1, float y2, float y3, float frac)
+{
+    const float a0 = -0.5f * y0 + 1.5f * y1 - 1.5f * y2 + 0.5f * y3;
+    const float a1 = y0 - 2.5f * y1 + 2.0f * y2 - 0.5f * y3;
+    const float a2 = -0.5f * y0 + 0.5f * y2;
+    const float a3 = y1;
+
+    return ((a0 * frac + a1) * frac + a2) * frac + a3;
+}
+
+float SampleData::getSampleAtFrame (int frame, int channel) const
+{
+    if (! activeDecoded || channel < 0 || channel > 1)
+        return 0.0f;
+
+    const auto& buf = activeDecoded->buffer;
+    if (frame < 0 || frame >= buf.getNumSamples())
+        return 0.0f;
+
+    auto* data = buf.getReadPointer (channel);
+    return data != nullptr ? data[frame] : 0.0f;
+}
+
+float SampleData::getInterpolatedSample (double pos, int channel) const
+{
+    if (! activeDecoded || channel < 0 || channel > 1)
+        return 0.0f;
+
+    const auto& buf = activeDecoded->buffer;
+    int ipos = (int) pos;
+    float frac = (float) (pos - ipos);
+
+    if (ipos < 0 || ipos >= buf.getNumSamples())
+        return 0.0f;
+    if (ipos == buf.getNumSamples() - 1)
+    {
+        auto* data = buf.getReadPointer (channel);
+        return data != nullptr ? data[ipos] : 0.0f;
+    }
+
+    auto* data = buf.getReadPointer (channel);
+    if (data == nullptr)
+        return 0.0f;
+    return data[ipos] + (data[ipos + 1] - data[ipos]) * frac;
+}

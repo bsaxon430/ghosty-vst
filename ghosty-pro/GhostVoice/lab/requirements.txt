@@ -1,0 +1,8 @@
+numpy>=1.26
+scipy>=1.11
+soundfile>=0.12
+librosa>=0.10.2
+speechbrain>=1.0.0
+torch>=2.2
+gradio>=4.44
+pytest>=8.0

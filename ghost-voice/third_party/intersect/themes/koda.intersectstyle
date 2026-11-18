@@ -1,0 +1,48 @@
+# INTERSECT Koda Theme
+# Source: oskarnurm/koda.nvim
+#
+# Themes folder:
+#   Windows:  %APPDATA%\Roaming\INTERSECT\themes\
+#   macOS:    ~/Library/Application Support/INTERSECT/themes/
+#   Linux:    ~/.config/INTERSECT/themes/
+#
+# Colours are 6-digit hex (RRGGBB). Restart the plugin to apply changes.
+
+name: koda
+
+surface0: 000000    # waveform area
+surface1: 0a0a0a    # base background
+surface2: 101010    # raised panels
+surface3: 272727    # borders
+surface4: 272727    # recessed controls
+surface5: 777777    # hover / separator
+
+text0: 50585d       # muted / inactive
+text1: 909090       # body / secondary
+text2: b0b0b0       # primary
+
+waveform: 458ee6    # audio waveform rendering
+accent: ffffff      # main accent + selection + active tabs
+
+color1: 458ee6      # playback module
+color2: d9ba73      # filter module
+color3: 86cd82      # amp module
+color4: f2a4db      # output module
+color5: ff7676      # alert / warning
+
+slice1: 86cd82
+slice2: ff7676
+slice3: d9ba73
+slice4: 5abfb5
+slice5: f2a4db
+slice6: ff5733
+slice7: 8ebeec
+slice8: 458ee6
+slice9: 14ba19
+slice10: 701516
+slice11: ffffff
+slice12: b0b0b0
+slice13: 777777
+slice14: 50585d
+slice15: 272727
+slice16: 86cd82

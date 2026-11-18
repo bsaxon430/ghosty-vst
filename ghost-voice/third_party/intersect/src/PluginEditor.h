@@ -1,0 +1,139 @@
+#pragma once
+#include <juce_audio_processors/juce_audio_processors.h>
+#include "PluginProcessor.h"
+#include "SettingsFile.h"
+#include "ui/IntersectLookAndFeel.h"
+#include "ui/HeaderBar.h"
+#include "ui/SampleLane.h"
+#include "ui/browser/BrowserView.h"
+#include "ui/stems/StemView.h"
+#include "ui/settings/SettingsHost.h"
+#include "ui/settings/SettingsView.h"
+#include "ui/SignalChainBar.h"
+#include "ui/SliceLane.h"
+#include "ui/WaveformView.h"
+#include "ui/ScrollZoomBar.h"
+#include "ui/ActionPanel.h"
+#include "ui/UrlImportPanel.h"
+
+class IntersectEditor : public juce::AudioProcessorEditor,
+                             public juce::DragAndDropContainer,
+                             public SettingsHost,
+                             private juce::Timer
+{
+public:
+    explicit IntersectEditor (IntersectProcessor&);
+    ~IntersectEditor() override;
+
+    void paint (juce::Graphics&) override;
+    void resized() override;
+    bool keyPressed (const juce::KeyPress& key) override;
+
+    // ---- SettingsHost ----
+    juce::StringArray getAvailableThemes() override;
+    void applyTheme (const juce::String& themeName) override;
+    void setMiddleCOctave (int octave) override;
+    int getMiddleCOctave() const override { return middleCOctave; }
+    float getDesiredUiScale() const override;
+    float getEffectiveUiScale() const override { return lastAppliedScale; }
+    void adjustUiScale (float delta) override;
+    juce::File getCustomPresetsFolder() const override { return browser.getCustomPresetsFolder(); }
+    void setCustomPresetsFolder (const juce::File& folder) override;
+    Browser::DefaultFolderMode getBrowserDefaultFolderMode() const override { return browser.getDefaultFolderMode(); }
+    void setBrowserDefaultFolderMode (Browser::DefaultFolderMode mode) override;
+    juce::File getBrowserDefaultFolder() const override { return browser.getDefaultFolder(); }
+    void setBrowserDefaultFolder (const juce::File& folder) override;
+    void persistSettings() override;
+
+private:
+    enum class DeleteTarget
+    {
+        slice,
+        sample,
+    };
+
+    /** Deletes the selected slice, or removes the selected sample (asking first unless skipConfirm). */
+    void performContextualDelete (bool skipConfirm);
+    void timerCallback() override;
+    void ensureDefaultThemes();
+    void loadUserSettings();
+    void saveUserSettings (float scale, const juce::String& themeName);
+    void setBrowserVisible (bool shouldBeVisible);
+    void setStemViewVisible (bool shouldBeVisible, int sampleId = -1);
+    void setSettingsVisible (bool shouldBeVisible);
+    void setEditingBandsVisible (bool shouldBeVisible);
+    void addFilesToKit (const std::vector<juce::File>& files);
+    void replaceKitWithFiles (const std::vector<juce::File>& files);
+    void loadPreset (const juce::File& preset);
+    void handleDroppedFiles (const std::vector<juce::File>& files);
+    /** Opens the browser in relink mode for a missing session sample. */
+    void startRelink (int sampleId);
+    /** Points a missing sample at file; other missing samples found by name next to it follow. */
+    void relinkSample (int sampleId, const juce::File& file);
+    void openFileDialog();
+    /** Import from URL: shows the panel, the link field prefilled (paste, browser menu). */
+    void showUrlImport (const juce::String& prefillUrl);
+    void positionUrlImportPanel();
+    /** "Ask each time": a save dialog for an import waiting in staging. */
+    void askWhereToSaveImport (const UrlImport::JobResult& result);
+    void saveKitToLibrary();
+    void exportPreset (const juce::File& preset, bool embedSamples);
+    juce::String getDefaultPresetName() const;
+    float computeEffectiveScale (float desiredScale) const;
+    bool updateUiTransform();
+    void applyLogicalSize();
+
+    IntersectProcessor& processor;
+    int middleCOctave = 4;
+    float lastScale = 1.0f;          // last desired scale persisted to settings
+    float lastAppliedScale = 1.0f;   // effective (auto-fitted) scale currently in the transform
+    float lastFitDesired = -1.0f;    // guard cache: forces first fit on first post-attach tick
+    juce::Point<int> lastFitScreenPos;
+    int fitCheckCounter = 0;
+    float lastZoom = -1.0f;
+    float lastScroll = -1.0f;
+    float lastSampleFadeCrossfade = -1.0f;
+    int lastSampleFadeLoopMode = -1;
+    int lastSampleFadeReverse = -1;
+    int timerHz = 30;
+    bool lastWaveformAnimating = false;
+    bool lastPreviewActive = false;
+    float savedScale = -1.0f;
+    bool browserVisible = false;
+    bool stemViewVisible = false;
+    bool settingsVisible = false;
+    bool loadingSettings = false;    // saveUserSettings does nothing while settings are being applied
+    uint32_t lastUiSnapshotVersion = 0;
+    uint32_t lastPresetSaveVersion = 0;
+    DeleteTarget deleteTarget = DeleteTarget::slice;
+
+    IntersectLookAndFeel lnf;
+    BrowserView browser;
+    StemView    stemView;
+    SettingsView settingsView;
+    HeaderBar       headerBar;
+    SampleLane      sampleLane;
+    SignalChainBar  signalChainBar;
+    SliceLane       sliceLane;
+    WaveformView    waveformView;
+    ScrollZoomBar   scrollZoomBar;
+    ActionPanel     actionPanel;
+    UrlImportPanel  urlImportPanel;
+
+    juce::TooltipWindow tooltipWindow { this, 500 };
+    std::unique_ptr<juce::FileChooser> presetChooser;
+    std::unique_ptr<juce::FileChooser> openChooser;
+    std::unique_ptr<juce::FileChooser> urlImportChooser;
+    juce::File lastUrlImportSaveFolder;
+    SettingsFile settingsFile;       // settings.yaml, shared with other instances (see SettingsFile)
+    juce::File pendingRenamePreset;   // a SAVE whose new file should open for renaming once written
+    juce::File lastExportFolder;
+
+    // MIDI export of one session sample's slices (sample lane MIDI button).
+    bool writeMidiExport (const juce::File& dest, int sampleId);
+    juce::String getMidiExportBaseName (int sampleId) const;
+    juce::File writeMidiForDrag (int sampleId);
+    void saveMidiAs (int sampleId);
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (IntersectEditor)
+};

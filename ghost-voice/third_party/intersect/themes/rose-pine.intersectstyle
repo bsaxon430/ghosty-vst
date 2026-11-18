@@ -1,0 +1,47 @@
+# INTERSECT Rose Pine Theme
+#
+# Themes folder:
+#   Windows:  %APPDATA%\Roaming\INTERSECT\themes\
+#   macOS:    ~/Library/Application Support/INTERSECT/themes/
+#   Linux:    ~/.config/INTERSECT/themes/
+#
+# Colours are 6-digit hex (RRGGBB). Restart the plugin to apply changes.
+
+name: rose-pine
+
+surface0: 1f1d2e    # waveform area
+surface1: 15131e    # base background
+surface2: 191724    # raised panels
+surface3: 26233a    # borders
+surface4: 26233a    # recessed controls
+surface5: 26233a    # hover / separator
+
+text0: 6e6a86       # muted / inactive
+text1: 908caa       # body / secondary
+text2: e0def4       # primary
+
+waveform: 9ccfd8    # audio waveform rendering
+accent: ebbcba      # main accent + selection + active tabs
+
+color1: 31748f      # playback module
+color2: f6c177      # filter module
+color3: 9ccfd8      # amp module
+color4: c4a7e7      # output module
+color5: eb6f92      # alert / warning
+
+slice1: 31748f               # Pine
+slice2: eb6f92               # Love
+slice3: f6c177               # Gold
+slice4: ebbcba               # Rose
+slice5: 9ccfd8               # Foam
+slice6: c4a7e7               # Iris
+slice7: 56949f               # Pine Alt
+slice8: d7827e               # Rose Alt
+slice9: ea9d34               # Gold Alt
+slice10: b4637a              # Love Alt
+slice11: 286983              # Deep Pine
+slice12: 907aa9              # Iris Alt
+slice13: 56949f              # Foam Alt
+slice14: 6e6a86              # Muted
+slice15: 908caa              # Subtle
+slice16: e0def4              # Text

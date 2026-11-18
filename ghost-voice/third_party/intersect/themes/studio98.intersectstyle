@@ -1,0 +1,48 @@
+# INTERSECT Studio98 Theme
+# Source: jnz/studio98
+#
+# Themes folder:
+#   Windows:  %APPDATA%\Roaming\INTERSECT\themes\
+#   macOS:    ~/Library/Application Support/INTERSECT/themes/
+#   Linux:    ~/.config/INTERSECT/themes/
+#
+# Colours are 6-digit hex (RRGGBB). Restart the plugin to apply changes.
+
+name: studio98
+
+surface0: ffffff    # waveform area
+surface1: ececec    # base background
+surface2: f5f5f5    # raised panels
+surface3: c0c0c0    # borders
+surface4: c2c3ca    # recessed controls
+surface5: efeef3    # hover / separator
+
+text0: 808080       # muted / inactive
+text1: 404040       # body / secondary
+text2: 000000       # primary
+
+waveform: 007acc    # audio waveform rendering
+accent: 007acc      # main accent + selection + active tabs
+
+color1: 357ec7      # playback module
+color2: c08020      # filter module
+color3: 008000      # amp module
+color4: 800080      # output module
+color5: cc0000      # alert / warning
+
+slice1: 800000
+slice2: 008000
+slice3: 000080
+slice4: f3b63c
+slice5: 357ec7
+slice6: ff00ff
+slice7: 00ffff
+slice8: fff953
+slice9: 545454
+slice10: 0000ff
+slice11: 64ffff
+slice12: b3b3b3
+slice13: 800000
+slice14: 008000
+slice15: 000080
+slice16: 545454

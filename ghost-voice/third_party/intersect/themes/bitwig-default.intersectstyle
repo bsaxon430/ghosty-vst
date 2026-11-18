@@ -1,0 +1,53 @@
+# Bitwig Default Palette — INTERSECT Dark Theme
+#
+# Built from Bitwig Studio's classic track/clip color palette.
+# Surface tones are extrapolated (the palette has no near-blacks);
+# every other slot maps to a real Bitwig hue.
+#
+# Copy this file to your INTERSECT themes folder:
+#   Windows:  %APPDATA%\Roaming\INTERSECT\themes\
+#   macOS:    ~/Library/Application Support/INTERSECT/themes/
+#   Linux:    ~/.config/INTERSECT/themes/
+name: bitwig-default
+
+# Surfaces — dark grays with a faint Silver-blue cast
+surface0: 0a0a0c    # deepest (waveform pit)
+surface1: 101013    # base background
+surface2: 161619    # raised panels
+surface3: 1e1e23    # borders
+surface4: 2d2d35    # recessed controls
+surface5: 545458    # hover / separator
+
+# Text — Bitwig grayscale
+text0: 545454       # muted / inactive   (Dark Gray)
+text1: 7a7a7a       # body / secondary   (Gray)
+text2: c9c9c9       # primary            (Light Gray)
+
+# Waveform + main accent
+waveform: 8689ac    # Silver
+accent:   43d2b9    # Moss Green
+
+# Module colors
+color1: 0099d9      # playback   (Light Blue)
+color2: d99d10      # filter     (Light Orange)
+color3: 739814      # amp        (Green)
+color4: 9549cb      # output     (Purple)
+color5: d92e24      # alert      (Red)
+
+# Slice palette — 16 distinct Bitwig hues
+slice1:  44c8ff     # Blue
+slice2:  ec6157     # Rose
+slice3:  a0c04c     # Light Green
+slice4:  c69f70     # Brown
+slice5:  bc76f0     # Light Purple
+slice6:  e4b74e     # Light Brown
+slice7:  00a694     # Bluish Green
+slice8:  d93871     # Pink
+slice9:  3ebb62     # Greenish Blue
+slice10: ff833e     # Reddish Brown
+slice11: 5761c6     # Dark Blue
+slice12: a37943     # Dark Brown
+slice13: 848ae0     # Purplish Blue
+slice14: 009d47     # Cold Green
+slice15: e16691     # Light Pink
+slice16: ff5706     # Orange

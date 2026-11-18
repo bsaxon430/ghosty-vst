@@ -1,0 +1,103 @@
+#pragma once
+#include "../Constants.h"
+#include "AdsrEnvelope.h"
+#include "SvfFilter.h"
+#include <cstdint>
+#include <memory>
+#include <vector>
+
+// Forward declare to avoid including heavy header in every TU
+namespace signalsmith { namespace stretch {
+    template<typename Sample, class RandomEngine> struct SignalsmithStretch;
+}}
+
+namespace Bungee {
+    struct Basic;
+    template<class Edition> struct Stretcher;
+}
+
+struct Voice
+{
+    bool         active       = false;
+    int          sliceIdx     = -1;
+    double       position     = 0.0;     // loop-mapped playhead for every playback algorithm
+    double       speed        = 1.0;
+    int          direction    = 1;       // 1=forward, -1=reverse
+    int          midiNote     = -1;
+    int          repitchMode  = (int) RepitchMode::Linear;
+    float        velocity     = 0.0f;
+    AdsrEnvelope envelope;
+    int          startSample  = 0;
+    int          endSample    = 0;
+    bool         pingPong     = false;
+    int          muteGroup    = 1;  // default matches slice creation default; always overwritten in startVoice()
+    bool         looping      = false;
+    int          loopStartSample = 0;
+    int          loopEndSample   = 0;
+    bool         inLoopRegion    = false;
+    float        volume       = 1.0f;
+    bool         releaseTail  = false;
+    bool         oneShot      = false;
+    int          bufferEnd    = 0;       // actual end of sample buffer (for release tail)
+    int          outputBus    = 0;       // output bus index (0-15)
+    bool         filterEnabled = false;
+    int          filterType    = 0;
+    int          filterSlope   = 0;
+    float        filterCutoff  = 8200.0f;
+    float        filterReso    = 0.0f;
+    float        filterDrive   = 0.0f;
+    float        filterAsym    = 0.0f;
+    float        filterDriveGain = 1.0f;
+    float        satBias       = 0.0f;
+    float        satOffset     = 0.0f;
+    float        satNorm       = 1.0f;
+    float        dcPrevInL     = 0.0f;
+    float        dcPrevInR     = 0.0f;
+    float        dcPrevOutL    = 0.0f;
+    float        dcPrevOutR    = 0.0f;
+    float        dcCoeffR      = 0.0f;
+    bool         dcBlockerActive = false;
+    float        filterEnvAmount = 0.0f;
+    float        filterKeyTrackRatio = 1.0f;
+    AdsrEnvelope filterEnvelope;
+    SvfFilter    filterL1, filterR1, filterL2, filterR2;
+    SvfFilter::SvfCoeffs filterCoeffs;
+    int          filterCoeffCounter = 0;
+
+    // Crossfade fields
+    float        crossfadePct      = 0.0f;
+    int          crossfadeLenSamples = 0;
+
+    // Signalsmith stretch fields
+    bool         stretchActive = false;
+    std::shared_ptr<signalsmith::stretch::SignalsmithStretch<float, void>> stretcher;
+    std::vector<float> stretchInBufL, stretchInBufR;
+    std::vector<float> stretchOutBufL, stretchOutBufR;
+    int          stretchOutReadPos  = 0;
+    int          stretchOutAvail    = 0;
+    double       stretchSrcPos      = 0.0;
+    float        stretchTimeRatio   = 1.0f;
+    float        stretchPitchSemis  = 0.0f;
+    // Source position of every sample fed to the stretcher, so the playhead
+    // can follow the output instead of the read head. Positions are integral.
+    std::vector<int> stretchFedPos;      // ring buffer, power-of-two size
+    int64_t      stretchFedCount      = 0;
+    int64_t      stretchSeekFedStart  = 0;
+    int64_t      stretchBlockFedStart = 0;
+    int          stretchBlockInputs   = 0;
+    int          stretchLatency       = 0;
+
+    // Bungee stretch fields
+    bool         bungeeActive       = false;
+    std::shared_ptr<Bungee::Stretcher<Bungee::Basic>> bungeeStretcher;
+    std::vector<float> bungeeInputBuf;   // interleaved per-channel input buffer
+    std::vector<float> bungeeOutBufL, bungeeOutBufR;
+    int          bungeeOutReadPos   = 0;
+    int          bungeeOutAvail     = 0;
+    double       bungeeSrcPos       = 0.0;
+    double       bungeePitch        = 1.0;
+    double       bungeeSpeed        = 1.0;
+    double       bungeeOutPosBegin  = 0.0;   // unbounded source position of the first output frame
+    double       bungeeOutPosEnd    = 0.0;   // ...and of the frame after the last
+    bool         bungeeResetNeeded  = false;
+};

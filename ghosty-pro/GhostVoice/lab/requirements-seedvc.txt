@@ -1,0 +1,5 @@
+# Install in the SAME environment as the Seed-VC checkout.
+# Keep torch and torchaudio versions matched to one another.
+torchaudio>=2.2
+soundfile>=0.12
+numpy>=1.26

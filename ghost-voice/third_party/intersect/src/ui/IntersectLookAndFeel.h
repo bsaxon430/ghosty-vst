@@ -1,0 +1,61 @@
+#pragma once
+#include <juce_gui_basics/juce_gui_basics.h>
+#include "ThemeData.h"
+
+ThemeData& getTheme();
+void setTheme (const ThemeData& t);
+
+class IntersectLookAndFeel : public juce::LookAndFeel_V4
+{
+public:
+    static constexpr const char* outlineOnlyButtonProperty = "intersectOutlineOnlyButton";
+
+    IntersectLookAndFeel();
+    ~IntersectLookAndFeel() override;
+
+    void drawButtonBackground (juce::Graphics&, juce::Button&, const juce::Colour&,
+                               bool isHighlighted, bool isDown) override;
+    void drawButtonText (juce::Graphics&, juce::TextButton&, bool, bool) override;
+
+    void drawPopupMenuBackground (juce::Graphics&, int width, int height) override;
+    void drawPopupMenuItem (juce::Graphics&, const juce::Rectangle<int>& area,
+                            bool isSeparator, bool isActive, bool isHighlighted,
+                            bool isTicked, bool hasSubMenu,
+                            const juce::String& text, const juce::String& shortcutText,
+                            const juce::Drawable* icon, const juce::Colour* textColour) override;
+    void drawPopupMenuSectionHeader (juce::Graphics&, const juce::Rectangle<int>& area,
+                                     const juce::String& sectionName) override;
+    juce::Font getPopupMenuFont() override;
+    void fillTextEditorBackground (juce::Graphics&, int width, int height, juce::TextEditor&) override;
+    void drawTextEditorOutline (juce::Graphics&, int width, int height, juce::TextEditor&) override;
+
+    // Standard options for popup menus opened by components inside the plugin editor.
+    // Parents the menu to the editor so it inherits the UI-scale transform and never
+    // adds children to the host wrapper window (issue #41: opening a menu grew the
+    // plugin window and dismissed the menu in some Windows hosts).
+    static juce::PopupMenu::Options makeEditorMenuOptions (juce::Component& owner,
+                                                           int minimumWidth = 0,
+                                                           int standardItemHeight = 0);
+
+    void drawTooltip (juce::Graphics&, const juce::String& text, int width, int height) override;
+    juce::Rectangle<int> getTooltipBounds (const juce::String& text, juce::Point<int> screenPos,
+                                           juce::Rectangle<int> parentArea) override;
+
+    juce::Typeface::Ptr getTypefaceForFont (const juce::Font& f) override;
+
+    static juce::Font makeFont (float pointSize, bool bold = false);
+    static juce::Font fitFontToWidth (const juce::String& text, float maxPointSize,
+                                      float minPointSize, int width, bool bold = false);
+    static void drawShellButton (juce::Graphics& g,
+                                 juce::Rectangle<float> bounds,
+                                 const juce::Colour& fill,
+                                 const juce::Colour& outline,
+                                 float cornerRadius);
+
+private:
+    static juce::Typeface::Ptr sRegularTypeface;
+    static juce::Typeface::Ptr sBoldTypeface;
+
+    juce::Typeface::Ptr regularTypeface;
+    juce::Typeface::Ptr boldTypeface;
+};

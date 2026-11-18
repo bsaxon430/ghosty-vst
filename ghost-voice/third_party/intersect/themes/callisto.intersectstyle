@@ -1,0 +1,47 @@
+# INTERSECT Callisto Theme
+#
+# Themes folder:
+#   Windows:  %APPDATA%\Roaming\INTERSECT\themes\
+#   macOS:    ~/Library/Application Support/INTERSECT/themes/
+#   Linux:    ~/.config/INTERSECT/themes/
+#
+# Colours are 6-digit hex (RRGGBB). Restart the plugin to apply changes.
+
+name: callisto
+
+surface0: 161b21    # waveform area
+surface1: 1d222a    # base background
+surface2: 161b21    # raised panels
+surface3: 34414d    # borders
+surface4: 262833    # recessed controls
+surface5: 5e6d7c    # hover / separator
+
+text0: 8f9fae       # muted / inactive
+text1: d1e0ef       # body / secondary
+text2: d1e0ef       # primary
+
+waveform: 00a08d    # audio waveform rendering
+accent: 00d0b8      # main accent + selection + active tabs
+
+color1: 00d0b8      # playback module
+color2: 8f9fae      # filter module
+color3: d1e0ef      # amp module
+color4: 74c0fc      # output module
+color5: 00e1c6      # alert / warning
+
+slice1: 8f9fae
+slice2: 5e6d7c
+slice3: 8f9fae
+slice4: 5e6d7c
+slice5: 8f9fae
+slice6: 5e6d7c
+slice7: 8f9fae
+slice8: 5e6d7c
+slice9: 8f9fae
+slice10: 5e6d7c
+slice11: 8f9fae
+slice12: 5e6d7c
+slice13: 8f9fae
+slice14: 5e6d7c
+slice15: 8f9fae
+slice16: 5e6d7c

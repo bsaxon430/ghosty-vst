@@ -1,0 +1,451 @@
+# Changelog
+
+All notable changes to INTERSECT will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
+## [Unreleased]
+
+## [0.19.1] - 2026-11-09
+
+### Added
+- **Import from URL**: paste a link from YouTube, SoundCloud, Bandcamp or another site yt-dlp supports, and INTERSECT downloads the audio, saves it as a WAV and adds it to your kit (one undo step). Use **Import from URL...** in the file browser's open menu, type or paste the link into the browser's path bar, or press Ctrl/Cmd+V anywhere in INTERSECT with a link copied.
+- The first import downloads the tools it needs: yt-dlp from its official releases, plus ffmpeg and QuickJS from INTERSECT's tools repository. yt-dlp keeps itself up to date (checked at most every 6 hours, when you import), and every download is checked against its published checksum before it is used.
+- **SET → URL Import**: save imports to a folder (Music/INTERSECT Downloads by default) or choose where each time, follow yt-dlp's stable or nightly builds, see what's installed, and update or remove the tools.
+- Imports longer than an hour ask before downloading, live streams are refused, and a failed import says what happened (a sign-in or bot check, not available in your country, a site that changed) with **COPY DETAILS** for asking for help.
+
+### Changed
+- Searching in the file browser is much faster. On a large library the first search in a folder takes well under a second instead of many seconds, and typing more narrows the results instantly. Opening big folders is faster too.
+- Search now works as a filter while you browse: each folder shows its matching sounds plus the subfolders that lead to them, with a count, so you click down to what you need. Going up searches from the higher folder, and × or Esc turns the search off.
+- Search matches every word in any order, so `808 kick` finds "Kick 808 Hard.wav". Put words in quotes to match an exact phrase.
+- Sounds inside a folder whose name matches are found too, so searching "kick" also finds "BD 01.wav" in a "Kicks" folder. Folders that hold no matching sounds are hidden, and linked folders (shortcuts / symlinks) are searched as well.
+- The README now opens with what INTERSECT does best and lists its features in collapsible sections, each linking to the matching page in the documentation.
+
+### Fixed
+- Search no longer lists the hidden "._" files macOS leaves on NTFS and exFAT drives.
+
+## [0.19.0] - 2026-11-07
+
+### Added
+- Settings now open in their own full window (**SET**), like the file browser and STEMS, with General, MIDI, Files, Presets and Stems pages. Changes apply and are saved straight away. Stem models and ONNX Runtime bundles can be downloaded and activated there with live progress, even with no sample loaded.
+- Settings → General shows when a newer INTERSECT is out, with a button that opens its release page. It asks GitHub only when you open settings, at most every 6 hours.
+- Choose where the **FILES** button opens the browser: the last folder you browsed (the default) or a folder you pick. Set it in SET → Files, or right-click any folder in the browser and choose **Set as Default Folder**.
+- The file browser has a bottom bar with **CLOSE** and a status line showing how many items are listed and selected, and search progress.
+- **OPEN SETTINGS FOLDER** in the settings window opens the folder holding settings.yaml, themes and presets.
+
+### Changed
+- Removing a sample now asks first. Hold Shift (on the **X**, the Delete key or **DEL**) to remove it without asking.
+- The last folder you browsed is shared by every open INTERSECT and remembered for your next session.
+
+### Fixed
+- With several INTERSECT instances open, closing one no longer undoes settings changed in another (bookmarks, recent folders, theme, the last folder and others).
+
+## [0.18.2] - 2026-11-04
+
+### Added
+- When a stem model gets a fixed version, STEMS shows a bright **UPDATE** button and "Update available" in the model list. The old version keeps working until you click **UPDATE**; updating replaces it and deletes the old file.
+- Stem separation keeps a log (`INTERSECT/logs/stem-separation.log` in your user data folder). Clicking a stem error in the status bar now also copies the details needed to help: INTERSECT and runtime versions, your GPU and driver, the model, and where it stopped.
+
+### Fixed
+- BS-RoFormer SW and Mini-BS-RoFormer V2.5 now run on older NVIDIA GPUs on Windows (GTX 600/700/900 series), where they stopped with error 887A0006 because Windows reset the graphics driver. BS-RoFormer SW's stems on Windows GPUs are also correct now; before, a DirectML bug made them wrong on every GPU. Both fixes come as updated model files: click **UPDATE** in STEMS.
+- When Windows resets the graphics driver during a GPU separation (error 887A0006, common on older NVIDIA cards such as the GTX 900 series), the message now says so instead of showing a generic GPU error. Other GPU errors also name their cause, such as running out of graphics memory.
+- If the GPU hands back silence after such a reset, separation now stops with that message instead of writing silent stems.
+- In the standalone app with no audio output device, loading a sample now says why it can't finish instead of doing nothing.
+
+## [0.18.1] - 2026-11-02
+
+### Added
+- Join the Discord link in the SET menu
+
+### Fixed
+- SCNet and Mini-BS-RoFormer V2.5 now work on Windows GPUs (DirectML). Before, they stopped with "The parameter is incorrect". If you already downloaded either model, STEMS now offers the fixed version: click **DOWNLOAD** once to replace it.
+- When the GPU can't load or run a stem model, the message now says why, for example that the GPU ran out of memory, and tells you to switch **DEVICE** to CPU. INTERSECT no longer switches to the CPU on its own: before, if the GPU runtime couldn't start for a separation, it quietly used the CPU instead.
+
+### Changed
+- Fixes to stem models now reach INTERSECT without an update. STEMS checks for an updated model list when it opens.
+
+## [0.18.0] - 2026-10-29
+
+### Added
+- Three new stem separation models, each downloadable from the stem view. All are MIT-licensed.
+  - **SCNet**: small and fast, and runs well on the CPU.
+  - **Mini-BS-RoFormer V2.5**: much faster than full-size models, with slightly lower quality.
+  - **MVSep Mega 53**: finds 53 individual instruments, such as kick, snare, hi-hat, lead and backing vocals, piano, strings and brass. Its stems overlap, so they don't add up to the mix.
+- Each model now shows what it needs to run: how much RAM (in red when your computer has less), roughly how long a 3-minute song takes on the CPU, and whether a GPU is recommended.
+
+### Changed
+- **STEMS** now opens a full-size stem view, like the file browser.
+  - On the left, pick a model. Each one shows its description, license, credits and download progress.
+  - On the right, tick the stems you want. Stems are grouped, with search and all/none buttons.
+  - Along the bottom, choose the device, mode and output folder.
+  - The view remembers the last model you used and which stems you picked for each model.
+- Model downloads are checked before they're installed, so a damaged download is caught right away instead of failing later.
+- Generated stems keep their names (such as "lead-vocal" or "kick") when you save and reopen a project.
+
+### Fixed
+- Reopening a project no longer turns piano stems and combined stems into guitar stems.
+
+## [0.17.2] - 2026-10-27
+
+### Fixed
+- Clicking an error message in the top bar now copies the whole message. Before, long errors (such as GPU stem separation errors) were cut off after 255 characters, which hid the part that explains what went wrong (#56).
+- Projects made with versions before 0.13 open with their slices again (#57). Before, the sample loaded but every slice was squashed into the first instant, so nothing could be seen or heard.
+- Missing samples can be relinked again (#57). A sample whose file was moved or deleted now shows as an empty slot in the waveform with a **RELINK** button. Click it, the sample's red tab, or the MISSING message in the top bar to pick the file in the browser. The sample keeps its slices and settings, and other missing files with the same name in the chosen folder are relinked too.
+- Saving while some samples are missing no longer loses them or their settings, and adding a file while samples are missing no longer deletes all slices.
+- Presets whose sample files can't be found now load them as missing samples you can relink, instead of leaving them out.
+
+## [0.17.1] - 2026-10-20
+
+### Fixed
+- Lazy chop works again with stretch turned on, or with the Signalsmith or Bungee algorithm (#50, #55, contributed by [@Thijs226](https://github.com/Thijs226)). Before, pressing keys after the first one created no slices.
+- With Signalsmith or Bungee, lazy chop now cuts where you hear the sample, and the playback cursor matches the sound. Before, chops landed up to about 20 ms late, which could cut off the start of a hit.
+- Signalsmith loops and ping-pong no longer stutter at the loop point. Before, each pass skipped the end of the loop and repeated a short piece of its start.
+- Slices made with lazy chop now follow the settings of the sample they were cut from. Before, in a session with several samples, they could take another sample's settings, so changes like turning 1SHOT back on had no effect.
+- The standalone app no longer shrinks back to 100% size, cutting off the UI, when you move its window at a larger UI scale (#54).
+
+## [0.17.0] - 2026-10-06
+
+### Added
+- REX2 (`.rx2`) loop support (#52, contributed by [@cadecomposer](https://github.com/cadecomposer)): drop a `.rx2` file and INTERSECT loads the loop with every slice from the file already created, and the loop's tempo becomes that sample's BPM (stretch stays off). Slices keep their REX tails, so they ring out naturally at slower tempos. `.rx2` files also preview in the file browser and work in multi-sample sessions and presets. Decoding uses the [VelociLoops](https://github.com/kunitoki/VelociLoops) library.
+- MIDI export (#52, contributed by [@cadecomposer](https://github.com/cadecomposer)): each sample in the sample lane has a new **MIDI** button, next to **STEMS**. Drag it into your DAW to drop a MIDI clip that plays that sample's slices in order, or click it to save a `.mid` file. REX2 loops export with their original groove.
+
+### Changed
+- Every sample in a session now keeps its own settings. Changing BPM, pitch, algorithm, envelope, filter, gain or playback on the `SAMPLE` tab only affects the selected sample; before, those settings were shared by all samples in the session. Projects and presets saved with earlier versions load and sound exactly as before. New samples start at the default settings, and stems start with the settings of the sample they were split from.
+- `VOICES` moved to the bottom row of the signal chain, next to `SLICES` and `ROOT`, since it applies to the whole plugin.
+- Sample settings can no longer be automated from your DAW (`VOICES` and UI scale still can). Automation for each sample's settings is planned.
+- The file browser's search status bar ("Searching…", "Showing the first … matches") is now accent-coloured so it stands out from the file list.
+
+## [0.16.0] - 2026-09-21
+
+### Added
+- Built-in presets (#47): the new `SAVE` button in the header saves the whole kit (samples, slices and all settings) straight into your preset library and opens it in the browser with the name ready to type. Load a preset by double-clicking it or dropping it on the sample lane; loading can be undone. Right-click a preset to rename it or to export a copy, optionally with the audio embedded so a single file can be shared. Presets live in a `presets` folder next to your themes, and you can add your own presets folder in **SET → Presets**.
+- Previewing in the file browser: selecting a file shows its waveform, length and format and plays it (turn `AUTO` off to only play on demand). `Space` plays or pauses, `→` restarts from the top, and the preview has its own volume.
+- The file browser remembers the folder you were in and lists your recent folders, plus Home, Desktop, Documents, Music and Downloads.
+- The folder button next to the browser's path opens files or a folder with your system's file dialog.
+- Windows ARM64 and Linux ARM64 (aarch64) builds. Stem separation works on both with a CPU runtime, downloaded from **SET → Stem Separation → ONNX Runtime** like on other platforms.
+
+### Changed
+- The FILES browser is now a full view that takes over the editing area instead of a narrow side panel, so file names fit and the whole plugin can render larger on small screens. Files show their length and sample rate, and columns can be sorted.
+- Double-clicking a file in the browser adds it to the kit; `Shift` + double-click (or `Shift` + `Return`) replaces the kit instead. Both can be undone.
+- On Wayland, the notice under the waveform now says drag-and-drop *may* be unavailable, since it works in some setups.
+- The Home icon in the file browser is now solid, like the folder icons.
+
+### Fixed
+- Right-click menus in the file browser (such as **Add Bookmark**) now open at the mouse pointer instead of off to the side.
+
+## [0.15.4] - 2026-07-25
+
+### Added
+- The FILES browser has a search mode: click the magnifier in the path bar and type to find matching files and folders across the current folder and all of its subfolders. Matching is case-insensitive and partial, each result shows its file name (hover to see the full path), and clearing the search or switching the magnifier off returns to normal browsing.
+
+### Changed
+- The signal chain bar's sample-wide parameter scope is now labelled `SAMPLE` instead of `GLOBAL` (in both the collapsed tab and the expanded strip).
+
+## [0.15.3] - 2026-07-23
+
+### Added
+- Keyboard shortcuts Ctrl/Cmd + = and Ctrl/Cmd + - step the UI scale up and down.
+
+### Fixed
+- The SET settings menu and SET BPM menu now open reliably in Windows hosts such as REAPER at UI scales other than 1.0, and opening a menu no longer slowly grows the plugin window (#41).
+- The interface now renders at the largest scale that fully fits the current display, so the right side is no longer cut off at high UI scales or with the FILES browser open; the SET menu shows the fitted scale when it differs from the chosen one.
+- Toggling the FILES browser no longer changes the window height by a small amount.
+- The right side of the interface is no longer cut off in Ableton Live with "Auto-Scale Plugin Window" disabled on high-DPI displays (JUCE 8.0.14).
+
+## [0.15.2] - 2026-07-13
+
+### Changed
+- Documented Flatpak DAW library-path settings for CUDA ONNX Runtime bundles when hosted plugins cannot load CUDA provider libraries.
+- Replaced the single-page README with a slim landing page plus a full documentation site at <https://tucktuckg00se.github.io/INTERSECT/> covering installation, workflow, interface, controls reference, NRPN routing, themes, and building from source.
+- Expanded the documentation site with a Getting Started walkthrough, a Stem Separation walkthrough, a Troubleshooting / FAQ page, a complete parameter reference, a settings-file reference, and a changelog page. Rewrote the Themes page with the full `.intersectstyle` colour-key reference and a sample template. Filled in missing parameter ranges in the Controls reference and added a master/global controls section.
+- Restyled the documentation site with a custom colour scheme that matches the `oc.intersectstyle` plugin theme (Open Color palette), and switched the body typeface to Inter to match the plugin.
+- Fixed cross-page links in the documentation site that were missing the `/INTERSECT/` base URL.
+
+### Fixed
+- Sample browser path text now follows the active theme immediately on plugin open and when switching themes.
+- Slices triggered via MIDI now start at their exact requested time. Previously every trigger was rounded to the start of the host's audio buffer, so repeated triggers drifted by several milliseconds each — most noticeable at larger buffer sizes and with 1SHOT playback ([#40](https://github.com/tucktuckg00se/INTERSECT/issues/40)).
+- Short MIDI notes that start and end within a single audio buffer now play; previously they were silent.
+- Lazy chop boundaries are now placed at the exact moment the key is pressed instead of snapping to the start of the audio buffer.
+
+## [0.15.1] - 2026-06-10
+
+### Changed
+- Updated the JUCE submodule from the previous 8.0.12-based pin to the stable 8.0.13 release.
+
+### Fixed
+- Restored plugin UI rendering under Wine via the upstream JUCE 8.0.13 Wine functionality fix.
+
+## [0.15.0] - 2026-05-12
+
+### Added
+- Built-in sample browser side panel: toggle with the new FILES button in the header to navigate your file system, bookmark folders, browse with back/forward/up/refresh, and drag or double-click audio files into the waveform. Browser visibility and bookmarks are saved with your user settings.
+
+### Changed
+- Replaced the LOAD and APPEND buttons in the header with a single FILES toggle that opens the new browser panel
+- Sample name and status text in the header is now centered, and warning text follows the active theme's warning color instead of a hard-coded orange
+
+### Fixed
+- Wayland drag-and-drop fallback hint on the empty waveform now auto-hides after a few seconds instead of staying on screen indefinitely
+- Dropping non-audio files onto the waveform no longer attempts to load them
+- Browser bookmark right-click menu now appears under the cursor at every UI scale
+
+## [0.14.0] - 2026-05-01
+
+### Added
+- GPU-accelerated stem separation via downloadable ONNX Runtime bundles. Open SET > Stem Separation > ONNX Runtime and pick NVIDIA CUDA 12 or 13 / AMD MIGraphX on Linux, DirectML on Windows, or CoreML on macOS. Bundles download into your user data folder; restart INTERSECT after install to use the new runtime.
+
+### Changed
+- Updated the ONNX Runtime this build targets to 1.24.2 on Windows and Linux; macOS stays on 1.23.2 for x64 support.
+- On Intel macs, the stem separation panel now clearly shows that stem separation is not available instead of failing on START.
+
+### Fixed
+- GPU stem separation errors now display in the header status bar instead of silently doing nothing.
+- ONNX Runtime and stem model downloads no longer do completion work on the audio thread, removing a potential source of audio dropouts during downloads.
+
+## [0.13.0] - 2026-04-15
+
+### Added
+- Multi-sample sessions with APPEND loading, a dedicated sample lane, sample reordering, and sample deletion
+- Stem separation powered by BS-RoFormer: split any sample into vocals and instrumental via the STEM panel
+
+### Changed
+- Sample lane colors now run opposite the slice palette, labels truncate cleanly, and slice/sample lane blocks use a simpler filled style
+- Stem export now shows a `CANCEL` button while separation is running, and header status text copies warning/error messages instead of opening sample load dialogs
+
+### Fixed
+- Restoring multi-sample projects and undoing back to an empty session no longer leaves stale sample data loaded
+- Stem export now opens reliably from the sample lane, warning banners clear automatically, and copied release builds bundle the ONNX Runtime files they need
+- Hosted VST3 stem separation is now more stable in Ableton Live and REAPER on Windows by forcing INTERSECT to use its bundled ONNX Runtime instead of incompatible DAW-loaded versions
+
+## [0.12.4] - 2026-04-12
+
+### Added
+- Middle C octave convention setting in the SET menu: choose C3, C4, or C5 to match your DAW's note naming (saved globally, does not affect stored MIDI data)
+
+### Fixed
+- RESEQ no longer collapses note-range slices to single notes; ranges and root note offsets are preserved, and slices are packed without overlaps
+- Warning now appears when creating or resequencing slices past the MIDI note limit, showing which slices are affected
+- Auto chop no longer freezes the UI on large samples; transient analysis now runs in the background with responsive slider controls
+
+## [0.12.3] - 2026-04-11
+
+### Changed
+- Standalone builds now let you set the transport BPM from the Audio/MIDI settings dialog
+
+## [0.12.2] - 2026-04-04
+
+### Changed
+- Improved internal stability and maintenance in the waveform, slice, and signal-chain editor code
+
+### Fixed
+- Reopened projects now keep sample speed and pitch consistent when the project sample rate differs from the sample file
+
+## [0.12.1] - 2026-04-01
+
+### Changed
+- Empty sample states now use clearer loading instructions, and Linux Wayland/XWayland sessions no longer suggest drag-and-drop when it is unavailable
+
+### Fixed
+- Linux builds now load MP3 files through INTERSECT's sample browser
+
+## [0.12.0] - 2026-04-01
+
+### Added
+- Loop crossfade (FADE) parameter — smooths loop and ping-pong seams with equal-power crossfading, adjustable from 0–100% of the slice length
+- Fade region overlay and crossfade source cursor in the waveform view
+- Repitch MODE parameter with Linear and Cubic options for higher-quality Repitch playback
+- Slice note ranges with `NOTE`/`RANGE` switching plus per-slice `LOW`, `HIGH`, and `ROOT` note controls for chromatic trigger zones and transposition
+
+### Changed
+- Gain control moved from the Playback module to the Amp module in the signal chain
+- Renamed internal code to match UI labels: "Time/Pitch" and "Playback" modules, "Settings" button
+- Loop points now use dedicated waveform handles
+
+### Fixed
+- Header action buttons now use theme-coloured outlines, and OFF states in light themes are easier to read
+- Bungee algorithm no longer produces loud static when Grain is set to Smooth
+- Fade overlay now updates immediately when changing global crossfade, loop mode, or reverse settings
+- Loop fade cursors now appear on the first loop or ping-pong seam, and saved projects once again restore their linked sample path correctly
+- Context-bar note editing no longer flips single-note slices into range mode while dragging, and note names now stay read-only beside the numeric controls
+
+## [0.11.0] - 2026-03-31
+### Added
+- Filter drive asymmetry (ASYM) parameter — biases the drive waveshaper to add even-harmonic saturation for more tonal variety
+- "Buy Me a Coffee" sponsor link in the Settings menu
+
+### Changed
+- Stretch algorithm renamed to "Signalsmith" in the algorithm selector
+- Signal chain modules use consistent cell sizing and alignment across all rows
+- Auto Chop controls (SENS, MIN, DIV) now use drag-to-edit cells with double-click text entry
+- Transient detection uses spectral flux analysis — SENS controls detection threshold (0–100), MIN controls minimum slice length in ms
+- Action tooltips are shorter, and RESEQ now has a Shift+R shortcut
+
+### Fixed
+- Crash when quitting certain DAWs on macOS (e.g. Cubase, Live) caused by typeface cleanup during static destruction
+- Filter row 2 cells no longer drift out of alignment with row 1
+- Filter key tracking now scales musically across the keyboard (previously over-tracked upward and under-tracked downward)
+- Filter resonance response is more evenly distributed across the knob range
+- Filter cutoff automation in the DAW now follows a logarithmic curve matching how we hear pitch
+- Slice numbers no longer drift outside their region when zoomed out with many slices
+- Signal chain background color is now consistent between global and slice tabs
+- Auto Chop transient markers now land at the true onset instead of slightly after
+- Undo now restores the pre-drag value in one step instead of stepping through intermediate values
+- Global parameter changes (BPM, pitch, filter, etc.) are now undoable
+- Root note changes are now undoable
+- Undo no longer couples unrelated slice and global parameter changes
+
+### Removed
+- Removed unused SliceControlBar and SettingsPanel source files
+
+## [0.10.0] - 2026-03-20
+### Added
+- Multimode filter with per-voice processing (type, slope, cutoff, resonance, drive, key tracking, filter ADSR envelope)
+- New bundled colour themes
+- RESEQ action to re-sequence MIDI notes across slices (v0.10.9)
+
+### Changed
+- Tightened envelope timing controls (attack/decay/release ranges)
+- Renamed signal chain modules; moved MUTE to row 2 (v0.10.5)
+- Refined popup menus and parameter editing (v0.10.2)
+- Simplified signal chain UI and adjusted theme colours (v0.10.2)
+- Switched voice mixing to block render paths (v0.10.7)
+
+### Fixed
+- AU cold open failure on older macOS (v0.10.10, issue #13)
+- Bungee loop buzzing with unbounded phase model (v0.10.8)
+- Ping-pong direction tracking for stretch engines (v0.10.8)
+- Stretch engine seam resets replaced with exact virtual loop feeding (v0.10.8)
+- Sample restore timeline drift (v0.10.6)
+- Global SET BPM now uses selected slice range (v0.10.4)
+- Text editor Enter-key crash — async teardown regression (v0.10.3)
+- Text-entry crash fix restored after GUI rewrite (v0.10.1)
+- Duplicate MIDI notes on slice creation (v0.10.9)
+- Clang/GCC build compatibility for juce::File assignment (v0.10.7)
+- State restore and real-time safety hardening (v0.10.7)
+
+## [0.9.0] - 2026-02-28
+### Added
+- NRPN MIDI controller routing
+- SET popup for BPM/pitch assignment
+- .aif file extension support (v0.9.1)
+- Auto-detect plugin version from git tag (v0.9.2)
+
+### Fixed
+- Text editor use-after-free crash (v0.9.3)
+- FontOptions constructor compatibility (v0.9.2)
+- Windows CI version string parsing (bash shell fix)
+
+## [0.8.0] - 2026-02-18
+### Added
+- Filled waveform rendering with peak mipmaps
+- Theme-aware slice UI and colour palette
+- One-shot (1SHOT) playback mode (v0.8.7)
+- Output safety clamp and NaN/Inf guard (v0.8.5)
+- macOS Intel x64 build (v0.8.4)
+- Button tooltips and keyboard shortcuts (v0.8.3)
+- Async sample loading with tune controls (v0.8.8)
+- Live slice drag preview and smart repaint scheduling (v0.8.10)
+- Shift+key shortcuts and overlay hint system (v0.8.14)
+- Lazy chop real-time slice placement (v0.8.11)
+- Pitch range extended from ±24 to ±48 semitones (v0.8.12)
+
+### Changed
+- Merged pingPong + loop into 3-way loop mode (v0.8.1)
+- Removed WSOLA algorithm; renamed DAW parameters (v0.8.6)
+- Follow MIDI now works during lazy chop (v0.8.6)
+- STRETCH control moved to row 1 (v0.8.7)
+- HeaderBar always visible (v0.8.11)
+
+### Fixed
+- Null pointer crash on sample load (v0.8.2)
+- macOS release build failures (v0.8.9)
+- MIDI note collision on slice split (v0.8.13)
+- Redo functionality (v0.8.3)
+- MIDI All Notes Off / All Sound Off handling (v0.8.7)
+- Click-to-cycle parameter choices (v0.8.2)
+
+## [0.7.0] - 2026-02-17
+### Added
+- Theme-aware slice colour palette (v0.7.1)
+- `.intersectstyle` theme file extension (v0.7.1)
+
+### Changed
+- Repository flattened to single-project structure
+- Theme colour naming standardized
+- Release zip naming updated
+
+### Fixed
+- Undo state restoration
+- Button theming (v0.7.1)
+
+## [0.6.0] - 2026-02-17
+### Added
+- Auto-chop with transient detection
+- Undo/redo system
+
+### Changed
+- Auto-chop panel redesigned with sensitivity slider (v0.6.1)
+
+### Fixed
+- Transient detection accuracy (v0.6.1)
+
+## [0.5.0] - 2026-02-17
+### Added
+- Multi-output bus routing
+- Reverse (REV) playback mode
+- Multi-slice simultaneous triggering
+- Voice count display
+- Sub-sample zoom waveform rendering (v0.5.2)
+
+### Changed
+- Wider plugin window
+
+### Fixed
+- Bungee ping-pong playback (v0.5.1)
+- Lazy chop preview in multi-output mode (v0.5.2)
+- Sample replace crash (v0.5.1)
+
+## [0.4.0] - 2026-02-16
+### Added
+- Gain parameter
+- Release tail control
+- Ping-pong mode for all stretch algorithms
+
+### Fixed
+- Blank-space drag behaviour (v0.4.1)
+- Button overflow in narrow layouts (v0.4.1)
+- Bungee ping-pong audio pop (v0.4.1)
+- Sample relink after file move
+
+## [0.3.0] - 2026-02-15
+### Changed
+- Improved font rendering sharpness
+- Enlarged UI fonts and controls
+- SliceLane visually separated from waveform
+- SliceControlBar layout reorganized
+
+## [0.2.0] - 2026-02-15
+### Added
+- Lazy chop with time-stretch preview
+- Path-based sample state restoration
+- Missing sample relink dialog
+
+### Fixed
+- Button ordering in action panel
+
+## [0.1.0] - 2026-02-15
+### Added
+- VST3, AU, and Standalone audio sampler plugin
+- Sample loading via drag-and-drop (WAV, OGG, AIFF, FLAC, MP3)
+- Manual slice creation with per-slice MIDI note assignment
+- Per-slice parameter control with lock/inherit system
+- Signalsmith Stretch and Bungee time/pitch processing
+- WSOLA stretch algorithm
+- ADSR envelope per voice
+- Mute groups
+- Waveform display with scroll, zoom, and cursor-anchored zoom
+- Lazy chop with preview highlight
+- YAML theme support with IBM Plex Sans font
+- LOAD button and draw preview mode
+- Root note control and UI scale persistence
+- Cross-platform CI/CD release workflow (Windows, macOS, Linux)

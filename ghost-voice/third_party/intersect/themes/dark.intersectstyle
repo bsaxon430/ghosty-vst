@@ -1,0 +1,50 @@
+# INTERSECT Dark Theme
+#
+# Copy this file to your INTERSECT themes folder and give it a new name:
+# e.g. mytheme.intersectstyle
+#
+# Themes folder:
+#   Windows:  %APPDATA%\Roaming\INTERSECT\themes\
+#   macOS:    ~/Library/Application Support/INTERSECT/themes/
+#   Linux:    ~/.config/INTERSECT/themes/
+#
+# Colours are 6-digit hex (RRGGBB). Restart the plugin to apply changes.
+
+name: dark
+
+surface0: 060608    # deepest (waveform pit)
+surface1: 0a0a0e    # base background
+surface2: 0e0e13    # raised panels
+surface3: 181c24    # borders
+surface4: 23232d    # recessed controls
+surface5: 2a3040    # hover / separator
+
+text0: 506070       # muted / inactive
+text1: 7888a0       # body / secondary
+text2: ccd0d8       # primary
+
+waveform: b2c6d8    # audio waveform rendering
+accent: 3fd8d8      # main accent + selection + active tabs
+
+color1: 4a7098      # playback module
+color2: 98783a      # filter module
+color3: 4a7858      # amp module
+color4: 685090      # output module
+color5: cc4444      # alert / warning
+
+slice1: 4d8c99               # Cold Teal
+slice2: 8c4747               # Muted Red
+slice3: 4d8059               # Dark Green
+slice4: 8c7340               # Rust
+slice5: 664d8c               # Dusk Violet
+slice6: 80804d               # Olive
+slice7: 40808c               # Steel Cyan
+slice8: 804d6b               # Dark Rose
+slice9: 597a47               # Moss
+slice10: 80594d              # Clay
+slice11: 52598c              # Slate Blue
+slice12: 737359              # Concrete
+slice13: 6b4773              # Plum
+slice14: 477a6b              # Patina
+slice15: 7a5973              # Mauve
+slice16: 617a66              # Lichen

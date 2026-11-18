@@ -1,0 +1,22 @@
+GHOST VOICE (free, open source) - build 3 test build for Mac (Apple Silicon and Intel)
+
+1. Double-click "Install Ghost Voice.command", then rescan in FL Studio (Options > Manage plugins > Find more plugins).
+   It puts the plug-ins (VST3 + AU) into your own plug-in folders, the app into Applications, and moves any older Ghost Voice
+   to the Trash. Ghost Voice is under GhostBlock, as an effect: put it on a mixer insert.
+   If macOS blocks the installer: right-click it > Open, or System Settings > Privacy & Security > Open Anyway.
+2. ENGINE (top right of the IDENTITY LAB and the SING ENGINE):
+     SEED-VC      AI re-sing: a new singer sings your performance. Needs the voice engine (step 3). Takes minutes.
+     NATURAL      keeps the performer's own recording and reshapes it: subtle blends. Built in, instant.
+     CLASSIC      re-synthesises the voice from scratch. Built in, instant.
+     BEST OF ALL  SEED-VC near voice A and voice B, NATURAL in the middle, crossfaded (the default).
+   While SEED-VC sings, NATURAL's version plays at once as an instant preview (switch: Instant Preview).
+3. For SEED-VC (and for measuring any voice C): SETTINGS > INSTALL VOICE ENGINE. It downloads Seed-VC and its models,
+   about 2.5 GB, once (on Intel Macs it uses PyTorch 2.2.2, the last version made for Intel), into ~/Library/Application Support/GhostBlock/Ghost Voice/engine. Delete that folder to remove it.
+   Everything runs on your Mac; nothing is uploaded.
+4. IDENTITY LAB: drop a recording of voice A and of voice B (yours, or voices you have permission to use), tick
+   "I have the rights to these voices", set the BALANCE (and NOVELTY on SEED-VC / BEST OF ALL), press CREATE NEW VOICE C.
+   With the voice engine installed it also measures how far the new voice is from A and from B. SAVE VOICE C keeps it.
+5. SING ENGINE: record your melody (or drop an audio guide), press SING IT, then drag the take into your song.
+   MOTION moves the voice between A and B in time with the song, on every engine.
+
+Licences: Licenses/ (Ghost Voice is AGPL-3.0; its full source is Licenses/Ghost Voice source.zip).

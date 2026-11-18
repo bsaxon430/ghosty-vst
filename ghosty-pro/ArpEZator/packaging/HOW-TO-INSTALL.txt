@@ -1,0 +1,15 @@
+PROFESSOR BERNSTEIN'S ARPEZATOR 3.2.2 - test build for Mac (MUTANT ARP + CYBERPOP learned from MIDI packs, the new TRAP flute)
+
+1. Double-click "Install ArpEZator.command" (if macOS blocks it: right-click > Open; or System Settings > Privacy & Security > Open Anyway).
+2. In FL Studio: Options > Manage plugins > Find more plugins. ArpEZator is an INSTRUMENT (Channel rack > + > ArpEZator).
+   In Logic / GarageBand it is an Audio Unit instrument. Or open "ArpEZator" from Applications.
+3. NEW in 3.2.1: TRAP ideas (DARK / TRIUMPHANT / HYPNOTIC / DRILL) sing a slow trap-flute melody: short phrases, long held notes with
+   vibrato, breaths, grace notes, trills and slides; a 2-bar call and a 2-bar answer. Sessions saved before 3.2.1 keep their melodies.
+4. MUTANT ARP (top right of the lane editor, next to HOOK LAB).
+   - Pick a mode: RAGE / ALIEN / DIGITAL / DREAM / HYPER / CYBERPOP (learned from MIDI packs). GENERATE makes a new cell over your chords; MUTATE, OCTAVE CHAOS and
+     RHYTHM CHAOS vary it. Click a step in the CELL strip (or LOCK FIRST 4) to lock notes: locked steps never change.
+   - RATE 1/4..1/64, LENGTH, FORWARD / REVERSE / PING-PONG, ROTATE, EVOLVE 4 / 8 / 16 bars, VARY every 1 / 2 / 4 bars, the ten knobs.
+   - 2 LINES: ANSWER (call and response), INTERLOCK (a hocket) or SHADOW (a canon) writes a second line into the MELODY lane.
+   - DRAG MIDI drags the line(s) out as a .mid; the ARP lane's own DRAG pill and DRAG ALL work as before.
+   - CLASSIC ARP hands the lane back to the old figure engine; UNDO walks back through everything.
+Your older projects open exactly as before (the mutant is off until you press MUTANT ARP).
