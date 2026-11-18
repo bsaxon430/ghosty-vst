@@ -1,0 +1,100 @@
+repo: https://github.com/surge-synthesizer/sst-basic-blocks.git
+branch: main
+commit: 5fb60983d57ccd0318865df8c004a1f9d8419b73
+commit date: 2026-11-02T21:52:27-05:00
+licence files:
+./LICENSE.md
+
+--- top level
+CMakeLists.txt
+LICENSE.md
+README.md
+cmake
+doxygen
+include
+libs
+scripts
+tests
+utils
+
+--- tree (depth 2, dirs)
+.
+./cmake
+./doxygen
+./include
+./include/sst
+./libs
+./libs/catch2
+./libs/elliptic-blep
+./scripts
+./tests
+./tests/perf
+./utils
+
+--- include/sst/basic-blocks
+.
+./dsp
+./dsp/Ballistics.h
+./dsp/BlockInterpolators.h
+./dsp/Clippers.h
+./dsp/CorrelatedNoise.h
+./dsp/DCBlocker.h
+./dsp/DPWSawPulseOscillator.h
+./dsp/EllipticBlepOscillators.h
+./dsp/FastMath.h
+./dsp/FollowSlewAndSmooth.h
+./dsp/HilbertTransform.h
+./dsp/Interpolators.h
+./dsp/Lag.h
+./dsp/LagCollection.h
+./dsp/LanczosResampler.h
+./dsp/MidSide.h
+./dsp/OnePoles.h
+./dsp/OscillatorDriftUnisonCharacter.h
+./dsp/PanLaws.h
+./dsp/PinkNoise.h
+./dsp/QuadratureOscillators.h
+./dsp/RNG.h
+./dsp/SSESincDelayLine.h
+./dsp/SmoothingStrategies.h
+./dsp/SpecialFunctions.h
+./dsp/VUPeak.h
+./mechanics
+./mechanics/block-ops.h
+./mechanics/endian-ops.h
+./mechanics/simd-ops.h
+./mechanics/string-ops.h
+./mod-matrix
+./mod-matrix/ModMatrix.h
+./mod-matrix/ModMatrixDetails.h
+./modulators
+./modulators/ADAREnvelope.h
+./modulators/ADSREnvelope.h
+./modulators/AHDSRShapedSC.h
+./modulators/DAHDEnvelope.h
+./modulators/DAHDSREnvelope.h
+./modulators/DAREnvelope.h
+./modulators/DiscreteStagesEnvelope.h
+./modulators/FXModControl.h
+./modulators/SimpleLFO.h
+./modulators/StepLFO.h
+./modulators/Transport.h
+./modulators/TransportClapAdapter.h
+./params
+./params/ParamMetadata.h
+./simd
+./simd/setup.h
+./simd/wrap_simd_f32x4.h
+./tables
+./tables/DbToLinearProvider.h
+./tables/EqualTuningProvider.h
+./tables/ExpTimeProvider.h
+./tables/MIDICCNames.h
+./tables/SimpleSineProvider.h
+./tables/SincTableProvider.h
+./tables/SixSinesWaveProvider.h
+./tables/TemposyncSupport.h
+./tables/TwoToTheXProvider.h
+
+--- submodules
+(none)

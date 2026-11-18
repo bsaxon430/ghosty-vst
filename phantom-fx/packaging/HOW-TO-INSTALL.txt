@@ -1,0 +1,9 @@
+PHANTOM FX for Mac (VST3 + CLAP + Standalone)
+
+1. Double-click "Install Phantom FX.command". If macOS says it cannot be opened, right-click it, choose Open, then Open again.
+2. It copies Phantom FX.vst3 to ~/Library/Audio/Plug-Ins/VST3, Phantom FX.clap to ~/Library/Audio/Plug-Ins/CLAP and the
+   Phantom FX app to /Applications. Old copies are moved to ~/GhostBlock-Backups, never deleted.
+3. In FL Studio: Options > Manage plugins > Find more plugins, then load Phantom FX on a mixer insert.
+
+Phantom FX is free software (AGPL-3.0-or-later). The Licenses folder holds every licence; THIRD_PARTY.md lists what is inside.
+Ghost Box stays installed under its own name; both can be open side by side.

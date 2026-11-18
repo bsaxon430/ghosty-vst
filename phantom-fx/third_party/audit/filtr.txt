@@ -1,0 +1,93 @@
+repo: https://github.com/tiagolr/filtr.git
+branch: master
+commit: b42c4e0aad8deca5078788840104fcad84eec7b7
+commit date: 2026-07-06T18:43:31+01:00
+licence files:
+./LICENSE
+
+--- top level
+CMakeLists.txt
+LICENSE
+README.md
+doc
+libs
+resources
+src
+
+--- tree (depth 2, dirs)
+.
+./doc
+./libs
+./libs/JUCE
+./resources
+./src
+./src/dsp
+./src/ui
+./src/utils
+
+--- src
+.
+./Globals.h
+./PluginEditor.cpp
+./PluginEditor.h
+./PluginProcessor.cpp
+./PluginProcessor.h
+./Presets.h
+./dsp
+./dsp/Follower.cpp
+./dsp/Follower.h
+./dsp/Pattern.cpp
+./dsp/Pattern.h
+./dsp/Splitter.cpp
+./dsp/Splitter.h
+./dsp/TptFilter
+./dsp/TptFilter.cpp
+./dsp/TptFilter.h
+./dsp/TptFilterState.h
+./dsp/Transient.cpp
+./dsp/Transient.h
+./dsp/Utils.h
+./dsp/filter
+./ui
+./ui/About.cpp
+./ui/About.h
+./ui/AudioDisplay.cpp
+./ui/AudioDisplay.h
+./ui/AudioWidget.cpp
+./ui/AudioWidget.h
+./ui/BandsWidget.cpp
+./ui/BandsWidget.h
+./ui/CustomLookAndFeel.cpp
+./ui/CustomLookAndFeel.h
+./ui/EnvelopeWidget.cpp
+./ui/EnvelopeWidget.h
+./ui/GridSelector.cpp
+./ui/GridSelector.h
+./ui/Meter.cpp
+./ui/Meter.h
+./ui/Multiselect.cpp
+./ui/Multiselect.h
+./ui/PaintTool.cpp
+./ui/PaintTool.h
+./ui/PaintToolWidget.cpp
+./ui/PaintToolWidget.h
+./ui/Rotary.cpp
+./ui/Rotary.h
+./ui/Sequencer.cpp
+./ui/Sequencer.h
+./ui/SequencerWidget.cpp
+./ui/SequencerWidget.h
+./ui/SettingsButton.cpp
+./ui/SettingsButton.h
+./ui/TextDial.cpp
+./ui/TextDial.h
+./ui/View.cpp
+./ui/View.h
+./utils
+./utils/PatternManager.cpp
+./utils/PatternManager.h
+
+--- submodules
+[submodule "libs/JUCE"]
+	path = libs/JUCE
+	url = https://github.com/juce-framework/JUCE.git

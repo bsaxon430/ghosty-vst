@@ -1,0 +1,136 @@
+repo: https://github.com/jatinchowdhury18/AnalogTapeModel.git
+branch: master
+commit: 604372e4ffd9690c3e283362e4598cb43edbb475
+commit date: 2023-11-05T11:17:38-08:00
+licence files:
+./LICENSE
+
+--- top level
+BUILDING.md
+CHANGELOG.md
+CONTRIBUTING.md
+LICENSE
+Manual
+Notes
+Paper
+Plugin
+README.md
+Scripts
+Simulations
+Testing
+
+--- tree (depth 2, dirs)
+.
+./Manual
+./Notes
+./Paper
+./Plugin
+./Plugin/Installers
+./Plugin/Screenshots
+./Plugin/Source
+./Plugin/modules
+./Scripts
+./Simulations
+./Simulations/Bias
+./Simulations/Compression
+./Simulations/Hysteresis
+./Simulations/LossEffects
+./Simulations/TimingEffects
+./Testing
+
+--- Plugin/Source/Processors
+.
+./BypassProcessor.h
+./CMakeLists.txt
+./Chew
+./Chew/ChewProcessor.cpp
+./Chew/ChewProcessor.h
+./Chew/Dropout.h
+./Compression
+./Compression/CompressionProcessor.cpp
+./Compression/CompressionProcessor.h
+./Degrade
+./Degrade/DegradeFilter.h
+./Degrade/DegradeNoise.h
+./Degrade/DegradeProcessor.cpp
+./Degrade/DegradeProcessor.h
+./DryWetProcessor.h
+./GainProcessor.h
+./Hysteresis
+./Hysteresis/DCBlocker.h
+./Hysteresis/HysteresisOps.h
+./Hysteresis/HysteresisProcessing.cpp
+./Hysteresis/HysteresisProcessing.h
+./Hysteresis/HysteresisProcessor.cpp
+./Hysteresis/HysteresisProcessor.h
+./Hysteresis/HysteresisSTN.cpp
+./Hysteresis/HysteresisSTN.h
+./Hysteresis/STNModel.cpp
+./Hysteresis/STNModel.h
+./Hysteresis/STN_Models
+./Hysteresis/ToneControl.cpp
+./Hysteresis/ToneControl.h
+./Input_Filters
+./Input_Filters/InputFilters.cpp
+./Input_Filters/InputFilters.h
+./Input_Filters/LinkwitzRileyFilter.h
+./Loss_Effects
+./Loss_Effects/AzimuthProc.cpp
+./Loss_Effects/AzimuthProc.h
+./Loss_Effects/LossFilter.cpp
+./Loss_Effects/LossFilter.h
+./MidSide
+./MidSide/MidSideProcessor.cpp
+./MidSide/MidSideProcessor.h
+./Timing_Effects
+./Timing_Effects/FlutterProcess.cpp
+./Timing_Effects/FlutterProcess.h
+./Timing_Effects/OHProcess.h
+./Timing_Effects/WowFlutterProcessor.cpp
+./Timing_Effects/WowFlutterProcessor.h
+./Timing_Effects/WowProcess.cpp
+./Timing_Effects/WowProcess.h
+
+--- Plugin/Source/Processors/Hysteresis
+.
+./DCBlocker.h
+./HysteresisOps.h
+./HysteresisProcessing.cpp
+./HysteresisProcessing.h
+./HysteresisProcessor.cpp
+./HysteresisProcessor.h
+./HysteresisSTN.cpp
+./HysteresisSTN.h
+./STNModel.cpp
+./STNModel.h
+./STN_Models
+./STN_Models/hyst_width_0.json
+./STN_Models/hyst_width_10.json
+./STN_Models/hyst_width_100.json
+./STN_Models/hyst_width_20.json
+./STN_Models/hyst_width_30.json
+./STN_Models/hyst_width_40.json
+./STN_Models/hyst_width_50.json
+./STN_Models/hyst_width_60.json
+./STN_Models/hyst_width_70.json
+./STN_Models/hyst_width_80.json
+./STN_Models/hyst_width_90.json
+./ToneControl.cpp
+./ToneControl.h
+
+--- submodules
+[submodule "Plugin/foleys_gui_magic"]
+	path = Plugin/modules/foleys_gui_magic
+	url = https://github.com/Chowdhury-DSP/foleys_gui_magic.git
+[submodule "Plugin/modules/chowdsp_utils"]
+	path = Plugin/modules/chowdsp_utils
+	url = https://github.com/Chowdhury-DSP/chowdsp_utils
+[submodule "Plugin/modules/RTNeural"]
+	path = Plugin/modules/RTNeural
+	url = https://github.com/jatinchowdhury18/RTNeural
+[submodule "Plugin/modules/JUCE"]
+	path = Plugin/modules/JUCE
+	url = https://github.com/lv2-porting-project/JUCE
+[submodule "Plugin/modules/clap-juce-extensions"]
+	path = Plugin/modules/clap-juce-extensions
+	url = https://github.com/free-audio/clap-juce-extensions

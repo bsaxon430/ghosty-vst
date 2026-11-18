@@ -1,0 +1,255 @@
+{
+ "look": "neon",
+ "folder": "_shared",
+ "stage_units": [
+  280,
+  300
+ ],
+ "px_per_su": 1.7,
+ "note": "px = the @2x picture. su = stage units (280 x 300). anchor = the point of the picture that the scene places. mask = white + alpha, tinted by code. sizes / rots = steps the cache should hold (scale factors / number of angles round the circle).",
+ "files": [
+  {
+   "file": "glow-soft@2x.png",
+   "zip": "visual/_shared/glow-soft@2x.png",
+   "su": [
+    80,
+    80
+   ],
+   "px": [
+    136,
+    136
+   ],
+   "cell": [
+    136,
+    136
+   ],
+   "anchor_su": [
+    40,
+    40
+   ],
+   "anchor_px": [
+    68,
+    68
+   ],
+   "frames": 1,
+   "kind": "mask",
+   "sizes": [
+    0.5,
+    0.75,
+    1,
+    1.5,
+    2,
+    2.6,
+    3.4,
+    4.4
+   ],
+   "note": "soft round light, tinted; sizes are the cache steps"
+  },
+  {
+   "file": "glow-floor@2x.png",
+   "zip": "visual/_shared/glow-floor@2x.png",
+   "su": [
+    120,
+    36
+   ],
+   "px": [
+    204,
+    61
+   ],
+   "cell": [
+    204,
+    61
+   ],
+   "anchor_su": [
+    60,
+    18
+   ],
+   "anchor_px": [
+    102,
+    31
+   ],
+   "frames": 1,
+   "kind": "mask",
+   "sizes": [
+    0.6,
+    1,
+    1.5,
+    2.1
+   ],
+   "note": "light pool on the floor"
+  },
+  {
+   "file": "glint@2x.png",
+   "zip": "visual/_shared/glint@2x.png",
+   "su": [
+    20,
+    20
+   ],
+   "px": [
+    34,
+    34
+   ],
+   "cell": [
+    34,
+    34
+   ],
+   "anchor_su": [
+    10,
+    10
+   ],
+   "anchor_px": [
+    17,
+    17
+   ],
+   "frames": 1,
+   "kind": "mask",
+   "sizes": [
+    0.5,
+    0.8,
+    1.25
+   ],
+   "note": "four-point star glint"
+  },
+  {
+   "file": "puff@2x.png",
+   "zip": "visual/_shared/puff@2x.png",
+   "su": [
+    24,
+    24
+   ],
+   "px": [
+    205,
+    41
+   ],
+   "cell": [
+    41,
+    41
+   ],
+   "anchor_su": [
+    12,
+    12
+   ],
+   "anchor_px": [
+    21,
+    21
+   ],
+   "frames": 5,
+   "kind": "mask",
+   "sizes": [
+    0.7,
+    1,
+    1.5
+   ],
+   "note": "dust / steam puff, 5 held frames"
+  },
+  {
+   "file": "stage-shade@2x.png",
+   "zip": "visual/_shared/stage-shade@2x.png",
+   "su": [
+    280,
+    300
+   ],
+   "px": [
+    119,
+    128
+   ],
+   "cell": [
+    119,
+    128
+   ],
+   "anchor_su": [
+    0,
+    0
+   ],
+   "anchor_px": [
+    0,
+    0
+   ],
+   "frames": 1,
+   "kind": "colour",
+   "draw_scale": 4,
+   "note": "dark wash + horizon glow + vignette, over the smoked glass, under stage-back. Quarter resolution: draw at four times its pixel size"
+  },
+  {
+   "file": "stage-back@2x.png",
+   "zip": "visual/_shared/stage-back@2x.png",
+   "su": [
+    280,
+    300
+   ],
+   "px": [
+    476,
+    510
+   ],
+   "cell": [
+    476,
+    510
+   ],
+   "anchor_su": [
+    0,
+    0
+   ],
+   "anchor_px": [
+    0,
+    0
+   ],
+   "frames": 1,
+   "kind": "colour",
+   "note": "the crisp floor grid, over stage-shade, under the visual"
+  },
+  {
+   "file": "stage-front@2x.png",
+   "zip": "visual/_shared/stage-front@2x.png",
+   "su": [
+    280,
+    300
+   ],
+   "px": [
+    476,
+    510
+   ],
+   "cell": [
+    476,
+    510
+   ],
+   "anchor_su": [
+    0,
+    0
+   ],
+   "anchor_px": [
+    0,
+    0
+   ],
+   "frames": 1,
+   "kind": "colour",
+   "note": "scan lines + vignette + corner marks, over the visual"
+  },
+  {
+   "file": "stage-frame@2x.png",
+   "zip": "visual/_shared/stage-frame@2x.png",
+   "su": [
+    327.059,
+    340
+   ],
+   "px": [
+    556,
+    578
+   ],
+   "cell": [
+    556,
+    578
+   ],
+   "anchor_su": [
+    23.529,
+    14.118
+   ],
+   "anchor_px": [
+    40,
+    24
+   ],
+   "frames": 1,
+   "kind": "colour",
+   "note": "the holo screen bezel; sprite top-left at design px 861,100"
+  }
+ ]
+}

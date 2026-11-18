@@ -1,0 +1,53 @@
+repo: https://github.com/GhostNoteAudio/CloudSeedCore.git
+branch: master
+commit: deb21ded9eb7dad9b3ff94ce1ba96a963716594e
+commit date: 2024-09-22T17:18:08+01:00
+licence files:
+./LICENSE
+
+--- top level
+CloudSeedCore.sln
+CloudSeedCore.vcxproj
+CloudSeedCore.vcxproj.filters
+DSP
+LICENSE
+Parameters.cpp
+Parameters.h
+PluginProcessor.cpp
+Programs.h
+Readme.md
+
+--- tree (depth 2, dirs)
+.
+./DSP
+
+--- .
+.
+./CloudSeedCore.sln
+./CloudSeedCore.vcxproj
+./CloudSeedCore.vcxproj.filters
+./DSP
+./DSP/AllpassDiffuser.h
+./DSP/Biquad.cpp
+./DSP/Biquad.h
+./DSP/DelayLine.h
+./DSP/Hp1.h
+./DSP/LcgRandom.h
+./DSP/Lp1.h
+./DSP/ModulatedAllpass.h
+./DSP/ModulatedDelay.h
+./DSP/MultitapDelay.h
+./DSP/RandomBuffer.cpp
+./DSP/RandomBuffer.h
+./DSP/ReverbChannel.h
+./DSP/ReverbController.h
+./DSP/Utils.h
+./LICENSE
+./Parameters.cpp
+./Parameters.h
+./PluginProcessor.cpp
+./Programs.h
+./Readme.md
+
+--- submodules
+(none)

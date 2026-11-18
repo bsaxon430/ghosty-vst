@@ -1,0 +1,22 @@
+--- a/modules/chowdsp_dsp/SIMD/chowdsp_SIMDComplex.h
++++ b/modules/chowdsp_dsp/SIMD/chowdsp_SIMDComplex.h
+@@ -29,7 +29,7 @@
+         _i = T::fromRawArray (i);
+     }
+ 
+-    SIMDComplex<Type> (std::initializer_list<Type> r, std::initializer_list<Type> i)
++    SIMDComplex (std::initializer_list<Type> r, std::initializer_list<Type> i)
+     {
+         if (r.size() != size && i.size() != size)
+         {
+--- a/modules/chowdsp_dsp/Delay/chowdsp_PitchShift.cpp
++++ b/modules/chowdsp_dsp/Delay/chowdsp_PitchShift.cpp
+@@ -26,7 +26,7 @@
+     jassert (spec.numChannels > 0);
+ 
+     bufferData.setSize ((int) spec.numChannels, 2 * totalSize, false, false, true);
+-    bufferPtrs = bufferData.getArrayOfWritePointers();
++    bufferPtrs = const_cast<SampleType**> (bufferData.getArrayOfWritePointers());
+     jassert (bufferPtrs != nullptr);
+ 
+     writePos.resize (spec.numChannels);

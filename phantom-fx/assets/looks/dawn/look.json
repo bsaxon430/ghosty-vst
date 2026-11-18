@@ -1,0 +1,443 @@
+{
+ "name": "DAWN",
+ "order": 1,
+ "pack": {
+  "quality": 90,
+  "drop": [
+   "ghosts/pose-*",
+   "ghosts/unit-*",
+   "anim/ghost-bounce-strip"
+  ]
+ },
+ "text": {
+  "cream": "fbf1d6",
+  "ink": "23182f",
+  "sub": "eadbb8",
+  "scenes": "fa9ede",
+  "onPainting": "f6ecd2",
+  "halo": "150e20",
+  "haloAlpha": 0.85
+ },
+ "palette": {
+  "light": false,
+  "window": "1f3f40",
+  "panel": "224546",
+  "card": "28504f",
+  "cell": "193536",
+  "line": "3f7a70",
+  "ink": "fbf1d6",
+  "dim": "b9c7b0"
+ },
+ "slice": {
+  "slider/track": [
+   8,
+   0,
+   8,
+   0
+  ],
+  "button/off": [
+   12,
+   10,
+   12,
+   12
+  ],
+  "button/hover": [
+   12,
+   10,
+   12,
+   12
+  ],
+  "button/on": [
+   12,
+   10,
+   12,
+   12
+  ],
+  "menu/menu": [
+   14,
+   10,
+   34,
+   12
+  ],
+  "label/name": [
+   12,
+   10,
+   12,
+   10
+  ],
+  "slab/plate": [
+   18,
+   18,
+   18,
+   20
+  ],
+  "slab/plate-wood": [
+   14,
+   14,
+   14,
+   16
+  ],
+  "slab/plate-stone": [
+   18,
+   16,
+   18,
+   18
+  ],
+  "label/value": [
+   12,
+   10,
+   12,
+   10
+  ]
+ },
+ "slabs": {
+  "level": "slab/plate",
+  "rail": null,
+  "title": null,
+  "editor": "slab/plate",
+  "tablet": "slab/plate",
+  "tray": "slab/plate",
+  "paper": "label/name",
+  "valuePaper": "label/value",
+  "card": "label/name",
+  "macro": {
+   "img": "slab/plate-stone",
+   "rect": [
+    4,
+    655,
+    1192,
+    56
+   ],
+   "stretch": true
+  },
+  "scenes": {
+   "img": "slab/plate-wood",
+   "rect": [
+    -8,
+    717,
+    1216,
+    52
+   ],
+   "stretch": true
+  }
+ },
+ "darkSlabs": [
+  "slab/plate",
+  "slab/plate-wood",
+  "slab/plate-stone",
+  "slab/rack-unit-plate"
+ ],
+ "knob": {
+  "centre": [
+   58,
+   57
+  ],
+  "arcR": 38.4,
+  "arcW": 3.6,
+  "macroArcR": 17.2,
+  "macroArcW": 2.2,
+  "valueOnPaper": true,
+  "static": false
+ },
+ "rack": {
+  "strip": [
+   0,
+   100,
+   1200,
+   165
+  ],
+  "legend": [
+   10,
+   108,
+   74
+  ],
+  "hintRight": 1190,
+  "tiles": {
+   "cols": 12,
+   "x": 11,
+   "dx": 98.6,
+   "y": 122,
+   "dy": 75,
+   "w": 91,
+   "h": 67,
+   "tilt": 0,
+   "drop": 0,
+   "pose": {
+    "strip": "ghosts/poses-",
+    "cell": [
+     72,
+     88
+    ],
+    "anchor": [
+     35,
+     42
+    ]
+   }
+  },
+  "cord": {
+   "img": "slab/rope",
+   "x": -4,
+   "w": 1208,
+   "y": 114,
+   "dy": 75
+  },
+  "title": [
+   20,
+   284,
+   440,
+   26
+  ],
+  "titleOnSign": false,
+  "rail": [
+   470,
+   286,
+   380,
+   25
+  ],
+  "on": [
+   860,
+   286,
+   54,
+   25
+  ],
+  "ab": [
+   922,
+   286,
+   34,
+   25
+  ],
+  "preset": [
+   963,
+   286,
+   218,
+   25
+  ],
+  "blurb": [
+   20,
+   310,
+   440,
+   14
+  ],
+  "blurbOnPaper": false,
+  "page": [
+   10,
+   271,
+   1180,
+   368
+  ],
+  "content": [
+   22,
+   330,
+   862,
+   300
+  ],
+  "wide": [
+   10,
+   271,
+   1180,
+   368
+  ],
+  "widePages": [
+   "mods",
+   "lanes",
+   "perform",
+   "editor"
+  ],
+  "wideContent": [
+   22,
+   330,
+   1156,
+   300
+  ],
+  "plate": {
+   "img": "slab/rack-unit-plate",
+   "at": [
+    0,
+    263
+   ],
+   "window": [
+    902,
+    330,
+    278,
+    298
+   ]
+  },
+  "knobCell": 116,
+  "knobCols": 3,
+  "choiceCols": 3,
+  "wideIsPage": true
+ },
+ "spatial": {
+  "ringR": 183,
+  "tray": [
+   20,
+   584,
+   848,
+   112
+  ],
+  "tablet": [
+   882,
+   130,
+   304,
+   388
+  ]
+ },
+ "anim": {
+  "lamp": {
+   "rack": [
+    1055,
+    466
+   ],
+   "spatial": [
+    1066,
+    590
+   ]
+  },
+  "hatch": {},
+  "shoulder": {},
+  "mist": {
+   "y": 470,
+   "x0": 0,
+   "x1": 1200,
+   "alpha": 0.5,
+   "pages": [
+    "spatial"
+   ]
+  },
+  "leaves": true,
+  "overlay": {
+   "rack": "overlay/light-rack",
+   "spatial": "overlay/light-spatial",
+   "rack-wide": "overlay/light-rack"
+  },
+  "sceneStrip": "anim/ghost-poses-strip",
+  "sprites": [
+   {
+    "img": "anim/scene-ghost-a-strip",
+    "strip": true,
+    "frames": 6,
+    "cell": [
+     96,
+     110
+    ],
+    "c": [
+     48,
+     52
+    ],
+    "at": [
+     936,
+     596
+    ],
+    "scale": 0.81,
+    "pages": [
+     "rack"
+    ],
+    "asleep": false
+   },
+   {
+    "img": "anim/scene-ghost-b-strip",
+    "strip": true,
+    "frames": 6,
+    "cell": [
+     96,
+     110
+    ],
+    "c": [
+     48,
+     52
+    ],
+    "at": [
+     1146,
+     596
+    ],
+    "scale": 0.71,
+    "pages": [
+     "rack"
+    ],
+    "asleep": true
+   },
+   {
+    "img": "anim/scene-ghost-a-strip",
+    "strip": true,
+    "frames": 6,
+    "cell": [
+     96,
+     110
+    ],
+    "c": [
+     48,
+     52
+    ],
+    "at": [
+     936,
+     640
+    ],
+    "scale": 0.9,
+    "pages": [
+     "spatial"
+    ],
+    "asleep": false
+   },
+   {
+    "img": "anim/scene-ghost-c-strip",
+    "strip": true,
+    "frames": 6,
+    "cell": [
+     96,
+     110
+    ],
+    "c": [
+     48,
+     52
+    ],
+    "at": [
+     1020,
+     527
+    ],
+    "scale": 0.57,
+    "pages": [
+     "spatial"
+    ],
+    "asleep": false
+   }
+  ]
+ },
+ "visual": {
+  "stageUnits": [
+   280,
+   300
+  ],
+  "note": "The scene is laid out in stage units (su), 280 x 300, and scaled uniformly into 'stage' (design px, window 1200x760). Every sprite is @2x at this look's own stage scale: blit 1:1 on Retina, resample once for 1x. Sprite anchors (manifest.json, su) are the point the scene places. Painter = /home/claude/work/phantom-anime/visuals/src ; spec = /home/claude/work/phantom-anime/visuals/SPEC.md",
+  "style": "dawn",
+  "stage": [
+   903,
+   331,
+   276,
+   296
+  ],
+  "under": [
+   {
+    "img": "visual/_shared/backdrop",
+    "at_su": [
+     0,
+     0
+    ]
+   }
+  ],
+  "over": [],
+  "frame": null,
+  "drawOrder": "visual/_shared/backdrop, the unit's visual (clipped to 'stage'), then slab/rack-unit-plate as today (its brass frame and moss lie over the visual), then overlay/light-rack as today",
+  "skipWhileOn": [
+   "anim.sprites entries with pages 'rack' (the two small scene ghosts stand inside the window)"
+  ],
+  "brush": {
+   "texture": "visual/_shared/tex-bristle",
+   "textureTile_su": 120,
+   "textureAlpha": 0.5,
+   "paintBoilEveryTicks": 4,
+   "lineBoilEveryTicks": 4,
+   "wobble_su_per_s": 0.024,
+   "note": "gouache hand: shadow, half tone, lit shape, core light, gold rim (upper left), green bounce (lower right), bristle tile through one clip, dark contour only on the shadow side"
+  }
+ }
+}

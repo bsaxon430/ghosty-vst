@@ -1,0 +1,161 @@
+repo: https://github.com/ZL-Audio/ZLLimiter.git
+branch: main
+commit: f0de37a6c93ed9eaa3e8678ab4deab5e39209830
+commit date: 2026-11-07T22:21:33-05:00
+licence files:
+./LICENSE.md
+./licenses
+
+--- top level
+CHANGELOG.md
+CMakeLists.txt
+JUCE
+LICENSE.md
+README.md
+assets
+cmake-includes
+docs
+highway
+licenses
+modules
+packaging
+renovate.json
+source
+
+--- tree (depth 2, dirs)
+.
+./JUCE
+./assets
+./assets/font
+./assets/icons
+./cmake-includes
+./docs
+./highway
+./licenses
+./modules
+./packaging
+./packaging/installer.icon
+./source
+./source/chore
+./source/dsp
+./source/gui
+./source/panel
+./source/state
+./source/zlp
+
+--- source
+.
+./PluginEditor.cpp
+./PluginEditor.hpp
+./PluginProcessor.cpp
+./PluginProcessor.hpp
+./chore
+./chore/thread
+./dsp
+./dsp/analyzer
+./dsp/chore
+./dsp/container
+./dsp/delay
+./dsp/filter
+./dsp/gain
+./dsp/limiter
+./dsp/loudness
+./dsp/over_sample
+./dsp/vector
+./gui
+./gui/attachment
+./gui/button
+./gui/calloutbox
+./gui/colour_selector
+./gui/combobox
+./gui/dragger
+./gui/gui.hpp
+./gui/interface_definitions.hpp
+./gui/interface_definitons.cpp
+./gui/label
+./gui/resize_corner
+./gui/scrolling
+./gui/slider
+./gui/tooltip
+./panel
+./panel/common
+./panel/control_panel
+./panel/curve_panel
+./panel/helper
+./panel/main_panel.cpp
+./panel/main_panel.hpp
+./panel/multilingual
+./panel/preset_browser
+./panel/ui_setting_panel
+./state
+./state/dummy_processor.hpp
+./state/property.cpp
+./state/property.hpp
+./state/state.hpp
+./state/state_definitions.hpp
+./state/state_schema.hpp
+./state/ui_state.cpp
+./state/ui_state.hpp
+./zlp
+./zlp/controller.cpp
+./zlp/controller.hpp
+./zlp/juce_helper
+./zlp/limiter_attach.cpp
+./zlp/limiter_attach.hpp
+./zlp/zlp.hpp
+./zlp/zlp_definitions.hpp
+
+--- source/dsp
+.
+./analyzer
+./analyzer/analyzer_base
+./analyzer/mag_analyzer
+./analyzer/value_analyzer
+./chore
+./chore/decibels.hpp
+./chore/smoothed_value.hpp
+./container
+./container/circular_buffer.hpp
+./container/circular_minmax_buffer.hpp
+./container/fifo
+./delay
+./delay/delay.hpp
+./delay/integer_delay.hpp
+./filter
+./filter/empty_filter
+./filter/filter_design
+./filter/helpers.hpp
+./filter/ideal_filter
+./filter/iir_filter
+./gain
+./gain/gain.hpp
+./limiter
+./limiter/detector
+./limiter/envelope
+./limiter/gain
+./limiter/limiter.hpp
+./limiter/limiter_definitions.hpp
+./limiter/styles
+./limiter/true_peak
+./loudness
+./loudness/k_weighting_filter.hpp
+./loudness/loudness.hpp
+./loudness/lufs_meter.hpp
+./over_sample
+./over_sample/halfband_coeffs.hpp
+./over_sample/over_sample.hpp
+./over_sample/over_sample_stage.hpp
+./over_sample/scipy_coeff_calculation.py
+./vector
+./vector/highway_import.hpp
+./vector/vector.hpp
+./vector/vector_reduce
+./vector/vector_transform
+
+--- submodules
+[submodule "JUCE"]
+	path = JUCE
+	url = https://github.com/ZL-Audio/JUCE
+[submodule "highway"]
+	path = highway
+	url = https://github.com/ZL-Audio/highway

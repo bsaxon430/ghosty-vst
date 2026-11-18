@@ -1,0 +1,39 @@
+{
+ "look": "dawn",
+ "folder": "fatten",
+ "stage_units": [
+  280,
+  300
+ ],
+ "px_per_su": 1.97143,
+ "note": "px = the @2x picture. su = stage units (280 x 300). anchor = the point of the picture that the scene places. mask = white + alpha, tinted by code. sizes / rots = steps the cache should hold (scale factors / number of angles round the circle).",
+ "files": [
+  {
+   "file": "tuft@2x.png",
+   "zip": "visual/fatten/tuft@2x.png",
+   "su": [
+    150,
+    34
+   ],
+   "px": [
+    296,
+    67
+   ],
+   "cell": [
+    296,
+    67
+   ],
+   "anchor_su": [
+    75,
+    16
+   ],
+   "anchor_px": [
+    148,
+    32
+   ],
+   "frames": 1,
+   "kind": "colour",
+   "note": "moss and grass round the toadstool foot (full colour)"
+  }
+ ]
+}

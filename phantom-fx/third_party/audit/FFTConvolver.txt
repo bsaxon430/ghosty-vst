@@ -1,0 +1,41 @@
+repo: https://github.com/HiFi-LoFi/FFTConvolver.git
+branch: non-uniform
+commit: f2cdeb04c42141d2caec19ca4f137398b2a76b85
+commit date: 2017-04-01T00:35:20+02:00
+licence files:
+./COPYING.txt
+
+--- top level
+AudioFFT.cpp
+AudioFFT.h
+COPYING.txt
+FFTConvolver.cpp
+FFTConvolver.h
+README.md
+TwoStageFFTConvolver.cpp
+TwoStageFFTConvolver.h
+Utilities.cpp
+Utilities.h
+test
+
+--- tree (depth 2, dirs)
+.
+./test
+
+--- .
+.
+./AudioFFT.cpp
+./AudioFFT.h
+./COPYING.txt
+./FFTConvolver.cpp
+./FFTConvolver.h
+./README.md
+./TwoStageFFTConvolver.cpp
+./TwoStageFFTConvolver.h
+./Utilities.cpp
+./Utilities.h
+./test
+./test/Test.cpp
+
+--- submodules
+(none)

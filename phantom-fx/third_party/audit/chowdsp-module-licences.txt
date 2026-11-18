@@ -1,0 +1,33 @@
+chowdsp_core                     license:       BSD 3-Clause
+chowdsp_data_structures          license:       BSD 3-Clause
+chowdsp_json                     license:       BSD 3-Clause
+chowdsp_listeners                license:       BSD 3-Clause
+chowdsp_logging                  license:       BSD 3-Clause
+chowdsp_reflection               license:       BSD 3-Clause
+chowdsp_serialization            license:       BSD 3-Clause
+chowdsp_units                    license:       BSD 3-Clause
+chowdsp_buffers                  license:       BSD 3-Clause
+chowdsp_compressor               license:       GPLv3
+chowdsp_dsp_data_structures      license:       GPLv3
+chowdsp_dsp_utils                license:       GPLv3
+chowdsp_eq                       license:       GPLv3
+chowdsp_filters                  license:       GPLv3
+chowdsp_math                     license:       BSD 3-clause
+chowdsp_modal_dsp                license:       GPLv3
+chowdsp_reverb                   license:       GPLv3
+chowdsp_simd                     license:       BSD 3-clause
+chowdsp_sources                  license:       GPLv3
+chowdsp_waveshapers              license:       GPLv3
+chowdsp_foleys                   license:       GPLv3
+chowdsp_gui                      license:       GPLv3
+chowdsp_visualizers              license:       GPLv3
+chowdsp_rhythm                   license:       BSD 3-clause
+chowdsp_clap_extensions          license:       BSD 3-clause
+chowdsp_fuzzy_search             license:       BSD 3-Clause
+chowdsp_parameters               license:       BSD 3-clause
+chowdsp_plugin_base              license:       GPLv3
+chowdsp_plugin_state             license:       BSD 3-Clause
+chowdsp_plugin_utils             license:       GPLv3
+chowdsp_presets                  license:       BSD 3-clause
+chowdsp_presets_v2               license:       BSD 3-clause
+chowdsp_version                  license:       BSD 3-clause

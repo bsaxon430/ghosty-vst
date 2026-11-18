@@ -1,0 +1,71 @@
+repo: https://github.com/Sakhnovkrg/vitOTTx.git
+branch: master
+commit: 738ba9dc33448ced48c37b341ce96bd917857224
+commit date: 2026-05-13T00:17:25+05:00
+licence files:
+./LICENSE
+
+--- top level
+CMakeLists.txt
+LICENSE
+README.md
+Source
+build-xcode.sh
+build.bat
+build.sh
+config.bat.example
+config.cmake
+init.bat
+init.sh
+installer
+libs
+licecap.gif
+ref
+
+--- tree (depth 2, dirs)
+.
+./Source
+./Source/ui
+./Source/vital_dsp
+./installer
+./installer/macos
+./libs
+./libs/JUCE
+./ref
+
+--- Source
+.
+./PluginEditor.cpp
+./PluginEditor.h
+./PluginProcessor.cpp
+./PluginProcessor.h
+./Settings.cpp
+./Settings.h
+./ui
+./ui/AboutOverlay.h
+./ui/BandView.cpp
+./ui/BandView.h
+./ui/BypassButton.h
+./ui/BypassOverlay.h
+./ui/CrossoverHandle.cpp
+./ui/CrossoverHandle.h
+./ui/HiddenCursorDrag.h
+./ui/HoverFader.h
+./ui/Knob.cpp
+./ui/Knob.h
+./ui/Sidebar.h
+./ui/Theme.h
+./ui/TooltipReadout.h
+./vital_dsp
+./vital_dsp/compressor.cpp
+./vital_dsp/compressor.h
+./vital_dsp/constants.h
+./vital_dsp/framework
+./vital_dsp/linkwitz_riley_filter.cpp
+./vital_dsp/linkwitz_riley_filter.h
+./vital_dsp/utilities
+
+--- submodules
+[submodule "libs/JUCE"]
+	path = libs/JUCE
+	url = https://github.com/juce-framework/JUCE.git

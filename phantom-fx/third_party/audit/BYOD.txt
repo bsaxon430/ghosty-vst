@@ -1,0 +1,414 @@
+repo: https://github.com/Chowdhury-DSP/BYOD.git
+branch: main
+commit: 1cf22b6ac802b9dc33cfc9f8dd6af5b3c3e40bc9
+commit date: 2025-08-13T17:15:19-07:00
+licence files:
+./LICENSE
+
+--- top level
+AUTHORS
+CHANGELOG.md
+CMakeLists.txt
+LICENSE
+README.md
+docs
+installers
+manual
+modules
+res
+scripts
+sim
+src
+
+--- tree (depth 2, dirs)
+.
+./docs
+./installers
+./installers/mac
+./installers/windows
+./manual
+./manual/screenshots
+./modules
+./modules/JUCE
+./modules/RTNeural
+./modules/chowdsp_utils
+./modules/chowdsp_wdf
+./modules/clap-juce-extensions
+./modules/cmake
+./modules/ea_variant
+./modules/magic_enum
+./modules/math_approx
+./modules/melatonin_perfetto
+./modules/sst-cpputils
+./res
+./res/amp_irs
+./res/guitar_ml_models
+./res/lofi_irs
+./res/presets
+./res/schematics
+./res/ui_assets
+./scripts
+./sim
+./sim/BigMuff
+./sim/Blonde
+./sim/FuzzFace
+./sim/GraphicEQ
+./sim/GuitarML
+./sim/HotCakes
+./sim/JuniorB
+./sim/KingOfTone
+./sim/Phaser
+./sim/Rangemaster
+./sim/ScannerVibrato
+./sim/SpringReverb
+./sim/ZenDrive
+./src
+./src/gui
+./src/headless
+./src/jai
+./src/processors
+./src/state
+
+--- src/processors
+.
+./BaseProcessor.cpp
+./BaseProcessor.h
+./BufferHelpers.h
+./JuceProcWrapper.h
+./ParameterHelpers.h
+./PlayheadHelpers.h
+./ProcessorStore.cpp
+./ProcessorStore.h
+./chain
+./chain/ChainIOProcessor.cpp
+./chain/ChainIOProcessor.h
+./chain/DryWetProcessor.cpp
+./chain/DryWetProcessor.h
+./chain/ProcessorChain.cpp
+./chain/ProcessorChain.h
+./chain/ProcessorChainActionHelper.cpp
+./chain/ProcessorChainActionHelper.h
+./chain/ProcessorChainActions.cpp
+./chain/ProcessorChainActions.h
+./chain/ProcessorChainPortMagnitudesHelper.cpp
+./chain/ProcessorChainPortMagnitudesHelper.h
+./chain/ProcessorChainStateHelper.cpp
+./chain/ProcessorChainStateHelper.h
+./drive
+./drive/BassFace.cpp
+./drive/BassFace.h
+./drive/BlondeDrive.cpp
+./drive/BlondeDrive.h
+./drive/GuitarMLAmp.cpp
+./drive/GuitarMLAmp.h
+./drive/MetalFace.cpp
+./drive/MetalFace.h
+./drive/RONN.cpp
+./drive/RONN.h
+./drive/RangeBooster.cpp
+./drive/RangeBooster.h
+./drive/Warp.cpp
+./drive/Warp.h
+./drive/big_muff
+./drive/centaur
+./drive/diode_circuits
+./drive/flapjack
+./drive/fuzz_machine
+./drive/hysteresis
+./drive/junior_b
+./drive/king_of_tone
+./drive/mouse_drive
+./drive/muff_clipper
+./drive/mxr_distortion
+./drive/neural_utils
+./drive/tube_amp
+./drive/tube_screamer
+./drive/waveshaper
+./drive/zen_drive
+./modulation
+./modulation/Chorus.cpp
+./modulation/Chorus.h
+./modulation/CleanDelayType.h
+./modulation/Flanger.cpp
+./modulation/Flanger.h
+./modulation/FrequencyShifter.cpp
+./modulation/FrequencyShifter.h
+./modulation/MIDIModulator.cpp
+./modulation/MIDIModulator.h
+./modulation/Panner.cpp
+./modulation/Panner.h
+./modulation/ParamModulator.cpp
+./modulation/ParamModulator.h
+./modulation/Rotary.cpp
+./modulation/Rotary.h
+./modulation/Tremolo.cpp
+./modulation/Tremolo.h
+./modulation/phaser
+./modulation/scanner_vibrato
+./modulation/uni_vibe
+./netlist_helpers
+./netlist_helpers/CircuitQuantity.cpp
+./netlist_helpers/CircuitQuantity.h
+./netlist_helpers/NetlistViewer.cpp
+./netlist_helpers/NetlistViewer.h
+./other
+./other/Compressor.cpp
+./other/Compressor.h
+./other/Delay.cpp
+./other/Delay.h
+./other/EnvelopeFilter.cpp
+./other/EnvelopeFilter.h
+./other/Gate.cpp
+./other/Gate.h
+./other/LevelDetective.cpp
+./other/LevelDetective.h
+./other/Octaver.cpp
+./other/Octaver.h
+./other/ShimmerReverb.cpp
+./other/ShimmerReverb.h
+./other/SmoothReverb.cpp
+./other/SmoothReverb.h
+./other/cry_baby
+./other/krusher
+./other/poly_octave
+./other/spring_reverb
+./tone
+./tone/BassCleaner.cpp
+./tone/BassCleaner.h
+./tone/BigMuffTone.cpp
+./tone/BigMuffTone.h
+./tone/BlondeTone.cpp
+./tone/BlondeTone.h
+./tone/GraphicEQ.cpp
+./tone/GraphicEQ.h
+./tone/HighCut.cpp
+./tone/HighCut.h
+./tone/LofiIrs.cpp
+./tone/LofiIrs.h
+./tone/StateVariableFilter.cpp
+./tone/StateVariableFilter.h
+./tone/TrebleBooster.cpp
+./tone/TrebleBooster.h
+./tone/amp_irs
+./tone/bassman
+./tone/baxandall
+./tone/ladder_filter
+./tone/tube_screamer_tone
+./utility
+./utility/CleanGain.cpp
+./utility/CleanGain.h
+./utility/DCBias.h
+./utility/DCBlocker.h
+./utility/FreqBandSplitter.cpp
+./utility/FreqBandSplitter.h
+./utility/InputProcessor.cpp
+./utility/InputProcessor.h
+./utility/Mixer.cpp
+./utility/Mixer.h
+./utility/Oscilloscope.cpp
+./utility/Oscilloscope.h
+./utility/OutputProcessor.cpp
+./utility/OutputProcessor.h
+./utility/StereoMerger.cpp
+./utility/StereoMerger.h
+./utility/StereoSplitter.cpp
+./utility/StereoSplitter.h
+./utility/Tuner.cpp
+./utility/Tuner.h
+
+--- src/processors/drive
+.
+./BassFace.cpp
+./BassFace.h
+./BlondeDrive.cpp
+./BlondeDrive.h
+./GuitarMLAmp.cpp
+./GuitarMLAmp.h
+./MetalFace.cpp
+./MetalFace.h
+./RONN.cpp
+./RONN.h
+./RangeBooster.cpp
+./RangeBooster.h
+./Warp.cpp
+./Warp.h
+./big_muff
+./big_muff/BigMuffClippingStage.cpp
+./big_muff/BigMuffClippingStage.h
+./big_muff/BigMuffDrive.cpp
+./big_muff/BigMuffDrive.h
+./centaur
+./centaur/AmpStage.h
+./centaur/Centaur.cpp
+./centaur/Centaur.h
+./centaur/ClippingStage.h
+./centaur/FeedForward2.h
+./centaur/GainStageML.cpp
+./centaur/GainStageML.h
+./centaur/GainStageProc.cpp
+./centaur/GainStageProc.h
+./centaur/InputBufferProcessor.h
+./centaur/OutputStageProcessor.h
+./centaur/PreAmpStage.h
+./centaur/SummingAmp.h
+./diode_circuits
+./diode_circuits/DiodeClipper.cpp
+./diode_circuits/DiodeClipper.h
+./diode_circuits/DiodeClipperWDF.h
+./diode_circuits/DiodeParameter.h
+./diode_circuits/DiodeRectifier.cpp
+./diode_circuits/DiodeRectifier.h
+./diode_circuits/OmegaProvider.h
+./flapjack
+./flapjack/Flapjack.cpp
+./flapjack/Flapjack.h
+./flapjack/FlapjackOpAmpRType.h
+./flapjack/FlapjackWDF.h
+./flapjack/FlapjackWDFScatteringMatrix.h
+./flapjack/scatt_mathematica.txt
+./fuzz_machine
+./fuzz_machine/FuzzFaceNDK.cpp
+./fuzz_machine/FuzzFaceNDK.h
+./fuzz_machine/FuzzMachine.cpp
+./fuzz_machine/FuzzMachine.h
+./fuzz_machine/fuzz_face_ndk_config.json
+./hysteresis
+./hysteresis/Hysteresis.cpp
+./hysteresis/Hysteresis.h
+./hysteresis/HysteresisOps.h
+./hysteresis/HysteresisProcessing.cpp
+./hysteresis/HysteresisProcessing.h
+./junior_b
+./junior_b/EluApprox.h
+./junior_b/JuniorB.cpp
+./junior_b/JuniorB.h
+./junior_b/JuniorBWDF.h
+./junior_b/ModifiedRType.h
+./junior_b/NeuralTriodeModel.h
+./king_of_tone
+./king_of_tone/KingOfToneClipper.h
+./king_of_tone/KingOfToneDrive.cpp
+./king_of_tone/KingOfToneDrive.h
+./king_of_tone/KingOfToneOverdrive.h
+./mouse_drive
+./mouse_drive/MouseDrive.cpp
+./mouse_drive/MouseDrive.h
+./mouse_drive/MouseDriveWDF.h
+./muff_clipper
+./muff_clipper/MuffClipper.cpp
+./muff_clipper/MuffClipper.h
+./muff_clipper/MuffClipperStage.cpp
+./muff_clipper/MuffClipperStage.h
+./mxr_distortion
+./mxr_distortion/MXRDistWDF.h
+./mxr_distortion/MXRDistortion.cpp
+./mxr_distortion/MXRDistortion.h
+./neural_utils
+./neural_utils/RNNAccelerated.cpp
+./neural_utils/RNNAccelerated.h
+./neural_utils/ResampledRNN.cpp
+./neural_utils/ResampledRNN.h
+./neural_utils/ResampledRNNAccelerated.cpp
+./neural_utils/ResampledRNNAccelerated.h
+./neural_utils/model_loaders.h
+./tube_amp
+./tube_amp/TubeAmp.cpp
+./tube_amp/TubeAmp.h
+./tube_amp/TubeProc.h
+./tube_screamer
+./tube_screamer/TubeScreamer.cpp
+./tube_screamer/TubeScreamer.h
+./tube_screamer/TubeScreamerWDF.h
+./waveshaper
+./waveshaper/SurgeWaveshapers.cpp
+./waveshaper/SurgeWaveshapers.h
+./waveshaper/Waveshaper.cpp
+./waveshaper/Waveshaper.h
+./zen_drive
+./zen_drive/ZenDrive.cpp
+./zen_drive/ZenDrive.h
+./zen_drive/ZenDriveWDF.h
+
+--- src/processors/tone
+.
+./BassCleaner.cpp
+./BassCleaner.h
+./BigMuffTone.cpp
+./BigMuffTone.h
+./BlondeTone.cpp
+./BlondeTone.h
+./GraphicEQ.cpp
+./GraphicEQ.h
+./HighCut.cpp
+./HighCut.h
+./LofiIrs.cpp
+./LofiIrs.h
+./StateVariableFilter.cpp
+./StateVariableFilter.h
+./TrebleBooster.cpp
+./TrebleBooster.h
+./amp_irs
+./amp_irs/AmpIRs.cpp
+./amp_irs/AmpIRs.h
+./amp_irs/AmpIRsSaveLoad.cpp
+./amp_irs/AmpIRsSelector.cpp
+./bassman
+./bassman/BassmanTone.cpp
+./bassman/BassmanTone.h
+./bassman/BassmanToneStack.cpp
+./bassman/BassmanToneStack.h
+./baxandall
+./baxandall/BaxandallEQ.cpp
+./baxandall/BaxandallEQ.h
+./baxandall/BaxandallWDF.cpp
+./baxandall/BaxandallWDF.h
+./ladder_filter
+./ladder_filter/HighPassLadder.cpp
+./ladder_filter/HighPassLadder.h
+./ladder_filter/HighPassOnePole.cpp
+./ladder_filter/HighPassOnePole.h
+./ladder_filter/LadderFilterProcessor.cpp
+./ladder_filter/LadderFilterProcessor.h
+./ladder_filter/LadderParameters.cpp
+./ladder_filter/LadderParameters.h
+./ladder_filter/LowPassLadder.cpp
+./ladder_filter/LowPassLadder.h
+./ladder_filter/LowPassOnePole.cpp
+./ladder_filter/LowPassOnePole.h
+./ladder_filter/utility.h
+./tube_screamer_tone
+./tube_screamer_tone/TubeScreamerTone.cpp
+./tube_screamer_tone/TubeScreamerTone.h
+./tube_screamer_tone/TubeScreamerToneWDF.h
+
+--- submodules
+[submodule "modules/JUCE"]
+	path = modules/JUCE
+	url = https://github.com/juce-framework/JUCE.git
+[submodule "modules/chowdsp_utils"]
+	path = modules/chowdsp_utils
+	url = https://github.com/Chowdhury-DSP/chowdsp_utils.git
+[submodule "modules/RTNeural"]
+	path = modules/RTNeural
+	url = https://github.com/jatinchowdhury18/RTNeural
+[submodule "modules/magic_enum"]
+	path = modules/magic_enum
+	url = https://github.com/Neargye/magic_enum
+[submodule "modules/sst-cpputils"]
+	path = modules/sst-cpputils
+	url = https://github.com/surge-synthesizer/sst-cpputils
+[submodule "modules/clap-juce-extensions"]
+	path = modules/clap-juce-extensions
+	url = https://github.com/jatinchowdhury18/clap-juce-extensions
+[submodule "modules/chowdsp_wdf"]
+	path = modules/chowdsp_wdf
+	url = https://github.com/Chowdhury-DSP/chowdsp_wdf
+[submodule "modules/ea_variant"]
+	path = modules/ea_variant
+	url = https://github.com/eyalamirmusic/Variant
+[submodule "modules/melatonin_perfetto"]
+	path = modules/melatonin_perfetto
+	url = https://github.com/sudara/melatonin_perfetto
+[submodule "modules/math_approx"]
+	path = modules/math_approx
+	url = https://github.com/Chowdhury-DSP/math_approx

@@ -1,0 +1,203 @@
+repo: https://github.com/surge-synthesizer/eurorack.git
+branch: master
+commit: 84f4f67aaa25bf696093b224e2a51a5c18143e4f
+commit date: 2020-12-17T12:28:00+01:00
+licence files:
+
+--- top level
+README.md
+__init__.py
+avr_audio_bootloader
+avrlib
+avrlibx
+blinds
+braids
+branches
+clouds
+ears
+edges
+elements
+frames
+grids
+kinks
+links
+marbles
+peaks
+plaits
+rings
+ripples
+shades
+shelves
+stages
+stm_audio_bootloader
+stmlib
+streams
+tides
+tides2
+tools
+veils
+volts
+warps
+yarns
+
+--- tree (depth 2, dirs)
+.
+./avr_audio_bootloader
+./avrlib
+./avrlibx
+./blinds
+./blinds/hardware_design
+./braids
+./braids/bootloader
+./braids/data
+./braids/drivers
+./braids/hardware_design
+./braids/resources
+./braids/test
+./branches
+./branches/bootloader
+./branches/hardware_design
+./clouds
+./clouds/bootloader
+./clouds/drivers
+./clouds/dsp
+./clouds/hardware_design
+./clouds/resources
+./clouds/test
+./ears
+./ears/hardware_design
+./edges
+./edges/bootloader
+./edges/hardware_design
+./edges/resources
+./elements
+./elements/bootloader
+./elements/drivers
+./elements/dsp
+./elements/hardware_design
+./elements/resources
+./elements/samples
+./elements/test
+./frames
+./frames/bootloader
+./frames/drivers
+./frames/hardware_design
+./frames/resources
+./grids
+./grids/bootloader
+./grids/hardware_design
+./grids/resources
+./kinks
+./kinks/hardware_design
+./links
+./links/hardware_design
+./marbles
+./marbles/bootloader
+./marbles/drivers
+./marbles/hardware_design
+./marbles/ramp
+./marbles/random
+./marbles/resources
+./marbles/test
+./peaks
+./peaks/bootloader
+./peaks/data
+./peaks/drivers
+./peaks/drums
+./peaks/hardware_design
+./peaks/modulations
+./peaks/number_station
+./peaks/pulse_processor
+./peaks/resources
+./peaks/test
+./plaits
+./plaits/bootloader
+./plaits/drivers
+./plaits/dsp
+./plaits/hardware_design
+./plaits/resources
+./plaits/test
+./rings
+./rings/bootloader
+./rings/drivers
+./rings/dsp
+./rings/hardware_design
+./rings/resources
+./rings/test
+./ripples
+./ripples/hardware_design
+./shades
+./shades/hardware_design
+./shelves
+./shelves/hardware_design
+./stages
+./stages/bootloader
+./stages/drivers
+./stages/hardware_design
+./stages/resources
+./stages/test
+./stm_audio_bootloader
+./stmlib
+./streams
+./streams/bootloader
+./streams/drivers
+./streams/hardware_design
+./streams/resources
+./tides
+./tides/bootloader
+./tides/drivers
+./tides/easter_egg
+./tides/hardware_design
+./tides/resources
+./tides/test
+./tides2
+./tides2/bootloader
+./tides2/drivers
+./tides2/hardware_design
+./tides2/resources
+./tides2/test
+./tools
+./tools/hex2sysex
+./tools/hexfile
+./tools/learning
+./tools/midi
+./tools/optimization
+./veils
+./veils/hardware_design
+./volts
+./volts/hardware_design
+./warps
+./warps/bootloader
+./warps/drivers
+./warps/dsp
+./warps/hardware_design
+./warps/resources
+./warps/test
+./warps/tools
+./yarns
+./yarns/bootloader
+./yarns/drivers
+./yarns/hardware_design
+./yarns/resources
+./yarns/scale_editor
+./yarns/song
+
+--- eurorack/clouds
+(missing: eurorack/clouds)
+
+--- submodules
+[submodule "avrlib"]
+	path = avrlib
+	url = https://github.com/pichenettes/avril.git
+[submodule "avrlibx"]
+	path = avrlibx
+	url = https://github.com/pichenettes/avrilx.git
+[submodule "stmlib"]
+	path = stmlib
+	url = https://github.com/pichenettes/stmlib.git
+[submodule "stm_audio_bootloader"]
+	path = stm_audio_bootloader
+	url = https://github.com/pichenettes/stm-audio-bootloader.git
+[submodule "avr_audio_bootloader"]
+	path = avr_audio_bootloader
+	url = https://github.com/pichenettes/avr-audio-bootloader.git

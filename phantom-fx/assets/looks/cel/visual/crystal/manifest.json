@@ -1,0 +1,67 @@
+{
+ "look": "cel",
+ "folder": "crystal",
+ "stage_units": [
+  280,
+  300
+ ],
+ "px_per_su": 1.7,
+ "note": "px = the @2x picture. su = stage units (280 x 300). anchor = the point of the picture that the scene places. mask = white + alpha, tinted by code. sizes / rots = steps the cache should hold (scale factors / number of angles round the circle).",
+ "files": [
+  {
+   "file": "frost@2x.png",
+   "zip": "visual/crystal/frost@2x.png",
+   "su": [
+    280,
+    300
+   ],
+   "px": [
+    238,
+    255
+   ],
+   "cell": [
+    238,
+    255
+   ],
+   "anchor_su": [
+    0,
+    0
+   ],
+   "anchor_px": [
+    0,
+    0
+   ],
+   "frames": 1,
+   "kind": "mask",
+   "draw_scale": 2,
+   "note": "frost creeping in from the corners; laid over the stage when FREEZE is on (tinted ice white). Half resolution: draw at twice its pixel size"
+  },
+  {
+   "file": "base@2x.png",
+   "zip": "visual/crystal/base@2x.png",
+   "su": [
+    120,
+    40
+   ],
+   "px": [
+    204,
+    68
+   ],
+   "cell": [
+    204,
+    68
+   ],
+   "anchor_su": [
+    60,
+    22
+   ],
+   "anchor_px": [
+    102,
+    37
+   ],
+   "frames": 1,
+   "kind": "colour",
+   "note": "splintered floorboards at the foot of the main crystal (full colour)"
+  }
+ ]
+}
