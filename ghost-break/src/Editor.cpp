@@ -2272,7 +2272,7 @@ struct Editor::Impl
         const int my = pagesMode() ? 0 : 5;   // the classic layout: DRAG WAV sits on top of the meter
         meter->setBounds (1050, cy - 5 + my, 114, 9);
         tag ("OUTPUT", rf (1050, cy - 20 + my * 2, 60, 10), 4.6f, cDim, Just::centredLeft, Type::bold, 0.14f);
-        tag ("v" + proc.build, rf (1104, cy - 20 + my * 2, 60, 10), 4.4f, cFaint, Just::centredRight, Type::medium, 0.04f);
+        tag (juce::String ("v1 beta"), rf (1104, cy - 20 + my * 2, 60, 10), 4.4f, cFaint, Just::centredRight, Type::medium, 0.04f);
         for (int db : { -36, -24, -12, 0 }) tag (juce::String (db), RF (1050.0f + 114.0f * ((float) db + 42.0f) / 45.0f - 12.0f, (float) (cy + 7 + my), 24.0f, 9.0f), 4.0f, cFaint, Just::centred, Type::medium, 0.0f);
         for (int x : { 349, 888, 1041 }) lines.push_back (RF ((float) x, (float) cy - 20.0f, 1.0f, 40.0f));
         paneList.push_back ({ topRect().toFloat(), cViolet, 10.0f });
