@@ -1379,7 +1379,7 @@ private:
 static juce::File lookFile() { return juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory).getChildFile ("GhostBlock").getChildFile ("Phantom FX").getChildFile ("look.settings"); }
 juce::String PhantomEditor::creditsText()
 {
-    return "PHANTOM FX " + PhantomProcessor::versionString() + " by GhostBlock. Free software: AGPL-3.0-or-later. Source: github.com/bsaxon430/ghosty-vst (phantom-fx)\n\n"
+    return "PHANTOM FX v" + juce::String ("1 beta") + " by GhostBlock. Free software: AGPL-3.0-or-later. Source: github.com/bsaxon430/ghosty-vst (phantom-fx)\n\n"
            "Built with:\nJUCE 8.0.4 (Raw Material Software, AGPL-3.0) - github.com/juce-framework/JUCE\n"
            "chowdsp_utils (Jatin Chowdhury; BSD-3-Clause / GPL-3.0 per module) - github.com/Chowdhury-DSP/chowdsp_utils\n"
            "Signalsmith DSP (Geraint Luff, MIT) - github.com/Signalsmith-Audio/dsp\n"
@@ -1730,7 +1730,7 @@ void PhantomEditor::paintPainted (juce::Graphics& g, painted::Look& L)
     // the header: logo plaque, the level strip with its meters
     L.draw (g, "slab/logo-sign", m.f (0, 0, 256, 66));
     if (const auto ld = L.str ("anim.logoDim.img"); ld.isNotEmpty()) if (const int d = L.tableAt (L.str ("anim.logoDim.table"), tick, (int) L.num ("anim.logoDim.period", 0)); d < 9) L.draw (g, ld, m.f (0, 0, 256, 66), 1.0f - (float) d / 9.0f);
-    L.text (g, "the open-source 24-effect rack  v" + PhantomProcessor::versionString(), m.f (L.el ("header.sub", 0, 67), L.el ("header.sub", 1, 41), 186, 12), juce::Justification::centredLeft, 8.4f * s, L.sub());
+    L.text (g, "the open-source 24-effect rack  v" + juce::String ("1 beta"), m.f (L.el ("header.sub", 0, 67), L.el ("header.sub", 1, 41), 186, 12), juce::Justification::centredLeft, 8.4f * s, L.sub());
     L.panel (g, *this, L.str ("slabs.level"), m.f (258, 10, 522, 48));
     auto meter = [&] (juce::Rectangle<int> mr, const float* lv, const float* tp)
     {
@@ -1799,7 +1799,7 @@ void PhantomEditor::paint (juce::Graphics& g)
     g.setColour (col::ice.withAlpha (0.35f)); g.drawText (title, tr.translated (-1.5f, 0), juce::Justification::centredLeft);
     g.setColour (col::pink.withAlpha (0.30f)); g.drawText (title, tr.translated (1.5f, 0), juce::Justification::centredLeft);
     g.setColour (ghost() ? ghosty::glass::ink() : col::white.get()); g.drawText (title, tr, juce::Justification::centredLeft);
-    drawCaption (g, tr.translated (0, 24).withHeight (14), "the open-source 24-effect rack  v" + PhantomProcessor::versionString(), ghost() ? ghosty::glass::ink2() : col::dim.get(), 10.0f);
+    drawCaption (g, tr.translated (0, 24).withHeight (14), "the open-source 24-effect rack  v" + juce::String ("1 beta"), ghost() ? ghosty::glass::ink2() : col::dim.get(), 10.0f);
     drawMeter (g, inMeter.toFloat(), inLv, nullptr); drawMeter (g, outMeter.toFloat(), outLv, outTp);
     const bool byp = proc.apvts.getRawParameterValue ("bypass")->load() >= 0.5f;
     if (t < toastUntil && toastText.isNotEmpty()) drawCaption (g, mixHint.toFloat(), toastText, col::slime.get(), 9.0f);
