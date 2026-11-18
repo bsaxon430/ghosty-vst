@@ -1398,7 +1398,7 @@ void MickensEditor::paint(juce::Graphics& g) { g.fillAll(BG); }
 void MickensEditor::resized() { if (content) content->setTransform(juce::AffineTransform::scale((float) getWidth() / W)); }
 juce::String MickensEditor::versionString() {
 #if defined(JucePlugin_VersionString)
-    return JucePlugin_VersionString;
+    return "1 beta";
 #elif defined(JUCE_APPLICATION_VERSION_STRING)
     return JUCE_APPLICATION_VERSION_STRING;
 #else

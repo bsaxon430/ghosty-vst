@@ -167,7 +167,7 @@ struct BeatsXEditor::Content : juce::Component {
             g.setGradientFill(juce::ColourGradient(juce::Colour(0xff1C0B2E), c.getX(), c.getY(), juce::Colour(0xff07040C), c.getX(), c.getBottom(), false)); g.fillRect(c);   // GHOSTY BEATS: the logo artwork, big
             drawLogo(g, juce::RectanglePlacement(juce::RectanglePlacement::centred).appliedTo(logoArt().getBounds().toFloat(), c.reduced(c.getWidth() * 0.08f, c.getHeight() * 0.18f)));
             g.setColour(juce::Colour(0xffE9E3F5)); g.setFont(font(12.0f, false));
-            g.drawText(juce::String("v") + BeatsXProcessor::kVersion + "  by GhostBlock  -  click to close", c.reduced(18, 10).removeFromBottom(18), juce::Justification::centredRight);
+            g.drawText(juce::String("v1 beta") + "  by GhostBlock  -  click to close", c.reduced(18, 10).removeFromBottom(18), juce::Justification::centredRight);
             g.setColour(PURPLE.withAlpha(0.7f)); g.drawRoundedRectangle(c.reduced(0.5f), 16.0f, 1.5f);
         }
         void mouseUp(const juce::MouseEvent&) override { hide(); }
@@ -291,7 +291,7 @@ struct BeatsXEditor::Content : juce::Component {
         audioOut.prepare = [this, job] { proc.startAudioRender(job(true)); };
         audioOut.make = [this, job] { const auto j = job(true); if (!proc.exportGate(&audioOut, j.stems ? "beats.drag-stems" : "beats.drag-audio")) return juce::StringArray(); return proc.waitAudioRender(j); };
         audioOut.progress = [this] { return proc.renderProgress.load(); };
-        add(-1, midiOut); add(-1, audioOut); add(-1, versionTip); versionTip.setTooltip(juce::String("GHOSTY BEATS ") + BeatsXProcessor::kVersion + " by GhostBlock" + (proc.license.isUnlocked() ? "" : " (demo)") + ". Click for the about card.");   // GHOST KIT (brand)
+        add(-1, midiOut); add(-1, audioOut); add(-1, versionTip); versionTip.setTooltip(juce::String("GHOSTY BEATS v1 beta") + " by GhostBlock" + (proc.license.isUnlocked() ? "" : " (demo)") + ". Click for the about card.");   // GHOST KIT (brand)
         versionTip.setMouseCursor(juce::MouseCursor::PointingHandCursor); versionTip.onClick = [this] { about.show(); }; addChildComponent(about);   // GHOST KIT (brand)
         add(-1, bypassBtn); bypassBtn.setTheme(THEME); add(-1, playModeSw);
         playModeSw.get = [this] { return proc.playMode.load(); };
@@ -1139,7 +1139,7 @@ struct BeatsXEditor::Content : juce::Component {
     // the logo artwork is made for a dark backdrop: on LIGHT and GHOST (glass) it sits on a dark plate of its own
     void paintLogo(juce::Graphics& g) {
         const auto r = logoRect();
-        if (NEON) { neonLogo.draw(g, r, BeatsXProcessor::kVersion, phase); return; }   // NEON: the neon-sign wordmark
+        if (NEON) { neonLogo.draw(g, r, "1 beta", phase); return; }   // NEON: the neon-sign wordmark
         if (SUMI) { drawLogo(g, r, true); return; }   // LIGHT: the artwork faded like a print on the paper (no black plate)
         if (GLASS || ! isDark) { g.setColour(juce::Colour(0xff100718).withAlpha(0.94f)); g.fillRoundedRectangle(r.expanded(4.0f, 1.0f).withTrimmedTop(-1.0f), 10.0f); }
         drawLogo(g, r);

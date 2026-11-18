@@ -1434,7 +1434,7 @@ void SliceEditor::settingsMenu()
 {
     juce::PopupMenu m, in;
     for (int i = 0; i < 3; ++i) in.addItem (10 + i, kInputNames[i], true, (int) proc.input == i);
-    m.addSectionHeader ("GHOST SLICE " GSLICE_VERSION);
+    m.addSectionHeader ("GHOST SLICE v1 beta");
     m.addSubMenu ("RECORD INPUT", in);
     m.addItem (25, "DARK look (the night version)", true, Look::dark);
     m.addItem (23, "CLEAR: keep the sound clean and true (the next takes)", true, proc.clear);

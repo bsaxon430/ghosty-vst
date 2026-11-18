@@ -99,7 +99,7 @@ BoxEditor::~BoxEditor() { proc.snapshots->onChanged = nullptr; removeMouseListen
 juce::String BoxEditor::versionString()
 {
 #ifdef JucePlugin_VersionString
-    return "v" + juce::String (JucePlugin_VersionString);
+    return "v1 beta";
 #else
     return "v(dev)";   // (test builds have no plugin version)
 #endif

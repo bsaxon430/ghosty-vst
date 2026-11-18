@@ -204,7 +204,7 @@ public:
         glassPanel(g, barArea.toFloat(), 14.0f, look::green, 0.7f, 0.5f);
         g.setFont(look::small(9.5f)); glowText(g, "QUANTIZE", quantLabel, juce::Justification::centredLeft, look::dim, look::green, 0.4f);
         // footer
-        g.setFont(look::label(9.0f)); glowText(g, juce::String::fromUTF8("GHOST HUM  \xc2\xb7  VERSION ") + GHOSTHUM_VERSION + juce::String::fromUTF8("  \xc2\xb7  BUILD ") + GHOSTHUM_BUILD, getLocalBounds().removeFromBottom(18).withTrimmedBottom(4), juce::Justification::centred, look::green.withAlpha(0.8f), look::green, 0.6f);
+        g.setFont(look::label(9.0f)); glowText(g, juce::String::fromUTF8("GHOST HUM  \xc2\xb7  VERSION 1 BETA") + juce::String::fromUTF8("  \xc2\xb7  BUILD ") + GHOSTHUM_BUILD, getLocalBounds().removeFromBottom(18).withTrimmedBottom(4), juce::Justification::centred, look::green.withAlpha(0.8f), look::green, 0.6f);
     }
     juce::String statusText() const {
         if (proc.isCountingIn()) return "Count-in... the take starts on the next downbeat.";

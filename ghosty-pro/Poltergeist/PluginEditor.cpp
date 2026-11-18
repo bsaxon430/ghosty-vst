@@ -7,7 +7,7 @@ static constexpr int W = 1040, H = 744;
 static void paintBase(juce::Graphics& g, juce::Component& c) { g.fillAll((bool) c.getProperties()["onCard"] ? CARD : BG); }
 static juce::String versionText() {
 #ifdef JucePlugin_VersionString
-    return juce::String("v") + JucePlugin_VersionString;   // (CMake VERSION -> the plugin's version define)
+    return "v1 beta";   // (CMake VERSION -> the plugin's version define)
 #else
     return "v-dev";
 #endif

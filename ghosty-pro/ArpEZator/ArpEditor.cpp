@@ -2120,7 +2120,7 @@ void ArpEditor::applyThemeNow (int mode)
 juce::String ArpEditor::versionString()
 {
    #ifdef JucePlugin_VersionString
-    return JucePlugin_VersionString;
+    return "1 beta";   // shown as version 1, beta (GhostBlock v1 beta label)
    #else
     return "3.0.0";   // (the test app has no plug-in version macro)
    #endif

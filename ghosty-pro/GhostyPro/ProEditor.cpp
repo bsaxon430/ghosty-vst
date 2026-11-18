@@ -3227,7 +3227,7 @@ ProEditor::~ProEditor() { tips.reset(); content.reset(); setLookAndFeel (nullptr
 juce::String ProEditor::versionString()
 {
    #ifdef JucePlugin_VersionString
-    return JucePlugin_VersionString;
+    return "1 beta";
    #else
     return "dev";
    #endif
