@@ -26,7 +26,7 @@ jobs:
           - { key: ghostbreak,  ref: src/ghostbreak,  src: phantom-fx, flags: "-DPHANTOM_BUILD_AU=OFF -DPHANTOM_WITH_GHOST_BREAK=ON -DPHANTOM_LIMITER_ENGINE=ZL -DPHANTOM_WARP_ENGINE=SIGNALSMITH", targets: "GhostBreak_VST3", names: "Ghost Break.vst3" }
           - { key: ghostatlas,  ref: src/ghostatlas,  src: phantom-fx, flags: "-DPHANTOM_BUILD_AU=OFF -DPHANTOM_WITH_GHOST_ATLAS=ON -DPHANTOM_LIMITER_ENGINE=ZL -DPHANTOM_WARP_ENGINE=SIGNALSMITH -DGHOSTATLAS_FFTW_DIR=FFTWDIR", targets: "GhostAtlas_VST3", names: "Ghost Atlas.vst3", fftw: ghost-atlas }
           - { key: ghostmosaic, ref: src/ghostmosaic, src: ghost-mosaic, flags: "-DGHOSTMOSAIC_FFTW_DIR=FFTWDIR", targets: "GhostMosaic_VST3 GhostMosaicFX_VST3", names: "Ghost Mosaic.vst3|Ghost Mosaic FX.vst3", fftw: ghost-mosaic }
-          - { key: ghostlab,    ref: src/ghostlab,    src: ghost-lab, flags: "-DGHOSTLAB_CDP_DEV_DIR=CDPDIR -DGHOSTLAB_DDSP=OFF", targets: "GhostLab_VST3 GhostLabFX_VST3", names: "Ghost Lab.vst3|Ghost Lab FX.vst3", prep: ghostlab }
+          - { key: ghostlab,    ref: src/ghostlab,    src: ghost-lab, flags: "-DGHOSTLAB_CDP_DEV_DIR=CDPDIR", targets: "GhostLab_VST3 GhostLabFX_VST3", names: "Ghost Lab.vst3|Ghost Lab FX.vst3", prep: ghostlab, split: true }
           - { key: ghostvoice,  ref: src/ghostvoice,  src: ghost-voice, flags: "", targets: "GhostVoice_VST3", names: "Ghost Voice.vst3" }
           - { key: ghostypro2,  ref: src/ghostypro2,  src: ".", flags: "", targets: "GhostyPro_VST3", names: "Ghosty Pro 2.vst3" }
           - { key: ghostbass,   ref: src/ghostbass,   src: ".", flags: "-DSURGE_BUILD_CLAP=OFF -DSURGE_SKIP_LUA=FALSE", targets: "surge-xt_VST3", names: "Ghost Bass.vst3", subs: recursive }
@@ -58,17 +58,29 @@ jobs:
             lipo -create "$SB/x86/seance-beast.o" "$SB/arm/seance-beast.o" -output "$SB/seance-beast.o"; FL="${FL//BEASTOBJ/-DSEANCE_BEAST_OBJ=$SB/seance-beast.o}"
           fi
           B="$RUNNER_TEMP/build"
-          cmake -S "$SRC" -B "$B" -DCMAKE_BUILD_TYPE=Release "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 $FL > cfg.log 2>&1 || { tail -n 60 cfg.log; exit 1; }
-          set +e
-          cmake --build "$B" --config Release --parallel $J --target ${{ matrix.targets }} > build.log 2>&1; rb=$?
-          set -e
-          [ $rb = 0 ] || { grep -a -E "error:|ld: " build.log | head -40; tail -n 30 build.log; exit 1; }
+          # split: true builds each Mac type on its own and joins them with lipo (TensorFlow Lite picks its CPU code per build,
+          # so it cannot do both in one pass); the Intel half's build helper runs under Rosetta
+          if [ "${{ matrix.split }}" = true ]; then ARCHS="arm64 x86_64"; else ARCHS="arm64;x86_64"; fi
+          [ "${{ matrix.split }}" = true ] && { /usr/bin/pgrep -q oahd || sudo softwareupdate --install-rosetta --agree-to-license > /dev/null 2>&1 || true; }
+          for A in $ARCHS; do
+            BA="$B"; [ "${{ matrix.split }}" = true ] && BA="$B-$A"
+            cmake -S "$SRC" -B "$BA" -DCMAKE_BUILD_TYPE=Release "-DCMAKE_OSX_ARCHITECTURES=$A" -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 $FL > cfg.log 2>&1 || { tail -n 60 cfg.log; exit 1; }
+            set +e
+            cmake --build "$BA" --config Release --parallel $J --target ${{ matrix.targets }} > build.log 2>&1; rb=$?
+            set -e
+            [ $rb = 0 ] || { echo "build failed ($A)"; grep -a -E "error:|ld: " build.log | head -40; tail -n 30 build.log; exit 1; }
+          done
+          [ "${{ matrix.split }}" = true ] && B="$B-arm64"
           mkdir -p out
           IFS='|' read -r -a NAMES <<< "${{ matrix.names }}"
           for N in "${NAMES[@]}"; do
             b=$(find "$B" -maxdepth 7 -type d -name "$N" -prune | while read -r x; do m=$(find "$x/Contents/MacOS" -type f 2>/dev/null | head -1); [ -s "$m" ] && echo "$(stat -f %m "$m") $x"; done | sort -rn | head -1 | cut -d' ' -f2-)
             [ -n "$b" ] || { echo "MISSING $N"; exit 1; }
             ditto "$b" "out/$N"
+            if [ "${{ matrix.split }}" = true ]; then   # join the Intel half into the same bundle
+              bx="${b/$B/$RUNNER_TEMP/build-x86_64}"; ex=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "out/$N/Contents/Info.plist")
+              lipo -create "$b/Contents/MacOS/$ex" "$bx/Contents/MacOS/$ex" -output "out/$N/Contents/MacOS/$ex"
+            fi
             if [ "${{ matrix.prep }}" = ghostlab ]; then   # Ghost Lab carries the CDP programs inside the bundle, with their licence and notice
               mkdir -p "out/$N/Contents/Helpers/cdp" "out/$N/Contents/Resources"; cp cdp-bin/* "out/$N/Contents/Helpers/cdp/"
               mkdir -p "out/$N/Contents/Resources/cdp"; cp ghost-lab/packaging/licenses/CDP-LGPL-2.1.txt "out/$N/Contents/Resources/cdp/LICENSE-LGPL-2.1.txt"; cp ghost-lab/packaging/CDP-NOTICE.txt "out/$N/Contents/Resources/cdp/NOTICE.txt"   # text stays out of Helpers: codesign wants only code there
@@ -96,5 +108,6 @@ jobs:
           ditto -c -k --keepParent all "rel/GhostBlock-All-Plugins-mac-universal.zip"; mv rel/GhostBlock-All-Plugins-mac-universal.zip rel/GhostBlock-All-Plugins-mac-universal.zip
           ls -la rel
           T="plugins-$(date -u +%Y%m%d-%H%M)"
-          { echo "Universal macOS VST3 builds (Apple Silicon + Intel) of every GhostBlock plugin."; echo; echo "Install: unzip, copy the .vst3 files to ~/Library/Audio/Plug-Ins/VST3, then rescan in FL Studio or Ableton Live."; echo; echo '```'; cat BUILT.txt; echo '```'; } > notes.md
-          gh release create "$T" rel/*.zip --repo "${{ github.repository }}" --title "GhostBlock plugins (universal Mac) $(date -u +%Y-%m-%d)" --notes-file notes.md
+          { echo "Universal macOS VST3 builds (Apple Silicon + Intel) of every GhostBlock plugin."; echo; echo "One-step install on a Mac: open Terminal and paste"; echo; echo '    curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/builds/install-plugins.sh | bash'; echo; echo "Or by hand: unzip, copy the .vst3 files to ~/Library/Audio/Plug-Ins/VST3, then rescan in FL Studio or Ableton Live."; echo; echo '```'; cat BUILT.txt; echo '```'; } > notes.md
+          PRE=""; [ "${{ needs.build.result }}" = success ] || PRE="--prerelease"   # a build with a failed plugin never becomes "latest"
+          gh release create "$T" rel/*.zip --repo "${{ github.repository }}" $PRE --title "GhostBlock plugins (universal Mac) $(date -u +%Y-%m-%d)" --notes-file notes.md
