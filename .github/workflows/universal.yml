@@ -5,6 +5,7 @@ name: GhostBlock universal plugins
 on:
   push:
     branches: [ builds ]
+    paths: [ BUILD ]
   workflow_dispatch:
 permissions:
   contents: write
@@ -52,8 +53,8 @@ jobs:
           fi
           if [ "${{ matrix.prep }}" = seance ]; then
             SB="$RUNNER_TEMP/beast"; src/ghostblock/beast/fetch-surge.sh "$SB/surge" > /dev/null
-            src/ghostblock/beast/build-beast.sh "$SB/surge" "$SB/x86" -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 > beast-x86.log 2>&1 || { tail -n 30 beast-x86.log; exit 1; }
-            src/ghostblock/beast/build-beast.sh "$SB/surge" "$SB/arm" -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 > beast-arm.log 2>&1 || { tail -n 30 beast-arm.log; exit 1; }
+            BEAST_ARCH=x86_64 src/ghostblock/beast/build-beast.sh "$SB/surge" "$SB/x86" -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 > beast-x86.log 2>&1 || { tail -n 30 beast-x86.log; exit 1; }
+            BEAST_ARCH=arm64 src/ghostblock/beast/build-beast.sh "$SB/surge" "$SB/arm" -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 > beast-arm.log 2>&1 || { tail -n 30 beast-arm.log; exit 1; }
             lipo -create "$SB/x86/seance-beast.o" "$SB/arm/seance-beast.o" -output "$SB/seance-beast.o"; FL="${FL//BEASTOBJ/-DSEANCE_BEAST_OBJ=$SB/seance-beast.o}"
           fi
           B="$RUNNER_TEMP/build"
@@ -67,7 +68,15 @@ jobs:
           for N in "${NAMES[@]}"; do
             b=$(find "$B" -maxdepth 7 -type d -name "$N" -prune | while read -r x; do m=$(find "$x/Contents/MacOS" -type f 2>/dev/null | head -1); [ -s "$m" ] && echo "$(stat -f %m "$m") $x"; done | sort -rn | head -1 | cut -d' ' -f2-)
             [ -n "$b" ] || { echo "MISSING $N"; exit 1; }
-            ditto "$b" "out/$N"; codesign --force --deep --sign - "out/$N"
+            ditto "$b" "out/$N"
+            if [ "${{ matrix.prep }}" = ghostlab ]; then   # Ghost Lab carries the CDP programs inside the bundle, with their licence and notice
+              mkdir -p "out/$N/Contents/Helpers/cdp" "out/$N/Contents/Resources"; cp cdp-bin/* "out/$N/Contents/Helpers/cdp/"
+              cp ghost-lab/packaging/licenses/CDP-LGPL-2.1.txt "out/$N/Contents/Helpers/cdp/LICENSE-LGPL-2.1.txt"; cp ghost-lab/packaging/CDP-NOTICE.txt "out/$N/Contents/Helpers/cdp/NOTICE.txt"
+              cp ghost-lab/packaging/CREDITS.txt "out/$N/Contents/Resources/CREDITS.txt"; cp ghost-lab/NOTICE.md ghost-lab/LICENSE "out/$N/Contents/Resources/" 2>/dev/null || true
+              for h in "out/$N/Contents/Helpers/cdp/"*; do file "$h" | grep -q Mach-O && codesign --force --sign - "$h"; done
+              echo "  + $(ls "out/$N/Contents/Helpers/cdp" | wc -l | tr -d ' ') CDP programs ($(lipo -archs "out/$N/Contents/Helpers/cdp/pvoc"))" | tee -a out/BUILT.txt
+            fi
+            codesign --force --sign - "out/$N"
             echo "$N: $(lipo -archs "out/$N/Contents/MacOS/"* | head -1)  v$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "out/$N/Contents/Info.plist")" | tee -a out/BUILT.txt
           done
       - uses: actions/upload-artifact@v4
