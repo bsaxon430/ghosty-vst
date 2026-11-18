@@ -78,7 +78,7 @@ struct Header : public juce::Component
     GButton prevB{"<"}, nextB{">"}, saveB{"SAVE"}, engB{"ENGINE"}, aboutB, themeB;
     explicit Header(EasyView::Impl &i) : I(i), pill(i)
     {
-        aboutB.text = juce::String("(i)  v") + GHOST_BASS_VERSION_STR;
+        aboutB.text = juce::String("(i)  v1 beta");
         for (juce::Component *c : std::initializer_list<juce::Component *>{&logo, &pill, &prevB, &nextB, &saveB, &engB, &aboutB, &themeB})
             addAndMakeVisible(*c);
         themeB.big = true;
@@ -99,7 +99,7 @@ struct Header : public juce::Component
         aboutB.onClick = [] {
             juce::AlertWindow::showMessageBoxAsync(
                 juce::MessageBoxIconType::InfoIcon, "About / Credits",
-                juce::String("Ghost Bass ") + GHOST_BASS_VERSION_STR +
+                juce::String("Ghost Bass v1 beta") +
                     " - GPL-3.0. Built from open-source projects; the full notices are in the LICENSE and CREDITS files that come with it.\n\n"
                     "Engine: Surge XT - Surge Synth Team - GPL-3.0 - github.com/surge-synthesizer/surge\n"
                     "SUB layer: Bombaz - Matthijs Hollemans - GPL-3.0 - github.com/hollance/bombaz\n"
