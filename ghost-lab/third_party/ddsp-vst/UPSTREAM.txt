@@ -1,0 +1,11 @@
+magenta/ddsp-vst @ f2996e97f9469f3956a6b8e9d2d9b50b6555e1e9 (2023-05-18), Apache License 2.0 (LICENSE, read).
+Vendored unmodified: src/ (the plug-in's processor, its inference pipeline, synthesizers, model library and its UI),
+assets/icons/, models/pitch-detection/extract_features_micro.tflite.
+Not vendored: its 11 instrument models (models/ddsp/*.tflite, Apache-2.0, LICENSE inside the zip). CMake downloads
+https://storage.googleapis.com/ddsp-vst/releases/DDSP-VST-Models.zip (the file its scripts/download-models.sh fetches),
+checks sha256 bbb0f4a61be86d8b52460b21210016945899d78f031b99a844a3771e9a2a5308 and embeds them, as its own build does.
+TensorFlow Lite: tensorflow/tensorflow @ d8ce9f9c301d021a69953134185ab728c1c248d3 (its externals/tensorflow submodule),
+Apache-2.0, built from tensorflow/lite's own CMake.
+Ghost Matter's only additions are outside this folder: shim/JuceHeader.h (what JUCE's Projucer would generate for the
+DDSP effect: the JUCE modules, BinaryData, ProjectInfo, and JucePlugin_IsSynth 0 so its processor is the effect, which
+listens to audio) and Source/Engine/Ddsp.cpp (runs the processor offline on Ghost Matter's sound).

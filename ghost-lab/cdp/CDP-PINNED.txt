@@ -1,0 +1,7 @@
+CDP8 (Composers Desktop Project, Release 8) - the sound engine of Ghost Lab
+repo   https://github.com/ComposersDesktop/CDP8
+commit 28bc42c72c1a7cb0fab933acd1c433be958a787b   (main, 2026-06-08 "Merge branch 'main'")
+licence GNU Lesser General Public License v2.1 or later (the repo's LICENSE file; shipped as Licenses/CDP-LGPL-2.1.txt)
+programs shipped (separate executables, unmodified): pvoc stretch strange focus blur modify combine morph repitch formants envel, and cdparams (the parameter definitions its own front end uses: names, ranges, defaults)
+build  cdp/build-cdp.sh (CMake per building.txt, portaudio off; Mac: arm64 + x86_64 joined with lipo)
+patches cdp/patches/ (none so far: CDP is used exactly as published)

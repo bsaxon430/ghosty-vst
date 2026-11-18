@@ -1,0 +1,8 @@
+Pristine MIT subset (STM32 modules only) of:
+  https://github.com/pichenettes/eurorack  commit f4cfa7697095a28d292bff758beb51deb49b5a86 (2026-10-12)
+  https://github.com/pichenettes/stmlib    commit e3bd7c9cc00e4364166f9905c0509b6ffd0535ec (2023-05-30, the eurorack submodule pin)
+Copied: plaits/dsp (minus engine2, drums, voice.*, drum/noise/wavetable/speech engines, LPC speech + its TI-ROM word data),
+        plaits/resources.*, rings/dsp + resources.*, clouds/dsp (minus pvoc) + resources.*,
+        stmlib/stmlib.h, stmlib/dsp/*, stmlib/utils/{buffer_allocator,dsp,random,ring_buffer,gate_flags}.
+No AVR (GPL) project and no stmlib/programming (GPL) file is included.
+The patched copy that the build uses lives in the repo: ghosty-pro/third_party/eurorack-mit (see its PATCHES.md).

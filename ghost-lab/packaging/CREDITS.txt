@@ -1,0 +1,37 @@
+GHOST LAB / GHOST LAB FX - credits and licences (by GhostBlock)
+
+FREE AND OPEN SOURCE (from build 12)
+  Ghost Lab is released under the GNU Affero General Public License, version 3 only (AGPL-3.0): Licenses/Ghost Lab LICENSE
+  (AGPL-3.0).txt. The complete source of this build is Licenses/Ghost Lab source.zip. The full notices: Licenses/NOTICE.md.
+
+THE ROOMS' ENGINES (each runs as its authors wrote it)
+  GROW     Flues (PM-Synth, Chatterbox, Disyn) by Danny Ayers. MIT License. https://github.com/danja/flues (commit 2eae800)
+  STRETCH  PaulXStretch by Nasca Octavian Paul, Xenakios and Jesse Chappell. GPL-3.0. https://github.com/essej/paulxstretch
+           (commit b6175e9). Its FFT: PFFFT by Julien Pommier (BSD-like) with FFTPACK (UCAR).
+  REBORN   DDSP-VST by Google / the Magenta team, with its instrument models. Apache-2.0. https://github.com/magenta/ddsp-vst
+           (commit f2996e9). It runs on TensorFlow Lite (the TensorFlow authors, Apache-2.0).
+  SPACE    Pertylizer (Spatial Panner, Reverb) by Per Jonsson. MIT License. https://github.com/pertyjons/pertylizer (commit 3726360)
+  Also compiled in: Box2D v3.1.1 by Erin Catto (MIT).
+
+THE LAB'S ENGINE
+  The CDP System, Release 8 (Composers Desktop Project).
+  Copyright (c) 2022 Composers Desktop Project; programs by Trevor Wishart and the CDP authors.
+  Licence: GNU Lesser General Public License, version 2.1 or (at your option) any later version (LGPL-2.1+).
+  Source code: https://github.com/ComposersDesktop/CDP8 (commit 28bc42c72c1a7cb0fab933acd1c433be958a787b).
+  The programs pvoc, stretch, strange, focus, blur, modify, combine, morph, repitch, formants, envel and cdparams ship unmodified, as separate programs, inside
+  each plug-in and the app (Contents/Helpers/cdp), with LICENSE-LGPL-2.1.txt and NOTICE.txt beside them. The download's
+  Licenses folder holds the full source of exactly this build (CDP8-source.zip) and SOURCE-OFFER.txt. You may replace the
+  programs with your own build of CDP (same names, same folder).
+
+UNDER THE HOOD, IN PLAIN WORDS
+  Some of the longer descriptions of the engine's processes come from SoundThread's process help
+  (https://github.com/j-p-higgins/SoundThread), Copyright (c) 2025 Jonathan Higgins, MIT License
+  (Licenses/SoundThread-MIT.txt). The rest of the names and words are ours.
+
+TYPE
+  Poppins (Medium, SemiBold, Bold) by the Indian Type Foundry. Licence: SIL Open Font License 1.1 (Licenses folder).
+
+FRAMEWORK
+  Built with JUCE 8 (https://juce.com), under its AGPLv3 option.
+
+In the plug-in, the small "i" button (top right) shows these credits.

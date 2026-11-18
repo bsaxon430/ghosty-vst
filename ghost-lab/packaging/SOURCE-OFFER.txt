@@ -1,0 +1,10 @@
+SOURCE CODE OFFER (GNU LGPL 2.1, sections 4 and 6)
+
+The complete corresponding source code of the CDP8 programs included with Ghost Lab is provided with this download as
+CDP8-source.zip (commit 28bc42c72c1a7cb0fab933acd1c433be958a787b of https://github.com/ComposersDesktop/CDP8). The same
+source is publicly available at that address. Any changes GhostBlock ever makes to CDP files are published under the
+LGPL in a public fork, kept separate from Ghost Lab's own code. (So far there are none: CDP is used as published.)
+
+For at least three years from the date you received Ghost Lab, GhostBlock will also send the complete corresponding
+source of the included CDP programs to anyone who asks, for no more than the cost of providing it. Write to: GhostBlock,
+via ghostblock.io.

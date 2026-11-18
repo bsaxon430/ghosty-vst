@@ -1,0 +1,30 @@
+GHOST LAB - test build for Mac (Apple Silicon + Intel, macOS 11 or newer)
+
+Experimental sound organism: drop a sound, then pull, twist, freeze, smear, shatter, mutate and breed it.
+
+1. Double-click "Install Ghost Lab.command" (if macOS blocks it: right-click > Open; or System Settings > Privacy & Security > Open Anyway).
+2. In FL Studio: Options > Manage plugins > Find more plugins. Then:
+   - Ghost Lab is an INSTRUMENT (Channel rack > + > Ghost Lab). Drag a sound from FL's browser or Finder onto it.
+     Play it from the piano roll or your keyboard (C5 in FL = the sound as it is).
+   - Ghost Lab FX is an EFFECT (put it on a Mixer track). FL instruments get no audio in, so this is how a track's sound
+     gets in: press CAPTURE, play the track, press STOP CAPTURE.
+   In Logic / GarageBand they are Audio Units (instrument and effect).
+3. Or open "Ghost Lab" from Applications and drop sounds on it.
+
+How to use it:
+- Touch the glowing body: drag sideways = PULL (stretch that part), drag down/up = PINCH (squeeze/widen the sound),
+  draw a circle = TWIST (a small one anywhere on it will do), shake = MUTATE, double-click or hold = FREEZE that moment.
+  It follows your hand, and you hear the sound change while you drag (a quick sketch); let go and it makes the real
+  thing, then plays it. A tap just plays / stops the sound.
+- The six cards do the same with one tap. The EXPERIMENT TABLE cards run now when tapped; the green dots make your
+  mutation chain (drag the cards up/down to reorder). GENERATE MUTATION runs the chain with a fresh twist each time.
+- SOUND BREEDING: drop a second sound on "+ SECOND SOUND" (or drop two sounds at once), then drag SPECIMEN 002 onto the body.
+- ORIGINAL / PROCESSED: click to hear, click the other to switch at the same spot. Drag PROCESSED into FL (24-bit WAV).
+- UNDO / REDO go back and forth through everything. SAVE: save the sound, save or load a favourite chain.
+- DEEP shows every setting of the sound engine for the selected card.
+
+Your sounds: Documents/GhostBlock/Ghost Lab (dragged and saved WAVs), Documents/GhostBlock/Ghost Lab/Chains (favourite chains).
+Nothing else on your computer is touched.
+
+Ghost Lab's sound engine is the Composers Desktop Project (CDP8), free software under the GNU LGPL 2.1 or later.
+See the Licenses folder: the licence, the notice, and CDP's full source code (CDP8-source.zip).

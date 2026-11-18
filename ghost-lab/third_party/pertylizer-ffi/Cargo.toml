@@ -1,0 +1,24 @@
+# Ghost Matter's C interface to Pertylizer (pertyjons/pertylizer, MIT, Per Jonsson), pinned to one commit.
+# Only glue lives here: Pertylizer's own modules (SpatialPanner, Reverb, Euclidean, TuringMachine) do all the sound work,
+# built from its own crates, unmodified.
+[package]
+name = "ghostmatter_pertylizer"
+version = "0.2.0"
+edition = "2024"
+license = "AGPL-3.0-only"
+publish = false
+
+[lib]
+crate-type = ["staticlib"]
+path = "src/lib.rs"
+
+[dependencies]
+synth_core = { git = "https://github.com/pertyjons/pertylizer", rev = "3726360a7e59fcecb71ce51a1148921760659107" }
+synth_modules = { git = "https://github.com/pertyjons/pertylizer", rev = "3726360a7e59fcecb71ce51a1148921760659107" }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+debug = false

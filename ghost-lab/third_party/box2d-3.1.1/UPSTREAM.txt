@@ -1,0 +1,3 @@
+Box2D v3.1.1 (erincatto/box2d, tag v3.1.1 = commit 8c661469c9507d3ad6fbd2fea3f1aa71669c2fe3), MIT (LICENSE).
+src/ and include/ copied unmodified. Built by Ghost Matter's CMakeLists.txt as the static library gm_box2d (C17), with its own src/CMakeLists.txt not used.
+Used by BOUNCE (Source/Engine/Bounce.*): the balls, walls, gravity, restitution, friction and the contact hit events are all Box2D.

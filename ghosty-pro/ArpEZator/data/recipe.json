@@ -1,0 +1,1969 @@
+{
+ "version": 1,
+ "about": "Distilled from 70 original ideas x 4 critique rounds (175 idea-versions). Winners = final top 12 MIDNIGHT, top 12 SUNRISE, top 5 DUSK; losers = every idea-version scored <= 6.0. All numbers are per 8-bar idea.",
+ "grid": {
+  "step": "1/16",
+  "ticks_per_step": 24,
+  "ppq": 96,
+  "steps_per_bar": 16,
+  "idea_bars": 8
+ },
+ "fields": {
+  "degree tokens": "melody degrees 1-7 of the mode scale, b/# alter, ' = octave up, , = octave down; tonic of degree 1 sits in MIDI 62-73",
+  "figure tokens": "arp steps: integer = chord-tone LADDER index (ladder = chord tones >= floor, upward); P = pedal; - = rest; ~ = tie; > = accent; ^ = +12",
+  "cell": "4 (beat) or 8 (two-beat) chars on the 1/16 grid: x = onset, - = held from before, . = silence. A cell starting with '-' is a tie-in (anticipation landed)",
+  "targets": "lo/hi = winners' 10th-90th percentile; weight = |effect size| winners vs losers (capped 1.5)",
+  "weight": "relative selection probability inside its list (sums to 1)"
+ },
+ "hard_rules": {
+  "arp": [
+   "no two consecutive arp steps with the same pitch, including the wrap (last step -> first step) and the resync seam (the step before a re-sync -> step 0)",
+   "with resync every bar, 3- and 5-step figures always repeat step 0 at the bar line (16 = 3x5+1, 5x3+1): use resync 2 bars for them",
+   "pedal pitch must never equal the ladder pitch of either neighbouring step (choose a pedal pc that is not reachable there, or cap ladder indices)",
+   "total arp span <= 15 semitones (target 12-14); ladder floor = tonic, its 5th below, or its 5th above so that the pedal sits just above the top ladder note used",
+   "figure length 6 or 7 preferred (polymeter against 16 must be audible); 4 or 8 only as an evolve target, never as the main figure",
+   "chords last 2 bars (1 bar only for 3-step rolling figures)"
+  ],
+  "melody": [
+   "range 9-14 semitones; largest leap <= 9 (one 4th-6th leap per phrase, then stepwise fill in the opposite direction)",
+   "at most one repeated-note stutter per 2-bar phrase; never 3 identical notes in a row on 1/16s",
+   "no nursery contours: reject two consecutive identical 3-note stepwise runs (e.g. 3-2-1 3-2-1), 2-3-2-3 chants, 5-6-5-3 playground shapes and 1-5-8-scale-down openings",
+   "bar 4 ends open (not on the tonic: 2, 5 or 6), bar 8 resolves (1, or 3 over I)",
+   "no sustained (>= 1/8) note a semitone against a chord tone on a strong beat unless it resolves by step within 1/8",
+   "B phrase peak must be higher than A phrase peak (by a 3rd to a 5th)"
+  ],
+  "originality": [
+   "after generation compare the first 8 notes (scale-step intervals + 1/16 onsets) with the factory library and the last 50 generated hooks; if >= 7 of 8 intervals and the onset pattern match, mutate (change one interval of the 2nd half and one cell)",
+   "never seed from or import existing songs; templates here are abstract intervals and cells, not melodies"
+  ]
+ },
+ "modes": {
+  "MIDNIGHT": {
+   "defaults": {
+    "tempo_range": [
+     120,
+     126
+    ],
+    "tempo_default": 122,
+    "scales": {
+     "minor": 0.7,
+     "dorian": 0.2,
+     "phrygian": 0.1
+    },
+    "harmonic_rhythm_bars": {
+     "2": 0.85,
+     "1": 0.15
+    },
+    "rate": "1/16",
+    "gate": [
+     0.45,
+     0.5
+    ],
+    "octave_span_semitones": [
+     12,
+     15
+    ],
+    "figure_len_weights": {
+     "6": 0.5,
+     "7": 0.32,
+     "3": 0.1,
+     "5": 0.08
+    },
+    "resync_bars": {
+     "1": 0.5,
+     "2": 0.5,
+     "rule": "resync 2 when 16 % len == 1 (len 3, 5)"
+    },
+    "pedal": {
+     "position": {
+      "top": 0.8,
+      "bottom_then_flip_top_at_lift": 0.2
+     },
+     "degree_weights": {
+      "1'": 0.45,
+      "5": 0.25,
+      "7 (b7 common tone)": 0.15,
+      "4 (dorian common tone)": 0.15
+     },
+     "share_of_steps": [
+      0.28,
+      0.34
+     ],
+     "rule": "prefer the pitch class common to the most chords of the loop (b7 over i-bVII-iv-bVI, 5 over i-bVI-bIII-bVII)"
+    },
+    "velocity": {
+     "base": 0.7,
+     "bar_downbeat": 0.14,
+     "quarter": 0.08,
+     "figure_start": 0.06,
+     "accent_token": 0.14,
+     "pedal": -0.08,
+     "offbeat_16th_melody": -0.06,
+     "repeat_within_2_steps": -0.05,
+     "max": 1.0
+    },
+    "stagger": 0,
+    "stutter": 0,
+    "chords": {
+     "rhythm": "sustain whole chord",
+     "voicing": "close, voice-led in MIDI 52-76 around 63, keep the top note when common",
+     "target_vl_semitones_per_change": [
+      3.7,
+      6.3
+     ],
+     "notes_moved_per_change": [
+      1.4,
+      3.0
+     ]
+    },
+    "bass": {
+     "pulse16": 0.7,
+     "off8": 0.3
+    },
+    "sound": {
+     "lead": "saw pluck, filter env 90 ms, resonance ~0.9",
+     "cutoff_lfo_beats": 8,
+     "delay": "dotted 1/8 ping-pong, feedback 0.45",
+     "pad": "dark 3-voice saw, 700 Hz"
+    }
+   },
+   "evolve": {
+    "every_bars": [
+     2,
+     4
+    ],
+    "ops": {
+     "swap_one_index_by_1": 0.35,
+     "fill_a_rest": 0.15,
+     "raise_top_index": 0.2,
+     "pedal_lift": 0.3
+    },
+    "lift": {
+     "when_bar": [
+      5,
+      7
+     ],
+     "probability": 0.85,
+     "pedal_targets": [
+      "b3 above the old pedal",
+      "b7 (common tone)",
+      "9th of the bar-7 chord",
+      "same pc one octave up (from bottom pedal)"
+     ],
+     "rule": "the lift target must be a chord tone or 9th of the chord it starts on"
+    }
+   },
+   "progressions": [
+    {
+     "prog": [
+      "i",
+      "bVI",
+      "iv",
+      "bVII"
+     ],
+     "bars": [
+      2,
+      2,
+      2,
+      2
+     ],
+     "weight": 0.095,
+     "n_winners": 1
+    },
+    {
+     "prog": [
+      "i",
+      "bVImaj7",
+      "bIII",
+      "bVIIsus2"
+     ],
+     "bars": [
+      2,
+      2,
+      2,
+      2
+     ],
+     "weight": 0.095,
+     "n_winners": 1
+    },
+    {
+     "prog": [
+      "i",
+      "bVI",
+      "bIII",
+      "bVII"
+     ],
+     "bars": [
+      1,
+      1,
+      1,
+      1
+     ],
+     "weight": 0.095,
+     "n_winners": 1
+    },
+    {
+     "prog": [
+      "i",
+      "bVII",
+      "iv",
+      "bVI"
+     ],
+     "bars": [
+      2,
+      2,
+      2,
+      2
+     ],
+     "weight": 0.095,
+     "n_winners": 1
+    },
+    {
+     "prog": [
+      "i",
+      "bII",
+      "i",
+      "bVII"
+     ],
+     "bars": [
+      2,
+      2,
+      2,
+      2
+     ],
+     "weight": 0.083,
+     "n_winners": 1
+    },
+    {
+     "prog": [
+      "iv",
+      "i",
+      "bVII",
+      "bVI"
+     ],
+     "bars": [
+      2,
+      2,
+      2,
+      2
+     ],
+     "weight": 0.083,
+     "n_winners": 1
+    },
+    {
+     "prog": [
+      "i",
+      "bIII",
+      "iv",
+      "bVI"
+     ],
+     "bars": [
+      2,
+      2,
+      2,
+      2
+     ],
+     "weight": 0.083,
+     "n_winners": 1
+    },
+    {
+     "prog": [
+      "isus2",
+      "bVIadd9",
+      "bIII",
+      "bVIIsus4"
+     ],
+     "bars": [
+      2,
+      2,
+      2,
+      2
+     ],
+     "weight": 0.083,
+     "n_winners": 1
+    },
+    {
+     "prog": [
+      "i",
+      "bVII",
+      "bVI",
+      "v"
+     ],
+     "bars": [
+      2,
+      2,
+      2,
+      2
+     ],
+     "weight": 0.071,
+     "n_winners": 1
+    },
+    {
+     "prog": [
+      "isus2",
+      "i",
+      "bVImaj7",
+      "bVII"
+     ],
+     "bars": [
+      2,
+      2,
+      2,
+      2
+     ],
+     "weight": 0.071,
+     "n_winners": 1
+    },
+    {
+     "prog": [
+      "i",
+      "bIII",
+      "bVI",
+      "bVII"
+     ],
+     "bars": [
+      2,
+      2,
+      2,
+      2
+     ],
+     "weight": 0.071,
+     "n_winners": 1
+    },
+    {
+     "prog": [
+      "i",
+      "bIII",
+      "bVII",
+      "bVI"
+     ],
+     "bars": [
+      2,
+      2,
+      2,
+      2
+     ],
+     "weight": 0.071,
+     "n_winners": 1
+    }
+   ],
+   "progressions_also_ok": [
+    [
+     "i",
+     "bVII",
+     "bVI",
+     "bVII"
+    ],
+    [
+     "i",
+     "IV",
+     "i",
+     "bVII"
+    ],
+    [
+     "bVI",
+     "bVII",
+     "i",
+     "i"
+    ],
+    [
+     "i",
+     "iv",
+     "bVI",
+     "bVII"
+    ]
+   ],
+   "figures": [
+    {
+     "tokens": [
+      "P",
+      "-",
+      "0",
+      "2",
+      "P",
+      "1"
+     ],
+     "len": 6,
+     "resync_bars": 1,
+     "pedal_degree": "1'",
+     "evolve": [
+      {
+       "from_bar": 6,
+       "pedal": "3'"
+      }
+     ],
+     "weight": 0.094,
+     "source_idea": "M09"
+    },
+    {
+     "tokens": [
+      "0",
+      "1",
+      "P",
+      "2",
+      "1",
+      "P"
+     ],
+     "len": 6,
+     "resync_bars": 1,
+     "pedal_degree": "1'",
+     "evolve": [
+      {
+       "from_bar": 4,
+       "pedal": "3'"
+      }
+     ],
+     "weight": 0.094,
+     "source_idea": "M22"
+    },
+    {
+     "tokens": [
+      "P",
+      "1",
+      "2"
+     ],
+     "len": 3,
+     "resync_bars": 2,
+     "pedal_degree": "5",
+     "evolve": [
+      {
+       "from_bar": 4,
+       "pattern": [
+        "P",
+        "1",
+        "3"
+       ]
+      },
+      {
+       "from_bar": 6,
+       "pedal": "7"
+      }
+     ],
+     "weight": 0.094,
+     "source_idea": "M25"
+    },
+    {
+     "tokens": [
+      "P",
+      "2",
+      "0",
+      "P",
+      "1",
+      "2"
+     ],
+     "len": 6,
+     "resync_bars": 2,
+     "pedal_degree": "7,",
+     "evolve": [
+      {
+       "from_bar": 6,
+       "pedal": "7"
+      }
+     ],
+     "weight": 0.094,
+     "source_idea": "M21"
+    },
+    {
+     "tokens": [
+      "0",
+      "P",
+      "1",
+      "0",
+      "P",
+      "2",
+      "1"
+     ],
+     "len": 7,
+     "resync_bars": 2,
+     "pedal_degree": "5",
+     "evolve": [
+      {
+       "from_bar": 4,
+       "pattern": [
+        "0",
+        "P",
+        "2",
+        "0",
+        "P",
+        "1",
+        "2"
+       ]
+      }
+     ],
+     "weight": 0.078,
+     "source_idea": "M10"
+    },
+    {
+     "tokens": [
+      "1",
+      "0",
+      "P",
+      "2",
+      "0",
+      "P",
+      "2"
+     ],
+     "len": 7,
+     "resync_bars": 2,
+     "pedal_degree": "1'",
+     "evolve": [
+      {
+       "from_bar": 6,
+       "pedal": "3'"
+      }
+     ],
+     "weight": 0.078,
+     "source_idea": "M16"
+    },
+    {
+     "tokens": [
+      "P",
+      "2",
+      "0",
+      "1",
+      "2",
+      "1"
+     ],
+     "len": 6,
+     "resync_bars": 1,
+     "pedal_degree": "7",
+     "evolve": [],
+     "weight": 0.078,
+     "source_idea": "M13"
+    },
+    {
+     "tokens": [
+      "P",
+      "2",
+      "1",
+      "P",
+      "0",
+      "1"
+     ],
+     "len": 6,
+     "resync_bars": 2,
+     "pedal_degree": "5",
+     "evolve": [
+      {
+       "from_bar": 6,
+       "pedal": "7"
+      }
+     ],
+     "weight": 0.078,
+     "source_idea": "M05"
+    },
+    {
+     "tokens": [
+      "P",
+      "0",
+      "P",
+      "1",
+      "P",
+      "2"
+     ],
+     "len": 6,
+     "resync_bars": 1,
+     "pedal_degree": "1",
+     "evolve": [
+      {
+       "from_bar": 4,
+       "pattern": [
+        "P",
+        "0",
+        "P",
+        "1",
+        "P",
+        "3"
+       ]
+      },
+      {
+       "from_bar": 6,
+       "pedal": "3"
+      }
+     ],
+     "weight": 0.062,
+     "source_idea": "M07"
+    },
+    {
+     "tokens": [
+      "1",
+      "P",
+      "0",
+      "-",
+      "2",
+      "P"
+     ],
+     "len": 6,
+     "resync_bars": 1,
+     "pedal_degree": "5",
+     "evolve": [
+      {
+       "from_bar": 4,
+       "pattern": [
+        "1",
+        "P",
+        "0",
+        "1",
+        "2",
+        "P"
+       ]
+      }
+     ],
+     "weight": 0.062,
+     "source_idea": "M23"
+    },
+    {
+     "tokens": [
+      "P",
+      "0",
+      "1",
+      "P",
+      "2",
+      "1"
+     ],
+     "len": 6,
+     "resync_bars": 2,
+     "pedal_degree": "1'",
+     "evolve": [
+      {
+       "from_bar": 4,
+       "pattern": [
+        "P",
+        "0",
+        "2",
+        "P",
+        "1",
+        "2"
+       ]
+      }
+     ],
+     "weight": 0.062,
+     "source_idea": "M08"
+    },
+    {
+     "tokens": [
+      "P",
+      "2",
+      "-",
+      "1",
+      "0",
+      "P",
+      "1"
+     ],
+     "len": 7,
+     "resync_bars": 1,
+     "pedal_degree": "5",
+     "evolve": [],
+     "weight": 0.062,
+     "source_idea": "M29"
+    },
+    {
+     "tokens": [
+      "P",
+      "0",
+      "1",
+      "2",
+      "P",
+      "1",
+      "0"
+     ],
+     "len": 7,
+     "resync_bars": 2,
+     "pedal_degree": "4",
+     "evolve": [
+      {
+       "from_bar": 4,
+       "pattern": [
+        "P",
+        "0",
+        "2",
+        "1",
+        "P",
+        "2",
+        "0"
+       ]
+      },
+      {
+       "from_bar": 6,
+       "pedal": "5"
+      }
+     ],
+     "weight": 0.062,
+     "source_idea": "D08"
+    }
+   ],
+   "targets": {
+    "ct_strong": {
+     "lo": 0.634,
+     "hi": 0.938,
+     "winner_median": 0.844,
+     "loser_mean": 0.885,
+     "weight": 0.54
+    },
+    "max_leap": {
+     "lo": 12.0,
+     "hi": 15.0,
+     "winner_median": 12.0,
+     "loser_mean": 13.5,
+     "weight": 0.25
+    },
+    "range": {
+     "lo": 12.0,
+     "hi": 15.0,
+     "winner_median": 15.0,
+     "loser_mean": 15.727,
+     "weight": 0.79
+    },
+    "ngram_entropy": {
+     "lo": 0.662,
+     "hi": 0.726,
+     "winner_median": 0.694,
+     "loser_mean": 0.668,
+     "weight": 0.65
+    },
+    "top_share": {
+     "lo": 0.213,
+     "hi": 0.356,
+     "winner_median": 0.27,
+     "loser_mean": 0.324,
+     "weight": 0.38
+    },
+    "vl_semitones": {
+     "lo": 3.686,
+     "hi": 6.297,
+     "winner_median": 5.0,
+     "loser_mean": 5.454,
+     "weight": 0.47
+    },
+    "vl_notes_moved": {
+     "lo": 1.364,
+     "hi": 2.967,
+     "winner_median": 2.0,
+     "loser_mean": 2.226,
+     "weight": 0.23
+    },
+    "stutters": {
+     "lo": 0.0,
+     "hi": 1.8,
+     "winner_median": 0.0,
+     "loser_mean": 5.955,
+     "weight": 0.86
+    },
+    "arp_len": {
+     "lo": 6.0,
+     "hi": 7.0,
+     "winner_median": 6.0,
+     "loser_mean": 6.182,
+     "weight": 0.14
+    },
+    "polymeter": {
+     "lo": 1.0,
+     "hi": 1.0,
+     "winner_median": 1.0,
+     "loser_mean": 0.682,
+     "weight": 0.79
+    },
+    "resync_bars": {
+     "lo": 1.0,
+     "hi": 2.0,
+     "winner_median": 1.5,
+     "loser_mean": 1.455,
+     "weight": 0.07
+    },
+    "pedal_share": {
+     "lo": 0.286,
+     "hi": 0.333,
+     "winner_median": 0.333,
+     "loser_mean": 0.27,
+     "weight": 0.49
+    },
+    "evolve_changes": {
+     "lo": 0.1,
+     "hi": 1.9,
+     "winner_median": 1.0,
+     "loser_mean": 0.364,
+     "weight": 0.87
+    },
+    "density": {
+     "lo": 14.05,
+     "hi": 16.0,
+     "winner_median": 16.0,
+     "loser_mean": 15.818,
+     "weight": 0.4
+    }
+   },
+   "notes": "winners put fewer chord tones on strong beats than losers (0.81 vs 0.89): the pedal colour (maj7/9/11 against the chord) is wanted"
+  },
+  "SUNRISE": {
+   "defaults": {
+    "tempo_range": [
+     122,
+     126
+    ],
+    "tempo_default": 124,
+    "scales": {
+     "major": 0.85,
+     "minor (lift loop)": 0.15
+    },
+    "harmonic_rhythm_bars": {
+     "1": 0.9,
+     "2": 0.1
+    },
+    "melody_rate": "mixed 1/8 + 1/16 (cells below)",
+    "notes_per_bar": [
+     5.4,
+     6.9
+    ],
+    "range_semitones": [
+     9,
+     14
+    ],
+    "gate": 0.85,
+    "stagger": {
+     "0": 0.8,
+     "8 steps (2 beats)": 0.2
+    },
+    "stutter": {
+     "max_per_phrase": 1,
+     "repeat_pct": [
+      0.02,
+      0.11
+     ]
+    },
+    "tie_across_barline": {
+     "per_phrase_probability": 0.9,
+     "land_on": [
+      "3rd",
+      "9th",
+      "root"
+     ],
+     "length_steps": [
+      1,
+      4
+     ]
+    },
+    "velocity": {
+     "base": 0.7,
+     "bar_downbeat": 0.14,
+     "quarter": 0.08,
+     "figure_start": 0.06,
+     "accent_token": 0.14,
+     "pedal": -0.08,
+     "offbeat_16th_melody": -0.06,
+     "repeat_within_2_steps": -0.05,
+     "max": 1.0
+    },
+    "chords": {
+     "rhythm": "x..x..x...x..x..",
+     "push": "a hit on step 14/15 plays the NEXT chord (anticipation)",
+     "voicing": "close, voice-led, MIDI 52-76",
+     "target_vl_semitones_per_change": [
+      2.7,
+      3.8
+     ]
+    },
+    "bass": {
+     "off8": 1.0
+    },
+    "sound": {
+     "lead": "piano + octave-up short pluck layer",
+     "chords": "supersaw stab 7 voices +-26 c",
+     "bass": "sine + saw 380 Hz"
+    }
+   },
+   "forms": {
+    "A B A C": 0.65,
+    "A A A B": 0.25,
+    "A B A B": 0.1
+   },
+   "variation_operators": {
+    "A'": "repeat A exactly (AAAB) or change only the last 1-2 notes (open -> closed)",
+    "B": "keep bar 1's rhythm and first 3-4 notes (the call); lift the 2nd half by a 3rd-5th so the phrase peaks at 2' or 3'; end open on 2/5/6",
+    "C": "B's bar 1 + a stepwise descending tail that resolves to 1 (or 3) on beat 1-3 of the last bar",
+    "tie_in": "end bar 1 of each phrase with a 1/16 pickup tied 1-4 steps into bar 2, landing on the new chord 3rd/9th/root",
+    "lift": "in B, sequence the A cell up a 4th (3-3-2 cell) or replace the 2nd-half leap with a bigger one"
+   },
+   "rhythm_cells_beat": [
+    {
+     "cell": "--x-",
+     "weight": 0.21,
+     "lift_vs_losers": 2.48,
+     "anticipation": true
+    },
+    {
+     "cell": "x-x-",
+     "weight": 0.172,
+     "lift_vs_losers": 0.65,
+     "anticipation": false
+    },
+    {
+     "cell": "x---",
+     "weight": 0.122,
+     "lift_vs_losers": 0.72,
+     "anticipation": false
+    },
+    {
+     "cell": "..xx",
+     "weight": 0.103,
+     "lift_vs_losers": 2.28,
+     "anticipation": true
+    },
+    {
+     "cell": "x-xx",
+     "weight": 0.101,
+     "lift_vs_losers": 1.34,
+     "anticipation": true
+    },
+    {
+     "cell": "x--x",
+     "weight": 0.096,
+     "lift_vs_losers": 1.82,
+     "anticipation": true
+    },
+    {
+     "cell": "....",
+     "weight": 0.056,
+     "lift_vs_losers": 0.79,
+     "anticipation": false
+    },
+    {
+     "cell": "----",
+     "weight": 0.048,
+     "lift_vs_losers": 0.89,
+     "anticipation": true
+    },
+    {
+     "cell": "..x-",
+     "weight": 0.029,
+     "lift_vs_losers": 0.54,
+     "anticipation": false
+    },
+    {
+     "cell": "xxx-",
+     "weight": 0.026,
+     "lift_vs_losers": 0.66,
+     "anticipation": false
+    },
+    {
+     "cell": "-x--",
+     "weight": 0.021,
+     "lift_vs_losers": 21.83,
+     "anticipation": true
+    },
+    {
+     "cell": "--..",
+     "weight": 0.016,
+     "lift_vs_losers": 0.63,
+     "anticipation": true
+    }
+   ],
+   "rhythm_cells_two_beat": [
+    {
+     "cell": "x--x--x-",
+     "weight": 0.151,
+     "lift_vs_losers": 1.46,
+     "anticipation": false
+    },
+    {
+     "cell": "x-xx--x-",
+     "weight": 0.138,
+     "lift_vs_losers": 3.29,
+     "anticipation": false
+    },
+    {
+     "cell": "..xxx-x-",
+     "weight": 0.101,
+     "lift_vs_losers": 1.46,
+     "anticipation": false
+    },
+    {
+     "cell": "--x-x---",
+     "weight": 0.088,
+     "lift_vs_losers": 73.92,
+     "anticipation": true
+    },
+    {
+     "cell": "..xxx-xx",
+     "weight": 0.075,
+     "lift_vs_losers": 63.5,
+     "anticipation": false
+    },
+    {
+     "cell": "....x-x-",
+     "weight": 0.075,
+     "lift_vs_losers": 1.81,
+     "anticipation": false
+    },
+    {
+     "cell": "--x-x-x-",
+     "weight": 0.05,
+     "lift_vs_losers": 42.67,
+     "anticipation": true
+    },
+    {
+     "cell": "..xxx--x",
+     "weight": 0.05,
+     "lift_vs_losers": 42.67,
+     "anticipation": false
+    },
+    {
+     "cell": "x---x-x-",
+     "weight": 0.05,
+     "lift_vs_losers": 1.22,
+     "anticipation": false
+    },
+    {
+     "cell": "----x-x-",
+     "weight": 0.044,
+     "lift_vs_losers": 37.46,
+     "anticipation": true
+    },
+    {
+     "cell": "..x-x---",
+     "weight": 0.038,
+     "lift_vs_losers": 1.36,
+     "anticipation": false
+    },
+    {
+     "cell": "x-x-x---",
+     "weight": 0.031,
+     "lift_vs_losers": 0.47,
+     "anticipation": false
+    },
+    {
+     "cell": "x-------",
+     "weight": 0.031,
+     "lift_vs_losers": 0.84,
+     "anticipation": false
+    },
+    {
+     "cell": "x-x-x-x-",
+     "weight": 0.025,
+     "lift_vs_losers": 0.62,
+     "anticipation": false
+    },
+    {
+     "cell": "-x--...x",
+     "weight": 0.025,
+     "lift_vs_losers": 21.83,
+     "anticipation": true
+    },
+    {
+     "cell": "....xxx-",
+     "weight": 0.025,
+     "lift_vs_losers": 2.29,
+     "anticipation": false
+    }
+   ],
+   "motif_openings_scale_steps": [
+    {
+     "iv": [
+      -2,
+      -1,
+      1,
+      2
+     ],
+     "weight": 0.156
+    },
+    {
+     "iv": [
+      -1,
+      -1,
+      0,
+      1
+     ],
+     "weight": 0.156
+    },
+    {
+     "iv": [
+      1,
+      1,
+      2,
+      -2
+     ],
+     "weight": 0.094
+    },
+    {
+     "iv": [
+      -2,
+      5,
+      -2,
+      -1
+     ],
+     "weight": 0.094
+    },
+    {
+     "iv": [
+      2,
+      3,
+      -1,
+      -2
+     ],
+     "weight": 0.094
+    },
+    {
+     "iv": [
+      0,
+      -1,
+      -1,
+      0
+     ],
+     "weight": 0.094
+    },
+    {
+     "iv": [
+      2,
+      -2,
+      -1,
+      -2
+     ],
+     "weight": 0.094
+    },
+    {
+     "iv": [
+      -1,
+      -1,
+      2,
+      -1
+     ],
+     "weight": 0.062
+    },
+    {
+     "iv": [
+      -1,
+      -1,
+      -2,
+      2
+     ],
+     "weight": 0.062
+    },
+    {
+     "iv": [
+      -1,
+      1,
+      -3,
+      -2
+     ],
+     "weight": 0.031
+    },
+    {
+     "iv": [
+      -1,
+      1,
+      -2,
+      -1
+     ],
+     "weight": 0.031
+    },
+    {
+     "iv": [
+      2,
+      3,
+      -1,
+      1
+     ],
+     "weight": 0.031
+    }
+   ],
+   "motif_opening_degrees": [
+    {
+     "deg": [
+      5,
+      3,
+      2,
+      3,
+      5
+     ],
+     "weight": 0.107
+    },
+    {
+     "deg": [
+      1,
+      2,
+      3,
+      5,
+      3
+     ],
+     "weight": 0.107
+    },
+    {
+     "deg": [
+      5,
+      3,
+      1,
+      6,
+      5
+     ],
+     "weight": 0.107
+    },
+    {
+     "deg": [
+      1,
+      3,
+      6,
+      5,
+      3
+     ],
+     "weight": 0.107
+    },
+    {
+     "deg": [
+      6,
+      1,
+      6,
+      5,
+      3
+     ],
+     "weight": 0.107
+    },
+    {
+     "deg": [
+      1,
+      6,
+      5,
+      6,
+      1
+     ],
+     "weight": 0.071
+    },
+    {
+     "deg": [
+      1,
+      1,
+      7,
+      6,
+      6
+     ],
+     "weight": 0.071
+    },
+    {
+     "deg": [
+      7,
+      6,
+      5,
+      5,
+      6
+     ],
+     "weight": 0.071
+    },
+    {
+     "deg": [
+      1,
+      7,
+      6,
+      1,
+      7
+     ],
+     "weight": 0.071
+    },
+    {
+     "deg": [
+      1,
+      7,
+      6,
+      6,
+      7
+     ],
+     "weight": 0.071
+    },
+    {
+     "deg": [
+      4,
+      3,
+      2,
+      7,
+      2
+     ],
+     "weight": 0.071
+    },
+    {
+     "deg": [
+      1,
+      7,
+      1,
+      5,
+      3
+     ],
+     "weight": 0.036
+    }
+   ],
+   "contour_weights": {
+    "descending": 0.273,
+    "arch": 0.545,
+    "ascending": 0.121,
+    "level": 0.061
+   },
+   "progressions": [
+    {
+     "prog": [
+      "vi",
+      "IV",
+      "I",
+      "V"
+     ],
+     "bars": [
+      1,
+      1,
+      1,
+      1
+     ],
+     "weight": 0.338,
+     "n_winners": 4
+    },
+    {
+     "prog": [
+      "I",
+      "V",
+      "vi",
+      "IV"
+     ],
+     "bars": [
+      1,
+      1,
+      1,
+      1
+     ],
+     "weight": 0.262,
+     "n_winners": 3
+    },
+    {
+     "prog": [
+      "IV",
+      "I",
+      "V",
+      "vi"
+     ],
+     "bars": [
+      1,
+      1,
+      1,
+      1
+     ],
+     "weight": 0.154,
+     "n_winners": 2
+    },
+    {
+     "prog": [
+      "I",
+      "vi",
+      "IV",
+      "V"
+     ],
+     "bars": [
+      1,
+      1,
+      1,
+      1
+     ],
+     "weight": 0.092,
+     "n_winners": 1
+    },
+    {
+     "prog": [
+      "I",
+      "iii",
+      "vi",
+      "IV"
+     ],
+     "bars": [
+      1,
+      1,
+      1,
+      1
+     ],
+     "weight": 0.077,
+     "n_winners": 1
+    },
+    {
+     "prog": [
+      "i",
+      "bIII",
+      "bVII",
+      "bVI"
+     ],
+     "bars": [
+      1,
+      1,
+      1,
+      1
+     ],
+     "weight": 0.077,
+     "n_winners": 1
+    }
+   ],
+   "targets": {
+    "ct_strong": {
+     "lo": 0.573,
+     "hi": 0.812,
+     "winner_median": 0.732,
+     "loser_mean": 0.575,
+     "weight": 0.88
+    },
+    "step_pct": {
+     "lo": 0.545,
+     "hi": 0.772,
+     "winner_median": 0.609,
+     "loser_mean": 0.606,
+     "weight": 0.28
+    },
+    "repeat_pct": {
+     "lo": 0.021,
+     "hi": 0.114,
+     "winner_median": 0.048,
+     "loser_mean": 0.12,
+     "weight": 0.56
+    },
+    "leap_pct": {
+     "lo": 0.0,
+     "hi": 0.142,
+     "winner_median": 0.083,
+     "loser_mean": 0.104,
+     "weight": 0.36
+    },
+    "max_leap": {
+     "lo": 4.0,
+     "hi": 9.0,
+     "winner_median": 5.0,
+     "loser_mean": 7.5,
+     "weight": 0.45
+    },
+    "range": {
+     "lo": 9.0,
+     "hi": 14.0,
+     "winner_median": 12.0,
+     "loser_mean": 12.545,
+     "weight": 0.28
+    },
+    "ngram_entropy": {
+     "lo": 0.695,
+     "hi": 0.844,
+     "winner_median": 0.812,
+     "loser_mean": 0.733,
+     "weight": 0.89
+    },
+    "bar_repeat": {
+     "lo": 0.375,
+     "hi": 0.5,
+     "winner_median": 0.375,
+     "loser_mean": 0.528,
+     "weight": 1.09
+    },
+    "syncopation": {
+     "lo": 0.246,
+     "hi": 0.448,
+     "winner_median": 0.36,
+     "loser_mean": 0.213,
+     "weight": 0.99
+    },
+    "desc_pct": {
+     "lo": 0.472,
+     "hi": 0.665,
+     "winner_median": 0.593,
+     "loser_mean": 0.585,
+     "weight": 0.11
+    },
+    "top_share": {
+     "lo": 0.226,
+     "hi": 0.311,
+     "winner_median": 0.258,
+     "loser_mean": 0.317,
+     "weight": 0.9
+    },
+    "end_tonic": {
+     "lo": 1.0,
+     "hi": 1.0,
+     "winner_median": 1.0,
+     "loser_mean": 0.955,
+     "weight": 0.27
+    },
+    "mid_open": {
+     "lo": 1.0,
+     "hi": 1.0,
+     "winner_median": 1.0,
+     "loser_mean": 0.773,
+     "weight": 0.64
+    },
+    "vl_semitones": {
+     "lo": 2.71,
+     "hi": 3.831,
+     "winner_median": 3.29,
+     "loser_mean": 3.485,
+     "weight": 0.36
+    },
+    "clashes": {
+     "lo": 2.1,
+     "hi": 7.0,
+     "winner_median": 5.0,
+     "loser_mean": 4,
+     "weight": 0.44
+    },
+    "anticipations": {
+     "lo": 0.0,
+     "hi": 4.0,
+     "winner_median": 4.0,
+     "loser_mean": 0.273,
+     "weight": 1.22
+    },
+    "stutters": {
+     "lo": 0.0,
+     "hi": 1.8,
+     "winner_median": 0.0,
+     "loser_mean": 4.227,
+     "weight": 0.8
+    },
+    "density": {
+     "lo": 5.388,
+     "hi": 6.85,
+     "winner_median": 6.0,
+     "loser_mean": 6.0,
+     "weight": 0.01
+    },
+    "peak_pos": {
+     "lo": 0.004,
+     "hi": 0.394,
+     "winner_median": 0.316,
+     "loser_mean": 0.256,
+     "weight": 0.04
+    }
+   }
+  },
+  "DUSK": {
+   "defaults": {
+    "tempo_range": [
+     120,
+     123
+    ],
+    "tempo_default": 122,
+    "scales": {
+     "major with b3/b6 borrowing": 0.7,
+     "minor": 0.15,
+     "dorian (arp)": 0.15
+    },
+    "harmonic_rhythm_bars": {
+     "1": 0.85,
+     "2": 0.15
+    },
+    "form": {
+     "A B A B": 0.8,
+     "A B A C": 0.2
+    },
+    "melody": "SUNRISE rules, plus: over iv use b6 (its 3rd) or the 5th tied in from the previous chord; over IV allow #11 or 7 as a passing colour",
+    "arp_share": 0.2,
+    "sound": {
+     "lead": "piano + pluck",
+     "chords": "pad"
+    },
+    "velocity": {
+     "base": 0.7,
+     "bar_downbeat": 0.14,
+     "quarter": 0.08,
+     "figure_start": 0.06,
+     "accent_token": 0.14,
+     "pedal": -0.08,
+     "offbeat_16th_melody": -0.06,
+     "repeat_within_2_steps": -0.05,
+     "max": 1.0
+    }
+   },
+   "rhythm_cells_beat": [
+    {
+     "cell": "--x-",
+     "weight": 0.21,
+     "lift_vs_losers": 3.21,
+     "anticipation": true
+    },
+    {
+     "cell": "x---",
+     "weight": 0.194,
+     "lift_vs_losers": 0.6,
+     "anticipation": false
+    },
+    {
+     "cell": "x--x",
+     "weight": 0.129,
+     "lift_vs_losers": 1.98,
+     "anticipation": true
+    },
+    {
+     "cell": "x-x-",
+     "weight": 0.113,
+     "lift_vs_losers": 0.5,
+     "anticipation": false
+    },
+    {
+     "cell": "..xx",
+     "weight": 0.113,
+     "lift_vs_losers": 5.06,
+     "anticipation": true
+    },
+    {
+     "cell": "....",
+     "weight": 0.081,
+     "lift_vs_losers": 1.25,
+     "anticipation": false
+    },
+    {
+     "cell": "----",
+     "weight": 0.065,
+     "lift_vs_losers": 1.0,
+     "anticipation": true
+    },
+    {
+     "cell": "--..",
+     "weight": 0.032,
+     "lift_vs_losers": 0.44,
+     "anticipation": true
+    },
+    {
+     "cell": "---x",
+     "weight": 0.032,
+     "lift_vs_losers": 32.25,
+     "anticipation": true
+    },
+    {
+     "cell": "x-xx",
+     "weight": 0.032,
+     "lift_vs_losers": 32.25,
+     "anticipation": true
+    }
+   ],
+   "progressions": [
+    {
+     "prog": [
+      "IV",
+      "iv",
+      "I",
+      "vi"
+     ],
+     "bars": [
+      1,
+      1,
+      1,
+      1
+     ],
+     "weight": 0.212,
+     "n_winners": 1
+    },
+    {
+     "prog": [
+      "vi",
+      "IV",
+      "iv",
+      "I"
+     ],
+     "bars": [
+      1,
+      1,
+      1,
+      1
+     ],
+     "weight": 0.212,
+     "n_winners": 1
+    },
+    {
+     "prog": [
+      "I",
+      "IV",
+      "iv",
+      "I"
+     ],
+     "bars": [
+      1,
+      1,
+      1,
+      1
+     ],
+     "weight": 0.212,
+     "n_winners": 1
+    },
+    {
+     "prog": [
+      "I",
+      "V",
+      "vi",
+      "iv"
+     ],
+     "bars": [
+      1,
+      1,
+      1,
+      1
+     ],
+     "weight": 0.182,
+     "n_winners": 1
+    },
+    {
+     "prog": [
+      "i",
+      "IV",
+      "bVII",
+      "bIII"
+     ],
+     "bars": [
+      2,
+      2,
+      2,
+      2
+     ],
+     "weight": 0.182,
+     "n_winners": 1
+    }
+   ],
+   "targets": {
+    "ct_strong": {
+     "lo": 0.625,
+     "hi": 0.886,
+     "winner_median": 0.75,
+     "loser_mean": 0.703,
+     "weight": 0.45
+    },
+    "step_pct": {
+     "lo": 0.216,
+     "hi": 0.799,
+     "winner_median": 0.585,
+     "loser_mean": 0.737,
+     "weight": 0.79
+    },
+    "repeat_pct": {
+     "lo": 0.0,
+     "hi": 0.088,
+     "winner_median": 0.0,
+     "loser_mean": 0.163,
+     "weight": 1.5
+    },
+    "leap_pct": {
+     "lo": 0.01,
+     "hi": 0.491,
+     "winner_median": 0.034,
+     "loser_mean": 0.048,
+     "weight": 0.62
+    },
+    "max_leap": {
+     "lo": 4.4,
+     "hi": 14.4,
+     "winner_median": 7.0,
+     "loser_mean": 7,
+     "weight": 0.42
+    },
+    "range": {
+     "lo": 9.6,
+     "hi": 15.6,
+     "winner_median": 13.0,
+     "loser_mean": 11,
+     "weight": 0.71
+    },
+    "ngram_entropy": {
+     "lo": 0.735,
+     "hi": 0.816,
+     "winner_median": 0.792,
+     "loser_mean": 0.784,
+     "weight": 0.1
+    },
+    "bar_repeat": {
+     "lo": 0.2,
+     "hi": 0.575,
+     "winner_median": 0.5,
+     "loser_mean": 0.458,
+     "weight": 0.17
+    },
+    "syncopation": {
+     "lo": 0.312,
+     "hi": 0.514,
+     "winner_median": 0.441,
+     "loser_mean": 0.203,
+     "weight": 1.37
+    },
+    "desc_pct": {
+     "lo": 0.505,
+     "hi": 0.668,
+     "winner_median": 0.595,
+     "loser_mean": 0.572,
+     "weight": 0.18
+    },
+    "top_share": {
+     "lo": 0.198,
+     "hi": 0.328,
+     "winner_median": 0.235,
+     "loser_mean": 0.312,
+     "weight": 0.99
+    },
+    "end_tonic": {
+     "lo": 0.4,
+     "hi": 1.0,
+     "winner_median": 1.0,
+     "loser_mean": 0.667,
+     "weight": 0.31
+    },
+    "mid_open": {
+     "lo": 0.0,
+     "hi": 0.0,
+     "winner_median": 0.0,
+     "loser_mean": 0.667,
+     "weight": 1.5
+    },
+    "vl_semitones": {
+     "lo": 1.658,
+     "hi": 4.058,
+     "winner_median": 2.14,
+     "loser_mean": 4.39,
+     "weight": 1.08
+    },
+    "clashes": {
+     "lo": 0.0,
+     "hi": 8.8,
+     "winner_median": 2.0,
+     "loser_mean": 4,
+     "weight": 0.11
+    },
+    "anticipations": {
+     "lo": 0.0,
+     "hi": 5.2,
+     "winner_median": 3.0,
+     "loser_mean": 0,
+     "weight": 1.16
+    },
+    "stutters": {
+     "lo": 0.0,
+     "hi": 0.0,
+     "winner_median": 0.0,
+     "loser_mean": 3,
+     "weight": 1.01
+    },
+    "density": {
+     "lo": 4.45,
+     "hi": 12.2,
+     "winner_median": 5.25,
+     "loser_mean": 5.083,
+     "weight": 0.61
+    },
+    "peak_pos": {
+     "lo": 0.0,
+     "hi": 0.618,
+     "winner_median": 0.146,
+     "loser_mean": 0.244,
+     "weight": 0.07
+    }
+   }
+  }
+ },
+ "scoring_function": {
+  "formula": "score = sum_m w_m * fit_m / sum_m w_m ; fit_m = 1 inside [lo,hi], falls linearly to 0 at one (hi-lo) width outside; any hard_rule violation -> reject (score 0)",
+  "use": "generate N candidates (N >= 8), drop rejects, keep the best score; break ties by n-gram entropy (higher) then by fewer clashes",
+  "validation_in_sample_spearman_vs_critique": {
+   "MIDNIGHT": {
+    "n": 75,
+    "spearman_proxy_vs_critique": 0.694
+   },
+   "SUNRISE": {
+    "n": 76,
+    "spearman_proxy_vs_critique": 0.557
+   },
+   "DUSK": {
+    "n": 20,
+    "spearman_proxy_vs_critique": 0.683
+   }
+  },
+  "caveat": "targets were fit on the same ideas they rank, so the Spearman numbers are optimistic; re-check on fresh generated ideas"
+ },
+ "critique_progression": {
+  "progression": {
+   "after_critique_1": {
+    "MIDNIGHT": {
+     "mean": 6.08,
+     "min": 5.0,
+     "max": 7.0,
+     "n_ge_7": 3
+    },
+    "SUNRISE": {
+     "mean": 5.89,
+     "min": 3.25,
+     "max": 7.0,
+     "n_ge_7": 1
+    },
+    "DUSK": {
+     "mean": 6.28,
+     "min": 5.5,
+     "max": 7.25,
+     "n_ge_7": 1
+    }
+   },
+   "after_critique_2": {
+    "MIDNIGHT": {
+     "mean": 6.59,
+     "min": 6.0,
+     "max": 7.0,
+     "n_ge_7": 6
+    },
+    "SUNRISE": {
+     "mean": 6.43,
+     "min": 5.5,
+     "max": 7.0,
+     "n_ge_7": 2
+    },
+    "DUSK": {
+     "mean": 6.72,
+     "min": 6.5,
+     "max": 7.25,
+     "n_ge_7": 2
+    }
+   },
+   "after_critique_3": {
+    "MIDNIGHT": {
+     "mean": 6.76,
+     "min": 5.75,
+     "max": 7.5,
+     "n_ge_7": 11
+    },
+    "SUNRISE": {
+     "mean": 6.66,
+     "min": 6.0,
+     "max": 7.0,
+     "n_ge_7": 3
+    },
+    "DUSK": {
+     "mean": 6.88,
+     "min": 6.5,
+     "max": 7.25,
+     "n_ge_7": 4
+    }
+   },
+   "after_critique_4": {
+    "MIDNIGHT": {
+     "mean": 7.02,
+     "min": 6.25,
+     "max": 7.5,
+     "n_ge_7": 22
+    },
+    "SUNRISE": {
+     "mean": 6.77,
+     "min": 6.5,
+     "max": 7.0,
+     "n_ge_7": 5
+    },
+    "DUSK": {
+     "mean": 7.0,
+     "min": 6.75,
+     "max": 7.25,
+     "n_ge_7": 7
+    }
+   }
+  },
+  "rewrites": {
+   "rewrite_round_1": {
+    "n": 35,
+    "before": 5.48,
+    "after": 6.51
+   },
+   "rewrite_round_2": {
+    "n": 35,
+    "before": 6.28,
+    "after": 6.66
+   },
+   "rewrite_round_3": {
+    "n": 35,
+    "before": 6.54,
+    "after": 6.89
+   }
+  }
+ }
+}

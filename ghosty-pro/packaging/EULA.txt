@@ -1,0 +1,9 @@
+GhostBlock Plugins - License
+
+You may install each plugin you bought on up to 5 computers that you own or use, and use it to make music,
+including commercial releases. The sounds and breaks inside the plugins are original and are yours to use in
+your tracks. You may not share, resell or publish the plugins or your license key.
+
+Unlicensed copies run in demo mode (a 2-second drop-out every 20 seconds, projects reopen at the default sound, no export).
+
+The plugins are provided "as is", without warranty of any kind.

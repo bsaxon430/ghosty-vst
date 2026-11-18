@@ -1,0 +1,19 @@
+Ghost Lab uses the CDP System (Composers Desktop Project, Release 8) as its sound engine.
+
+  Copyright (c) 2022 Composers Desktop Project. https://github.com/ComposersDesktop/CDP8
+
+  The CDP System is free software; you can redistribute it and/or modify it under the terms of the GNU Lesser General
+  Public License as published by the Free Software Foundation; either version 2.1 of the License, or (at your option)
+  any later version. It is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+  implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License
+  for more details (LICENSE-LGPL-2.1.txt / CDP-LGPL-2.1.txt next to this file).
+
+How Ghost Lab uses CDP:
+  - The CDP programs pvoc, stretch, strange, focus, blur, modify, combine, morph, repitch, formants, envel and cdparams (the parameter
+    definitions CDP's own front end uses) are included as separate,
+    unmodified executables (in each plug-in and app bundle: Contents/Helpers/cdp). Ghost Lab starts them like a user
+    would from a terminal; Ghost Lab's own code does not contain or link any CDP code.
+  - They were built from commit 28bc42c72c1a7cb0fab933acd1c433be958a787b of https://github.com/ComposersDesktop/CDP8
+    (universal: arm64 + x86_64), with CMake as its building.txt describes (portaudio programs off).
+  - You may replace these programs with your own build of CDP (same names, same folder) and Ghost Lab will use them.
+  - CDP's complete source code for exactly this build is included (Licenses/CDP8-source.zip); see SOURCE-OFFER.txt.
