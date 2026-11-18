@@ -16,6 +16,9 @@
 
 #pragma once
 
+#include <cstddef>   // GhostBlock: size_t (float4.h uses it right after including this header)
+#include <cstdint>
+
 #include <arm_neon.h>
 
 #include "platform.h"
