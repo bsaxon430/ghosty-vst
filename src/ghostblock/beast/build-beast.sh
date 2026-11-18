@@ -13,14 +13,15 @@ cmake -S "$SURGE" -B "$B" -DCMAKE_BUILD_TYPE=Release -DCMAKE_PROJECT_INCLUDE="$H
   -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_CXX_VISIBILITY_PRESET=hidden -DCMAKE_C_VISIBILITY_PRESET=hidden -DCMAKE_VISIBILITY_INLINES_HIDDEN=ON ${EXTRA[@]+"${EXTRA[@]}"} "$@"
 cmake --build "$B" --target beast beast-check --parallel "${BEAST_JOBS:-$(getconf _NPROCESSORS_ONLN)}"
 CHK=$(find "$B" -type f -name beast-check -perm -u+x | head -n 1)
-"$CHK"
+# BEAST_ARCH=x86_64|arm64 builds the object for that architecture (a universal SEANCE joins both); its check runs only natively
+if [ -z "${BEAST_ARCH:-}" ] || [ "$BEAST_ARCH" = "$(uname -m)" ]; then "$CHK"; fi
 # every static library the build made, linked into one relocatable object; only beast_* stays visible
 LIBS=$(find "$B" -name "*.a" | sort)
 OUT="$B/seance-beast.o"
 if [ "$(uname)" = Darwin ]; then
   printf '_beast_*\n' > "$B/beast-exports.txt"
   # -all_load: take every member (static initialisers included); what nothing uses is dropped by the plugin's own dead-strip
-  ld -r -arch "$(uname -m)" -o "$OUT" -exported_symbols_list "$B/beast-exports.txt" -all_load $LIBS
+  ld -r -arch "${BEAST_ARCH:-$(uname -m)}" -o "$OUT" -exported_symbols_list "$B/beast-exports.txt" -all_load $LIBS
   # " C " = common symbols (two zero-initialised C globals inside Surge's libraries): the export list cannot hide
   # them and this Mac's linker has no -d; they hold no code and cannot collide with a function, so they are allowed
   nm -g "$OUT" | grep -v " U " | grep -v " C " | grep -v "_beast_" | head -n 5 > "$B/leaks.txt" || true
