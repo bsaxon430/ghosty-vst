@@ -1,0 +1,703 @@
+[
+ {
+  "name": "Acid",
+  "file": "Acid.gbc",
+  "lanes": 7,
+  "drives": [
+   0.0,
+   1.0,
+   2.0,
+   4.0,
+   6.0,
+   8.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Amp Drainer",
+  "file": "Amp_Drainer.gbc",
+  "lanes": 5,
+  "drives": [
+   0.0,
+   2.0,
+   5.0,
+   8.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Amperical",
+  "file": "Amperical.gbc",
+  "lanes": 3,
+  "drives": [
+   0.0,
+   2.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Bad Breakup",
+  "file": "Bad_Breakup.gbc",
+  "lanes": 7,
+  "drives": [
+   0.0,
+   1.0,
+   4.0,
+   5.0,
+   6.0,
+   8.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Bit Wrench (Style 1)",
+  "file": "Bit_Wrench_Style_1.gbc",
+  "lanes": 3,
+  "drives": [
+   0.0,
+   2.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Blitz",
+  "file": "Blitz.gbc",
+  "lanes": 4,
+  "drives": [
+   2.0,
+   6.0,
+   8.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Blues Driver",
+  "file": "Blues_Driver.gbc",
+  "lanes": 4,
+  "drives": [
+   2.0,
+   5.0,
+   8.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Busted",
+  "file": "Busted.gbc",
+  "lanes": 12,
+  "drives": [
+   0.0,
+   2.0,
+   3.4,
+   3.5,
+   4.5,
+   5.0,
+   6.0,
+   7.5,
+   8.0,
+   9.0,
+   9.5,
+   10.0
+  ]
+ },
+ {
+  "name": "Buzzsaw",
+  "file": "Buzzsaw.gbc",
+  "lanes": 3,
+  "drives": [
+   0.0,
+   2.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Cactus",
+  "file": "Cactus.gbc",
+  "lanes": 11,
+  "drives": [
+   0.0,
+   1.0,
+   2.0,
+   3.0,
+   4.0,
+   5.0,
+   6.0,
+   7.0,
+   8.0,
+   9.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Capacity",
+  "file": "Capacity.gbc",
+  "lanes": 5,
+  "drives": [
+   0.0,
+   2.0,
+   6.0,
+   8.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Citrus Pulp",
+  "file": "Citrus_Pulp.gbc",
+  "lanes": 5,
+  "drives": [
+   0.0,
+   2.0,
+   6.0,
+   8.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Cracked Actor",
+  "file": "Cracked_Actor.gbc",
+  "lanes": 5,
+  "drives": [
+   0.0,
+   2.0,
+   6.0,
+   8.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Cracked Actress",
+  "file": "Cracked_Actress.gbc",
+  "lanes": 5,
+  "drives": [
+   0.0,
+   2.0,
+   6.0,
+   8.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Crispy",
+  "file": "Crispy.gbc",
+  "lanes": 31,
+  "drives": [
+   0.0,
+   0.2,
+   0.4,
+   0.7,
+   1.0,
+   1.3,
+   1.5,
+   1.8,
+   2.0,
+   2.3,
+   2.6,
+   3.0,
+   3.5,
+   4.0,
+   4.3,
+   4.6,
+   4.8,
+   5.0,
+   5.3,
+   5.5,
+   5.8,
+   6.0,
+   6.3,
+   6.5,
+   7.0,
+   7.3,
+   7.5,
+   8.0,
+   8.5,
+   9.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Crunchy Grunge",
+  "file": "Crunchy_Grunge.gbc",
+  "lanes": 5,
+  "drives": [
+   0.0,
+   2.0,
+   5.0,
+   8.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Crunchy Taco",
+  "file": "Crunchy_Taco.gbc",
+  "lanes": 6,
+  "drives": [
+   0.0,
+   2.0,
+   4.0,
+   6.0,
+   8.0,
+   10.0
+  ]
+ },
+ {
+  "name": "DOOMCOMP",
+  "file": "DOOMCOMP.gbc",
+  "lanes": 9,
+  "drives": [
+   0.0,
+   1.0,
+   2.0,
+   3.0,
+   4.0,
+   5.0,
+   6.0,
+   7.0,
+   8.0
+  ]
+ },
+ {
+  "name": "DOOMCOMPPARALLEL",
+  "file": "DOOMCOMPPARALLEL.gbc",
+  "lanes": 9,
+  "drives": [
+   0.0,
+   1.0,
+   2.0,
+   3.0,
+   4.0,
+   5.0,
+   6.0,
+   7.0,
+   8.0
+  ]
+ },
+ {
+  "name": "Delicate Harmonics",
+  "file": "Delicate_Harmonics.gbc",
+  "lanes": 4,
+  "drives": [
+   2.0,
+   10.0,
+   10.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Dense",
+  "file": "Dense.gbc",
+  "lanes": 5,
+  "drives": [
+   0.0,
+   2.0,
+   4.0,
+   8.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Elastic Trash",
+  "file": "Elastic_Trash.gbc",
+  "lanes": 6,
+  "drives": [
+   0.0,
+   2.0,
+   4.0,
+   6.0,
+   8.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Faulty Transistor",
+  "file": "Faulty_Transistor.gbc",
+  "lanes": 11,
+  "drives": [
+   0.0,
+   1.0,
+   2.0,
+   3.0,
+   4.0,
+   5.0,
+   6.0,
+   7.0,
+   8.0,
+   9.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Fry",
+  "file": "Fry.gbc",
+  "lanes": 4,
+  "drives": [
+   0.0,
+   2.0,
+   6.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Gentle Push",
+  "file": "Gentle_Push.gbc",
+  "lanes": 3,
+  "drives": [
+   0.0,
+   2.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Gnasher",
+  "file": "Gnasher.gbc",
+  "lanes": 5,
+  "drives": [
+   0.0,
+   5.0,
+   8.0,
+   9.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Grainy",
+  "file": "Grainy.gbc",
+  "lanes": 5,
+  "drives": [
+   0.0,
+   2.0,
+   6.0,
+   8.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Hard Chip",
+  "file": "Hard_Chip.gbc",
+  "lanes": 5,
+  "drives": [
+   0.0,
+   2.0,
+   5.0,
+   8.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Hard Limits",
+  "file": "Hard_Limits.gbc",
+  "lanes": 7,
+  "drives": [
+   0.0,
+   1.0,
+   2.0,
+   4.0,
+   6.0,
+   8.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Harmonic Control",
+  "file": "Harmonic_Control.gbc",
+  "lanes": 5,
+  "drives": [
+   0.0,
+   2.0,
+   5.0,
+   8.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Hot Tin Roof",
+  "file": "Hot_Tin_Roof.gbc",
+  "lanes": 11,
+  "drives": [
+   0.0,
+   1.0,
+   2.0,
+   3.0,
+   4.0,
+   5.0,
+   6.0,
+   7.0,
+   8.0,
+   9.0,
+   10.0
+  ]
+ },
+ {
+  "name": "INFLATORFULL",
+  "file": "INFLATORFULL.gbc",
+  "lanes": 9,
+  "drives": [
+   0.0,
+   1.0,
+   2.0,
+   3.0,
+   4.0,
+   5.0,
+   6.0,
+   7.0,
+   8.0
+  ]
+ },
+ {
+  "name": "Impaler",
+  "file": "Impaler.gbc",
+  "lanes": 5,
+  "drives": [
+   0.0,
+   2.0,
+   5.0,
+   8.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Iron",
+  "file": "Iron.gbc",
+  "lanes": 2,
+  "drives": [
+   0.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Nasty Boy",
+  "file": "Nasty_Boy.gbc",
+  "lanes": 5,
+  "drives": [
+   0.0,
+   2.0,
+   6.0,
+   8.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Negative (Style 1)",
+  "file": "Negative_Style_1.gbc",
+  "lanes": 2,
+  "drives": [
+   0.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Noise Art",
+  "file": "Noise_Art.gbc",
+  "lanes": 5,
+  "drives": [
+   0.0,
+   2.0,
+   6.0,
+   8.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Plateau",
+  "file": "Plateau.gbc",
+  "lanes": 5,
+  "drives": [
+   0.0,
+   2.0,
+   5.0,
+   8.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Positive (Style 1)",
+  "file": "Positive_Style_1.gbc",
+  "lanes": 2,
+  "drives": [
+   0.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Rusty Bits",
+  "file": "Rusty_Bits.gbc",
+  "lanes": 5,
+  "drives": [
+   0.0,
+   2.0,
+   6.0,
+   8.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Sandpaper",
+  "file": "Sandpaper.gbc",
+  "lanes": 4,
+  "drives": [
+   0.0,
+   5.0,
+   9.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Sine Shaper",
+  "file": "Sine_Shaper.gbc",
+  "lanes": 9,
+  "drives": [
+   0.0,
+   2.0,
+   4.0,
+   5.0,
+   6.0,
+   7.0,
+   8.0,
+   9.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Soft Taco",
+  "file": "Soft_Taco.gbc",
+  "lanes": 19,
+  "drives": [
+   0.0,
+   0.5,
+   1.0,
+   1.5,
+   2.0,
+   2.5,
+   3.0,
+   3.5,
+   4.0,
+   4.5,
+   5.5,
+   6.0,
+   7.0,
+   8.0,
+   8.3,
+   8.5,
+   9.0,
+   9.5,
+   10.0
+  ]
+ },
+ {
+  "name": "Sputter",
+  "file": "Sputter.gbc",
+  "lanes": 3,
+  "drives": [
+   0.0,
+   7.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Squealer",
+  "file": "Squealer.gbc",
+  "lanes": 10,
+  "drives": [
+   0.0,
+   2.0,
+   3.0,
+   4.0,
+   5.0,
+   6.0,
+   7.0,
+   8.0,
+   9.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Stomper",
+  "file": "Stomper.gbc",
+  "lanes": 5,
+  "drives": [
+   0.0,
+   2.0,
+   6.0,
+   8.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Tape Saturation",
+  "file": "Tape_Saturation.gbc",
+  "lanes": 5,
+  "drives": [
+   2.0,
+   6.0,
+   8.0,
+   9.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Tarnish",
+  "file": "Tarnish.gbc",
+  "lanes": 6,
+  "drives": [
+   0.0,
+   2.0,
+   4.5,
+   7.0,
+   9.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Triangle Clipper",
+  "file": "Triangle_Clipper.gbc",
+  "lanes": 5,
+  "drives": [
+   2.0,
+   5.0,
+   7.5,
+   8.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Tube Drainer",
+  "file": "Tube_Drainer.gbc",
+  "lanes": 6,
+  "drives": [
+   0.0,
+   2.0,
+   4.0,
+   6.0,
+   8.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Uncontrolled Static",
+  "file": "Uncontrolled_Static.gbc",
+  "lanes": 9,
+  "drives": [
+   0.0,
+   1.0,
+   2.0,
+   4.0,
+   6.0,
+   7.0,
+   8.0,
+   9.0,
+   10.0
+  ]
+ },
+ {
+  "name": "Weathered",
+  "file": "Weathered.gbc",
+  "lanes": 6,
+  "drives": [
+   0.0,
+   2.0,
+   5.0,
+   8.0,
+   9.0,
+   10.0
+  ]
+ }
+]

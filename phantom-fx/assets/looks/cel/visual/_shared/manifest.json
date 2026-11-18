@@ -1,0 +1,228 @@
+{
+ "look": "cel",
+ "folder": "_shared",
+ "stage_units": [
+  280,
+  300
+ ],
+ "px_per_su": 1.7,
+ "note": "px = the @2x picture. su = stage units (280 x 300). anchor = the point of the picture that the scene places. mask = white + alpha, tinted by code. sizes / rots = steps the cache should hold (scale factors / number of angles round the circle).",
+ "files": [
+  {
+   "file": "glow-soft@2x.png",
+   "zip": "visual/_shared/glow-soft@2x.png",
+   "su": [
+    80,
+    80
+   ],
+   "px": [
+    136,
+    136
+   ],
+   "cell": [
+    136,
+    136
+   ],
+   "anchor_su": [
+    40,
+    40
+   ],
+   "anchor_px": [
+    68,
+    68
+   ],
+   "frames": 1,
+   "kind": "mask",
+   "sizes": [
+    0.5,
+    0.75,
+    1,
+    1.5,
+    2,
+    2.6,
+    3.4,
+    4.4
+   ],
+   "note": "soft round light, tinted; sizes are the cache steps"
+  },
+  {
+   "file": "glow-floor@2x.png",
+   "zip": "visual/_shared/glow-floor@2x.png",
+   "su": [
+    120,
+    36
+   ],
+   "px": [
+    204,
+    61
+   ],
+   "cell": [
+    204,
+    61
+   ],
+   "anchor_su": [
+    60,
+    18
+   ],
+   "anchor_px": [
+    102,
+    31
+   ],
+   "frames": 1,
+   "kind": "mask",
+   "sizes": [
+    0.6,
+    1,
+    1.5,
+    2.1
+   ],
+   "note": "light pool on the floor"
+  },
+  {
+   "file": "glint@2x.png",
+   "zip": "visual/_shared/glint@2x.png",
+   "su": [
+    20,
+    20
+   ],
+   "px": [
+    34,
+    34
+   ],
+   "cell": [
+    34,
+    34
+   ],
+   "anchor_su": [
+    10,
+    10
+   ],
+   "anchor_px": [
+    17,
+    17
+   ],
+   "frames": 1,
+   "kind": "mask",
+   "sizes": [
+    0.5,
+    0.8,
+    1.25
+   ],
+   "note": "four-point star glint"
+  },
+  {
+   "file": "puff@2x.png",
+   "zip": "visual/_shared/puff@2x.png",
+   "su": [
+    24,
+    24
+   ],
+   "px": [
+    205,
+    41
+   ],
+   "cell": [
+    41,
+    41
+   ],
+   "anchor_su": [
+    12,
+    12
+   ],
+   "anchor_px": [
+    21,
+    21
+   ],
+   "frames": 5,
+   "kind": "mask",
+   "sizes": [
+    0.7,
+    1,
+    1.5
+   ],
+   "note": "dust / steam puff, 5 held frames"
+  },
+  {
+   "file": "backdrop@2x.jpg",
+   "zip": "visual/_shared/backdrop@2x.jpg",
+   "su": [
+    280,
+    300
+   ],
+   "px": [
+    476,
+    510
+   ],
+   "cell": [
+    476,
+    510
+   ],
+   "anchor_su": [
+    0,
+    0
+   ],
+   "anchor_px": [
+    0,
+    0
+   ],
+   "frames": 1,
+   "kind": "colour",
+   "note": "inside the machine (opaque)"
+  },
+  {
+   "file": "stage-frame@2x.png",
+   "zip": "visual/_shared/stage-frame@2x.png",
+   "su": [
+    345.882,
+    370.588
+   ],
+   "px": [
+    588,
+    630
+   ],
+   "cell": [
+    588,
+    630
+   ],
+   "anchor_su": [
+    32.941,
+    40
+   ],
+   "anchor_px": [
+    56,
+    68
+   ],
+   "frames": 1,
+   "kind": "colour",
+   "note": "the show box frame; draw so the stage interior lands on 897,372: sprite top-left at design px 869,338"
+  },
+  {
+   "file": "stage-frame-wide@2x.png",
+   "zip": "visual/_shared/stage-frame-wide@2x.png",
+   "su": [
+    324,
+    350
+   ],
+   "px": [
+    518,
+    560
+   ],
+   "cell": [
+    518,
+    560
+   ],
+   "anchor_su": [
+    22,
+    30
+   ],
+   "anchor_px": [
+    35,
+    48
+   ],
+   "frames": 1,
+   "kind": "colour",
+   "px_per_su": 1.6,
+   "note": "CEL WIDE PAGES ONLY: the show box the robot holds on the slab (boards + moss, no patch plate). Baked at the wide stage's own scale, 1.6 px per su @2x (not this folder's 1.7): blit 1:1 with its top-left at design px 893.4,101; the stage interior is then 911,125,224,240. Draw it after the visual and before slab/wide-hands."
+  }
+ ]
+}

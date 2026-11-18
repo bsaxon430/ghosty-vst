@@ -1,0 +1,111 @@
+repo: https://github.com/surge-synthesizer/sst-effects.git
+branch: main
+commit: 987b39dcb2e2e61e6225c3bc390fd00da824d226
+commit date: 2026-10-16T20:36:32-04:00
+licence files:
+./LICENSE.md
+
+--- top level
+CMakeLists.txt
+LICENSE.md
+README.md
+cmake
+examples
+include
+libs
+presets
+scripts
+src
+tests
+
+--- tree (depth 2, dirs)
+.
+./cmake
+./examples
+./include
+./include/sst
+./libs
+./libs/catch2
+./presets
+./presets/voice-effects
+./scripts
+./src
+./tests
+
+--- include/sst/effects
+.
+./Bonsai.h
+./Chorus.h
+./ConcreteConfig.h
+./Delay.h
+./EffectCore.h
+./EffectCoreDetails.h
+./EffectsPresetSupport.h
+./Flanger.h
+./FloatyDelay.h
+./Nimbus.h
+./NimbusImpl.h
+./Phaser.h
+./Reverb1.h
+./Reverb2.h
+./RotarySpeaker.h
+./TreeMonster.h
+
+--- include/sst/voice-effects
+.
+./VoiceEffectCore.h
+./VoiceEffectsPresetSupport.h
+./delay
+./delay/DelaySupport.h
+./delay/Microgate.h
+./delay/ShortDelay.h
+./delay/Widener.h
+./distortion
+./distortion/BitCrusher.h
+./distortion/Slewer.h
+./distortion/TreeMonster.h
+./dynamics
+./dynamics/AutoWah.h
+./dynamics/Compressor.h
+./eq
+./eq/EqGraphic6Band.h
+./eq/EqNBandParametric.h
+./eq/MorphEQ.h
+./eq/TiltEQ.h
+./filter
+./filter/FiltersPlusPlus.h
+./filter/StaticPhaser.h
+./filter/UtilityFilters.h
+./generator
+./generator/3opPhaseMod.h
+./generator/EllipticBlepWaveforms.h
+./generator/FourVoiceResonator.h
+./generator/GenCorrelatedNoise.h
+./generator/SinePlus.h
+./generator/StringResonator.h
+./generator/TiltNoise.h
+./lifted_bus_effects
+./lifted_bus_effects/FXConfigFromVFXConfig.h
+./lifted_bus_effects/LiftedDelay.h
+./lifted_bus_effects/LiftedReverb1.h
+./lifted_bus_effects/LiftedReverb2.h
+./modulation
+./modulation/Chorus.h
+./modulation/FMFilter.h
+./modulation/Flanger.h
+./modulation/FreqShiftMod.h
+./modulation/NoiseAM.h
+./modulation/PhaseMod.h
+./modulation/Phaser.h
+./modulation/RingMod.h
+./modulation/ShepardPhaser.h
+./modulation/Tremolo.h
+./utilities
+./utilities/GainMatrix.h
+./utilities/StereoTool.h
+./utilities/VolumeAndPan.h
+./waveshaper
+./waveshaper/WaveShaper.h
+
+--- submodules
+(none)

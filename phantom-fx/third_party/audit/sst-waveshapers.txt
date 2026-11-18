@@ -1,0 +1,51 @@
+repo: https://github.com/surge-synthesizer/sst-waveshapers.git
+branch: main
+commit: dd12f31a5a9016c9895e52d1a00eee0e1eebe6ce
+commit date: 2026-02-25T17:15:10-05:00
+licence files:
+./LICENSE.md
+
+--- top level
+CMakeLists.txt
+LICENSE.md
+README.md
+cmake
+doxygen
+examples
+include
+libs
+scripts
+tests
+
+--- tree (depth 2, dirs)
+.
+./cmake
+./doxygen
+./examples
+./examples/waveshapers_example_plugin
+./include
+./include/sst
+./libs
+./libs/catch2
+./scripts
+./tests
+
+--- include/sst/waveshapers
+.
+./ADAA.h
+./DCBlocker.h
+./Effects.h
+./Fuzzes.h
+./Harmonics.h
+./QuadWaveshaper.h
+./QuadWaveshaper_Impl.h
+./Rectifiers.h
+./Saturators.h
+./Trigonometrics.h
+./Wavefolders.h
+./WaveshaperConfiguration.h
+./WaveshaperLUT.h
+./WaveshaperTables.h
+
+--- submodules
+(none)

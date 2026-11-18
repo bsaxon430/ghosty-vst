@@ -1,0 +1,965 @@
+{
+ "name": "NEON",
+ "order": 3,
+ "font": {
+  "bold": "fonts/bold.otf",
+  "black": "fonts/black.otf",
+  "em": 1.21,
+  "size": 1.0
+ },
+ "pack": {
+  "quality": 90,
+  "drop": [
+   "ghosts/pose-*",
+   "anim/ghost-bounce-strip"
+  ]
+ },
+ "text": {
+  "cream": "dfe5ff",
+  "ink": "0b0a1c",
+  "sub": "a3a9cf",
+  "scenes": "ff5ad0",
+  "onPainting": "eef1ff",
+  "halo": "040510",
+  "haloAlpha": 0.85,
+  "menu": "accent",
+  "value": "accent",
+  "title": "ffb347",
+  "popupBg": "0e1024",
+  "popupInk": "eef1ff",
+  "popupHi": "7a3cff"
+ },
+ "accent": {
+  "satMin": 0.78,
+  "satMax": 1.0,
+  "valMin": 0.96,
+  "valMax": 1.0,
+  "lightness": 0.8
+ },
+ "accents": {
+  "lime": "8dff1f",
+  "ice": "1fe9ff",
+  "pink": "ff5290",
+  "magenta": "ff33b4",
+  "orange": "ffb129",
+  "violet": "a35cff",
+  "red": "ff2944",
+  "green": "3ee084",
+  "gold": "ffc93c",
+  "neutral": "cfd6ff"
+ },
+ "palette": {
+  "light": false,
+  "window": "0b0d1e",
+  "panel": "101329",
+  "card": "171a36",
+  "cell": "090b1a",
+  "line": "343b7a",
+  "ink": "eef1ff",
+  "dim": "a3a9cf"
+ },
+ "margin": {
+  "l": 3.5,
+  "t": 3.5,
+  "r": 3.5,
+  "b": 4.0
+ },
+ "slice": {
+  "slider/track": [
+   8,
+   0,
+   8,
+   0
+  ],
+  "button/off": [
+   12,
+   10,
+   12,
+   12
+  ],
+  "button/hover": [
+   12,
+   10,
+   12,
+   12
+  ],
+  "button/pressed": [
+   12,
+   10,
+   12,
+   12
+  ],
+  "button/on": [
+   12,
+   10,
+   12,
+   12
+  ],
+  "menu/menu": [
+   14,
+   10,
+   34,
+   12
+  ],
+  "led/window": [
+   10,
+   10,
+   10,
+   10
+  ],
+  "slab/glass": [
+   22,
+   22,
+   22,
+   22
+  ],
+  "slab/glass-frame": [
+   22,
+   22,
+   22,
+   22
+  ],
+  "slab/strip": [
+   12,
+   12,
+   12,
+   12
+  ]
+ },
+ "slabs": {
+  "level": "slab/strip",
+  "rail": "slab/strip",
+  "title": null,
+  "editor": "slab/glass",
+  "tablet": "slab/glass",
+  "tray": "slab/glass",
+  "paper": null,
+  "tag": "slab/strip",
+  "valuePaper": "led/window",
+  "card": "slab/strip",
+  "macro": {},
+  "macroEach": {
+   "img": "slab/kerb-box",
+   "at": [
+    24,
+    657
+   ],
+   "dx": 148
+  },
+  "scenes": {
+   "img": "slab/kerb-strip",
+   "rect": [
+    0,
+    718,
+    1200,
+    42
+   ],
+   "stretch": false
+  }
+ },
+ "glass": {
+  "frame": "slab/glass-frame",
+  "blur": "bg/{page}-blur",
+  "radius": 8,
+  "replaces": [
+   "slab/glass",
+   "slab/strip"
+  ]
+ },
+ "darkSlabs": [
+  "slab/glass",
+  "slab/strip",
+  "led/window"
+ ],
+ "knob": {
+  "centre": [
+   62,
+   61
+  ],
+  "arcR": 45.9,
+  "arcW": 4.6,
+  "coreW": 2.1,
+  "endDot": 2.8,
+  "glow": 0,
+  "macroArcR": 18.6,
+  "macroArcW": 2.0,
+  "valueOnPaper": true,
+  "static": true,
+  "big": "knob/big-",
+  "macro": "knob/macro",
+  "pointerR": 35,
+  "macroPointerR": 13.5,
+  "glowSprite": "glow/soft-"
+ },
+ "slider": {
+  "core": true
+ },
+ "header": {
+  "sub": [
+   57,
+   40
+  ],
+  "ledMeter": true
+ },
+ "scenes": {
+  "playing": "magenta",
+  "held": "violet"
+ },
+ "rack": {
+  "strip": [
+   0,
+   100,
+   800,
+   240
+  ],
+  "legend": [
+   14,
+   108,
+   72
+  ],
+  "hintRight": 788,
+  "macroHintY": 650,
+  "tiles": {
+   "cols": 8,
+   "x": 13,
+   "dx": 97.6,
+   "y": 122,
+   "dy": 74,
+   "w": 91,
+   "h": 66,
+   "tilt": 0,
+   "drop": 0,
+   "sprite": "tile/",
+   "spriteAt": [
+    12,
+    12
+   ],
+   "softGlow": {
+    "prefix": "glow/soft-",
+    "size": [
+     150,
+     130
+    ],
+    "alpha": 0.6
+   },
+   "pose": {
+    "strip": "ghosts/tube-",
+    "cell": [
+     64,
+     76
+    ],
+    "onSign": true,
+    "kana": [
+     22.6,
+     -7.9,
+     0.835
+    ],
+    "plain": [
+     17.5,
+     -9.3,
+     1.0
+    ],
+    "plainUnits": [
+     "GRID",
+     "CRYSTAL",
+     "SPECTRA",
+     "SQUEEZE"
+    ]
+   }
+  },
+  "cord": {
+   "img": ""
+  },
+  "title": [
+   14,
+   346,
+   124,
+   30
+  ],
+  "titleOnSign": false,
+  "titleSprite": "slab/title-",
+  "titleSpriteAt": [
+   8,
+   340
+  ],
+  "rail": [
+   148,
+   347,
+   352,
+   28
+  ],
+  "on": [
+   504,
+   347,
+   54,
+   27
+  ],
+  "ab": [
+   562,
+   347,
+   34,
+   27
+  ],
+  "preset": [
+   600,
+   347,
+   190,
+   27
+  ],
+  "blurb": [
+   24,
+   384,
+   740,
+   14
+  ],
+  "blurbOnPaper": false,
+  "pods": true,
+  "page": [
+   12,
+   345,
+   774,
+   297
+  ],
+  "content": [
+   14,
+   400,
+   776,
+   233
+  ],
+  "wide": [
+   12,
+   384,
+   1176,
+   256
+  ],
+  "wideContent": [
+   22,
+   392,
+   1156,
+   240
+  ],
+  "editorContent": [
+   22,
+   392,
+   1156,
+   240
+  ],
+  "widePages": [
+   "mods",
+   "editor"
+  ],
+  "plate": null,
+  "knobCell": 124,
+  "knobCols": 5,
+  "choiceCols": 3,
+  "wideBlurb": [
+   800,
+   349,
+   388,
+   22
+  ],
+  "wideTitle": [
+   14,
+   349,
+   770,
+   22
+  ],
+  "wideIsPage": true
+ },
+ "spatial": {
+  "ringR": 180,
+  "tray": [
+   20,
+   588,
+   848,
+   110
+  ],
+  "tablet": [
+   882,
+   130,
+   304,
+   388
+  ],
+  "tileSprite": "spatial/drone-",
+  "tileCell": [
+   70,
+   72
+  ],
+  "listener": {
+   "img": "ghosts/listener",
+   "c": [
+    23,
+    25
+   ],
+   "at": [
+    [
+     235,
+     353
+    ],
+    [
+     655,
+     353
+    ]
+   ]
+  },
+  "valueInk": "ffb347"
+ },
+ "anim": {
+  "tables": {
+   "sg.HAUNT": "999999999929999999999999999499299999999999",
+   "sg.ECHO": "999399299999999999999999999999993999999999",
+   "sg.GATE": "999999999999999939199999999999999999999999",
+   "logo3": "999999999999999999999992949999999999999999",
+   "tile.selected": "979979997997999799979979997997999799979979",
+   "brandGhost": "999999999999929999999999999999999999939999",
+   "open": "999999999999999999999999939299999999999999"
+  },
+  "patches": [
+   {
+    "img": "anim/flicker-sign-echo",
+    "at": [
+     1029,
+     286
+    ],
+    "table": "sg.ECHO",
+    "period": 97,
+    "pages": [
+     "rack"
+    ]
+   },
+   {
+    "img": "anim/flicker-sign-haunt",
+    "at": [
+     821,
+     108
+    ],
+    "table": "sg.HAUNT",
+    "period": 71,
+    "pages": [
+     "rack"
+    ]
+   },
+   {
+    "img": "anim/flicker-sign-gate",
+    "at": [
+     792,
+     300
+    ],
+    "table": "sg.GATE",
+    "period": 113,
+    "pages": [
+     "rack"
+    ]
+   },
+   {
+    "img": "anim/flicker-brand-ghost",
+    "at": [
+     786,
+     98
+    ],
+    "table": "brandGhost",
+    "period": 83,
+    "pages": [
+     "rack"
+    ]
+   },
+   {
+    "img": "anim/flicker-open-24h",
+    "at": [
+     786,
+     340
+    ],
+    "table": "open",
+    "period": 131,
+    "pages": [
+     "rack"
+    ]
+   },
+   {
+    "img": "anim/wide-flicker-crush",
+    "at": [
+     914,
+     176
+    ],
+    "table": "sg.HAUNT",
+    "period": 89,
+    "pages": [
+     "rack-wide"
+    ]
+   },
+   {
+    "img": "anim/wide-flicker-echo",
+    "at": [
+     1026,
+     192
+    ],
+    "table": "sg.ECHO",
+    "period": 103,
+    "pages": [
+     "rack-wide"
+    ]
+   },
+   {
+    "img": "anim/wide-flicker-chorus",
+    "at": [
+     1060,
+     264
+    ],
+    "table": "sg.GATE",
+    "period": 127,
+    "pages": [
+     "rack-wide"
+    ]
+   },
+   {
+    "img": "anim/wide-flicker-mast",
+    "at": [
+     802,
+     104
+    ],
+    "table": "brandGhost",
+    "period": 79,
+    "pages": [
+     "rack-wide"
+    ]
+   }
+  ],
+  "logoDim": {
+   "img": "slab/logo-sign-dim",
+   "table": "logo3",
+   "period": 149
+  },
+  "tileBuzz": "tile.selected",
+  "train": [
+   {
+    "img": "anim/train",
+    "y": 269.4,
+    "from": 1057,
+    "speed": 30,
+    "clip": [
+     939,
+     1062
+    ],
+    "everyMin": 30,
+    "everyMax": 60,
+    "pages": [
+     "rack"
+    ]
+   },
+   {
+    "img": "anim/train",
+    "y": 269.4,
+    "from": 1100,
+    "speed": 30,
+    "clip": [
+     846,
+     1105
+    ],
+    "everyMin": 30,
+    "everyMax": 60,
+    "pages": [
+     "rack-wide"
+    ]
+   }
+  ],
+  "holo": [
+   {
+    "a": "anim/holo-a",
+    "b": "anim/holo-b",
+    "glitch": "anim/holo-glitch",
+    "at": [
+     951,
+     192
+    ],
+    "alpha": 0.82,
+    "pages": [
+     "rack"
+    ]
+   },
+   {
+    "a": "anim/holo-a",
+    "b": "anim/holo-b",
+    "glitch": "anim/holo-glitch",
+    "at": [
+     945,
+     130
+    ],
+    "alpha": 0.82,
+    "pages": [
+     "rack-wide"
+    ]
+   }
+  ],
+  "rain": {
+   "img": "anim/rain-strip",
+   "frames": 4,
+   "at": [
+    792,
+    60
+   ],
+   "pages": [
+    "rack",
+    "rack-wide"
+   ]
+  },
+  "strips": [
+   {
+    "img": "anim/steam-strip",
+    "frames": 6,
+    "at": [
+     830,
+     588
+    ],
+    "div": 3,
+    "phase": 0,
+    "pages": [
+     "rack"
+    ]
+   },
+   {
+    "img": "anim/ring-strip",
+    "frames": 7,
+    "at": [
+     88,
+     678
+    ],
+    "div": 2,
+    "phase": 0,
+    "pages": [
+     "rack",
+     "rack-wide"
+    ]
+   },
+   {
+    "img": "anim/ring-strip",
+    "frames": 7,
+    "at": [
+     388,
+     730
+    ],
+    "div": 2,
+    "phase": 4,
+    "pages": [
+     "rack",
+     "rack-wide"
+    ]
+   },
+   {
+    "img": "anim/ring-strip",
+    "frames": 7,
+    "at": [
+     608,
+     664
+    ],
+    "div": 2,
+    "phase": 8,
+    "pages": [
+     "rack",
+     "rack-wide"
+    ]
+   },
+   {
+    "img": "anim/ring-strip",
+    "frames": 7,
+    "at": [
+     873,
+     732
+    ],
+    "div": 2,
+    "phase": 2,
+    "pages": [
+     "rack",
+     "rack-wide"
+    ]
+   },
+   {
+    "img": "anim/ring-strip",
+    "frames": 7,
+    "at": [
+     978,
+     678
+    ],
+    "div": 2,
+    "phase": 6,
+    "pages": [
+     "rack",
+     "rack-wide"
+    ]
+   },
+   {
+    "img": "anim/ring-strip",
+    "frames": 7,
+    "at": [
+     268,
+     694
+    ],
+    "div": 2,
+    "phase": 10,
+    "pages": [
+     "rack",
+     "rack-wide"
+    ]
+   },
+   {
+    "img": "anim/ring-strip",
+    "frames": 7,
+    "at": [
+     728,
+     738
+    ],
+    "div": 2,
+    "phase": 4,
+    "pages": [
+     "rack",
+     "rack-wide"
+    ]
+   }
+  ],
+  "sprites": [
+   {
+    "img": "ghosts/walker-1",
+    "at": [
+     1048,
+     554
+    ],
+    "scale": 0.88,
+    "c": [
+     30,
+     44
+    ],
+    "pages": [
+     "rack"
+    ]
+   },
+   {
+    "img": "ghosts/walker-2",
+    "at": [
+     957,
+     518
+    ],
+    "scale": 0.68,
+    "c": [
+     30,
+     44
+    ],
+    "pages": [
+     "rack"
+    ]
+   },
+   {
+    "img": "ghosts/walker-3",
+    "at": [
+     1014,
+     494
+    ],
+    "scale": 0.55,
+    "c": [
+     30,
+     44
+    ],
+    "pages": [
+     "rack"
+    ]
+   },
+   {
+    "img": "anim/perch-ghost-strip",
+    "strip": true,
+    "frames": 6,
+    "cell": [
+     36,
+     44
+    ],
+    "c": [
+     18,
+     24
+    ],
+    "at": [
+     944.9,
+     142.5
+    ],
+    "scale": 0.944,
+    "pages": [
+     "rack-wide"
+    ],
+    "asleep": false
+   },
+   {
+    "img": "anim/perch-ghost-strip",
+    "strip": true,
+    "frames": 6,
+    "cell": [
+     36,
+     44
+    ],
+    "c": [
+     18,
+     24
+    ],
+    "at": [
+     1094.1,
+     168.7
+    ],
+    "scale": 1.056,
+    "pages": [
+     "rack-wide"
+    ],
+    "asleep": false
+   },
+   {
+    "img": "anim/perch-ghost-strip",
+    "strip": true,
+    "frames": 6,
+    "cell": [
+     36,
+     44
+    ],
+    "c": [
+     18,
+     24
+    ],
+    "at": [
+     1116.5,
+     170
+    ],
+    "scale": 0.833,
+    "pages": [
+     "rack-wide"
+    ],
+    "asleep": true
+   }
+  ],
+  "hatch": {
+   "rack": [
+    1065.5,
+    618.4,
+    0.76
+   ],
+   "rack-wide": [
+    1119.5,
+    355.4,
+    0.76
+   ],
+   "spatial": [
+    1140,
+    566,
+    0.64
+   ]
+  },
+  "hatchAnchor": [
+   52,
+   90
+  ],
+  "shoulder": {},
+  "lamp": {},
+  "mist": {
+   "pages": []
+  },
+  "leaves": false,
+  "overlay": {},
+  "sceneStrip": "anim/ghost-poses-strip"
+ },
+ "visual": {
+  "stageUnits": [
+   280,
+   300
+  ],
+  "note": "The scene is laid out in stage units (su), 280 x 300, and scaled uniformly into 'stage' (design px, window 1200x760). Every sprite is @2x at this look's own stage scale: blit 1:1 on Retina, resample once for 1x. Sprite anchors (manifest.json, su) are the point the scene places. Painter = /home/claude/work/phantom-anime/visuals/src ; spec = /home/claude/work/phantom-anime/visuals/SPEC.md",
+  "style": "neon",
+  "stage": [
+   881,
+   112,
+   238,
+   255
+  ],
+  "glass": true,
+  "under": [
+   {
+    "img": "visual/_shared/stage-shade",
+    "at_su": [
+     0,
+     0
+    ],
+    "draw_scale": 4
+   },
+   {
+    "img": "visual/_shared/stage-back",
+    "at_su": [
+     0,
+     0
+    ]
+   }
+  ],
+  "over": [
+   {
+    "img": "visual/_shared/stage-front",
+    "at_su": [
+     0,
+     0
+    ]
+   }
+  ],
+  "frame": {
+   "img": "visual/_shared/stage-frame",
+   "at": [
+    861,
+    100
+   ],
+   "size": [
+    278,
+    289
+   ],
+   "note": "the bezel; drawn after the visual, not clipped"
+  },
+  "drawOrder": "bg/rack, your smoked glass (bg/rack-blur cut to 'stage'), stage-shade (quarter resolution, drawn at 4x), stage-back, the unit's visual, stage-front (scan lines), stage-frame at 861,100, then the controls",
+  "skipWhileOn": [
+   "anim.holo 'rack'",
+   "anim.train 'rack'"
+  ],
+  "brush": {
+   "tubeHalo": [
+    [
+     8,
+     0.05
+    ],
+    [
+     4.6,
+     0.12
+    ],
+    [
+     2.4,
+     0.26
+    ]
+   ],
+   "tubeCore": 0.46,
+   "glass": "hsl(240,60%,8%)",
+   "note": "neon hand: a line = three halo strokes (width x, alpha), the colour body, a white-hot core at 0.46 of the width; surfaces = dark glass fill + a little of the tube colour; glows are the glow-soft mask in the tube colour"
+  },
+  "wide": {
+   "note": "wide pages: the stage and bezel exactly as on narrow pages",
+   "stage": [
+    881,
+    112,
+    238,
+    255
+   ],
+   "scale": 0.85,
+   "partScale": 1,
+   "frame": {
+    "img": "visual/_shared/stage-frame",
+    "at": [
+     861,
+     100
+    ],
+    "size": [
+     278,
+     289
+    ],
+    "note": "the bezel; drawn after the visual, not clipped"
+   },
+   "skipWhileOn": [
+    "anim.holo and the scene ghosts inside the bezel's box on rack-wide",
+    "rack.wideBlurb (the pane is cut by the bezel)"
+   ]
+  }
+ }
+}

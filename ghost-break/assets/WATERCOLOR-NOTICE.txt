@@ -1,0 +1,2 @@
+wc_font.ttf is Permanent Marker by Font Diner (Apache License 2.0), from github.com/google/fonts (apache/permanentmarker).
+wc_scene.jpg and wc_logo.png come from Brandon's own Ghost Breaks watercolour (the lettering lifted out as the logo).

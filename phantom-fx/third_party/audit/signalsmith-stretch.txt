@@ -1,0 +1,55 @@
+repo: https://github.com/Signalsmith-Audio/signalsmith-stretch.git
+branch: main
+commit: 88061fd4eda56a2353c5d65c74aa3f4ccf76f9da
+commit date: 2026-10-22T14:45:18+01:00
+licence files:
+./LICENSE.txt
+
+--- top level
+CMakeLists.txt
+LICENSE.txt
+README.md
+SUPPORT.txt
+cmd
+include
+signalsmith-stretch.h
+web
+
+--- tree (depth 2, dirs)
+.
+./cmd
+./cmd/util
+./include
+./include/signalsmith-stretch
+./web
+./web/demo
+./web/emscripten
+./web/release
+
+--- .
+.
+./CMakeLists.txt
+./LICENSE.txt
+./README.md
+./SUPPORT.txt
+./cmd
+./cmd/CMakeLists.txt
+./cmd/Makefile
+./cmd/main-dev.cpp
+./cmd/main.cpp
+./cmd/util
+./include
+./include/signalsmith-stretch
+./signalsmith-stretch.h
+./web
+./web/Makefile
+./web/demo
+./web/emscripten
+./web/index.html
+./web/release
+./web/web-wrapper.js
+
+--- submodules
+[submodule "cmd/util"]
+	path = cmd/util
+	url = https://github.com/geraintluff/util.git

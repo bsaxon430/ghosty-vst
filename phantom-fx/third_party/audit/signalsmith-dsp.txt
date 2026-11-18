@@ -1,0 +1,50 @@
+repo: https://github.com/Signalsmith-Audio/dsp.git
+branch: main
+commit: ca390d28c41ea5108a528e2e81faa4088f2f8ac8
+commit date: 2026-10-13T16:28:16+01:00
+licence files:
+./LICENSE.txt
+
+--- top level
+CMakeLists.txt
+LICENSE.txt
+README.md
+common.h
+curves.h
+delay.h
+envelopes.h
+fft.h
+filters.h
+include
+mix.h
+perf.h
+rates.h
+spectral.h
+windows.h
+
+--- tree (depth 2, dirs)
+.
+./include
+./include/signalsmith-dsp
+
+--- .
+.
+./CMakeLists.txt
+./LICENSE.txt
+./README.md
+./common.h
+./curves.h
+./delay.h
+./envelopes.h
+./fft.h
+./filters.h
+./include
+./include/signalsmith-dsp
+./mix.h
+./perf.h
+./rates.h
+./spectral.h
+./windows.h
+
+--- submodules
+(none)

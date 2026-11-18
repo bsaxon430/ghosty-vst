@@ -1,0 +1,99 @@
+repo: https://github.com/Chowdhury-DSP/ChowMatrix.git
+branch: main
+commit: 40d8e0ef1f752a6843099ff3dfc3d99132b332eb
+commit date: 2021-12-21T10:26:53+00:00
+licence files:
+./LICENSE
+
+--- top level
+CHANGELOG.md
+CMakeLists.txt
+LICENSE
+README.md
+installers
+manual
+modules
+res
+scripts
+src
+
+--- tree (depth 2, dirs)
+.
+./installers
+./installers/mac
+./installers/windows
+./manual
+./manual/screenshots
+./modules
+./modules/JUCE
+./modules/chowdsp_utils
+./modules/cmake
+./modules/foleys_gui_magic
+./modules/polylogarithm
+./res
+./res/presets
+./scripts
+./src
+./src/dsp
+./src/gui
+./src/headless
+./src/state
+
+--- src/dsp
+.
+./BaseNode.cpp
+./BaseNode.h
+./Delay
+./Delay/DelayProc.cpp
+./Delay/DelayProc.h
+./Delay/DelayStore.h
+./Delay/Diffusion.cpp
+./Delay/Diffusion.h
+./Delay/PitchShiftWrapper.cpp
+./Delay/PitchShiftWrapper.h
+./Delay/Reverser.cpp
+./Delay/Reverser.h
+./Delay/TempoSyncUtils.h
+./Delay/VariableDelay.cpp
+./Delay/VariableDelay.h
+./DelayNode.cpp
+./DelayNode.h
+./Distortion
+./Distortion/Distortion.cpp
+./Distortion/Distortion.h
+./Distortion/LookupTables.cpp
+./Distortion/LookupTables.h
+./InputNode.cpp
+./InputNode.h
+./Parameters
+./Parameters/BaseController.cpp
+./Parameters/BaseController.h
+./Parameters/DelayTypeControl.cpp
+./Parameters/DelayTypeControl.h
+./Parameters/HostParamControl.cpp
+./Parameters/HostParamControl.h
+./Parameters/InsanityControl.cpp
+./Parameters/InsanityControl.h
+./Parameters/InsanityLockHelper.cpp
+./Parameters/InsanityLockHelper.h
+./Parameters/NodeParamControl.cpp
+./Parameters/NodeParamControl.h
+./Parameters/ParamHelpers.cpp
+./Parameters/ParamHelpers.h
+./Parameters/RandomiseLockHelper.cpp
+./Parameters/RandomiseLockHelper.h
+./Parameters/SyncControl.cpp
+./Parameters/SyncControl.h
+./ProcessorBase.h
+./ProcessorChain.h
+
+--- submodules
+[submodule "modules/foleys_gui_magic"]
+	path = modules/foleys_gui_magic
+	url = https://github.com/Chowdhury-DSP/foleys_gui_magic.git
+[submodule "modules/chowdsp_utils"]
+	path = modules/chowdsp_utils
+	url = https://github.com/Chowdhury-DSP/chowdsp_utils.git
+[submodule "modules/JUCE"]
+	path = modules/JUCE
+	url = https://github.com/lv2-porting-project/JUCE

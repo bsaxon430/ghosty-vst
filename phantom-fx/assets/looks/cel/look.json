@@ -1,0 +1,435 @@
+{
+ "name": "CEL",
+ "order": 2,
+ "pack": {
+  "quality": 90,
+  "drop": [
+   "ghosts/pose-*",
+   "knob/stone",
+   "ghosts/unit-*",
+   "anim/ghost-bounce-strip"
+  ]
+ },
+ "text": {
+  "cream": "fbf1d6",
+  "ink": "23182f",
+  "sub": "eadbb8",
+  "scenes": "fa9ede",
+  "onPainting": "23182f",
+  "halo": "f6e9c4",
+  "haloAlpha": 0.9
+ },
+ "palette": {
+  "light": true,
+  "window": "c6d2c9",
+  "panel": "c6d2c9",
+  "card": "d6dfd6",
+  "cell": "b3c2ba",
+  "line": "7f958c",
+  "ink": "23182f",
+  "dim": "4a4257"
+ },
+ "slice": {
+  "slider/track": [
+   8,
+   0,
+   8,
+   0
+  ],
+  "button/off": [
+   12,
+   10,
+   12,
+   12
+  ],
+  "button/hover": [
+   12,
+   10,
+   12,
+   12
+  ],
+  "button/on": [
+   12,
+   10,
+   12,
+   12
+  ],
+  "menu/menu": [
+   14,
+   10,
+   34,
+   12
+  ],
+  "label/name": [
+   12,
+   10,
+   12,
+   10
+  ],
+  "label/value": [
+   12,
+   10,
+   12,
+   10
+  ],
+  "slab/wood": [
+   16,
+   16,
+   16,
+   18
+  ],
+  "slab/stone": [
+   20,
+   20,
+   20,
+   22
+  ],
+  "slab/sign": [
+   12,
+   10,
+   12,
+   12
+  ]
+ },
+ "slabs": {
+  "level": "slab/wood",
+  "rail": "slab/wood",
+  "title": "slab/sign",
+  "editor": "slab/stone",
+  "tablet": "slab/stone",
+  "tray": "slab/wood",
+  "paper": "label/name",
+  "valuePaper": "label/value",
+  "card": "label/value",
+  "macro": {
+   "img": "slab/macro-log",
+   "rect": [
+    0,
+    648,
+    1200,
+    72
+   ],
+   "stretch": false
+  },
+  "scenes": {
+   "img": "slab/scenes-grass",
+   "rect": [
+    0,
+    712,
+    1200,
+    48
+   ],
+   "stretch": false
+  }
+ },
+ "darkSlabs": [
+  "slab/wood",
+  "slab/sign",
+  "slab/macro-log",
+  "slab/scenes-grass"
+ ],
+ "knob": {
+  "centre": [
+   62,
+   61
+  ],
+  "arcR": 40.9,
+  "arcW": 5.1,
+  "macroArcR": 17.2,
+  "macroArcW": 2.2,
+  "valueOnPaper": true,
+  "static": false
+ },
+ "rack": {
+  "strip": [
+   0,
+   100,
+   800,
+   240
+  ],
+  "legend": [
+   14,
+   108,
+   72
+  ],
+  "hintRight": 790,
+  "tiles": {
+   "cols": 8,
+   "x": 13,
+   "dx": 97.6,
+   "y": 122,
+   "dy": 74,
+   "w": 91,
+   "h": 66,
+   "tilt": 1.26,
+   "drop": 2.5,
+   "pose": {
+    "strip": "ghosts/poses-",
+    "cell": [
+     72,
+     88
+    ],
+    "anchor": [
+     35,
+     42
+    ]
+   }
+  },
+  "cord": {
+   "img": "slab/cord",
+   "x": 18,
+   "w": 782,
+   "y": 119,
+   "dy": 74
+  },
+  "title": [
+   14,
+   346,
+   124,
+   30
+  ],
+  "titleOnSign": true,
+  "rail": [
+   148,
+   347,
+   352,
+   28
+  ],
+  "on": [
+   504,
+   347,
+   54,
+   27
+  ],
+  "ab": [
+   562,
+   347,
+   34,
+   27
+  ],
+  "preset": [
+   600,
+   347,
+   190,
+   27
+  ],
+  "blurb": [
+   48,
+   384,
+   276,
+   17
+  ],
+  "blurbOnPaper": true,
+  "page": [
+   14,
+   345,
+   776,
+   297
+  ],
+  "content": [
+   14,
+   406,
+   776,
+   236
+  ],
+  "wide": [
+   12,
+   384,
+   1176,
+   256
+  ],
+  "widePages": [
+   "mods",
+   "editor"
+  ],
+  "wideContent": [
+   22,
+   392,
+   1156,
+   240
+  ],
+  "editorContent": [
+   26,
+   388,
+   752,
+   244
+  ],
+  "plate": null,
+  "knobCell": 124,
+  "knobCols": 5,
+  "choiceCols": 3,
+  "widePanel": {
+   "img": "slab/wide-panel",
+   "at": [
+    4,
+    372
+   ]
+  },
+  "wideBlurb": [
+   800,
+   349,
+   388,
+   22
+  ],
+  "wideTitle": [
+   14,
+   349,
+   770,
+   22
+  ],
+  "wideIsPage": true,
+  "wideHands": {
+   "img": "slab/wide-hands",
+   "at": [
+    846,
+    355
+   ]
+  }
+ },
+ "spatial": {
+  "ringR": 180,
+  "tray": [
+   20,
+   588,
+   848,
+   110
+  ],
+  "tablet": [
+   882,
+   130,
+   304,
+   388
+  ]
+ },
+ "anim": {
+  "lamp": {
+   "rack": [
+    1026,
+    231
+   ],
+   "spatial": [
+    462,
+    222
+   ],
+   "rack-wide": [
+    1026,
+    231
+   ]
+  },
+  "hatch": {
+   "rack": [
+    1015,
+    482,
+    0.94
+   ],
+   "spatial": [
+    446,
+    455,
+    1.0
+   ],
+   "rack-wide": [
+    1014.5,
+    342.3,
+    0.94
+   ]
+  },
+  "shoulder": {
+   "rack": [
+    853,
+    287,
+    0.8
+   ],
+   "rack-wide": [
+    853,
+    287,
+    0.8
+   ]
+  },
+  "mist": {
+   "y": 470,
+   "x0": 40,
+   "x1": 760,
+   "alpha": 1.0,
+   "pages": [
+    "rack"
+   ]
+  },
+  "leaves": true,
+  "overlay": {},
+  "sceneStrip": "anim/ghost-poses-strip"
+ },
+ "visual": {
+  "stageUnits": [
+   280,
+   300
+  ],
+  "note": "The scene is laid out in stage units (su), 280 x 300, and scaled uniformly into 'stage' (design px, window 1200x760). Every sprite is @2x at this look's own stage scale: blit 1:1 on Retina, resample once for 1x. Sprite anchors (manifest.json, su) are the point the scene places. Painter = /home/claude/work/phantom-anime/visuals/src ; spec = /home/claude/work/phantom-anime/visuals/SPEC.md",
+  "style": "cel",
+  "stage": [
+   897,
+   372,
+   238,
+   255
+  ],
+  "under": [
+   {
+    "img": "visual/_shared/backdrop",
+    "at_su": [
+     0,
+     0
+    ]
+   }
+  ],
+  "over": [],
+  "frame": {
+   "img": "visual/_shared/stage-frame",
+   "at": [
+    869,
+    338
+   ],
+   "size": [
+    294,
+    315
+   ],
+   "note": "drawn after the visual, not clipped; its opening is the stage"
+  },
+  "drawOrder": "bg/rack, visual/_shared/backdrop + the unit's visual (clipped to 'stage'), visual/_shared/stage-frame at 869,338, then the controls",
+  "skipWhileOn": [
+   "anim.hatch 'rack' (the hatch ghost; the old window is under the stage)"
+  ],
+  "brush": {
+   "lineBoilEveryTicks": 3,
+   "ink": "hsl(268,30%,14%)",
+   "wobble_su_per_s": 0.014,
+   "note": "cel hand: one hard shadow shape (the form pulled in where it faces lower right), flat highlights, pressure line as a filled ribbon, heavier lower right"
+  },
+  "wide": {
+   "note": "wide pages (GATE GRID HAUNT WARP CRACKLE RETRO EQ): the same 280 x 300 su scene at scale 0.8. Every CEL part of the visual (backdrop, glows, glint, puff, unit parts) is drawn at 224/238 of its narrow-page size: resample once into a second cache. Stage + frame stay inside 806,100,384,282.",
+   "stage": [
+    911,
+    125,
+    224,
+    240
+   ],
+   "scale": 0.8,
+   "partScale": 0.94118,
+   "frame": {
+    "img": "visual/_shared/stage-frame-wide",
+    "at": [
+     893.4,
+     101
+    ],
+    "size": [
+     259.0,
+     280.0
+    ],
+    "note": "drawn after the visual, not clipped, and BEFORE slab/wide-hands (the robot's hands lie over its lower corners)"
+   },
+   "drawOrder": "bg/rack, visual/_shared/backdrop + the unit's visual (clipped to wide.stage, scaled 0.8), stage-frame-wide at 893.4,101, slab/wide-hands, then the controls",
+   "skipWhileOn": [
+    "the scene ghosts inside 806,100,384,282 on rack-wide (the one standing on the slab's edge is under the box)",
+    "rack.wideBlurb (the pane lies under the box)"
+   ]
+  }
+ }
+}

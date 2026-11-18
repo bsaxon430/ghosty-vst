@@ -1,0 +1,39 @@
+{
+ "look": "cel",
+ "folder": "echo",
+ "stage_units": [
+  280,
+  300
+ ],
+ "px_per_su": 1.7,
+ "note": "px = the @2x picture. su = stage units (280 x 300). anchor = the point of the picture that the scene places. mask = white + alpha, tinted by code. sizes / rots = steps the cache should hold (scale factors / number of angles round the circle).",
+ "files": [
+  {
+   "file": "path@2x.png",
+   "zip": "visual/echo/path@2x.png",
+   "su": [
+    280,
+    300
+   ],
+   "px": [
+    476,
+    510
+   ],
+   "cell": [
+    476,
+    510
+   ],
+   "anchor_su": [
+    0,
+    0
+   ],
+   "anchor_px": [
+    0,
+    0
+   ],
+   "frames": 1,
+   "kind": "colour",
+   "note": "the runner on the floor (full colour, stage-sized, mostly clear)"
+  }
+ ]
+}
