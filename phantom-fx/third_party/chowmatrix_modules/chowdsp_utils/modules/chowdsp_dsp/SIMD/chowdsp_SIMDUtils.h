@@ -43,7 +43,7 @@ Based on: https://forum.juce.com/t/divide-by-simdregister/28968/18
 #if CHOWDSP_USE_CUSTOM_JUCE_DSP
         return vdivq_f64 (l.value, r.value);
 #else
-        return { { l.value.v[0] / r.value.v[0], l.value.v[1] / r.value.v[1] } };
+        return vdivq_f64 (l.value, r.value);   // GhostBlock: JUCE 8's double register on arm64 is a float64x2_t
 #endif
     }
 
