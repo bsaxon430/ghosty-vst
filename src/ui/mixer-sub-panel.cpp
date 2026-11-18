@@ -1,0 +1,142 @@
+/*
+ * Six Sines
+ *
+ * A synth with audio rate modulation.
+ *
+ * Copyright 2024-2025, Paul Walker and Various authors, as described in the github
+ * transaction log.
+ *
+ * This source repo is released under the MIT license, but has
+ * GPL3 dependencies, as such the combined work will be
+ * released under GPL3.
+ *
+ * The source code and license are at https://github.com/baconpaul/six-sines
+ */
+
+#include "mixer-sub-panel.h"
+
+namespace baconpaul::six_sines::ui
+{
+MixerSubPanel::MixerSubPanel(SixSinesEditor &e) : HasEditor(e) { setSelectedIndex(0); };
+MixerSubPanel::~MixerSubPanel() {}
+
+void MixerSubPanel::setSelectedIndex(int idx)
+{
+    index = idx;
+    repaint();
+
+    removeAllChildren();
+
+    auto &sn = editor.patchMainRef.mixerNodes[idx];
+    setupDAHDSR(editor, sn);
+    setupLFO(editor, sn);
+    setupModulation(editor, sn);
+
+    auto travidx{400};
+    auto traverse = [&travidx](auto &c)
+    { sst::jucegui::component_adapters::setTraversalId(c.get(), travidx++); };
+
+    createRescaledComponent(editor, *this, sn.lfoToLevel, lfoToLevel, lfoToLevelDA);
+    addAndMakeVisible(*lfoToLevel);
+    lfoToLevelL = std::make_unique<jcmp::Label>();
+    lfoToLevelL->setText("Level");
+    addAndMakeVisible(*lfoToLevelL);
+    traverse(lfoToLevel);
+
+    createRescaledComponent(editor, *this, sn.lfoToPan, lfoToPan, lfoToPanDA);
+    addAndMakeVisible(*lfoToPan);
+    lfoToPanL = std::make_unique<jcmp::Label>();
+    lfoToPanL->setText("Pan");
+    addAndMakeVisible(*lfoToPanL);
+    traverse(lfoToPan);
+
+    createRescaledComponent(editor, *this, sn.envToLevel, envToLev, envToLevDA);
+    addAndMakeVisible(*envToLev);
+    envToLevL = std::make_unique<jcmp::Label>();
+    envToLevL->setText("Level");
+    addAndMakeVisible(*envToLevL);
+    traverse(envToLev);
+
+    createComponent(editor, *this, sn.envIsMultiplcative, envMul, envMulD);
+    addAndMakeVisible(*envMul);
+    traverse(envMul);
+
+    createComponent(editor, *this, sn.lfoLevelMode, lfoMode, lfoModeD);
+    addAndMakeVisible(*lfoMode);
+    traverse(lfoMode);
+
+    modLabelE = std::make_unique<jcmp::RuledLabel>();
+    modLabelE->setText(std::string() + "Env" + u8"\U00002192");
+    addAndMakeVisible(*modLabelE);
+
+    modLabelL = std::make_unique<jcmp::RuledLabel>();
+    modLabelL->setText(std::string() + "LFO" + u8"\U00002192");
+    addAndMakeVisible(*modLabelL);
+
+    auto op = [w = juce::Component::SafePointer(this)]()
+    {
+        if (w)
+            w->setEnabledState();
+    };
+
+    editor.componentRefreshByID[sn.envIsMultiplcative.meta.id] = op;
+    envMulD->onGuiSetValue = op;
+
+    setEnabledState();
+
+    resized();
+}
+
+void MixerSubPanel::resized()
+{
+    auto p = getLocalBounds().reduced(uicMargin, 0);
+    auto pn = layoutDAHDSRAt(p.getX(), p.getY());
+    auto r = layoutLFOAt(pn.getX() + uicMargin, p.getY());
+
+    auto depx = p.getX();
+    auto depy = std::min(pn.getBottom(), r.getBottom()) + uicMargin;
+
+    namespace jlo = sst::jucegui::layouts;
+    auto lo = jlo::HList().at(depx, depy).withAutoGap(uicMargin * 2);
+
+    auto el = jlo::VList().withWidth(uicSubPanelColumnWidth).withAutoGap(uicMargin);
+    el.add(titleLabelGaplessLayout(modLabelE));
+    el.add(labelKnobLayout(envToLev, envToLevL).centerInParent());
+    el.add(jlo::Component(*envMul).withHeight(2 * uicLabelHeight + uicMargin));
+    lo.add(el);
+
+    auto ll = jlo::VList().withWidth(2 * uicSubPanelColumnWidth + uicMargin).withAutoGap(uicMargin);
+    ll.add(titleLabelGaplessLayout(modLabelL));
+
+    // Space the Pan knob a full column pitch from Level so it aligns to the second column.
+    auto kl = jlo::HList()
+                  .withHeight(uicLabeledKnobHeight)
+                  .withAutoGap(uicSubPanelColumnWidth - uicKnobSize);
+    kl.add(labelKnobLayout(lfoToLevel, lfoToLevelL).centerInParent());
+    kl.add(labelKnobLayout(lfoToPan, lfoToPanL).centerInParent());
+    ll.add(kl);
+
+    // mode switch sits under the level knob (left column only)
+    auto sl = jlo::HList().withHeight(3 * uicLabelHeight + uicMargin).withAutoGap(uicMargin);
+    sl.add(jlo::Component(*lfoMode).withWidth(uicSubPanelColumnWidth));
+    ll.add(sl);
+
+    lo.add(ll);
+
+    lo.doLayout();
+
+    layoutModulation(p);
+}
+
+void MixerSubPanel::setEnabledState()
+{
+    auto en = envMulD->getValue() < 0.5;
+    envToLev->setEnabled(en);
+    envToLevL->setEnabled(en);
+    repaint();
+}
+
+IMPLEMENTS_CLIPBOARD_SUPPORT(MixerSubPanel, mixerNodes[index],
+                             Clipboard::ClipboardType::MIXER_FULLNODE)
+
+} // namespace baconpaul::six_sines::ui

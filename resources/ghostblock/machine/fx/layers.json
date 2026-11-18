@@ -1,0 +1,3121 @@
+{
+ "about": "Poltergeist 2 ghost-machine, page \"fx\" (SPECTRAL FX). Simple path: draw background.png and the sprites over it. Parallax path: draw \"world\" back to front (this page has its OWN world: the dark storm sky of the first tall-ghost picture; rain and the page-change cloud are the common ones), then \"layers\" in z order. \"grp\" = the craft a layer rides on: each group has its own small bob on top of the common one (\"groups\"), so the ghost and the town bob out of phase. All x/y/w/h are canvas px (1040x744); PNG pixels are png_scale times that.",
+ "page": "fx",
+ "canvas": {
+  "w": 1040,
+  "h": 744,
+  "png_scale": 2
+ },
+ "background": "background.png",
+ "world": [
+  {
+   "id": "sky",
+   "img": "fxw-sky",
+   "file": "world/sky.png",
+   "x": 0,
+   "y": 0,
+   "w": 1040,
+   "h": 744,
+   "png_scale": 2,
+   "anim": {
+    "type": "static"
+   },
+   "note": "opaque: the storm sky of the first tall-ghost picture, its cloud masses, ranges, low haze"
+  },
+  {
+   "id": "deck-far",
+   "img": "fxw-deck-far",
+   "file": "world/deck-far.png",
+   "x": 0,
+   "y": 0,
+   "w": 1116,
+   "h": 744,
+   "png_scale": 1,
+   "anim": {
+    "type": "deck",
+    "speed_px_per_s": 3.0,
+    "wrap_px": 1116,
+    "still_offset": 0
+   }
+  },
+  {
+   "id": "deck-mid",
+   "img": "fxw-deck-mid",
+   "file": "world/deck-mid.png",
+   "x": 0,
+   "y": 0,
+   "w": 1116,
+   "h": 744,
+   "png_scale": 1,
+   "anim": {
+    "type": "deck",
+    "speed_px_per_s": 7.0,
+    "wrap_px": 1116,
+    "still_offset": 0
+   }
+  },
+  {
+   "id": "rays",
+   "img": "fxw-rays",
+   "file": "world/rays.png",
+   "x": 0,
+   "y": 0,
+   "w": 1040,
+   "h": 744,
+   "png_scale": 1,
+   "anim": {
+    "type": "pulse",
+    "min": 0.62,
+    "max": 1.0,
+    "period": 9.5,
+    "blend": "screen",
+    "storm_gain": -0.8
+   }
+  },
+  {
+   "id": "deck-near",
+   "img": "fxw-deck-near",
+   "file": "world/deck-near.png",
+   "x": 0,
+   "y": 0,
+   "w": 1116,
+   "h": 744,
+   "png_scale": 1,
+   "anim": {
+    "type": "deck",
+    "speed_px_per_s": 14.0,
+    "wrap_px": 1116,
+    "still_offset": 0
+   }
+  },
+  {
+   "id": "storm-dark",
+   "type": "fill",
+   "note": "fill rgba(8,12,26, 0.72 * storm) over the sky and the decks, as on the other pages"
+  },
+  {
+   "id": "flash",
+   "img": "fxw-flash",
+   "file": "world/flash.png",
+   "x": 0,
+   "y": 0,
+   "w": 1040,
+   "h": 744,
+   "png_scale": 1,
+   "anim": {
+    "type": "strike",
+    "gain": 0.9,
+    "blend": "add"
+   }
+  },
+  {
+   "id": "bolt0",
+   "file": "../common/world/bolt0.png",
+   "x": 0,
+   "y": 0,
+   "w": 320,
+   "h": 560,
+   "png_scale": 2,
+   "anim": {
+    "type": "bolt"
+   },
+   "note": "the common bolts"
+  },
+  {
+   "id": "bolt1",
+   "file": "../common/world/bolt1.png",
+   "x": 690,
+   "y": 0,
+   "w": 350,
+   "h": 590,
+   "png_scale": 2,
+   "anim": {
+    "type": "bolt"
+   },
+   "note": "the common bolts"
+  },
+  {
+   "id": "bolt2",
+   "file": "../common/world/bolt2.png",
+   "x": 790,
+   "y": 0,
+   "w": 250,
+   "h": 660,
+   "png_scale": 2,
+   "anim": {
+    "type": "bolt"
+   },
+   "note": "the common bolts"
+  },
+  {
+   "id": "bolt3",
+   "file": "../common/world/bolt3.png",
+   "x": 530,
+   "y": 0,
+   "w": 400,
+   "h": 450,
+   "png_scale": 2,
+   "anim": {
+    "type": "bolt"
+   },
+   "note": "the common bolts"
+  },
+  {
+   "id": "bolt4",
+   "file": "../common/world/bolt4.png",
+   "x": 0,
+   "y": 0,
+   "w": 340,
+   "h": 680,
+   "png_scale": 2,
+   "anim": {
+    "type": "bolt"
+   },
+   "note": "the common bolts"
+  },
+  {
+   "id": "land",
+   "img": "fxw-land",
+   "file": "world/land.png",
+   "x": 0,
+   "y": 0,
+   "w": 1040,
+   "h": 744,
+   "png_scale": 2,
+   "anim": {
+    "type": "static"
+   },
+   "storm_dim": 0.5,
+   "note": "the far dark hills with their mist, the grass at rest"
+  },
+  {
+   "id": "grass",
+   "imgs": [
+    "fxw-grass-0",
+    "fxw-grass-1",
+    "fxw-grass-2",
+    "fxw-grass-3"
+   ],
+   "files": [
+    "world/grass-0.png",
+    "world/grass-1.png",
+    "world/grass-2.png",
+    "world/grass-3.png"
+   ],
+   "x": 0,
+   "y": 664,
+   "w": 1040,
+   "h": 80,
+   "png_scale": 2,
+   "storm_dim": 0.5,
+   "anim": {
+    "type": "crossfade-loop",
+    "frames": 4,
+    "period": 3.2,
+    "storm_speed": 1.8
+   }
+  }
+ ],
+ "groups": {
+  "ghost": {
+   "pivot": [
+    215,
+    300
+   ],
+   "period": 7.6,
+   "dip_px": 2.6,
+   "sway_px": 1.2,
+   "sway_period": 12.4,
+   "rotate_deg": 0.16,
+   "phase": 0.0
+  },
+  "town": {
+   "pivot": [
+    872,
+    400
+   ],
+   "period": 6.2,
+   "dip_px": 2.3,
+   "sway_px": 1.0,
+   "sway_period": 10.2,
+   "rotate_deg": 0.2,
+   "phase": 2.7
+  }
+ },
+ "layers": [
+  {
+   "z": 0,
+   "id": "mist-ghost-back",
+   "file": "world/mist-a.png",
+   "x": -38.9,
+   "y": 478,
+   "w": 517.7,
+   "h": 88.0,
+   "png_scale": 1,
+   "anim": {
+    "type": "drift",
+    "amp": 12,
+    "period": 17,
+    "alpha": 0.9
+   }
+  },
+  {
+   "z": 1,
+   "id": "mist-town-back",
+   "file": "world/mist-b.png",
+   "x": 654.1,
+   "y": 500,
+   "w": 451.8,
+   "h": 78.6,
+   "png_scale": 1,
+   "anim": {
+    "type": "drift",
+    "amp": 10,
+    "period": 13,
+    "alpha": 0.8
+   }
+  },
+  {
+   "z": 2,
+   "id": "town",
+   "file": "town.png",
+   "x": 693.0,
+   "y": 71.0,
+   "w": 347.0,
+   "h": 476.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "static"
+   },
+   "grp": "town"
+  },
+  {
+   "z": 3,
+   "id": "t-pole0",
+   "file": "sprites/t-pole0.png",
+   "x": 903,
+   "y": 306,
+   "w": 23,
+   "h": 24,
+   "png_scale": 2,
+   "anim": {
+    "type": "fxpole",
+    "index": 0,
+    "blend": "add"
+   },
+   "grp": "town"
+  },
+  {
+   "z": 4,
+   "id": "t-pole1",
+   "file": "sprites/t-pole1.png",
+   "x": 909,
+   "y": 238,
+   "w": 24,
+   "h": 24,
+   "png_scale": 2,
+   "anim": {
+    "type": "fxpole",
+    "index": 1,
+    "blend": "add"
+   },
+   "grp": "town"
+  },
+  {
+   "z": 5,
+   "id": "t-pole2",
+   "file": "sprites/t-pole2.png",
+   "x": 921,
+   "y": 289,
+   "w": 23,
+   "h": 24,
+   "png_scale": 2,
+   "anim": {
+    "type": "fxpole",
+    "index": 2,
+    "blend": "add"
+   },
+   "grp": "town"
+  },
+  {
+   "z": 6,
+   "id": "t-pole3",
+   "file": "sprites/t-pole3.png",
+   "x": 928,
+   "y": 229,
+   "w": 24,
+   "h": 23,
+   "png_scale": 2,
+   "anim": {
+    "type": "fxpole",
+    "index": 3,
+    "blend": "add"
+   },
+   "grp": "town"
+  },
+  {
+   "z": 7,
+   "id": "t-pole4",
+   "file": "sprites/t-pole4.png",
+   "x": 941,
+   "y": 291,
+   "w": 23,
+   "h": 23,
+   "png_scale": 2,
+   "anim": {
+    "type": "fxpole",
+    "index": 4,
+    "blend": "add"
+   },
+   "grp": "town"
+  },
+  {
+   "z": 8,
+   "id": "t-pole5",
+   "file": "sprites/t-pole5.png",
+   "x": 950,
+   "y": 240,
+   "w": 23,
+   "h": 24,
+   "png_scale": 2,
+   "anim": {
+    "type": "fxpole",
+    "index": 5,
+    "blend": "add"
+   },
+   "grp": "town"
+  },
+  {
+   "z": 9,
+   "id": "t-pole6",
+   "file": "sprites/t-pole6.png",
+   "x": 892,
+   "y": 325,
+   "w": 23,
+   "h": 23,
+   "png_scale": 2,
+   "anim": {
+    "type": "fxpole",
+    "index": 6,
+    "blend": "add"
+   },
+   "grp": "town"
+  },
+  {
+   "z": 10,
+   "id": "t-pole7",
+   "file": "sprites/t-pole7.png",
+   "x": 959,
+   "y": 315,
+   "w": 24,
+   "h": 23,
+   "png_scale": 2,
+   "anim": {
+    "type": "fxpole",
+    "index": 7,
+    "blend": "add"
+   },
+   "grp": "town"
+  },
+  {
+   "z": 11,
+   "id": "t-lamp-flare",
+   "file": "sprites/t-lamp-flare.png",
+   "x": 811,
+   "y": 51,
+   "w": 122,
+   "h": 122,
+   "png_scale": 2,
+   "anim": {
+    "type": "flare",
+    "source": "fxfhigh",
+    "gain": 1,
+    "blend": "add"
+   },
+   "grp": "town"
+  },
+  {
+   "z": 12,
+   "id": "t-beam",
+   "file": "sprites/t-beam.png",
+   "x": 708,
+   "y": 88,
+   "w": 328,
+   "h": 48,
+   "png_scale": 2,
+   "anim": {
+    "type": "beam",
+    "cx": 872,
+    "cy": 112,
+    "period": 7,
+    "source": "fxfhigh",
+    "blend": "add"
+   },
+   "grp": "town"
+  },
+  {
+   "z": 13,
+   "id": "t-sails",
+   "file": "sprites/t-sails.png",
+   "x": 680,
+   "y": 182,
+   "w": 136,
+   "h": 136,
+   "png_scale": 2,
+   "anim": {
+    "type": "rotate",
+    "cx": 748,
+    "cy": 250,
+    "period": 11,
+    "dir": 1,
+    "group": "fxwarp"
+   },
+   "grp": "town"
+  },
+  {
+   "z": 14,
+   "id": "t-gear-a",
+   "file": "sprites/t-gear-a.png",
+   "x": 938,
+   "y": 339,
+   "w": 37,
+   "h": 37,
+   "png_scale": 2,
+   "anim": {
+    "type": "rotate",
+    "cx": 956.4,
+    "cy": 357.6,
+    "period": 18,
+    "dir": 1,
+    "group": "fxscale"
+   },
+   "grp": "town"
+  },
+  {
+   "z": 15,
+   "id": "t-gear-b",
+   "file": "sprites/t-gear-b.png",
+   "x": 965,
+   "y": 339,
+   "w": 18,
+   "h": 18,
+   "png_scale": 2,
+   "anim": {
+    "type": "rotate",
+    "cx": 974,
+    "cy": 348,
+    "period": 9,
+    "dir": -1,
+    "group": "fxscale"
+   },
+   "grp": "town"
+  },
+  {
+   "z": 16,
+   "id": "t-prop0",
+   "file": "sprites/t-prop0.png",
+   "x": 726,
+   "y": 518,
+   "w": 32,
+   "h": 32,
+   "png_scale": 2,
+   "anim": {
+    "type": "rotate",
+    "cx": 742,
+    "cy": 534,
+    "period": 2.6,
+    "dir": -1,
+    "group": "wind"
+   },
+   "grp": "town"
+  },
+  {
+   "z": 17,
+   "id": "t-prop1",
+   "file": "sprites/t-prop1.png",
+   "x": 971,
+   "y": 520,
+   "w": 30,
+   "h": 30,
+   "png_scale": 2,
+   "anim": {
+    "type": "rotate",
+    "cx": 986,
+    "cy": 535,
+    "period": 3.3,
+    "dir": 1,
+    "group": "wind"
+   },
+   "grp": "town"
+  },
+  {
+   "z": 18,
+   "id": "t-hang0",
+   "file": "sprites/t-hang0.png",
+   "x": 822.0,
+   "y": 534.0,
+   "w": 9.0,
+   "h": 34.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 826,
+    "py": 535,
+    "amp": 5.3,
+    "period": 3.53,
+    "phase": 0.38,
+    "bias": -2
+   },
+   "grp": "town"
+  },
+  {
+   "z": 19,
+   "id": "t-hang1",
+   "file": "sprites/t-hang1.png",
+   "x": 786.0,
+   "y": 534.0,
+   "w": 8.0,
+   "h": 32.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 790,
+    "py": 534,
+    "amp": 2.9,
+    "period": 3.74,
+    "phase": 0.26,
+    "bias": -2
+   },
+   "grp": "town"
+  },
+  {
+   "z": 20,
+   "id": "t-hang2",
+   "file": "sprites/t-hang2.png",
+   "x": 897.0,
+   "y": 536.0,
+   "w": 18.0,
+   "h": 33.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 906,
+    "py": 536,
+    "amp": 4.5,
+    "period": 4.46,
+    "phase": 0.75,
+    "bias": -2
+   },
+   "grp": "town"
+  },
+  {
+   "z": 21,
+   "id": "t-hang3",
+   "file": "sprites/t-hang3.png",
+   "x": 954.0,
+   "y": 532.0,
+   "w": 8.0,
+   "h": 36.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 958,
+    "py": 532,
+    "amp": 3.7,
+    "period": 3.13,
+    "phase": 0.43,
+    "bias": -2
+   },
+   "grp": "town"
+  },
+  {
+   "z": 22,
+   "id": "t-hang4",
+   "file": "sprites/t-hang4.png",
+   "x": 1002.0,
+   "y": 523.0,
+   "w": 28.0,
+   "h": 31.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 1016,
+    "py": 522,
+    "amp": 4.1,
+    "period": 5.26,
+    "phase": 0.79,
+    "bias": -2
+   },
+   "grp": "town"
+  },
+  {
+   "z": 23,
+   "id": "t-hang5",
+   "file": "sprites/t-hang5.png",
+   "x": 867.0,
+   "y": 536.0,
+   "w": 11.0,
+   "h": 30.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 872,
+    "py": 537,
+    "amp": 2.8,
+    "period": 4.93,
+    "phase": 0.45,
+    "bias": -2
+   },
+   "grp": "town"
+  },
+  {
+   "z": 24,
+   "id": "win-tfurn",
+   "file": "sprites/win-tfurn.png",
+   "x": 753,
+   "y": 443,
+   "w": 48,
+   "h": 48,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "fire",
+    "min": 0.5,
+    "max": 1.0,
+    "period": 2.1
+   },
+   "grp": "town"
+  },
+  {
+   "z": 25,
+   "id": "win-tlamp",
+   "file": "sprites/win-tlamp.png",
+   "x": 842,
+   "y": 82,
+   "w": 60,
+   "h": 60,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "lamp",
+    "min": 0.75,
+    "max": 1.0,
+    "period": 5.9
+   },
+   "grp": "town"
+  },
+  {
+   "z": 26,
+   "id": "win-trim",
+   "file": "sprites/win-trim.png",
+   "x": 713,
+   "y": 504,
+   "w": 326,
+   "h": 35,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "lamp",
+    "min": 0.8,
+    "max": 1.0,
+    "period": 4.7
+   },
+   "grp": "town"
+  },
+  {
+   "z": 27,
+   "id": "win-tv1",
+   "file": "sprites/win-tv1.png",
+   "x": 701,
+   "y": 279,
+   "w": 160,
+   "h": 100,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "candle",
+    "min": 0.7,
+    "max": 1.0,
+    "period": 3.9
+   },
+   "grp": "town"
+  },
+  {
+   "z": 28,
+   "id": "win-tv2",
+   "file": "sprites/win-tv2.png",
+   "x": 732,
+   "y": 256,
+   "w": 169,
+   "h": 124,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "candle",
+    "min": 0.72,
+    "max": 1.0,
+    "period": 5.1
+   },
+   "grp": "town"
+  },
+  {
+   "z": 29,
+   "id": "win-tv3",
+   "file": "sprites/win-tv3.png",
+   "x": 742,
+   "y": 153,
+   "w": 147,
+   "h": 228,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "candle",
+    "min": 0.74,
+    "max": 1.0,
+    "period": 4.5
+   },
+   "grp": "town"
+  },
+  {
+   "z": 30,
+   "id": "g-stack-p6",
+   "file": "sprites/g-stack-p6.png",
+   "x": 333.0,
+   "y": 168.5,
+   "w": 20.0,
+   "h": 88.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "pump",
+    "travel": 6.0,
+    "period": 1.9,
+    "phase": 0,
+    "source": "fxin"
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 31,
+   "id": "g-stack-p1",
+   "file": "sprites/g-stack-p1.png",
+   "x": 342.0,
+   "y": 152.0,
+   "w": 22.5,
+   "h": 108.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "pump",
+    "travel": 9.3,
+    "period": 1.9,
+    "phase": 0.17,
+    "source": "fxin"
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 32,
+   "id": "g-stack-p2",
+   "file": "sprites/g-stack-p2.png",
+   "x": 351.5,
+   "y": 132.0,
+   "w": 25.5,
+   "h": 130.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "pump",
+    "travel": 7.3,
+    "period": 1.9,
+    "phase": 0.33,
+    "source": "fxin"
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 33,
+   "id": "g-stack-p3",
+   "file": "sprites/g-stack-p3.png",
+   "x": 365.5,
+   "y": 161.5,
+   "w": 21.5,
+   "h": 103.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "pump",
+    "travel": 10.7,
+    "period": 1.9,
+    "phase": 0.5,
+    "source": "fxin"
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 34,
+   "id": "g-stack-p4",
+   "file": "sprites/g-stack-p4.png",
+   "x": 376.0,
+   "y": 141.5,
+   "w": 23.5,
+   "h": 126.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "pump",
+    "travel": 8.0,
+    "period": 1.9,
+    "phase": 0.67,
+    "source": "fxin"
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 35,
+   "id": "g-stack-p5",
+   "file": "sprites/g-stack-p5.png",
+   "x": 389.5,
+   "y": 175.5,
+   "w": 19.5,
+   "h": 94.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "pump",
+    "travel": 6.7,
+    "period": 1.9,
+    "phase": 0.83,
+    "source": "fxin"
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 36,
+   "id": "ghost-back",
+   "file": "ghost-back.png",
+   "x": 319.5,
+   "y": 207.5,
+   "w": 98.0,
+   "h": 166.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "static"
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 37,
+   "id": "ghost-body",
+   "file": "ghost-body.png",
+   "x": 59.5,
+   "y": 22.0,
+   "w": 318.0,
+   "h": 502.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "static"
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 38,
+   "id": "g-windmill",
+   "file": "sprites/g-windmill.png",
+   "x": 78.0,
+   "y": 61.0,
+   "w": 50.0,
+   "h": 50.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "rotate",
+    "cx": 102.7,
+    "cy": 85.9,
+    "period": 26,
+    "dir": 1,
+    "group": "wind"
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 39,
+   "id": "g-gear-big",
+   "file": "sprites/g-gear-big.png",
+   "x": 270.0,
+   "y": 364.5,
+   "w": 37.0,
+   "h": 37.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "rotate",
+    "cx": 288.5,
+    "cy": 383.0,
+    "period": 22,
+    "dir": 1,
+    "teeth": 18,
+    "group": "spectral"
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 40,
+   "id": "g-gear-med",
+   "file": "sprites/g-gear-med.png",
+   "x": 299.0,
+   "y": 355.0,
+   "w": 24.0,
+   "h": 24.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "rotate",
+    "cx": 311.2,
+    "cy": 367.0,
+    "period": 12.2,
+    "dir": -1,
+    "teeth": 10,
+    "group": "spectral"
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 41,
+   "id": "g-gear-small",
+   "file": "sprites/g-gear-small.png",
+   "x": 260.0,
+   "y": 355.0,
+   "w": 19.5,
+   "h": 19.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "rotate",
+    "cx": 269.9,
+    "cy": 364.3,
+    "period": 9.8,
+    "dir": -1,
+    "teeth": 8,
+    "group": "spectral"
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 42,
+   "id": "ghost-top",
+   "file": "ghost-top.png",
+   "x": 24.0,
+   "y": 54.0,
+   "w": 374.0,
+   "h": 365.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "static"
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 43,
+   "id": "g-win-belly",
+   "file": "sprites/g-win-belly.png",
+   "x": 178.5,
+   "y": 55.0,
+   "w": 156.0,
+   "h": 274.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "lamp",
+    "min": 0.8,
+    "max": 1.0,
+    "period": 5.3
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 44,
+   "id": "g-win-eye",
+   "file": "sprites/g-win-eye.png",
+   "x": 120.0,
+   "y": 174.0,
+   "w": 130.5,
+   "h": 39.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "breathe",
+    "min": 0.5,
+    "max": 1.0,
+    "period": 8.4
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 45,
+   "id": "g-win-furnace",
+   "file": "sprites/g-win-furnace.png",
+   "x": 76.5,
+   "y": 357.0,
+   "w": 38.0,
+   "h": 39.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "fire",
+    "min": 0.45,
+    "max": 1.0,
+    "period": 1.9
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 46,
+   "id": "g-win-lamp",
+   "file": "sprites/g-win-lamp.png",
+   "x": -12.0,
+   "y": 310.5,
+   "w": 97.5,
+   "h": 97.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "lamp",
+    "min": 0.8,
+    "max": 1.0,
+    "period": 5.9
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 47,
+   "id": "g-win-mill",
+   "file": "sprites/g-win-mill.png",
+   "x": 106.5,
+   "y": 101.5,
+   "w": 12.5,
+   "h": 12.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "candle",
+    "min": 0.72,
+    "max": 1.0,
+    "period": 5.1
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 48,
+   "id": "g-win-mouth",
+   "file": "sprites/g-win-mouth.png",
+   "x": 160.0,
+   "y": 275.5,
+   "w": 49.0,
+   "h": 49.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "fire",
+    "min": 0.5,
+    "max": 1.0,
+    "period": 2.3
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 49,
+   "id": "g-win-obs",
+   "file": "sprites/g-win-obs.png",
+   "x": 362.0,
+   "y": 354.0,
+   "w": 33.5,
+   "h": 16.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "lamp",
+    "min": 0.78,
+    "max": 1.0,
+    "period": 6.1
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 50,
+   "id": "g-win-rim",
+   "file": "sprites/g-win-rim.png",
+   "x": 64.5,
+   "y": 289.5,
+   "w": 302.5,
+   "h": 127.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "lamp",
+    "min": 0.8,
+    "max": 1.0,
+    "period": 4.7
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 51,
+   "id": "g-win-v1",
+   "file": "sprites/g-win-v1.png",
+   "x": 145.0,
+   "y": 52.0,
+   "w": 200.5,
+   "h": 354.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "candle",
+    "min": 0.72,
+    "max": 1.0,
+    "period": 3.7
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 52,
+   "id": "g-win-v2",
+   "file": "sprites/g-win-v2.png",
+   "x": 81.5,
+   "y": 27.5,
+   "w": 273.0,
+   "h": 382.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "candle",
+    "min": 0.72,
+    "max": 1.0,
+    "period": 4.9
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 53,
+   "id": "g-win-v3",
+   "file": "sprites/g-win-v3.png",
+   "x": 103.0,
+   "y": 69.0,
+   "w": 255.5,
+   "h": 349.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "candle",
+    "min": 0.74,
+    "max": 1.0,
+    "period": 4.3
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 54,
+   "id": "g-eye-flare",
+   "file": "sprites/g-eye-flare.png",
+   "x": 98.5,
+   "y": 142.5,
+   "w": 176.0,
+   "h": 92.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "flare",
+    "gain": 1,
+    "source": "spectral"
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 55,
+   "id": "g-mouth-flare",
+   "file": "sprites/g-mouth-flare.png",
+   "x": 138.5,
+   "y": 242.5,
+   "w": 92.0,
+   "h": 92.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "flare",
+    "gain": 1,
+    "source": "fxwet"
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 56,
+   "id": "g-bell",
+   "file": "sprites/g-bell.png",
+   "x": 382.5,
+   "y": 357.0,
+   "w": 20.0,
+   "h": 34.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 392.4,
+    "py": 359.0,
+    "amp": 3.4,
+    "period": 6.4,
+    "phase": 0.1
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 57,
+   "id": "g-eye-shutter",
+   "file": "sprites/g-eye-shutter.png",
+   "x": 213.0,
+   "y": 138.5,
+   "w": 51.0,
+   "h": 31.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 237.9,
+    "py": 144.5,
+    "amp": 1.1,
+    "period": 6.6,
+    "phase": 0.4
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 58,
+   "id": "g-eye-shutter-closed",
+   "file": "sprites/g-eye-shutter-closed.png",
+   "x": 214.5,
+   "y": 155.5,
+   "w": 49.5,
+   "h": 53.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "lid",
+    "min": 0,
+    "max": 1,
+    "period": 19
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 59,
+   "id": "g-crane-plate",
+   "file": "sprites/g-crane-plate.png",
+   "x": 83.0,
+   "y": 48.5,
+   "w": 23.5,
+   "h": 42.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 94.1,
+    "py": 50.6,
+    "amp": 2.6,
+    "period": 5.6,
+    "phase": 0.3
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 60,
+   "id": "g-great-lamp",
+   "file": "sprites/g-great-lamp.png",
+   "x": 8.0,
+   "y": 327.5,
+   "w": 57.5,
+   "h": 62.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 36.8,
+    "py": 329.7,
+    "amp": 3,
+    "period": 7.2,
+    "phase": 0.3
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 61,
+   "id": "g-hem-plate0",
+   "file": "sprites/g-hem-plate0.png",
+   "x": 54.0,
+   "y": 443.0,
+   "w": 22.0,
+   "h": 30.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 65.1,
+    "py": 444.8,
+    "amp": 2.5,
+    "period": 5.02,
+    "phase": 0.48
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 62,
+   "id": "g-hem-rag1",
+   "file": "sprites/g-hem-rag1.png",
+   "x": 62.0,
+   "y": 454.0,
+   "w": 21.5,
+   "h": 25.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 72.7,
+    "py": 455.9,
+    "amp": 6.9,
+    "period": 2.99,
+    "phase": 0.51
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 63,
+   "id": "g-hem-chain2",
+   "file": "sprites/g-hem-chain2.png",
+   "x": 83.5,
+   "y": 446.5,
+   "w": 16.0,
+   "h": 34.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 91.2,
+    "py": 448.2,
+    "amp": 4.9,
+    "period": 3.7,
+    "phase": 0.36
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 64,
+   "id": "g-hem-rag3",
+   "file": "sprites/g-hem-rag3.png",
+   "x": 97.5,
+   "y": 487.0,
+   "w": 26.0,
+   "h": 34.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 110.5,
+    "py": 489.2,
+    "amp": 6.8,
+    "period": 3.14,
+    "phase": 0.87
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 65,
+   "id": "g-hem-pipe4",
+   "file": "sprites/g-hem-pipe4.png",
+   "x": 128.0,
+   "y": 446.5,
+   "w": 17.0,
+   "h": 32.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 136.5,
+    "py": 450.1,
+    "amp": 1.6,
+    "period": 5.8,
+    "phase": 0.94
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 66,
+   "id": "g-hem-plate5",
+   "file": "sprites/g-hem-plate5.png",
+   "x": 152.0,
+   "y": 444.5,
+   "w": 22.5,
+   "h": 33.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 163.2,
+    "py": 446.3,
+    "amp": 2.4,
+    "period": 4.56,
+    "phase": 0.12
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 67,
+   "id": "g-hem-chain6",
+   "file": "sprites/g-hem-chain6.png",
+   "x": 183.0,
+   "y": 479.0,
+   "w": 15.0,
+   "h": 26.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 189.8,
+    "py": 481.2,
+    "amp": 6.2,
+    "period": 3.12,
+    "phase": 0.67
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 68,
+   "id": "g-hem-rag7",
+   "file": "sprites/g-hem-rag7.png",
+   "x": 207.5,
+   "y": 458.5,
+   "w": 25.5,
+   "h": 34.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 220.2,
+    "py": 460.5,
+    "amp": 6.3,
+    "period": 3.21,
+    "phase": 0.17
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 69,
+   "id": "g-hem-plate8",
+   "file": "sprites/g-hem-plate8.png",
+   "x": 233.0,
+   "y": 431.0,
+   "w": 23.0,
+   "h": 31.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 244.4,
+    "py": 433.1,
+    "amp": 3,
+    "period": 5.29,
+    "phase": 0.98
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 70,
+   "id": "g-hem-chain9",
+   "file": "sprites/g-hem-chain9.png",
+   "x": 266.5,
+   "y": 468.0,
+   "w": 15.0,
+   "h": 37.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 273.5,
+    "py": 470.0,
+    "amp": 4.4,
+    "period": 4.5,
+    "phase": 0.67
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 71,
+   "id": "g-hem-rag10",
+   "file": "sprites/g-hem-rag10.png",
+   "x": 294.5,
+   "y": 471.5,
+   "w": 23.0,
+   "h": 37.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 306.1,
+    "py": 473.6,
+    "amp": 7.9,
+    "period": 2.59,
+    "phase": 0.49
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 72,
+   "id": "g-hem-ladder11",
+   "file": "sprites/g-hem-ladder11.png",
+   "x": 318.5,
+   "y": 451.5,
+   "w": 14.5,
+   "h": 34.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 324.9,
+    "py": 453.4,
+    "amp": 2.2,
+    "period": 5,
+    "phase": 0.91
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 73,
+   "id": "g-hem-plate12",
+   "file": "sprites/g-hem-plate12.png",
+   "x": 333.0,
+   "y": 443.0,
+   "w": 26.5,
+   "h": 34.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 346.5,
+    "py": 444.5,
+    "amp": 2.2,
+    "period": 4.48,
+    "phase": 0.61
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 74,
+   "id": "g-hem-rag13",
+   "file": "sprites/g-hem-rag13.png",
+   "x": 346.5,
+   "y": 466.0,
+   "w": 27.5,
+   "h": 27.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 360.2,
+    "py": 467.9,
+    "amp": 7.4,
+    "period": 2.47,
+    "phase": 0.31
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 75,
+   "id": "g-hem-chain14",
+   "file": "sprites/g-hem-chain14.png",
+   "x": 362.5,
+   "y": 460.5,
+   "w": 15.5,
+   "h": 31.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 369.6,
+    "py": 462.5,
+    "amp": 4.5,
+    "period": 3.91,
+    "phase": 0.78
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 76,
+   "id": "g-lantern0",
+   "file": "sprites/g-lantern0.png",
+   "x": 86.0,
+   "y": 431.0,
+   "w": 21.0,
+   "h": 29.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 96.5,
+    "py": 433.0,
+    "amp": 7,
+    "period": 4.04,
+    "phase": 0.39
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 77,
+   "id": "g-lantern1",
+   "file": "sprites/g-lantern1.png",
+   "x": 216.0,
+   "y": 457.0,
+   "w": 21.5,
+   "h": 32.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 226.9,
+    "py": 459.0,
+    "amp": 5.7,
+    "period": 3.91,
+    "phase": 0.79
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 78,
+   "id": "g-lantern2",
+   "file": "sprites/g-lantern2.png",
+   "x": 337.0,
+   "y": 441.5,
+   "w": 21.0,
+   "h": 27.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 347.2,
+    "py": 442.9,
+    "amp": 6.1,
+    "period": 4.01,
+    "phase": 0.29
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 79,
+   "id": "g-lantern3",
+   "file": "sprites/g-lantern3.png",
+   "x": 66.5,
+   "y": 300.5,
+   "w": 21.5,
+   "h": 27.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 77.6,
+    "py": 303.0,
+    "amp": 4.9,
+    "period": 4.13,
+    "phase": 0.72
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 80,
+   "id": "g-lantern4",
+   "file": "sprites/g-lantern4.png",
+   "x": 325.0,
+   "y": 220.0,
+   "w": 21.0,
+   "h": 28.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 335.5,
+    "py": 222.2,
+    "amp": 5.5,
+    "period": 3.21,
+    "phase": 0.27
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 81,
+   "id": "g-laundry-gantry",
+   "file": "sprites/g-laundry-gantry.png",
+   "x": 304.0,
+   "y": 136.5,
+   "w": 22.0,
+   "h": 32.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "frames",
+    "frames": 4,
+    "period": 1
+   },
+   "grp": "ghost",
+   "frames": 4
+  },
+  {
+   "z": 82,
+   "id": "g-streamer-crane",
+   "file": "sprites/g-streamer-crane.png",
+   "x": 129.0,
+   "y": 52.0,
+   "w": 33.0,
+   "h": 19.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "frames",
+    "frames": 8,
+    "period": 1.3
+   },
+   "grp": "ghost",
+   "frames": 8
+  },
+  {
+   "z": 83,
+   "id": "g-pennant-mill",
+   "file": "sprites/g-pennant-mill.png",
+   "x": 102.0,
+   "y": 71.5,
+   "w": 18.5,
+   "h": 14.5,
+   "png_scale": 2,
+   "anim": {
+    "type": "frames",
+    "frames": 6,
+    "period": 0.9
+   },
+   "grp": "ghost",
+   "frames": 6
+  },
+  {
+   "z": 84,
+   "id": "mist-ghost-front",
+   "file": "world/mist-b.png",
+   "x": 25.8,
+   "y": 492,
+   "w": 376.5,
+   "h": 65.5,
+   "png_scale": 1,
+   "anim": {
+    "type": "drift",
+    "amp": 14,
+    "period": 11,
+    "alpha": 0.7
+   }
+  },
+  {
+   "z": 85,
+   "id": "back",
+   "file": "back.png",
+   "x": 137.0,
+   "y": 0.0,
+   "w": 889.0,
+   "h": 669.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "static"
+   }
+  },
+  {
+   "z": 86,
+   "id": "title-loose1",
+   "file": "../common/sprites/title-loose1.png",
+   "x": 468,
+   "y": 14,
+   "w": 36,
+   "h": 48,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 477.1,
+    "py": 20.3,
+    "amp": 4.2,
+    "period": 3.1,
+    "phase": 0.14,
+    "bias": -1.2
+   }
+  },
+  {
+   "z": 87,
+   "id": "title-loose2",
+   "file": "sprites/title-loose2.png",
+   "x": 610,
+   "y": 14,
+   "w": 41,
+   "h": 51,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 637.4,
+    "py": 22.4,
+    "amp": 2.4,
+    "period": 4.3,
+    "phase": 0.71,
+    "bias": -1.2
+   }
+  },
+  {
+   "z": 88,
+   "id": "title-two",
+   "file": "../common/sprites/title-two.png",
+   "x": 706,
+   "y": 63,
+   "w": 36,
+   "h": 49,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 722,
+    "py": 68.1,
+    "amp": 3.6,
+    "period": 3.7,
+    "phase": 0.4,
+    "bias": -1.6
+   }
+  },
+  {
+   "z": 89,
+   "id": "jib-lantern",
+   "file": "../common/sprites/jib-lantern.png",
+   "x": 989,
+   "y": 80,
+   "w": 30,
+   "h": 30,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 1004,
+    "py": 84,
+    "amp": 5,
+    "period": 2.9,
+    "phase": 0.6,
+    "bias": -2
+   }
+  },
+  {
+   "z": 90,
+   "id": "anchor",
+   "file": "../common/sprites/anchor.png",
+   "x": 933,
+   "y": 665,
+   "w": 26,
+   "h": 48,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 946,
+    "py": 668,
+    "amp": 2.6,
+    "period": 5.2,
+    "phase": 0.1,
+    "bias": -2.2
+   }
+  },
+  {
+   "z": 91,
+   "id": "far-birds",
+   "file": "sprites/far-birds.png",
+   "x": 22.0,
+   "y": 47.0,
+   "w": 53.0,
+   "h": 26.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 50,
+    "py": 640,
+    "amp": 0.8,
+    "period": 17,
+    "phase": 0
+   }
+  },
+  {
+   "z": 92,
+   "id": "machine",
+   "file": "machine.png",
+   "x": 56.0,
+   "y": 74.0,
+   "w": 927.0,
+   "h": 629.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "static"
+   }
+  },
+  {
+   "z": 93,
+   "id": "win-v1",
+   "file": "sprites/win-v1.png",
+   "x": 715,
+   "y": 61,
+   "w": 209,
+   "h": 32,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "candle",
+    "min": 0.72,
+    "max": 1.0,
+    "period": 3.7
+   }
+  },
+  {
+   "z": 94,
+   "id": "win-v2",
+   "file": "sprites/win-v2.png",
+   "x": 746,
+   "y": 68,
+   "w": 209,
+   "h": 25,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "candle",
+    "min": 0.72,
+    "max": 1.0,
+    "period": 4.9
+   }
+  },
+  {
+   "z": 95,
+   "id": "win-v3",
+   "file": "sprites/win-v3.png",
+   "x": 777,
+   "y": 71,
+   "w": 210,
+   "h": 23,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "candle",
+    "min": 0.74,
+    "max": 1.0,
+    "period": 4.3
+   }
+  },
+  {
+   "z": 96,
+   "id": "title-glow",
+   "file": "../common/sprites/title-glow.png",
+   "x": 376,
+   "y": 0,
+   "w": 346,
+   "h": 108,
+   "png_scale": 2,
+   "anim": {
+    "type": "flare",
+    "source": "title",
+    "gain": 1,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 97,
+   "id": "hem-plate0",
+   "file": "sprites/hem-plate0.png",
+   "x": 125.0,
+   "y": 680.0,
+   "w": 20.0,
+   "h": 35.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 134,
+    "py": 680.3,
+    "amp": 3.2,
+    "period": 5.33,
+    "phase": 0.46,
+    "bias": -2
+   }
+  },
+  {
+   "z": 98,
+   "id": "hem-chain1",
+   "file": "sprites/hem-chain1.png",
+   "x": 148.0,
+   "y": 685.0,
+   "w": 12.0,
+   "h": 31.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 150,
+    "py": 684.5,
+    "amp": 6.7,
+    "period": 3.05,
+    "phase": 0.4,
+    "bias": -2
+   }
+  },
+  {
+   "z": 99,
+   "id": "hem-rag2",
+   "file": "sprites/hem-rag2.png",
+   "x": 116.0,
+   "y": 679.0,
+   "w": 16.0,
+   "h": 38.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 124,
+    "py": 681.2,
+    "amp": 7.1,
+    "period": 2.74,
+    "phase": 0.11,
+    "bias": -2
+   }
+  },
+  {
+   "z": 100,
+   "id": "hem-rag3",
+   "file": "sprites/hem-rag3.png",
+   "x": 890.0,
+   "y": 684.0,
+   "w": 11.0,
+   "h": 30.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 896,
+    "py": 685,
+    "amp": 7.3,
+    "period": 2.54,
+    "phase": 0.83,
+    "bias": -2
+   }
+  },
+  {
+   "z": 101,
+   "id": "hem-plate4",
+   "file": "sprites/hem-plate4.png",
+   "x": 898.0,
+   "y": 688.0,
+   "w": 21.0,
+   "h": 36.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 908,
+    "py": 688.6,
+    "amp": 2.2,
+    "period": 4.76,
+    "phase": 0.83,
+    "bias": -2
+   }
+  },
+  {
+   "z": 102,
+   "id": "hem-chain5",
+   "file": "sprites/hem-chain5.png",
+   "x": 882.0,
+   "y": 683.0,
+   "w": 13.0,
+   "h": 42.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 884,
+    "py": 683.1,
+    "amp": 4.6,
+    "period": 4.42,
+    "phase": 0.69,
+    "bias": -2
+   }
+  },
+  {
+   "z": 103,
+   "id": "hem-chain6",
+   "file": "sprites/hem-chain6.png",
+   "x": 201.0,
+   "y": 686.0,
+   "w": 9.0,
+   "h": 40.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 206,
+    "py": 686.3,
+    "amp": 5.6,
+    "period": 3.37,
+    "phase": 0.13,
+    "bias": -2
+   }
+  },
+  {
+   "z": 104,
+   "id": "hem-rag7",
+   "file": "sprites/hem-rag7.png",
+   "x": 285.0,
+   "y": 681.0,
+   "w": 14.0,
+   "h": 27.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 292,
+    "py": 682.2,
+    "amp": 6.2,
+    "period": 3.45,
+    "phase": 0.55,
+    "bias": -2
+   }
+  },
+  {
+   "z": 105,
+   "id": "hem-chain8",
+   "file": "sprites/hem-chain8.png",
+   "x": 394.0,
+   "y": 679.0,
+   "w": 8.0,
+   "h": 42.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 398,
+    "py": 679.4,
+    "amp": 4.1,
+    "period": 3.81,
+    "phase": 0.95,
+    "bias": -2
+   }
+  },
+  {
+   "z": 106,
+   "id": "hem-plate9",
+   "file": "sprites/hem-plate9.png",
+   "x": 501.0,
+   "y": 681.0,
+   "w": 23.0,
+   "h": 32.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 512,
+    "py": 681.7,
+    "amp": 2.9,
+    "period": 6.37,
+    "phase": 0.44,
+    "bias": -2
+   }
+  },
+  {
+   "z": 107,
+   "id": "hem-chain10",
+   "file": "sprites/hem-chain10.png",
+   "x": 636.0,
+   "y": 687.0,
+   "w": 9.0,
+   "h": 36.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 640,
+    "py": 687.7,
+    "amp": 4.7,
+    "period": 3.52,
+    "phase": 0.29,
+    "bias": -2
+   }
+  },
+  {
+   "z": 108,
+   "id": "hem-rag11",
+   "file": "sprites/hem-rag11.png",
+   "x": 737.0,
+   "y": 685.0,
+   "w": 10.0,
+   "h": 39.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 742,
+    "py": 685.8,
+    "amp": 5.4,
+    "period": 3.1,
+    "phase": 0.67,
+    "bias": -2
+   }
+  },
+  {
+   "z": 109,
+   "id": "hem-chain12",
+   "file": "sprites/hem-chain12.png",
+   "x": 816.0,
+   "y": 682.0,
+   "w": 8.0,
+   "h": 40.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 820,
+    "py": 682.3,
+    "amp": 4.2,
+    "period": 4.4,
+    "phase": 0.46,
+    "bias": -2
+   }
+  },
+  {
+   "z": 110,
+   "id": "hem-rag13",
+   "file": "sprites/hem-rag13.png",
+   "x": 169.0,
+   "y": 685.0,
+   "w": 15.0,
+   "h": 44.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 176,
+    "py": 687.3,
+    "amp": 7.1,
+    "period": 2.79,
+    "phase": 0.24,
+    "bias": -2
+   }
+  },
+  {
+   "z": 111,
+   "id": "hem-plate14",
+   "file": "../common/sprites/hem-plate14.png",
+   "x": 332,
+   "y": 682,
+   "w": 32,
+   "h": 38,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 348,
+    "py": 684.1,
+    "amp": 2.6,
+    "period": 5.57,
+    "phase": 0.25,
+    "bias": -2
+   }
+  },
+  {
+   "z": 112,
+   "id": "hem-rag15",
+   "file": "sprites/hem-rag15.png",
+   "x": 457.0,
+   "y": 683.0,
+   "w": 11.0,
+   "h": 38.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 462,
+    "py": 684.7,
+    "amp": 6.1,
+    "period": 2.72,
+    "phase": 0.04,
+    "bias": -2
+   }
+  },
+  {
+   "z": 113,
+   "id": "hem-chain16",
+   "file": "sprites/hem-chain16.png",
+   "x": 580.0,
+   "y": 685.0,
+   "w": 9.0,
+   "h": 33.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 584,
+    "py": 685,
+    "amp": 5.2,
+    "period": 4.33,
+    "phase": 0.4,
+    "bias": -2
+   }
+  },
+  {
+   "z": 114,
+   "id": "hem-plate17",
+   "file": "sprites/hem-plate17.png",
+   "x": 689.0,
+   "y": 682.0,
+   "w": 25.0,
+   "h": 39.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 700,
+    "py": 683.1,
+    "amp": 3,
+    "period": 5.61,
+    "phase": 0.51,
+    "bias": -2
+   }
+  },
+  {
+   "z": 115,
+   "id": "hem-rag18",
+   "file": "sprites/hem-rag18.png",
+   "x": 854.0,
+   "y": 683.0,
+   "w": 11.0,
+   "h": 39.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 860,
+    "py": 684.1,
+    "amp": 7.2,
+    "period": 3.05,
+    "phase": 0.42,
+    "bias": -2
+   }
+  },
+  {
+   "z": 116,
+   "id": "boom-pennant",
+   "file": "sprites/boom-pennant.png",
+   "x": 1005,
+   "y": 63,
+   "w": 35,
+   "h": 29,
+   "png_scale": 2,
+   "anim": {
+    "type": "frames",
+    "frames": 8,
+    "period": 0.9
+   },
+   "frames": 8
+  },
+  {
+   "z": 117,
+   "id": "ui",
+   "type": "controls"
+  },
+  {
+   "z": 118,
+   "id": "lip",
+   "file": "../common/lip.png",
+   "x": 123.0,
+   "y": 612.0,
+   "w": 853.0,
+   "h": 23.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "static"
+   }
+  },
+  {
+   "z": 119,
+   "id": "roll",
+   "file": "../common/roll.png",
+   "x": 126.0,
+   "y": 506.0,
+   "w": 798.0,
+   "h": 190.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "static"
+   },
+   "hidden": true
+  },
+  {
+   "z": 120,
+   "id": "ghost-lit",
+   "file": "sprites/ghost-lit.png",
+   "x": 107.0,
+   "y": 529.0,
+   "w": 826.0,
+   "h": 108.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "strike",
+    "gain": 1,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 121,
+   "id": "town-lit",
+   "file": "sprites/town-lit.png",
+   "x": 690,
+   "y": 356,
+   "w": 350,
+   "h": 190,
+   "png_scale": 2,
+   "anim": {
+    "type": "strike",
+    "gain": 0.9,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 122,
+   "id": "g-ghost-lit",
+   "file": "sprites/g-ghost-lit.png",
+   "x": 52.0,
+   "y": 22.0,
+   "w": 334.0,
+   "h": 504.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "strike",
+    "gain": 0.42,
+    "blend": "add"
+   },
+   "grp": "ghost"
+  },
+  {
+   "z": 123,
+   "id": "emitters",
+   "type": "emitters"
+  }
+ ],
+ "emitters": [
+  {
+   "id": "t-stack0",
+   "x": 914.8,
+   "y": 270.4,
+   "kind": "smoke",
+   "size": 1.48,
+   "dx": 0.6,
+   "dy": -1.0,
+   "rate": 0.8,
+   "parent": "bob",
+   "pole": 0,
+   "grp": "town"
+  },
+  {
+   "id": "t-stack1",
+   "x": 925.1,
+   "y": 214.4,
+   "kind": "black",
+   "size": 1.6,
+   "dx": 0.6,
+   "dy": -1.0,
+   "rate": 0.8,
+   "parent": "bob",
+   "pole": 1,
+   "grp": "town"
+  },
+  {
+   "id": "t-stack2",
+   "x": 933.2,
+   "y": 258.8,
+   "kind": "smoke",
+   "size": 1.52,
+   "dx": 0.6,
+   "dy": -1.0,
+   "rate": 0.8,
+   "parent": "bob",
+   "pole": 2,
+   "grp": "town"
+  },
+  {
+   "id": "t-stack3",
+   "x": 944.5,
+   "y": 198.4,
+   "kind": "smoke",
+   "size": 1.64,
+   "dx": 0.6,
+   "dy": -1.0,
+   "rate": 0.8,
+   "parent": "bob",
+   "pole": 3,
+   "grp": "town"
+  },
+  {
+   "id": "t-stack4",
+   "x": 953.5,
+   "y": 264.8,
+   "kind": "black",
+   "size": 1.56,
+   "dx": 0.6,
+   "dy": -1.0,
+   "rate": 0.8,
+   "parent": "bob",
+   "pole": 4,
+   "grp": "town"
+  },
+  {
+   "id": "t-stack5",
+   "x": 965.9,
+   "y": 232.8,
+   "kind": "smoke",
+   "size": 1.68,
+   "dx": 0.6,
+   "dy": -1.0,
+   "rate": 0.8,
+   "parent": "bob",
+   "pole": 5,
+   "grp": "town"
+  },
+  {
+   "id": "t-stack6",
+   "x": 904.0,
+   "y": 304.0,
+   "kind": "smoke",
+   "size": 1.4,
+   "dx": 0.6,
+   "dy": -1.0,
+   "rate": 0.8,
+   "parent": "bob",
+   "pole": 6,
+   "grp": "town"
+  },
+  {
+   "id": "t-stack7",
+   "x": 973.7,
+   "y": 286.4,
+   "kind": "black",
+   "size": 1.44,
+   "dx": 0.6,
+   "dy": -1.0,
+   "rate": 0.8,
+   "parent": "bob",
+   "pole": 7,
+   "grp": "town"
+  },
+  {
+   "id": "chim-fx-h1",
+   "x": 833.4,
+   "y": 267.0,
+   "kind": "smoke",
+   "size": 0.64,
+   "dx": 1.0,
+   "dy": -0.8,
+   "rate": 0.8,
+   "parent": "bob"
+  },
+  {
+   "id": "chim-fx-h3",
+   "x": 779.8,
+   "y": 276.9,
+   "kind": "smoke",
+   "size": 0.64,
+   "dx": 1.0,
+   "dy": -0.8,
+   "rate": 0.8,
+   "parent": "bob"
+  },
+  {
+   "id": "chim-fx-h7",
+   "x": 719.8,
+   "y": 336.6,
+   "kind": "smoke",
+   "size": 0.64,
+   "dx": 1.0,
+   "dy": -0.8,
+   "rate": 0.8,
+   "parent": "bob"
+  },
+  {
+   "id": "t-chim",
+   "x": 837.2,
+   "y": 273.6,
+   "kind": "smoke",
+   "size": 0.64,
+   "dx": 1.0,
+   "dy": -0.8,
+   "rate": 0.7,
+   "parent": "bob",
+   "grp": "town"
+  },
+  {
+   "id": "t-vent708",
+   "x": 705,
+   "y": 486,
+   "kind": "steam",
+   "size": 0.9,
+   "dx": -0.8,
+   "dy": -0.5,
+   "rate": 0.7,
+   "parent": "bob",
+   "grp": "town"
+  },
+  {
+   "id": "t-vent722",
+   "x": 719,
+   "y": 512,
+   "kind": "steam",
+   "size": 0.9,
+   "dx": -0.8,
+   "dy": -0.5,
+   "rate": 0.7,
+   "parent": "bob",
+   "grp": "town"
+  },
+  {
+   "id": "stream0",
+   "x": 932,
+   "y": 541,
+   "kind": "stream",
+   "size": 1.0,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "stream1",
+   "x": 922,
+   "y": 566,
+   "kind": "stream",
+   "size": 1.3,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "stream2",
+   "x": 920,
+   "y": 630,
+   "kind": "stream",
+   "size": 1.6,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "stream3",
+   "x": 840,
+   "y": 696,
+   "kind": "stream",
+   "size": 1.0,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "stream4",
+   "x": 610,
+   "y": 698,
+   "kind": "stream",
+   "size": 1.3,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "stream5",
+   "x": 380,
+   "y": 696,
+   "kind": "stream",
+   "size": 1.6,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "stream6",
+   "x": 160,
+   "y": 696,
+   "kind": "stream",
+   "size": 1.0,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "stream7",
+   "x": 700,
+   "y": 120,
+   "kind": "stream",
+   "size": 1.3,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "g-skirt0",
+   "x": 86.1,
+   "y": 486.9,
+   "kind": "steam",
+   "size": 1.6,
+   "dx": -1.3,
+   "dy": 0.1,
+   "rate": 0.9,
+   "grp": "ghost"
+  },
+  {
+   "id": "g-skirt1",
+   "x": 126.0,
+   "y": 490.9,
+   "kind": "steam",
+   "size": 1.47,
+   "dx": -0.8,
+   "dy": 0.1,
+   "rate": 0.9,
+   "grp": "ghost"
+  },
+  {
+   "id": "g-skirt2",
+   "x": 172.6,
+   "y": 494.9,
+   "kind": "steam",
+   "size": 1.6,
+   "dx": -0.4,
+   "dy": 0.1,
+   "rate": 0.9,
+   "grp": "ghost"
+  },
+  {
+   "id": "g-skirt3",
+   "x": 218.6,
+   "y": 486.9,
+   "kind": "steam",
+   "size": 1.67,
+   "dx": 0.2,
+   "dy": 0.1,
+   "rate": 0.9,
+   "grp": "ghost"
+  },
+  {
+   "id": "g-skirt4",
+   "x": 265.9,
+   "y": 490.9,
+   "kind": "steam",
+   "size": 1.53,
+   "dx": 0.5,
+   "dy": 0.1,
+   "rate": 0.9,
+   "grp": "ghost"
+  },
+  {
+   "id": "g-skirt5",
+   "x": 312.5,
+   "y": 494.9,
+   "kind": "steam",
+   "size": 1.6,
+   "dx": 0.9,
+   "dy": 0.1,
+   "rate": 0.9,
+   "grp": "ghost"
+  },
+  {
+   "id": "g-skirt6",
+   "x": 352.5,
+   "y": 486.9,
+   "kind": "steam",
+   "size": 1.67,
+   "dx": 1.3,
+   "dy": 0.1,
+   "rate": 0.9,
+   "grp": "ghost"
+  },
+  {
+   "id": "g-skirt7",
+   "x": 64.8,
+   "y": 490.9,
+   "kind": "steam",
+   "size": 1.33,
+   "dx": -1.6,
+   "dy": 0.1,
+   "rate": 0.9,
+   "grp": "ghost"
+  },
+  {
+   "id": "g-skirt8",
+   "x": 375.1,
+   "y": 494.9,
+   "kind": "steam",
+   "size": 1.33,
+   "dx": 1.6,
+   "dy": 0.1,
+   "rate": 0.9,
+   "grp": "ghost"
+  },
+  {
+   "id": "g-stack-p2",
+   "x": 366.6,
+   "y": 139.2,
+   "kind": "black",
+   "size": 1.27,
+   "dx": 1.0,
+   "dy": -0.6,
+   "rate": 1.0,
+   "grp": "ghost",
+   "source": "fxin"
+  },
+  {
+   "id": "g-stack-p4",
+   "x": 389.8,
+   "y": 148.5,
+   "kind": "black",
+   "size": 1.0,
+   "dx": 1.0,
+   "dy": -0.7,
+   "rate": 0.9,
+   "grp": "ghost",
+   "source": "fxin"
+  },
+  {
+   "id": "g-stack-p6",
+   "x": 344.1,
+   "y": 175.2,
+   "kind": "smoke",
+   "size": 0.8,
+   "dx": 1.0,
+   "dy": -0.7,
+   "rate": 0.8,
+   "grp": "ghost",
+   "source": "fxin"
+  },
+  {
+   "id": "g-stack-p3",
+   "x": 377.8,
+   "y": 168.5,
+   "kind": "steam",
+   "size": 0.67,
+   "dx": 0.9,
+   "dy": -0.6,
+   "rate": 0.7,
+   "grp": "ghost",
+   "source": "fxin"
+  },
+  {
+   "id": "g-mouth-breath",
+   "x": 180.6,
+   "y": 299.1,
+   "kind": "breath",
+   "size": 1.0,
+   "dx": -0.7,
+   "dy": -0.25,
+   "rate": 1.0,
+   "grp": "ghost"
+  },
+  {
+   "id": "g-valve-drip",
+   "x": 288.5,
+   "y": 240.4,
+   "kind": "drip",
+   "size": 0.47,
+   "dx": 0.0,
+   "dy": 1.0,
+   "rate": 0.7,
+   "grp": "ghost"
+  },
+  {
+   "id": "g-cheek-vent",
+   "x": 300.5,
+   "y": 260.4,
+   "kind": "steam",
+   "size": 0.6,
+   "dx": 0.9,
+   "dy": -0.7,
+   "rate": 0.6,
+   "grp": "ghost"
+  },
+  {
+   "id": "g-chim-c2",
+   "x": 273.7,
+   "y": 19.0,
+   "kind": "smoke",
+   "size": 0.53,
+   "dx": 1.0,
+   "dy": -0.8,
+   "rate": 0.8,
+   "grp": "ghost"
+  },
+  {
+   "id": "g-chim-c2",
+   "x": 275.4,
+   "y": 20.7,
+   "kind": "smoke",
+   "size": 0.33,
+   "dx": 0.9,
+   "dy": -0.6,
+   "rate": 0.5,
+   "grp": "ghost"
+  },
+  {
+   "id": "g-chim-s2",
+   "x": 308.6,
+   "y": 147.1,
+   "kind": "smoke",
+   "size": 0.53,
+   "dx": 1.0,
+   "dy": -0.8,
+   "rate": 0.8,
+   "grp": "ghost"
+  },
+  {
+   "id": "g-chim-s2",
+   "x": 310.9,
+   "y": 151.2,
+   "kind": "smoke",
+   "size": 0.33,
+   "dx": 0.9,
+   "dy": -0.6,
+   "rate": 0.5,
+   "grp": "ghost"
+  },
+  {
+   "id": "g-chim-s5",
+   "x": 332.7,
+   "y": 236.7,
+   "kind": "smoke",
+   "size": 0.53,
+   "dx": 1.0,
+   "dy": -0.8,
+   "rate": 0.8,
+   "grp": "ghost"
+  },
+  {
+   "id": "g-chim-s5",
+   "x": 335.4,
+   "y": 240.4,
+   "kind": "smoke",
+   "size": 0.33,
+   "dx": 0.9,
+   "dy": -0.6,
+   "rate": 0.5,
+   "grp": "ghost"
+  },
+  {
+   "id": "g-leak0",
+   "x": 265.4,
+   "y": 344.0,
+   "kind": "steam",
+   "size": 0.33,
+   "dx": -0.8,
+   "dy": -0.8,
+   "rate": 0.4,
+   "grp": "ghost"
+  },
+  {
+   "id": "g-hem-pipe-drip",
+   "x": 134.5,
+   "y": 476.1,
+   "kind": "drip",
+   "size": 0.47,
+   "dx": 0.0,
+   "dy": 1.0,
+   "rate": 0.6,
+   "grp": "ghost"
+  }
+ ],
+ "stories": [
+  {
+   "id": "boom-pennant",
+   "what": "a torn pennant streaming from the tip of the jib (8 frames)",
+   "at": [
+    1020,
+    76
+   ]
+  },
+  {
+   "id": "anchor",
+   "what": "an anchor on a chain off the lee corner of the hem (sprite anchor)",
+   "at": [
+    946,
+    700
+   ]
+  },
+  {
+   "id": "far-birds",
+   "what": "five far-off birds keeping pace in the upper left sky (sprite far-birds drifts a few px)",
+   "at": [
+    48,
+    58
+   ]
+  }
+ ],
+ "hull": [
+  [
+   126,
+   690
+  ],
+  [
+   120,
+   650
+  ],
+  [
+   118,
+   604
+  ],
+  [
+   119,
+   566
+  ],
+  [
+   111,
+   553
+  ],
+  [
+   108,
+   541
+  ],
+  [
+   117,
+   533
+  ],
+  [
+   150,
+   530
+  ],
+  [
+   330,
+   532
+  ],
+  [
+   520,
+   531
+  ],
+  [
+   720,
+   532
+  ],
+  [
+   890,
+   530
+  ],
+  [
+   923,
+   533
+  ],
+  [
+   932,
+   541
+  ],
+  [
+   929,
+   553
+  ],
+  [
+   922,
+   566
+  ],
+  [
+   922,
+   604
+  ],
+  [
+   920,
+   650
+  ],
+  [
+   914,
+   690
+  ]
+ ],
+ "ui_extra": [
+  {
+   "name": "sign-fx",
+   "file": "../../fx/ui/sign-fx.png",
+   "w": 56,
+   "h": 51,
+   "pivot": [
+    28.0,
+    0
+   ],
+   "state": "off",
+   "group": "sign-fx",
+   "label": [
+    4,
+    20,
+    48,
+    26.6
+   ],
+   "use": "Hanging page sign FX (unlit), on two longer chains: it hangs from the boom (pivot = top centre, 17 px above its rect), above the rail of the other three."
+  },
+  {
+   "name": "sign-fx-lit",
+   "file": "../../fx/ui/sign-fx-lit.png",
+   "w": 56,
+   "h": 51,
+   "pivot": [
+    28.0,
+    0
+   ],
+   "state": "lit",
+   "group": "sign-fx",
+   "label": [
+    4,
+    20,
+    48,
+    26.6
+   ],
+   "use": "Hanging page sign FX (selected: lit), on two longer chains: it hangs from the boom (pivot = top centre, 17 px above its rect), above the rail of the other three."
+  }
+ ]
+}

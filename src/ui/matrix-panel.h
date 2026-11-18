@@ -1,0 +1,67 @@
+/*
+ * Six Sines
+ *
+ * A synth with audio rate modulation.
+ *
+ * Copyright 2024-2025, Paul Walker and Various authors, as described in the github
+ * transaction log.
+ *
+ * This source repo is released under the MIT license, but has
+ * GPL3 dependencies, as such the combined work will be
+ * released under GPL3.
+ *
+ * The source code and license are at https://github.com/baconpaul/six-sines
+ */
+
+#ifndef BACONPAUL_SIX_SINES_UI_MATRIX_PANEL_H
+#define BACONPAUL_SIX_SINES_UI_MATRIX_PANEL_H
+
+#include <sst/jucegui/components/Label.h>
+#include <sst/jucegui/components/ToggleButton.h>
+#include <sst/jucegui/components/MultiSwitch.h>
+#include <sst/jucegui/components/TextPushButton.h>
+#include "six-sines-editor.h"
+#include "patch-data-bindings.h"
+
+namespace baconpaul::six_sines::ui
+{
+struct MatrixPanel : jcmp::NamedPanel, HasEditor
+{
+    MatrixPanel(SixSinesEditor &);
+    ~MatrixPanel();
+
+    void resized() override;
+    void paint(juce::Graphics &g) override;
+
+    void beginEdit(size_t, bool);
+
+    void mouseDown(const juce::MouseEvent &e) override;
+    juce::Rectangle<int> rectangleFor(int idx, bool self);
+
+    std::unique_ptr<juce::Component> highlight;
+    void clearHighlight()
+    {
+        if (highlight)
+            highlight->setVisible(false);
+    }
+
+    std::array<std::unique_ptr<jcmp::Knob>, numOps> Sknobs;
+    std::array<std::unique_ptr<PatchContinuous::cubic_t>, numOps> SknobsData;
+    std::array<std::unique_ptr<jcmp::ToggleButton>, numOps> Spower;
+    std::array<std::unique_ptr<PatchDiscrete>, numOps> SpowerData;
+    std::array<std::unique_ptr<jcmp::Label>, numOps> Slabels;
+
+    std::array<std::unique_ptr<jcmp::Knob>, matrixSize> Mknobs;
+    std::array<std::unique_ptr<PatchContinuous::cubic_t>, matrixSize> MknobsData;
+    std::array<std::unique_ptr<jcmp::ToggleButton>, matrixSize> Mpower;
+    std::array<std::unique_ptr<PatchDiscrete>, matrixSize> MpowerData;
+    std::array<std::unique_ptr<jcmp::TextPushButton>, matrixSize> MmodMode;
+    std::array<std::unique_ptr<PatchDiscrete>, matrixSize> MpmrmD;
+    std::array<std::unique_ptr<jcmp::Label>, matrixSize> Mlabels;
+
+    void setModModeDisplay(int);
+    void showModModeMenu(int);
+    void updateSelfKnobState(int idx);
+};
+} // namespace baconpaul::six_sines::ui
+#endif // MAIN_PANEL_H

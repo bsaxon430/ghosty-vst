@@ -1,0 +1,2232 @@
+{
+ "about": "Poltergeist 2 ghost-machine, page \"ghosts\". Simple path: draw background.png (the whole static picture, world included) and the sprites over it. Parallax path: draw common world layers, then \"layers\" here in z order (back.png, the sprites that stand behind the hull, machine.png, ...). All x/y/w/h are canvas px (1040x744); PNG pixels are 2x.",
+ "page": "ghosts",
+ "canvas": {
+  "w": 1040,
+  "h": 744,
+  "png_scale": 2
+ },
+ "background": "background.png",
+ "layers": [
+  {
+   "z": 0,
+   "id": "back",
+   "file": "back.png",
+   "x": 24.0,
+   "y": 0.0,
+   "w": 1002.0,
+   "h": 669.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "static"
+   }
+  },
+  {
+   "z": 1,
+   "id": "stack-p1",
+   "file": "sprites/stack-p1.png",
+   "x": 156,
+   "y": 70,
+   "w": 34,
+   "h": 132,
+   "png_scale": 2,
+   "anim": {
+    "type": "pump",
+    "travel": 8,
+    "period": 1.9,
+    "phase": 0,
+    "op": 0
+   }
+  },
+  {
+   "z": 2,
+   "id": "stack-p2",
+   "file": "sprites/stack-p2.png",
+   "x": 182,
+   "y": 34,
+   "w": 38,
+   "h": 167,
+   "png_scale": 2,
+   "anim": {
+    "type": "pump",
+    "travel": 12,
+    "period": 1.9,
+    "phase": 0.17,
+    "op": 1
+   }
+  },
+  {
+   "z": 3,
+   "id": "stack-p3",
+   "file": "sprites/stack-p3.png",
+   "x": 213,
+   "y": 58,
+   "w": 34,
+   "h": 142,
+   "png_scale": 2,
+   "anim": {
+    "type": "pump",
+    "travel": 9,
+    "period": 1.9,
+    "phase": 0.33,
+    "op": 2
+   }
+  },
+  {
+   "z": 4,
+   "id": "stack-p4",
+   "file": "sprites/stack-p4.png",
+   "x": 239,
+   "y": 14,
+   "w": 40,
+   "h": 186,
+   "png_scale": 2,
+   "anim": {
+    "type": "pump",
+    "travel": 13,
+    "period": 1.9,
+    "phase": 0.5,
+    "op": 3
+   }
+  },
+  {
+   "z": 5,
+   "id": "stack-p5",
+   "file": "sprites/stack-p5.png",
+   "x": 271,
+   "y": 46,
+   "w": 36,
+   "h": 154,
+   "png_scale": 2,
+   "anim": {
+    "type": "pump",
+    "travel": 10,
+    "period": 1.9,
+    "phase": 0.67,
+    "op": 4
+   }
+  },
+  {
+   "z": 6,
+   "id": "stack-p6",
+   "file": "sprites/stack-p6.png",
+   "x": 302,
+   "y": 28,
+   "w": 32,
+   "h": 173,
+   "png_scale": 2,
+   "anim": {
+    "type": "pump",
+    "travel": 8,
+    "period": 1.9,
+    "phase": 0.83,
+    "op": 5
+   }
+  },
+  {
+   "z": 7,
+   "id": "title-loose1",
+   "file": "../common/sprites/title-loose1.png",
+   "x": 468,
+   "y": 14,
+   "w": 36,
+   "h": 48,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 477.1,
+    "py": 20.3,
+    "amp": 4.2,
+    "period": 3.1,
+    "phase": 0.14,
+    "bias": -1.2
+   }
+  },
+  {
+   "z": 8,
+   "id": "title-loose2",
+   "file": "../common/sprites/title-loose2.png",
+   "x": 610,
+   "y": 14,
+   "w": 41,
+   "h": 51,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 637.4,
+    "py": 22.4,
+    "amp": 2.4,
+    "period": 4.3,
+    "phase": 0.71,
+    "bias": -1.2
+   }
+  },
+  {
+   "z": 9,
+   "id": "title-two",
+   "file": "../common/sprites/title-two.png",
+   "x": 706,
+   "y": 63,
+   "w": 36,
+   "h": 49,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 722,
+    "py": 68.1,
+    "amp": 3.6,
+    "period": 3.7,
+    "phase": 0.4,
+    "bias": -1.6
+   }
+  },
+  {
+   "z": 10,
+   "id": "jib-lantern",
+   "file": "../common/sprites/jib-lantern.png",
+   "x": 989,
+   "y": 80,
+   "w": 30,
+   "h": 30,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 1004,
+    "py": 84,
+    "amp": 5,
+    "period": 2.9,
+    "phase": 0.6,
+    "bias": -2
+   }
+  },
+  {
+   "z": 11,
+   "id": "anchor",
+   "file": "../common/sprites/anchor.png",
+   "x": 933,
+   "y": 665,
+   "w": 26,
+   "h": 48,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 946,
+    "py": 668,
+    "amp": 2.6,
+    "period": 5.2,
+    "phase": 0.1,
+    "bias": -2.2
+   }
+  },
+  {
+   "z": 12,
+   "id": "far-birds",
+   "file": "../common/sprites/far-birds.png",
+   "x": 16,
+   "y": 40,
+   "w": 66,
+   "h": 40,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 50,
+    "py": 640,
+    "amp": 0.8,
+    "period": 17,
+    "phase": 0
+   }
+  },
+  {
+   "z": 13,
+   "id": "cat-tail",
+   "file": "sprites/cat-tail.png",
+   "x": 76,
+   "y": 189,
+   "w": 21,
+   "h": 17,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 82,
+    "py": 194,
+    "amp": 9,
+    "period": 3.4,
+    "phase": 0.2
+   }
+  },
+  {
+   "z": 14,
+   "id": "bird-top",
+   "file": "sprites/bird-top.png",
+   "x": 38,
+   "y": 297,
+   "w": 18,
+   "h": 13,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 46.4,
+    "py": 307.4,
+    "amp": 7,
+    "period": 1.7,
+    "phase": 0.1
+   }
+  },
+  {
+   "z": 15,
+   "id": "wind-wheel",
+   "file": "sprites/wind-wheel.png",
+   "x": 100,
+   "y": 106,
+   "w": 32,
+   "h": 32,
+   "png_scale": 2,
+   "anim": {
+    "type": "rotate",
+    "cx": 116,
+    "cy": 122,
+    "period": 3.4,
+    "dir": 1,
+    "group": "wind"
+   }
+  },
+  {
+   "z": 16,
+   "id": "bucket",
+   "file": "sprites/bucket.png",
+   "x": 31,
+   "y": 311,
+   "w": 18,
+   "h": 64,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 40,
+    "py": 313,
+    "amp": 3.4,
+    "period": 4.3,
+    "phase": 0.5,
+    "bias": -2.5
+   }
+  },
+  {
+   "z": 17,
+   "id": "machine",
+   "file": "machine.png",
+   "x": 46.0,
+   "y": 48.0,
+   "w": 948.0,
+   "h": 655.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "static"
+   }
+  },
+  {
+   "z": 18,
+   "id": "gear-jaw1",
+   "file": "../common/sprites/gear-jaw1.png",
+   "x": 487,
+   "y": 223,
+   "w": 30,
+   "h": 30,
+   "png_scale": 2,
+   "anim": {
+    "type": "rotate",
+    "cx": 502,
+    "cy": 238,
+    "period": 3.2,
+    "dir": 1,
+    "teeth": 10,
+    "crank": true,
+    "crank_r": 6.5,
+    "group": "jaw"
+   }
+  },
+  {
+   "z": 19,
+   "id": "gear-jaw2",
+   "file": "sprites/gear-jaw2.png",
+   "x": 478,
+   "y": 215,
+   "w": 21,
+   "h": 21,
+   "png_scale": 2,
+   "anim": {
+    "type": "rotate",
+    "cx": 488.5,
+    "cy": 225.5,
+    "period": 1.92,
+    "dir": -1,
+    "teeth": 6,
+    "group": "jaw"
+   }
+  },
+  {
+   "z": 20,
+   "id": "gear-flank1",
+   "file": "sprites/gear-flank1.png",
+   "x": 67,
+   "y": 523,
+   "w": 30,
+   "h": 30,
+   "png_scale": 2,
+   "anim": {
+    "type": "rotate",
+    "cx": 82,
+    "cy": 538,
+    "period": 5.4,
+    "dir": 1,
+    "teeth": 12,
+    "group": "flank"
+   }
+  },
+  {
+   "z": 21,
+   "id": "gear-flank2",
+   "file": "sprites/gear-flank2.png",
+   "x": 89,
+   "y": 519,
+   "w": 23,
+   "h": 23,
+   "png_scale": 2,
+   "anim": {
+    "type": "rotate",
+    "cx": 100.6,
+    "cy": 530.6,
+    "period": 3.6,
+    "dir": -1,
+    "teeth": 8,
+    "group": "flank"
+   }
+  },
+  {
+   "z": 22,
+   "id": "gear-flank3",
+   "file": "sprites/gear-flank3.png",
+   "x": 54,
+   "y": 518,
+   "w": 21,
+   "h": 20,
+   "png_scale": 2,
+   "anim": {
+    "type": "rotate",
+    "cx": 64.6,
+    "cy": 528,
+    "period": 3.15,
+    "dir": -1,
+    "teeth": 7,
+    "group": "flank"
+   }
+  },
+  {
+   "z": 23,
+   "id": "face-ghost",
+   "file": "face-ghost.png",
+   "x": 461.0,
+   "y": 217.0,
+   "w": 503.0,
+   "h": 291.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "static"
+   }
+  },
+  {
+   "z": 24,
+   "id": "face-link",
+   "file": "face-link.png",
+   "x": 461.0,
+   "y": 217.0,
+   "w": 503.0,
+   "h": 291.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "static"
+   },
+   "hidden": true
+  },
+  {
+   "z": 25,
+   "id": "storm-shade",
+   "type": "fill",
+   "note": "fill rgba(6,10,24, 0.34 * storm) clipped to the machine (or simply darken back.png + machine.png); the lights after it keep their brightness"
+  },
+  {
+   "z": 26,
+   "id": "win-eye",
+   "file": "../common/sprites/win-eye.png",
+   "x": 408,
+   "y": 100,
+   "w": 267,
+   "h": 170,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "breathe",
+    "min": 0.8,
+    "max": 1.0,
+    "period": 9.2
+   }
+  },
+  {
+   "z": 27,
+   "id": "win-lamp",
+   "file": "sprites/win-lamp.png",
+   "x": 70,
+   "y": 169,
+   "w": 904,
+   "h": 345,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "lamp",
+    "min": 0.8,
+    "max": 1.0,
+    "period": 5.9
+   }
+  },
+  {
+   "z": 28,
+   "id": "win-mouth",
+   "file": "../common/sprites/win-mouth.png",
+   "x": 519,
+   "y": 209,
+   "w": 58,
+   "h": 59,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "fire",
+    "min": 0.5,
+    "max": 1.0,
+    "period": 2.3
+   }
+  },
+  {
+   "z": 29,
+   "id": "win-v1",
+   "file": "sprites/win-v1.png",
+   "x": 63,
+   "y": 61,
+   "w": 861,
+   "h": 192,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "candle",
+    "min": 0.72,
+    "max": 1.0,
+    "period": 3.7
+   }
+  },
+  {
+   "z": 30,
+   "id": "win-v2",
+   "file": "sprites/win-v2.png",
+   "x": 70,
+   "y": 68,
+   "w": 885,
+   "h": 268,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "candle",
+    "min": 0.72,
+    "max": 1.0,
+    "period": 4.9
+   }
+  },
+  {
+   "z": 31,
+   "id": "win-v3",
+   "file": "sprites/win-v3.png",
+   "x": 128,
+   "y": 71,
+   "w": 859,
+   "h": 110,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "candle",
+    "min": 0.74,
+    "max": 1.0,
+    "period": 4.3
+   }
+  },
+  {
+   "z": 32,
+   "id": "eye-flare",
+   "file": "../common/sprites/eye-flare.png",
+   "x": 428,
+   "y": 114,
+   "w": 236,
+   "h": 130,
+   "png_scale": 2,
+   "anim": {
+    "type": "flare",
+    "source": "out",
+    "gain": 1
+   }
+  },
+  {
+   "z": 33,
+   "id": "mouth-flare",
+   "file": "../common/sprites/mouth-flare.png",
+   "x": 500,
+   "y": 186,
+   "w": 96,
+   "h": 96,
+   "png_scale": 2,
+   "anim": {
+    "type": "flare",
+    "source": "note",
+    "gain": 1
+   }
+  },
+  {
+   "z": 34,
+   "id": "mix1-glow",
+   "file": "sprites/mix1-glow.png",
+   "x": 318,
+   "y": 168,
+   "w": 70,
+   "h": 62,
+   "png_scale": 2,
+   "anim": {
+    "type": "level",
+    "op": 0,
+    "source": "heard",
+    "gain": 1,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 35,
+   "id": "mix2-glow",
+   "file": "sprites/mix2-glow.png",
+   "x": 158,
+   "y": 172,
+   "w": 42,
+   "h": 108,
+   "png_scale": 2,
+   "anim": {
+    "type": "level",
+    "op": 1,
+    "source": "heard",
+    "gain": 1,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 36,
+   "id": "mix3-glow",
+   "file": "sprites/mix3-glow.png",
+   "x": 352,
+   "y": 176,
+   "w": 68,
+   "h": 110,
+   "png_scale": 2,
+   "anim": {
+    "type": "level",
+    "op": 2,
+    "source": "heard",
+    "gain": 1,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 37,
+   "id": "mix4-glow",
+   "file": "sprites/mix4-glow.png",
+   "x": 118,
+   "y": 176,
+   "w": 82,
+   "h": 232,
+   "png_scale": 2,
+   "anim": {
+    "type": "level",
+    "op": 3,
+    "source": "heard",
+    "gain": 1,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 38,
+   "id": "mix5-glow",
+   "file": "sprites/mix5-glow.png",
+   "x": 392,
+   "y": 278,
+   "w": 85,
+   "h": 137,
+   "png_scale": 2,
+   "anim": {
+    "type": "level",
+    "op": 4,
+    "source": "heard",
+    "gain": 1,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 39,
+   "id": "mix6-glow",
+   "file": "sprites/mix6-glow.png",
+   "x": 328,
+   "y": 482,
+   "w": 88,
+   "h": 64,
+   "png_scale": 2,
+   "anim": {
+    "type": "level",
+    "op": 5,
+    "source": "heard",
+    "gain": 1,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 40,
+   "id": "ch1-pilot",
+   "file": "sprites/ch1-pilot.png",
+   "x": 244,
+   "y": 182,
+   "w": 104,
+   "h": 105,
+   "png_scale": 2,
+   "anim": {
+    "type": "level",
+    "op": 0,
+    "source": "awake",
+    "gain": 1
+   }
+  },
+  {
+   "z": 41,
+   "id": "ch1-fire",
+   "file": "sprites/ch1-fire.png",
+   "x": 244,
+   "y": 182,
+   "w": 104,
+   "h": 105,
+   "png_scale": 2,
+   "anim": {
+    "type": "level",
+    "op": 0,
+    "source": "op",
+    "gain": 1
+   }
+  },
+  {
+   "z": 42,
+   "id": "ch1-halo",
+   "file": "sprites/ch1-halo.png",
+   "x": 215,
+   "y": 156,
+   "w": 162,
+   "h": 162,
+   "png_scale": 2,
+   "anim": {
+    "type": "level",
+    "op": 0,
+    "source": "op",
+    "gain": 0.9,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 43,
+   "id": "ch1-sel",
+   "file": "sprites/ch1-sel.png",
+   "x": 238,
+   "y": 177,
+   "w": 116,
+   "h": 121,
+   "png_scale": 2,
+   "anim": {
+    "type": "select",
+    "op": 0,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 44,
+   "id": "ch2-pilot",
+   "file": "sprites/ch2-pilot.png",
+   "x": 134,
+   "y": 256,
+   "w": 104,
+   "h": 105,
+   "png_scale": 2,
+   "anim": {
+    "type": "level",
+    "op": 1,
+    "source": "awake",
+    "gain": 1
+   }
+  },
+  {
+   "z": 45,
+   "id": "ch2-fire",
+   "file": "sprites/ch2-fire.png",
+   "x": 134,
+   "y": 256,
+   "w": 104,
+   "h": 105,
+   "png_scale": 2,
+   "anim": {
+    "type": "level",
+    "op": 1,
+    "source": "op",
+    "gain": 1
+   }
+  },
+  {
+   "z": 46,
+   "id": "ch2-halo",
+   "file": "sprites/ch2-halo.png",
+   "x": 105,
+   "y": 230,
+   "w": 162,
+   "h": 162,
+   "png_scale": 2,
+   "anim": {
+    "type": "level",
+    "op": 1,
+    "source": "op",
+    "gain": 0.9,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 47,
+   "id": "ch2-sel",
+   "file": "sprites/ch2-sel.png",
+   "x": 128,
+   "y": 251,
+   "w": 116,
+   "h": 121,
+   "png_scale": 2,
+   "anim": {
+    "type": "select",
+    "op": 1,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 48,
+   "id": "ch3-pilot",
+   "file": "sprites/ch3-pilot.png",
+   "x": 354,
+   "y": 262,
+   "w": 104,
+   "h": 105,
+   "png_scale": 2,
+   "anim": {
+    "type": "level",
+    "op": 2,
+    "source": "awake",
+    "gain": 1
+   }
+  },
+  {
+   "z": 49,
+   "id": "ch3-fire",
+   "file": "sprites/ch3-fire.png",
+   "x": 354,
+   "y": 262,
+   "w": 104,
+   "h": 105,
+   "png_scale": 2,
+   "anim": {
+    "type": "level",
+    "op": 2,
+    "source": "op",
+    "gain": 1
+   }
+  },
+  {
+   "z": 50,
+   "id": "ch3-halo",
+   "file": "sprites/ch3-halo.png",
+   "x": 325,
+   "y": 236,
+   "w": 162,
+   "h": 162,
+   "png_scale": 2,
+   "anim": {
+    "type": "level",
+    "op": 2,
+    "source": "op",
+    "gain": 0.9,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 51,
+   "id": "ch3-sel",
+   "file": "sprites/ch3-sel.png",
+   "x": 348,
+   "y": 257,
+   "w": 116,
+   "h": 121,
+   "png_scale": 2,
+   "anim": {
+    "type": "select",
+    "op": 2,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 52,
+   "id": "ch4-pilot",
+   "file": "sprites/ch4-pilot.png",
+   "x": 134,
+   "y": 370,
+   "w": 104,
+   "h": 105,
+   "png_scale": 2,
+   "anim": {
+    "type": "level",
+    "op": 3,
+    "source": "awake",
+    "gain": 1
+   }
+  },
+  {
+   "z": 53,
+   "id": "ch4-fire",
+   "file": "sprites/ch4-fire.png",
+   "x": 134,
+   "y": 370,
+   "w": 104,
+   "h": 105,
+   "png_scale": 2,
+   "anim": {
+    "type": "level",
+    "op": 3,
+    "source": "op",
+    "gain": 1
+   }
+  },
+  {
+   "z": 54,
+   "id": "ch4-halo",
+   "file": "sprites/ch4-halo.png",
+   "x": 105,
+   "y": 344,
+   "w": 162,
+   "h": 162,
+   "png_scale": 2,
+   "anim": {
+    "type": "level",
+    "op": 3,
+    "source": "op",
+    "gain": 0.9,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 55,
+   "id": "ch4-sel",
+   "file": "sprites/ch4-sel.png",
+   "x": 128,
+   "y": 365,
+   "w": 116,
+   "h": 121,
+   "png_scale": 2,
+   "anim": {
+    "type": "select",
+    "op": 3,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 56,
+   "id": "ch5-pilot",
+   "file": "sprites/ch5-pilot.png",
+   "x": 354,
+   "y": 377,
+   "w": 104,
+   "h": 105,
+   "png_scale": 2,
+   "anim": {
+    "type": "level",
+    "op": 4,
+    "source": "awake",
+    "gain": 1
+   }
+  },
+  {
+   "z": 57,
+   "id": "ch5-fire",
+   "file": "sprites/ch5-fire.png",
+   "x": 354,
+   "y": 377,
+   "w": 104,
+   "h": 105,
+   "png_scale": 2,
+   "anim": {
+    "type": "level",
+    "op": 4,
+    "source": "op",
+    "gain": 1
+   }
+  },
+  {
+   "z": 58,
+   "id": "ch5-halo",
+   "file": "sprites/ch5-halo.png",
+   "x": 325,
+   "y": 351,
+   "w": 162,
+   "h": 162,
+   "png_scale": 2,
+   "anim": {
+    "type": "level",
+    "op": 4,
+    "source": "op",
+    "gain": 0.9,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 59,
+   "id": "ch5-sel",
+   "file": "sprites/ch5-sel.png",
+   "x": 348,
+   "y": 372,
+   "w": 116,
+   "h": 121,
+   "png_scale": 2,
+   "anim": {
+    "type": "select",
+    "op": 4,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 60,
+   "id": "ch6-pilot",
+   "file": "sprites/ch6-pilot.png",
+   "x": 244,
+   "y": 432,
+   "w": 104,
+   "h": 105,
+   "png_scale": 2,
+   "anim": {
+    "type": "level",
+    "op": 5,
+    "source": "awake",
+    "gain": 1
+   }
+  },
+  {
+   "z": 61,
+   "id": "ch6-fire",
+   "file": "sprites/ch6-fire.png",
+   "x": 244,
+   "y": 432,
+   "w": 104,
+   "h": 105,
+   "png_scale": 2,
+   "anim": {
+    "type": "level",
+    "op": 5,
+    "source": "op",
+    "gain": 1
+   }
+  },
+  {
+   "z": 62,
+   "id": "ch6-halo",
+   "file": "sprites/ch6-halo.png",
+   "x": 215,
+   "y": 406,
+   "w": 162,
+   "h": 162,
+   "png_scale": 2,
+   "anim": {
+    "type": "level",
+    "op": 5,
+    "source": "op",
+    "gain": 0.9,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 63,
+   "id": "ch6-sel",
+   "file": "sprites/ch6-sel.png",
+   "x": 238,
+   "y": 427,
+   "w": 116,
+   "h": 121,
+   "png_scale": 2,
+   "anim": {
+    "type": "select",
+    "op": 5,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 64,
+   "id": "title-glow",
+   "file": "../common/sprites/title-glow.png",
+   "x": 376,
+   "y": 0,
+   "w": 346,
+   "h": 108,
+   "png_scale": 2,
+   "anim": {
+    "type": "flare",
+    "source": "title",
+    "gain": 1,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 65,
+   "id": "eye-shutter",
+   "file": "../common/sprites/eye-shutter.png",
+   "x": 575,
+   "y": 123,
+   "w": 64,
+   "h": 40,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 606,
+    "py": 130,
+    "amp": 1.1,
+    "period": 6.6,
+    "phase": 0.4
+   }
+  },
+  {
+   "z": 66,
+   "id": "eye-shutter-closed",
+   "file": "../common/sprites/eye-shutter-closed.png",
+   "x": 579,
+   "y": 143,
+   "w": 58,
+   "h": 62,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "lid",
+    "min": 0,
+    "max": 1,
+    "period": 19
+   }
+  },
+  {
+   "z": 67,
+   "id": "mouth-hatch",
+   "file": "../common/sprites/mouth-hatch.png",
+   "x": 514,
+   "y": 229,
+   "w": 70,
+   "h": 42,
+   "png_scale": 2,
+   "anim": {
+    "type": "flap",
+    "hinge_y": 261,
+    "open": [
+     1,
+     0.3
+    ],
+    "pin": [
+     522,
+     242.3
+    ],
+    "source": "note"
+   }
+  },
+  {
+   "z": 68,
+   "id": "jaw-rod",
+   "file": "../common/sprites/jaw-rod.png",
+   "x": 502,
+   "y": 232,
+   "w": 26,
+   "h": 17,
+   "png_scale": 2,
+   "anim": {
+    "type": "link",
+    "a": [
+     508.5,
+     238
+    ],
+    "b": [
+     522,
+     242.3
+    ],
+    "crank": "gear-jaw1",
+    "hatch": "mouth-hatch"
+   }
+  },
+  {
+   "z": 69,
+   "id": "spider",
+   "file": "sprites/spider.png",
+   "x": 192,
+   "y": 486,
+   "w": 12,
+   "h": 32,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 198,
+    "py": 488,
+    "amp": 5,
+    "period": 2.7,
+    "phase": 0.3
+   }
+  },
+  {
+   "z": 70,
+   "id": "oil-can",
+   "file": "sprites/oil-can.png",
+   "x": 380,
+   "y": 510,
+   "w": 18,
+   "h": 18,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 388,
+    "py": 512,
+    "amp": 6,
+    "period": 2.3,
+    "phase": 0.7,
+    "bias": -1.5
+   }
+  },
+  {
+   "z": 71,
+   "id": "hem-plate0",
+   "file": "../common/sprites/hem-plate0.png",
+   "x": 120,
+   "y": 678,
+   "w": 28,
+   "h": 41,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 134,
+    "py": 680.3,
+    "amp": 3.2,
+    "period": 5.33,
+    "phase": 0.46,
+    "bias": -2
+   }
+  },
+  {
+   "z": 72,
+   "id": "hem-chain1",
+   "file": "../common/sprites/hem-chain1.png",
+   "x": 140,
+   "y": 682,
+   "w": 22,
+   "h": 36,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 150,
+    "py": 684.5,
+    "amp": 6.7,
+    "period": 3.05,
+    "phase": 0.4,
+    "bias": -2
+   }
+  },
+  {
+   "z": 73,
+   "id": "hem-rag2",
+   "file": "../common/sprites/hem-rag2.png",
+   "x": 105,
+   "y": 679,
+   "w": 38,
+   "h": 41,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 124,
+    "py": 681.2,
+    "amp": 7.1,
+    "period": 2.74,
+    "phase": 0.11,
+    "bias": -2
+   }
+  },
+  {
+   "z": 74,
+   "id": "hem-rag3",
+   "file": "../common/sprites/hem-rag3.png",
+   "x": 881,
+   "y": 683,
+   "w": 30,
+   "h": 35,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 896,
+    "py": 685,
+    "amp": 7.3,
+    "period": 2.54,
+    "phase": 0.83,
+    "bias": -2
+   }
+  },
+  {
+   "z": 75,
+   "id": "hem-plate4",
+   "file": "../common/sprites/hem-plate4.png",
+   "x": 893,
+   "y": 686,
+   "w": 30,
+   "h": 42,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 908,
+    "py": 688.6,
+    "amp": 2.2,
+    "period": 4.76,
+    "phase": 0.83,
+    "bias": -2
+   }
+  },
+  {
+   "z": 76,
+   "id": "hem-chain5",
+   "file": "../common/sprites/hem-chain5.png",
+   "x": 874,
+   "y": 681,
+   "w": 22,
+   "h": 46,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 884,
+    "py": 683.1,
+    "amp": 4.6,
+    "period": 4.42,
+    "phase": 0.69,
+    "bias": -2
+   }
+  },
+  {
+   "z": 77,
+   "id": "hem-chain6",
+   "file": "../common/sprites/hem-chain6.png",
+   "x": 196,
+   "y": 684,
+   "w": 22,
+   "h": 44,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 206,
+    "py": 686.3,
+    "amp": 5.6,
+    "period": 3.37,
+    "phase": 0.13,
+    "bias": -2
+   }
+  },
+  {
+   "z": 78,
+   "id": "hem-rag7",
+   "file": "../common/sprites/hem-rag7.png",
+   "x": 274,
+   "y": 680,
+   "w": 36,
+   "h": 31,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 292,
+    "py": 682.2,
+    "amp": 6.2,
+    "period": 3.45,
+    "phase": 0.55,
+    "bias": -2
+   }
+  },
+  {
+   "z": 79,
+   "id": "hem-chain8",
+   "file": "../common/sprites/hem-chain8.png",
+   "x": 388,
+   "y": 677,
+   "w": 22,
+   "h": 46,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 398,
+    "py": 679.4,
+    "amp": 4.1,
+    "period": 3.81,
+    "phase": 0.95,
+    "bias": -2
+   }
+  },
+  {
+   "z": 80,
+   "id": "hem-plate9",
+   "file": "../common/sprites/hem-plate9.png",
+   "x": 497,
+   "y": 679,
+   "w": 30,
+   "h": 38,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 512,
+    "py": 681.7,
+    "amp": 2.9,
+    "period": 6.37,
+    "phase": 0.44,
+    "bias": -2
+   }
+  },
+  {
+   "z": 81,
+   "id": "hem-chain10",
+   "file": "../common/sprites/hem-chain10.png",
+   "x": 630,
+   "y": 685,
+   "w": 22,
+   "h": 40,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 640,
+    "py": 687.7,
+    "amp": 4.7,
+    "period": 3.52,
+    "phase": 0.29,
+    "bias": -2
+   }
+  },
+  {
+   "z": 82,
+   "id": "hem-rag11",
+   "file": "../common/sprites/hem-rag11.png",
+   "x": 727,
+   "y": 683,
+   "w": 30,
+   "h": 45,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 742,
+    "py": 685.8,
+    "amp": 5.4,
+    "period": 3.1,
+    "phase": 0.67,
+    "bias": -2
+   }
+  },
+  {
+   "z": 83,
+   "id": "hem-chain12",
+   "file": "../common/sprites/hem-chain12.png",
+   "x": 810,
+   "y": 680,
+   "w": 22,
+   "h": 44,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 820,
+    "py": 682.3,
+    "amp": 4.2,
+    "period": 4.4,
+    "phase": 0.46,
+    "bias": -2
+   }
+  },
+  {
+   "z": 84,
+   "id": "hem-rag13",
+   "file": "../common/sprites/hem-rag13.png",
+   "x": 157,
+   "y": 685,
+   "w": 38,
+   "h": 47,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 176,
+    "py": 687.3,
+    "amp": 7.1,
+    "period": 2.79,
+    "phase": 0.24,
+    "bias": -2
+   }
+  },
+  {
+   "z": 85,
+   "id": "hem-plate14",
+   "file": "../common/sprites/hem-plate14.png",
+   "x": 332,
+   "y": 682,
+   "w": 32,
+   "h": 38,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 348,
+    "py": 684.1,
+    "amp": 2.6,
+    "period": 5.57,
+    "phase": 0.25,
+    "bias": -2
+   }
+  },
+  {
+   "z": 86,
+   "id": "hem-rag15",
+   "file": "../common/sprites/hem-rag15.png",
+   "x": 446,
+   "y": 682,
+   "w": 32,
+   "h": 43,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 462,
+    "py": 684.7,
+    "amp": 6.1,
+    "period": 2.72,
+    "phase": 0.04,
+    "bias": -2
+   }
+  },
+  {
+   "z": 87,
+   "id": "hem-chain16",
+   "file": "../common/sprites/hem-chain16.png",
+   "x": 574,
+   "y": 683,
+   "w": 22,
+   "h": 37,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 584,
+    "py": 685,
+    "amp": 5.2,
+    "period": 4.33,
+    "phase": 0.4,
+    "bias": -2
+   }
+  },
+  {
+   "z": 88,
+   "id": "hem-plate17",
+   "file": "../common/sprites/hem-plate17.png",
+   "x": 683,
+   "y": 681,
+   "w": 34,
+   "h": 41,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 700,
+    "py": 683.1,
+    "amp": 3,
+    "period": 5.61,
+    "phase": 0.51,
+    "bias": -2
+   }
+  },
+  {
+   "z": 89,
+   "id": "hem-rag18",
+   "file": "../common/sprites/hem-rag18.png",
+   "x": 845,
+   "y": 682,
+   "w": 30,
+   "h": 44,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 860,
+    "py": 684.1,
+    "amp": 7.2,
+    "period": 3.05,
+    "phase": 0.42,
+    "bias": -2
+   }
+  },
+  {
+   "z": 90,
+   "id": "boom-pennant",
+   "file": "../common/sprites/boom-pennant.png",
+   "x": 1005,
+   "y": 63,
+   "w": 35,
+   "h": 29,
+   "png_scale": 2,
+   "anim": {
+    "type": "frames",
+    "frames": 8,
+    "period": 0.9
+   },
+   "frames": 8
+  },
+  {
+   "z": 91,
+   "id": "village-laundry",
+   "file": "sprites/village-laundry.png",
+   "x": 124,
+   "y": 138,
+   "w": 17,
+   "h": 33,
+   "png_scale": 2,
+   "anim": {
+    "type": "frames",
+    "frames": 4,
+    "period": 1.1
+   },
+   "frames": 4
+  },
+  {
+   "z": 92,
+   "id": "ui",
+   "type": "controls",
+   "note": "the moving parts, glows, hoses and live labels go here (common/ui.json + ui-layout.json)"
+  },
+  {
+   "z": 93,
+   "id": "lip",
+   "file": "../common/lip.png",
+   "x": 123.0,
+   "y": 612.0,
+   "w": 853.0,
+   "h": 23.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "static"
+   }
+  },
+  {
+   "z": 94,
+   "id": "roll",
+   "file": "../common/roll.png",
+   "x": 126.0,
+   "y": 506.0,
+   "w": 798.0,
+   "h": 190.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "static"
+   },
+   "hidden": true
+  },
+  {
+   "z": 95,
+   "id": "ghost-lit",
+   "file": "sprites/ghost-lit.png",
+   "x": 0,
+   "y": 0,
+   "w": 1040,
+   "h": 744,
+   "png_scale": 2,
+   "anim": {
+    "type": "strike",
+    "gain": 1,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 96,
+   "id": "emitters",
+   "type": "emitters",
+   "note": "draw the steam / smoke / spark particles here (see \"emitters\")"
+  }
+ ],
+ "emitters": [
+  {
+   "id": "stack-p1",
+   "x": 169.8,
+   "y": 82,
+   "kind": "smoke",
+   "size": 1.1,
+   "dx": 0.55,
+   "dy": -1.0,
+   "rate": 0.7,
+   "parent": "bob",
+   "op": 0
+  },
+  {
+   "id": "stack-p2",
+   "x": 202.9,
+   "y": 46,
+   "kind": "black",
+   "size": 1.6,
+   "dx": 0.55,
+   "dy": -1.0,
+   "rate": 1.0,
+   "parent": "bob",
+   "op": 1
+  },
+  {
+   "id": "stack-p3",
+   "x": 226.6,
+   "y": 70,
+   "kind": "steam",
+   "size": 1.0,
+   "dx": 0.55,
+   "dy": -1.0,
+   "rate": 0.7,
+   "parent": "bob",
+   "op": 2
+  },
+  {
+   "id": "stack-p4",
+   "x": 261.3,
+   "y": 26,
+   "kind": "black",
+   "size": 1.7,
+   "dx": 0.55,
+   "dy": -1.0,
+   "rate": 0.9,
+   "parent": "bob",
+   "op": 3
+  },
+  {
+   "id": "stack-p5",
+   "x": 285.3,
+   "y": 58,
+   "kind": "smoke",
+   "size": 1.1,
+   "dx": 0.55,
+   "dy": -1.0,
+   "rate": 0.8,
+   "parent": "bob",
+   "op": 4
+  },
+  {
+   "id": "stack-p6",
+   "x": 320.1,
+   "y": 40,
+   "kind": "steam",
+   "size": 0.9,
+   "dx": 0.55,
+   "dy": -1.0,
+   "rate": 0.6,
+   "parent": "bob",
+   "op": 5
+  },
+  {
+   "id": "mouth-breath",
+   "x": 545,
+   "y": 232,
+   "kind": "breath",
+   "size": 1.2,
+   "dx": -0.7,
+   "dy": -0.25,
+   "rate": 1.0,
+   "parent": "bob"
+  },
+  {
+   "id": "leak-drip",
+   "x": 418.4,
+   "y": 170.5,
+   "kind": "drip",
+   "size": 0.9,
+   "dx": 0,
+   "dy": 1,
+   "rate": 0.9,
+   "parent": "bob"
+  },
+  {
+   "id": "column-relief",
+   "x": 87,
+   "y": 184,
+   "kind": "steam",
+   "size": 0.8,
+   "dx": 0.4,
+   "dy": -1.0,
+   "rate": 0.5,
+   "parent": "bob"
+  },
+  {
+   "id": "village-chimney",
+   "x": 121.4,
+   "y": 144.5,
+   "kind": "smoke",
+   "size": 0.4,
+   "dx": 1.0,
+   "dy": -0.22,
+   "rate": 0.5,
+   "parent": "bob"
+  },
+  {
+   "id": "welder-sparks",
+   "x": 345.4,
+   "y": 167.0,
+   "kind": "spark",
+   "size": 0.9,
+   "dx": 1.0,
+   "dy": -1.0,
+   "rate": 1.0,
+   "parent": "bob"
+  },
+  {
+   "id": "stream0",
+   "x": 984,
+   "y": 290,
+   "kind": "stream",
+   "size": 1.0,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "stream1",
+   "x": 978,
+   "y": 470,
+   "kind": "stream",
+   "size": 1.3,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "stream2",
+   "x": 920,
+   "y": 630,
+   "kind": "stream",
+   "size": 1.6,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "stream3",
+   "x": 840,
+   "y": 696,
+   "kind": "stream",
+   "size": 1.0,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "stream4",
+   "x": 610,
+   "y": 698,
+   "kind": "stream",
+   "size": 1.3,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "stream5",
+   "x": 380,
+   "y": 696,
+   "kind": "stream",
+   "size": 1.6,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "stream6",
+   "x": 160,
+   "y": 696,
+   "kind": "stream",
+   "size": 1.0,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "stream7",
+   "x": 700,
+   "y": 120,
+   "kind": "stream",
+   "size": 1.3,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  }
+ ],
+ "stories": [
+  {
+   "id": "boom-pennant",
+   "what": "a torn pennant streaming from the tip of the jib (8 frames)",
+   "at": [
+    1020,
+    76
+   ]
+  },
+  {
+   "id": "cheek-door",
+   "what": "a small door with a lamp, a round lit window and a ladder in the lee temple",
+   "at": [
+    670,
+    184
+   ]
+  },
+  {
+   "id": "leak",
+   "what": "a weeping stand-pipe on the windward temple, bound with a rag; emitter leak-drip lets one drop fall every ~2 s",
+   "at": [
+    419,
+    158
+   ]
+  },
+  {
+   "id": "anchor",
+   "what": "an anchor on a chain off the lee corner of the hem (sprite anchor)",
+   "at": [
+    946,
+    700
+   ]
+  },
+  {
+   "id": "far-birds",
+   "what": "five far-off birds keeping pace in the upper left sky (sprite far-birds drifts a few px)",
+   "at": [
+    48,
+    58
+   ]
+  },
+  {
+   "id": "feed-column",
+   "what": "feed-water column on the windward flank: three lit sight glasses (flicker groups), a gauge, a ladder and landing, a relief valve that steams (emitter column-relief), a three-gear train at its foot (group flank)",
+   "at": [
+    87,
+    360
+   ]
+  },
+  {
+   "id": "village",
+   "what": "three crooked huts on the windward sleeve and the end of the shoulder; windows flicker (groups v1-v3), the middle chimney smokes",
+   "at": [
+    110,
+    160
+   ]
+  },
+  {
+   "id": "village-laundry",
+   "what": "a wash line between the house and the tower (4 frames)",
+   "at": [
+    128,
+    150
+   ]
+  },
+  {
+   "id": "cat",
+   "what": "a cat on the shed roof; its tail sways (sprite cat-tail)",
+   "at": [
+    78,
+    190
+   ]
+  },
+  {
+   "id": "jib-lantern",
+   "what": "a ship's lantern swinging from the tip of the jib over the notice slate (sprite jib-lantern)",
+   "at": [
+    1004,
+    94
+   ]
+  },
+  {
+   "id": "welder",
+   "what": "a welder at the end of the wind-chest; emitter welder-sparks throws bursts of sparks every few seconds",
+   "at": [
+    352,
+    172
+   ]
+  },
+  {
+   "id": "bird-pipe",
+   "what": "a cracked pipe stub poking out of the windward sleeve with a nest; one bird peers out, one bobs on top (sprite bird-top)",
+   "at": [
+    40,
+    306
+   ]
+  },
+  {
+   "id": "wind-wheel",
+   "what": "a patched wind-wheel on a mast over the huts (one sail missing); group \"wind\": speed x (1 + 4 * storm + 2 * (activity - idle))",
+   "at": [
+    116,
+    122
+   ]
+  },
+  {
+   "id": "web",
+   "what": "a cobweb in the lower corner of the chamber field; the spider swings on its thread (sprite spider)",
+   "at": [
+    154,
+    512
+   ]
+  },
+  {
+   "id": "tally",
+   "what": "days scratched into the plate beside ghost 6, and an oil can swinging from the pipe (sprite oil-can)",
+   "at": [
+    420,
+    512
+   ]
+  },
+  {
+   "id": "bucket",
+   "what": "a bucket on a rope under the cuff of the windward sleeve, swinging over the drop (sprite bucket)",
+   "at": [
+    40,
+    359
+   ]
+  }
+ ],
+ "hull": [
+  [
+   126,
+   690
+  ],
+  [
+   120,
+   650
+  ],
+  [
+   118,
+   604
+  ],
+  [
+   120,
+   566
+  ],
+  [
+   104,
+   548
+  ],
+  [
+   82,
+   524
+  ],
+  [
+   64,
+   480
+  ],
+  [
+   56,
+   420
+  ],
+  [
+   54,
+   340
+  ],
+  [
+   56,
+   270
+  ],
+  [
+   60,
+   230
+  ],
+  [
+   70,
+   205
+  ],
+  [
+   88,
+   189
+  ],
+  [
+   112,
+   181
+  ],
+  [
+   150,
+   177
+  ],
+  [
+   210,
+   175
+  ],
+  [
+   280,
+   175
+  ],
+  [
+   340,
+   177
+  ],
+  [
+   370,
+   181
+  ],
+  [
+   384,
+   189
+  ],
+  [
+   392,
+   197
+  ],
+  [
+   399,
+   190
+  ],
+  [
+   402,
+   172
+  ],
+  [
+   404,
+   150
+  ],
+  [
+   408,
+   122
+  ],
+  [
+   418,
+   100
+  ],
+  [
+   432,
+   84
+  ],
+  [
+   452,
+   72
+  ],
+  [
+   484,
+   62
+  ],
+  [
+   520,
+   57
+  ],
+  [
+   548,
+   56
+  ],
+  [
+   584,
+   58
+  ],
+  [
+   616,
+   64
+  ],
+  [
+   646,
+   75
+  ],
+  [
+   666,
+   88
+  ],
+  [
+   681,
+   105
+  ],
+  [
+   692,
+   128
+  ],
+  [
+   698,
+   152
+  ],
+  [
+   701,
+   170
+  ],
+  [
+   710,
+   178
+  ],
+  [
+   760,
+   178
+  ],
+  [
+   830,
+   177
+  ],
+  [
+   890,
+   178
+  ],
+  [
+   928,
+   181
+  ],
+  [
+   952,
+   189
+  ],
+  [
+   970,
+   205
+  ],
+  [
+   980,
+   230
+  ],
+  [
+   984,
+   270
+  ],
+  [
+   986,
+   340
+  ],
+  [
+   984,
+   420
+  ],
+  [
+   976,
+   480
+  ],
+  [
+   958,
+   524
+  ],
+  [
+   936,
+   548
+  ],
+  [
+   922,
+   566
+  ],
+  [
+   922,
+   604
+  ],
+  [
+   920,
+   650
+  ],
+  [
+   914,
+   690
+  ]
+ ]
+}

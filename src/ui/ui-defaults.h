@@ -1,0 +1,94 @@
+/*
+ * Six Sines
+ *
+ * A synth with audio rate modulation.
+ *
+ * Copyright 2024-2025, Paul Walker and Various authors, as described in the github
+ * transaction log.
+ *
+ * This source repo is released under the MIT license, but has
+ * GPL3 dependencies, as such the combined work will be
+ * released under GPL3.
+ *
+ * The source code and license are at https://github.com/baconpaul/six-sines
+ */
+
+#ifndef BACONPAUL_SIX_SINES_UI_UI_DEFAULTS_H
+#define BACONPAUL_SIX_SINES_UI_UI_DEFAULTS_H
+
+#include "configuration.h"
+#include <sst/plugininfra/userdefaults.h>
+
+namespace baconpaul::six_sines::ui
+{
+enum Defaults
+{
+    themePath, // stored as "factory:<Name>" for factory themes, or a filesystem path for user
+               // themes
+    zoomLevel,
+    useSoftwareRenderer, // only used on windows
+    flipSourceAndMatrix,
+    designModeRunAllNodes,
+    designModeAllSoundsOffOnToggle,
+    defaultAuthor,
+    spectrumAnalysisMode,
+    spectrumScopeScale,
+    sourceEditorType,
+    defaultMPEBend,         // int semitones; seeds DawExtraState.mpeBendRange on engine init
+    defaultMIDISmoothing,   // ms, stored as string; seeds midiCCSmoothingTimeMs
+    defaultParamSmoothing,  // ms, stored as string; seeds paramAutomationSmoothingTimeMs
+    lastWavetableDirectory, // u8 path; where the wavetable chooser opens next
+    numDefaults
+};
+
+enum SourceEditorType : int
+{
+    SourceEditor_Knob = 0,
+    SourceEditor_SegmentedDecimal = 1
+};
+
+inline std::string defaultName(Defaults d)
+{
+    switch (d)
+    {
+    case themePath:
+        return "themePath";
+    case zoomLevel:
+        return "zoomLevel";
+    case useSoftwareRenderer:
+        return "useSoftwareRenderer";
+    case flipSourceAndMatrix:
+        return "flipSourceAndMatrix";
+    case designModeRunAllNodes:
+        return "designModeRunAllNodes";
+    case designModeAllSoundsOffOnToggle:
+        return "designModeAllSoundsOffOnToggle";
+    case defaultAuthor:
+        return "defaultAuthor";
+    case spectrumAnalysisMode:
+        return "spectrumAnalysisMode";
+    case spectrumScopeScale:
+        return "spectrumScopeScale";
+    case sourceEditorType:
+        return "sourceEditorType";
+    case defaultMPEBend:
+        return "defaultMPEBend";
+    case defaultMIDISmoothing:
+        return "defaultMIDISmoothing";
+    case defaultParamSmoothing:
+        return "defaultParamSmoothing";
+    case lastWavetableDirectory:
+        return "lastWavetableDirectory";
+    case numDefaults:
+    {
+        SXSNLOG("Software Error - defaults found");
+        return "";
+    }
+    }
+    return "";
+}
+
+using defaultsProvder_t = sst::plugininfra::defaults::Provider<Defaults, Defaults::numDefaults>;
+} // namespace baconpaul::six_sines::ui
+
+#endif // UI_DEFAULTS_H

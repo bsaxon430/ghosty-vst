@@ -1,0 +1,15 @@
+# Poltergeist 2 (GhostBlock) - SUB: the reference the C++ port of Subhoofer's harmonic generators is checked against.
+# No dependencies: it compiles upstream's own Rust source text (see make-golden.py) with a few lines in place of nih-plug.
+[package]
+name = "subhoofer-reference"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-or-later"
+publish = false
+
+[workspace]
+
+[profile.release]
+opt-level = 3
+debug = false
+lto = false

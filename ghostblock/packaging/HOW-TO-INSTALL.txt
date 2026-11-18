@@ -1,0 +1,8 @@
+POLTERGEIST 2 for Mac
+
+Double-click "Install Poltergeist 2.command" (or copy by hand):
+  Plugins/Poltergeist 2.vst3  -> ~/Library/Audio/Plug-Ins/VST3/
+  Plugins/Poltergeist 2.clap  -> ~/Library/Audio/Plug-Ins/CLAP/
+  Poltergeist 2.app           -> /Applications/ (the standalone app)
+Then rescan plugins in FL Studio (Options > Manage plugins > Find more plugins).
+Your saved sounds live in Documents/GhostBlock/Poltergeist 2/Patches.

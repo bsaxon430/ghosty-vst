@@ -1,0 +1,9547 @@
+{
+ "canvas": [
+  1040,
+  744
+ ],
+ "about": "Poltergeist 2 ghost-machine layout, one entry per page (pages.common is on every page). Rects are [x, y, w, h] in the 1040 x 744 design canvas (the editor's W x H). Housings are painted into each page's background; moving parts and glows are sprites (assets/<page>/layers.json, assets/common/ui.json). \"param\" is the engine parameter (member of the Six Sines patch, as bound in p2-editor.cpp) or the MORPH parameter id; \"pname\" is its own display name; \"action\" is an editor function. \"label\" = the blank plate for the control's live name (and value, when the plate is two lines high). \"sprite\" / \"sprite_lit\" / \"glow\" / \"flash\" / \"label_glow\" = names in assets/common/ui.json (the moving part, its lit variant, its light, its spark, the light behind its label plate); chambers and other painted parts light through the sprites in assets/<page>/layers.json. \"hit\" (when present) = the pointer area where it is larger than the painted part in \"rect\". \"face\": the GHOSTS workbench shows one face at a time. \"state\": \"roll\" / \"ledger\" controls exist only while the brass roll / the preset ledger is down.",
+ "page_order": [
+  "ghosts",
+  "main",
+  "morph",
+  "fx"
+ ],
+ "page_names": {
+  "ghosts": "GHOSTS",
+  "main": "MAIN",
+  "morph": "MORPH",
+  "fx": "FX"
+ },
+ "types": {
+  "chamber": "operator chamber (select; drag = start a hose)",
+  "socket": "hose socket (drag source / drop target)",
+  "hose": "patch hose = FM link (see \"links\")",
+  "wheel": "valve wheel / tap (rotary)",
+  "selector": "stepped dial (with a centre) or drum (without): options",
+  "switch": "throw switch (bool)",
+  "plunger": "pull rod / push stop",
+  "lever": "pull lever or pull-chain",
+  "lens": "the blend puck",
+  "lantern": "corner lantern-chamber",
+  "pin": "envelope rail with draggable pins",
+  "gauge": "needle gauge (read-only)",
+  "sign": "hanging page sign",
+  "plate": "label plate or glass readout (live text); with \"action\" it is clickable",
+  "art": "painted art, no live text",
+  "key": "keyboard",
+  "ledger": "the preset drop-down",
+  "roll-cell": "slot grid of the brass roll"
+ },
+ "pages": {
+  "common": {
+   "controls": [
+    {
+     "id": "pick-name",
+     "type": "plate",
+     "page": "common",
+     "rect": [
+      458,
+      82,
+      180,
+      30
+     ],
+     "name": "PRESET",
+     "role": "preset nameplate window on the brow: shows the sound name; a click drops the preset ledger (showPresetMenu)",
+     "action": "showPresetMenu()",
+     "text": "preset",
+     "glow": "glow-plate"
+    },
+    {
+     "id": "pick-prev",
+     "type": "lever",
+     "page": "common",
+     "rect": [
+      420,
+      74,
+      38,
+      50
+     ],
+     "name": "PREV",
+     "action": "stepPreset(-1)",
+     "pivot": [
+      440,
+      84
+     ],
+     "momentary": true,
+     "sprite": "pull-lever"
+    },
+    {
+     "id": "pick-next",
+     "type": "lever",
+     "page": "common",
+     "rect": [
+      638,
+      74,
+      38,
+      50
+     ],
+     "name": "NEXT",
+     "action": "stepPreset(+1)",
+     "pivot": [
+      656,
+      84
+     ],
+     "momentary": true,
+     "sprite": "pull-lever"
+    },
+    {
+     "id": "pick-folder",
+     "type": "selector",
+     "page": "common",
+     "rect": [
+      402,
+      208,
+      66,
+      34
+     ],
+     "name": "FOLDER",
+     "action": "nextInCategory(folder) - the 13 sound-folder chips as one drum",
+     "text": "folder",
+     "options": [
+      "Bass",
+      "Bells",
+      "Brass",
+      "Drums",
+      "Effects",
+      "Guitar",
+      "Harmony",
+      "Keys",
+      "Leads",
+      "Mallets",
+      "Pads",
+      "Percussion",
+      "Strings"
+     ]
+    },
+    {
+     "id": "save",
+     "type": "plunger",
+     "page": "common",
+     "rect": [
+      580,
+      206,
+      34,
+      34
+     ],
+     "name": "SAVE",
+     "label": [
+      580,
+      242,
+      34,
+      12
+     ],
+     "momentary": true,
+     "action": "saveSound()",
+     "sprite": "rod-knob",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "load",
+     "type": "plunger",
+     "page": "common",
+     "rect": [
+      616,
+      206,
+      34,
+      34
+     ],
+     "name": "LOAD",
+     "label": [
+      616,
+      242,
+      34,
+      12
+     ],
+     "momentary": true,
+     "action": "loadMenu()  (the YOUR SOUNDS leaf of the ledger)",
+     "sprite": "rod-knob",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "init",
+     "type": "plunger",
+     "page": "common",
+     "rect": [
+      652,
+      206,
+      34,
+      34
+     ],
+     "name": "INIT",
+     "label": [
+      652,
+      242,
+      34,
+      12
+     ],
+     "momentary": true,
+     "action": "pm->loadInit()",
+     "sprite": "rod-knob",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "title",
+     "type": "art",
+     "page": "common",
+     "rect": [
+      384,
+      4,
+      330,
+      96
+     ],
+     "name": "POLTERGEIST 2",
+     "role": "hand-lettered wordmark on an arched rail over the crown (painted; sprites title-*), no live text"
+    },
+    {
+     "id": "page-ghosts",
+     "type": "sign",
+     "page": "common",
+     "rect": [
+      702,
+      152,
+      82,
+      34
+     ],
+     "name": "GHOSTS",
+     "action": "showPage(0)",
+     "index": 0,
+     "target": "ghosts",
+     "sprite": "sign-ghosts",
+     "sprite_lit": "sign-ghosts-lit"
+    },
+    {
+     "id": "page-main",
+     "type": "sign",
+     "page": "common",
+     "rect": [
+      788,
+      152,
+      74,
+      34
+     ],
+     "name": "MAIN",
+     "action": "showPage(1)",
+     "index": 1,
+     "target": "main",
+     "sprite": "sign-main",
+     "sprite_lit": "sign-main-lit"
+    },
+    {
+     "id": "page-morph",
+     "type": "sign",
+     "page": "common",
+     "rect": [
+      866,
+      152,
+      82,
+      34
+     ],
+     "name": "MORPH",
+     "action": "showPage(2)",
+     "index": 2,
+     "target": "morph",
+     "sprite": "sign-morph",
+     "sprite_lit": "sign-morph-lit"
+    },
+    {
+     "id": "page-fx",
+     "type": "sign",
+     "page": "common",
+     "rect": [
+      908,
+      101,
+      56,
+      34
+     ],
+     "name": "FX",
+     "action": "showPage(3)",
+     "index": 3,
+     "target": "fx",
+     "hung": "boom",
+     "role": "the FX page (SPECTRAL FX). Hung from the boom, not from the rail: no existing rect moved",
+     "sprite": "sign-fx",
+     "sprite_lit": "sign-fx-lit"
+    },
+    {
+     "id": "out-gauge",
+     "type": "gauge",
+     "page": "common",
+     "rect": [
+      970,
+      130,
+      44,
+      44
+     ],
+     "name": "OUT",
+     "label": [
+      970,
+      176,
+      44,
+      12
+     ],
+     "role": "output level (the scope / VU of the main output)",
+     "pivot": [
+      992,
+      152
+     ],
+     "angle": [
+      -120,
+      120
+     ],
+     "sprite": "needle-big",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "voices",
+     "type": "plate",
+     "page": "common",
+     "rect": [
+      966,
+      190,
+      52,
+      12
+     ],
+     "name": "VOICES",
+     "role": "voice count readout (infoL)",
+     "text": "voices",
+     "glow": "glow-plate"
+    },
+    {
+     "id": "sub-sign",
+     "type": "sign",
+     "page": "common",
+     "rect": [966, 208, 52, 26],
+     "hit": [962, 204, 60, 34],
+     "name": "SUB",
+     "action": "toggleSubPanel()  (right-click: SUB on / off)",
+     "hung": "voices",
+     "role": "SUB, the sub-bass layer (src/ghostblock/sub): a small sign on two short chains under the VOICES plate, on every page; lit while SUB is on. Its panel and the panel's parts are in common/sub/sub.json. No existing rect moved",
+     "sprite": "sign-sub",
+     "sprite_lit": "sign-sub-lit"
+    },
+    {
+     "id": "status",
+     "type": "plate",
+     "page": "common",
+     "rect": [
+      262,
+      547,
+      516,
+      13
+     ],
+     "name": "STATUS",
+     "role": "status slit on the lip of the console (statusL): one line of live text; a longer message runs through it",
+     "text": "status",
+     "glow": "glow-plate"
+    },
+    {
+     "id": "macro1",
+     "type": "wheel",
+     "page": "common",
+     "rect": [
+      137.0,
+      567,
+      40,
+      40
+     ],
+     "name": "MACRO 1",
+     "centre": [
+      157.0,
+      587
+     ],
+     "pivot": [
+      157.0,
+      587
+     ],
+     "label": [
+      183.0,
+      573,
+      76,
+      28
+     ],
+     "param": "patch.macroNodes[0].level",
+     "pname": "Macro 1 Level",
+     "hint": "computeMacroUsage(): what the macro is wired to (shown in the status slit)",
+     "sprite": "macro1",
+     "fmt": "bip",
+     "min": -1,
+     "max": 1,
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "macro2",
+     "type": "wheel",
+     "page": "common",
+     "rect": [
+      266.3,
+      567,
+      40,
+      40
+     ],
+     "name": "MACRO 2",
+     "centre": [
+      286.33333333333337,
+      587
+     ],
+     "pivot": [
+      286.33333333333337,
+      587
+     ],
+     "label": [
+      312.33333333333337,
+      573,
+      76,
+      28
+     ],
+     "param": "patch.macroNodes[1].level",
+     "pname": "Macro 2 Level",
+     "hint": "computeMacroUsage(): what the macro is wired to (shown in the status slit)",
+     "sprite": "macro2",
+     "fmt": "bip",
+     "min": -1,
+     "max": 1,
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "macro3",
+     "type": "wheel",
+     "page": "common",
+     "rect": [
+      395.7,
+      567,
+      40,
+      40
+     ],
+     "name": "MACRO 3",
+     "centre": [
+      415.6666666666667,
+      587
+     ],
+     "pivot": [
+      415.6666666666667,
+      587
+     ],
+     "label": [
+      441.6666666666667,
+      573,
+      76,
+      28
+     ],
+     "param": "patch.macroNodes[2].level",
+     "pname": "Macro 3 Level",
+     "hint": "computeMacroUsage(): what the macro is wired to (shown in the status slit)",
+     "sprite": "macro3",
+     "fmt": "bip",
+     "min": -1,
+     "max": 1,
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "macro4",
+     "type": "wheel",
+     "page": "common",
+     "rect": [
+      525.0,
+      567,
+      40,
+      40
+     ],
+     "name": "MACRO 4",
+     "centre": [
+      545.0,
+      587
+     ],
+     "pivot": [
+      545.0,
+      587
+     ],
+     "label": [
+      571.0,
+      573,
+      76,
+      28
+     ],
+     "param": "patch.macroNodes[3].level",
+     "pname": "Macro 4 Level",
+     "hint": "computeMacroUsage(): what the macro is wired to (shown in the status slit)",
+     "sprite": "macro4",
+     "fmt": "bip",
+     "min": -1,
+     "max": 1,
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "macro5",
+     "type": "wheel",
+     "page": "common",
+     "rect": [
+      654.3,
+      567,
+      40,
+      40
+     ],
+     "name": "MACRO 5",
+     "centre": [
+      674.3333333333334,
+      587
+     ],
+     "pivot": [
+      674.3333333333334,
+      587
+     ],
+     "label": [
+      700.3333333333334,
+      573,
+      76,
+      28
+     ],
+     "param": "patch.macroNodes[4].level",
+     "pname": "Macro 5 Level",
+     "hint": "computeMacroUsage(): what the macro is wired to (shown in the status slit)",
+     "sprite": "macro5",
+     "fmt": "bip",
+     "min": -1,
+     "max": 1,
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "macro6",
+     "type": "wheel",
+     "page": "common",
+     "rect": [
+      783.7,
+      567,
+      40,
+      40
+     ],
+     "name": "MACRO 6",
+     "centre": [
+      803.6666666666667,
+      587
+     ],
+     "pivot": [
+      803.6666666666667,
+      587
+     ],
+     "label": [
+      829.6666666666667,
+      573,
+      76,
+      28
+     ],
+     "param": "patch.macroNodes[5].level",
+     "pname": "Macro 6 Level",
+     "hint": "computeMacroUsage(): what the macro is wired to (shown in the status slit)",
+     "sprite": "macro6",
+     "fmt": "bip",
+     "min": -1,
+     "max": 1,
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "kbd",
+     "type": "key",
+     "page": "common",
+     "rect": [
+      132,
+      620,
+      776,
+      62
+     ],
+     "name": "KEYBOARD",
+     "role": "on-screen keyboard (UiNoteQueue); keys listed under \"keys\"",
+     "low_note": 36
+    },
+    {
+     "id": "theme",
+     "type": "selector",
+     "page": "common",
+     "rect": [
+      71,
+      583,
+      34,
+      34
+     ],
+     "name": "SKY",
+     "centre": [
+      88,
+      600
+     ],
+     "label": [
+      60,
+      621,
+      56,
+      24
+     ],
+     "options": [
+      "STORM",
+      "DUSK",
+      "CLEAR"
+     ],
+     "action": "applyTheme(th::next(theme))  (BLACK -> PURPLE -> LIGHT)",
+     "role": "the look: the plugin's three themes as three lights on the same painting (a colour grade, see JUCE-NOTES)",
+     "sprite": "sel-knob",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "roll-chain",
+     "type": "lever",
+     "page": "common",
+     "rect": [
+      936,
+      556,
+      34,
+      84
+     ],
+     "name": "ROLL",
+     "pivot": [
+      953,
+      560
+     ],
+     "label": [
+      931,
+      642,
+      44,
+      12
+     ],
+     "role": "pull-chain on the lee hip: rolls the punched brass sheet down over the console (keys <-> roll)  NEW FEATURE",
+     "sprite": "chain-pull",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "roll",
+     "type": "roll-cell",
+     "page": "common",
+     "rect": [
+      190,
+      536,
+      714,
+      146
+     ],
+     "name": "ROLL",
+     "state": "roll",
+     "steps": 32,
+     "rows": 12,
+     "cell": [
+      22.312,
+      12.167
+     ],
+     "role": "punched brass roll: click a slot for a note, drag right to lengthen it; NEW FEATURE (Poltergeist 2 has no sequencer today)",
+     "sprites": [
+      "peg",
+      "playhead"
+     ]
+    },
+    {
+     "id": "roll-play",
+     "type": "switch",
+     "page": "common",
+     "rect": [
+      140,
+      513,
+      64,
+      20
+     ],
+     "name": "PLAY",
+     "state": "roll",
+     "pivot": [
+      150,
+      523
+     ],
+     "label": [
+      162,
+      516,
+      40,
+      14
+     ],
+     "hit": [
+      140,
+      499,
+      66,
+      34
+     ],
+     "role": "start / stop the roll (concept)",
+     "sprite": "switch-arm",
+     "flash": "spark",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "roll-clear",
+     "type": "plunger",
+     "page": "common",
+     "rect": [
+      210,
+      513,
+      64,
+      20
+     ],
+     "name": "CLEAR",
+     "state": "roll",
+     "momentary": true,
+     "label": [
+      226,
+      516,
+      46,
+      14
+     ],
+     "hit": [
+      208,
+      499,
+      66,
+      34
+     ],
+     "role": "empty the roll (concept)",
+     "sprite": "rod-knob",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "ledger",
+     "type": "ledger",
+     "page": "common",
+     "rect": [
+      336,
+      112,
+      424,
+      506
+     ],
+     "name": "PRESETS",
+     "state": "ledger",
+     "tabs": [
+      340,
+      138,
+      116,
+      476
+     ],
+     "slats": [
+      460,
+      138,
+      296,
+      442
+     ],
+     "slat_h": 34,
+     "rows": 13,
+     "action": "showPresetMenu() / loadMenu() / cornerMenu(c)",
+     "role": "the preset browser: folder tabs down the left, one brass slat per sound; YOUR SOUNDS and INIT at the foot. For a MORPH corner the first slats are THIS SOUND / A COPY OF THIS SOUND and the last is EMPTY",
+     "sprites": [
+      "ledger-back",
+      "ledger-tab",
+      "ledger-tab-lit",
+      "ledger-slat0",
+      "ledger-slat1",
+      "ledger-slat2",
+      "ledger-slat-lit",
+      "ledger-foot",
+      "ledger-arrow"
+     ]
+    },
+    {
+     "id": "spyglass",
+     "type": "spyglass",
+     "page": "common",
+     "rect": [
+      988,
+      92,
+      52,
+      42
+     ],
+     "name": "SPYGLASS",
+     "hit": [
+      997,
+      94,
+      41,
+      36
+     ],
+     "action": "toggleSpyglass()",
+     "lens": [
+      1035.2,
+      100.5
+     ],
+     "role": "a brass telescope clamped to the OUT gauge's pipe, under the jib's lantern: opens / closes the floating SPYGLASS window (the spectrum analyzer + waveform scope)",
+     "sprite": "spyglass",
+     "sprite_lit": "spyglass-lit",
+     "glow": "glow-round"
+    },
+    {
+     "id": "size-grip",
+     "type": "grip",
+     "page": "common",
+     "rect": [
+      1006,
+      696,
+      34,
+      34
+     ],
+     "name": "SIZE",
+     "action": "drag: resize the plugin window (fixed 1040:744, 75 - 200 %); right-click: 75 / 100 / 125 / 150 / 200 %",
+     "role": "brass corner grip in the lee corner over the meadow (above the version line)",
+     "sprite": "size-grip",
+     "sprite_lit": "size-grip-lit"
+    }
+   ],
+   "about": "on every page: the head (wordmark, preset nameplate, PREV / NEXT, folder drum, SAVE / LOAD / INIT), the jib (page signs, output gauge, voices), the console (status, six macros, keyboard, SKY, ROLL)"
+  },
+  "ghosts": {
+   "controls": [
+    {
+     "id": "ch1",
+     "type": "chamber",
+     "page": "ghosts",
+     "rect": [
+      256,
+      202,
+      80,
+      74
+     ],
+     "name": "GHOST 1",
+     "op": 0,
+     "shape": "globe",
+     "colour": "#fff0cc",
+     "centre": [
+      296,
+      240
+     ],
+     "action": "selectGhost(0)",
+     "role": "operator chamber: glass + flame; glow follows opLevel(op); a click selects the ghost; dragging it starts a hose",
+     "param": "patch.sourceNodes[0] (selected)"
+    },
+    {
+     "id": "ch1-num",
+     "type": "plate",
+     "page": "ghosts",
+     "rect": [
+      226,
+      196,
+      21,
+      15
+     ],
+     "name": "1",
+     "text": "num",
+     "op": 0,
+     "glow": "glow-plate"
+    },
+    {
+     "id": "ch1-vu",
+     "type": "gauge",
+     "page": "ghosts",
+     "rect": [
+      327,
+      183,
+      18,
+      18
+     ],
+     "name": "LEVEL",
+     "op": 0,
+     "pivot": [
+      336,
+      192
+     ],
+     "angle": [
+      -110,
+      110
+     ],
+     "role": "operator level meter (UPDATE_VU)",
+     "sprite": "needle-small"
+    },
+    {
+     "id": "ch1-tag",
+     "type": "plate",
+     "page": "ghosts",
+     "rect": [
+      263,
+      280,
+      66,
+      13
+     ],
+     "name": "STATE",
+     "op": 0,
+     "text": "state",
+     "role": "asleep / you hear it / haunts others / silent",
+     "glow": "glow-plate"
+    },
+    {
+     "id": "ch1-out",
+     "type": "socket",
+     "page": "ghosts",
+     "rect": [
+      262,
+      292,
+      34,
+      34
+     ],
+     "name": "OUT",
+     "op": 0,
+     "dir": "out",
+     "centre": [
+      279,
+      309
+     ],
+     "role": "drag a hose from here to a chamber below (higher number) = it haunts it",
+     "glow": "glow-socket"
+    },
+    {
+     "id": "ch1-in",
+     "type": "socket",
+     "page": "ghosts",
+     "rect": [
+      337,
+      249,
+      34,
+      34
+     ],
+     "name": "IN",
+     "op": 0,
+     "dir": "in",
+     "centre": [
+      354,
+      266
+     ],
+     "role": "hoses plug in here; legal ones light while a hose is dragged",
+     "glow": "glow-socket"
+    },
+    {
+     "id": "ch1-mix",
+     "type": "wheel",
+     "page": "ghosts",
+     "rect": [
+      349,
+      195,
+      34,
+      34
+     ],
+     "name": "OUT",
+     "op": 0,
+     "centre": [
+      366,
+      212
+     ],
+     "pivot": [
+      366,
+      212
+     ],
+     "param": "patch.mixerNodes[0].level",
+     "sprite": "valve-s",
+     "art_r": 13,
+     "also": "patch.mixerNodes[0].active (touching it wakes the mixer)",
+     "pname": "Op 1 Mixer Level",
+     "role": "mix valve on the pipe to the stacks: how loud you hear this ghost",
+     "fmt": "pct",
+     "glow": "glow-round"
+    },
+    {
+     "id": "ch2",
+     "type": "chamber",
+     "page": "ghosts",
+     "rect": [
+      146,
+      276,
+      80,
+      74
+     ],
+     "name": "GHOST 2",
+     "op": 1,
+     "shape": "arch",
+     "colour": "#84e092",
+     "centre": [
+      186,
+      314
+     ],
+     "action": "selectGhost(1)",
+     "role": "operator chamber: glass + flame; glow follows opLevel(op); a click selects the ghost; dragging it starts a hose",
+     "param": "patch.sourceNodes[1] (selected)"
+    },
+    {
+     "id": "ch2-num",
+     "type": "plate",
+     "page": "ghosts",
+     "rect": [
+      130,
+      254,
+      21,
+      15
+     ],
+     "name": "2",
+     "text": "num",
+     "op": 1,
+     "glow": "glow-plate"
+    },
+    {
+     "id": "ch2-vu",
+     "type": "gauge",
+     "page": "ghosts",
+     "rect": [
+      217,
+      257,
+      18,
+      18
+     ],
+     "name": "LEVEL",
+     "op": 1,
+     "pivot": [
+      226,
+      266
+     ],
+     "angle": [
+      -110,
+      110
+     ],
+     "role": "operator level meter (UPDATE_VU)",
+     "sprite": "needle-small"
+    },
+    {
+     "id": "ch2-tag",
+     "type": "plate",
+     "page": "ghosts",
+     "rect": [
+      153,
+      354,
+      66,
+      13
+     ],
+     "name": "STATE",
+     "op": 1,
+     "text": "state",
+     "role": "asleep / you hear it / haunts others / silent",
+     "glow": "glow-plate"
+    },
+    {
+     "id": "ch2-out",
+     "type": "socket",
+     "page": "ghosts",
+     "rect": [
+      228,
+      320,
+      34,
+      34
+     ],
+     "name": "OUT",
+     "op": 1,
+     "dir": "out",
+     "centre": [
+      245,
+      337
+     ],
+     "role": "drag a hose from here to a chamber below (higher number) = it haunts it",
+     "glow": "glow-socket"
+    },
+    {
+     "id": "ch2-in",
+     "type": "socket",
+     "page": "ghosts",
+     "rect": [
+      228,
+      275,
+      34,
+      34
+     ],
+     "name": "IN",
+     "op": 1,
+     "dir": "in",
+     "centre": [
+      245,
+      292
+     ],
+     "role": "hoses plug in here; legal ones light while a hose is dragged",
+     "glow": "glow-socket"
+    },
+    {
+     "id": "ch2-mix",
+     "type": "wheel",
+     "page": "ghosts",
+     "rect": [
+      169,
+      235,
+      34,
+      34
+     ],
+     "name": "OUT",
+     "op": 1,
+     "centre": [
+      186,
+      252
+     ],
+     "pivot": [
+      186,
+      252
+     ],
+     "param": "patch.mixerNodes[1].level",
+     "sprite": "valve-s",
+     "art_r": 13,
+     "also": "patch.mixerNodes[1].active (touching it wakes the mixer)",
+     "pname": "Op 2 Mixer Level",
+     "role": "mix valve on the pipe to the stacks: how loud you hear this ghost",
+     "fmt": "pct",
+     "glow": "glow-round"
+    },
+    {
+     "id": "ch3",
+     "type": "chamber",
+     "page": "ghosts",
+     "rect": [
+      366,
+      282,
+      80,
+      74
+     ],
+     "name": "GHOST 3",
+     "op": 2,
+     "shape": "hex",
+     "colour": "#bda2ff",
+     "centre": [
+      406,
+      320
+     ],
+     "action": "selectGhost(2)",
+     "role": "operator chamber: glass + flame; glow follows opLevel(op); a click selects the ghost; dragging it starts a hose",
+     "param": "patch.sourceNodes[2] (selected)"
+    },
+    {
+     "id": "ch3-num",
+     "type": "plate",
+     "page": "ghosts",
+     "rect": [
+      441,
+      260,
+      21,
+      15
+     ],
+     "name": "3",
+     "text": "num",
+     "op": 2,
+     "glow": "glow-plate"
+    },
+    {
+     "id": "ch3-vu",
+     "type": "gauge",
+     "page": "ghosts",
+     "rect": [
+      363,
+      279,
+      18,
+      18
+     ],
+     "name": "LEVEL",
+     "op": 2,
+     "pivot": [
+      372,
+      288
+     ],
+     "angle": [
+      -110,
+      110
+     ],
+     "role": "operator level meter (UPDATE_VU)",
+     "sprite": "needle-small"
+    },
+    {
+     "id": "ch3-tag",
+     "type": "plate",
+     "page": "ghosts",
+     "rect": [
+      373,
+      360,
+      66,
+      13
+     ],
+     "name": "STATE",
+     "op": 2,
+     "text": "state",
+     "role": "asleep / you hear it / haunts others / silent",
+     "glow": "glow-plate"
+    },
+    {
+     "id": "ch3-out",
+     "type": "socket",
+     "page": "ghosts",
+     "rect": [
+      330,
+      326,
+      34,
+      34
+     ],
+     "name": "OUT",
+     "op": 2,
+     "dir": "out",
+     "centre": [
+      347,
+      343
+     ],
+     "role": "drag a hose from here to a chamber below (higher number) = it haunts it",
+     "glow": "glow-socket"
+    },
+    {
+     "id": "ch3-in",
+     "type": "socket",
+     "page": "ghosts",
+     "rect": [
+      330,
+      281,
+      34,
+      34
+     ],
+     "name": "IN",
+     "op": 2,
+     "dir": "in",
+     "centre": [
+      347,
+      298
+     ],
+     "role": "hoses plug in here; legal ones light while a hose is dragged",
+     "glow": "glow-socket"
+    },
+    {
+     "id": "ch3-mix",
+     "type": "wheel",
+     "page": "ghosts",
+     "rect": [
+      389,
+      241,
+      34,
+      34
+     ],
+     "name": "OUT",
+     "op": 2,
+     "centre": [
+      406,
+      258
+     ],
+     "pivot": [
+      406,
+      258
+     ],
+     "param": "patch.mixerNodes[2].level",
+     "sprite": "valve-s",
+     "art_r": 13,
+     "also": "patch.mixerNodes[2].active (touching it wakes the mixer)",
+     "pname": "Op 3 Mixer Level",
+     "role": "mix valve on the pipe to the stacks: how loud you hear this ghost",
+     "fmt": "pct",
+     "glow": "glow-round"
+    },
+    {
+     "id": "ch4",
+     "type": "chamber",
+     "page": "ghosts",
+     "rect": [
+      146,
+      390,
+      80,
+      74
+     ],
+     "name": "GHOST 4",
+     "op": 3,
+     "shape": "heart",
+     "colour": "#86d8ff",
+     "centre": [
+      186,
+      428
+     ],
+     "action": "selectGhost(3)",
+     "role": "operator chamber: glass + flame; glow follows opLevel(op); a click selects the ghost; dragging it starts a hose",
+     "param": "patch.sourceNodes[3] (selected)"
+    },
+    {
+     "id": "ch4-num",
+     "type": "plate",
+     "page": "ghosts",
+     "rect": [
+      130,
+      368,
+      21,
+      15
+     ],
+     "name": "4",
+     "text": "num",
+     "op": 3,
+     "glow": "glow-plate"
+    },
+    {
+     "id": "ch4-vu",
+     "type": "gauge",
+     "page": "ghosts",
+     "rect": [
+      217,
+      371,
+      18,
+      18
+     ],
+     "name": "LEVEL",
+     "op": 3,
+     "pivot": [
+      226,
+      380
+     ],
+     "angle": [
+      -110,
+      110
+     ],
+     "role": "operator level meter (UPDATE_VU)",
+     "sprite": "needle-small"
+    },
+    {
+     "id": "ch4-tag",
+     "type": "plate",
+     "page": "ghosts",
+     "rect": [
+      153,
+      468,
+      66,
+      13
+     ],
+     "name": "STATE",
+     "op": 3,
+     "text": "state",
+     "role": "asleep / you hear it / haunts others / silent",
+     "glow": "glow-plate"
+    },
+    {
+     "id": "ch4-out",
+     "type": "socket",
+     "page": "ghosts",
+     "rect": [
+      226,
+      433,
+      34,
+      34
+     ],
+     "name": "OUT",
+     "op": 3,
+     "dir": "out",
+     "centre": [
+      243,
+      450
+     ],
+     "role": "drag a hose from here to a chamber below (higher number) = it haunts it",
+     "glow": "glow-socket"
+    },
+    {
+     "id": "ch4-in",
+     "type": "socket",
+     "page": "ghosts",
+     "rect": [
+      228,
+      389,
+      34,
+      34
+     ],
+     "name": "IN",
+     "op": 3,
+     "dir": "in",
+     "centre": [
+      245,
+      406
+     ],
+     "role": "hoses plug in here; legal ones light while a hose is dragged",
+     "glow": "glow-socket"
+    },
+    {
+     "id": "ch4-mix",
+     "type": "wheel",
+     "page": "ghosts",
+     "rect": [
+      169,
+      363,
+      34,
+      34
+     ],
+     "name": "OUT",
+     "op": 3,
+     "centre": [
+      186,
+      380
+     ],
+     "pivot": [
+      186,
+      380
+     ],
+     "param": "patch.mixerNodes[3].level",
+     "sprite": "valve-s",
+     "art_r": 13,
+     "also": "patch.mixerNodes[3].active (touching it wakes the mixer)",
+     "pname": "Op 4 Mixer Level",
+     "role": "mix valve on the pipe to the stacks: how loud you hear this ghost",
+     "fmt": "pct",
+     "glow": "glow-round"
+    },
+    {
+     "id": "ch5",
+     "type": "chamber",
+     "page": "ghosts",
+     "rect": [
+      366,
+      397,
+      80,
+      74
+     ],
+     "name": "GHOST 5",
+     "op": 4,
+     "shape": "drum",
+     "colour": "#ffb340",
+     "centre": [
+      406,
+      435
+     ],
+     "action": "selectGhost(4)",
+     "role": "operator chamber: glass + flame; glow follows opLevel(op); a click selects the ghost; dragging it starts a hose",
+     "param": "patch.sourceNodes[4] (selected)"
+    },
+    {
+     "id": "ch5-num",
+     "type": "plate",
+     "page": "ghosts",
+     "rect": [
+      441,
+      375,
+      21,
+      15
+     ],
+     "name": "5",
+     "text": "num",
+     "op": 4,
+     "glow": "glow-plate"
+    },
+    {
+     "id": "ch5-vu",
+     "type": "gauge",
+     "page": "ghosts",
+     "rect": [
+      357,
+      378,
+      18,
+      18
+     ],
+     "name": "LEVEL",
+     "op": 4,
+     "pivot": [
+      366,
+      387
+     ],
+     "angle": [
+      -110,
+      110
+     ],
+     "role": "operator level meter (UPDATE_VU)",
+     "sprite": "needle-small"
+    },
+    {
+     "id": "ch5-tag",
+     "type": "plate",
+     "page": "ghosts",
+     "rect": [
+      373,
+      475,
+      66,
+      13
+     ],
+     "name": "STATE",
+     "op": 4,
+     "text": "state",
+     "role": "asleep / you hear it / haunts others / silent",
+     "glow": "glow-plate"
+    },
+    {
+     "id": "ch5-out",
+     "type": "socket",
+     "page": "ghosts",
+     "rect": [
+      332,
+      441,
+      34,
+      34
+     ],
+     "name": "OUT",
+     "op": 4,
+     "dir": "out",
+     "centre": [
+      349,
+      458
+     ],
+     "role": "drag a hose from here to a chamber below (higher number) = it haunts it",
+     "glow": "glow-socket"
+    },
+    {
+     "id": "ch5-in",
+     "type": "socket",
+     "page": "ghosts",
+     "rect": [
+      330,
+      396,
+      34,
+      34
+     ],
+     "name": "IN",
+     "op": 4,
+     "dir": "in",
+     "centre": [
+      347,
+      413
+     ],
+     "role": "hoses plug in here; legal ones light while a hose is dragged",
+     "glow": "glow-socket"
+    },
+    {
+     "id": "ch5-mix",
+     "type": "wheel",
+     "page": "ghosts",
+     "rect": [
+      389,
+      370,
+      34,
+      34
+     ],
+     "name": "OUT",
+     "op": 4,
+     "centre": [
+      406,
+      387
+     ],
+     "pivot": [
+      406,
+      387
+     ],
+     "param": "patch.mixerNodes[4].level",
+     "sprite": "valve-s",
+     "art_r": 13,
+     "also": "patch.mixerNodes[4].active (touching it wakes the mixer)",
+     "pname": "Op 5 Mixer Level",
+     "role": "mix valve on the pipe to the stacks: how loud you hear this ghost",
+     "fmt": "pct",
+     "glow": "glow-round"
+    },
+    {
+     "id": "ch6",
+     "type": "chamber",
+     "page": "ghosts",
+     "rect": [
+      256,
+      452,
+      80,
+      74
+     ],
+     "name": "GHOST 6",
+     "op": 5,
+     "shape": "retort",
+     "colour": "#ff93a8",
+     "centre": [
+      296,
+      490
+     ],
+     "action": "selectGhost(5)",
+     "role": "operator chamber: glass + flame; glow follows opLevel(op); a click selects the ghost; dragging it starts a hose",
+     "param": "patch.sourceNodes[5] (selected)"
+    },
+    {
+     "id": "ch6-num",
+     "type": "plate",
+     "page": "ghosts",
+     "rect": [
+      314,
+      447,
+      21,
+      15
+     ],
+     "name": "6",
+     "text": "num",
+     "op": 5,
+     "glow": "glow-plate"
+    },
+    {
+     "id": "ch6-vu",
+     "type": "gauge",
+     "page": "ghosts",
+     "rect": [
+      329,
+      427,
+      18,
+      18
+     ],
+     "name": "LEVEL",
+     "op": 5,
+     "pivot": [
+      338,
+      436
+     ],
+     "angle": [
+      -110,
+      110
+     ],
+     "role": "operator level meter (UPDATE_VU)",
+     "sprite": "needle-small"
+    },
+    {
+     "id": "ch6-tag",
+     "type": "plate",
+     "page": "ghosts",
+     "rect": [
+      263,
+      530,
+      66,
+      13
+     ],
+     "name": "STATE",
+     "op": 5,
+     "text": "state",
+     "role": "asleep / you hear it / haunts others / silent",
+     "glow": "glow-plate"
+    },
+    {
+     "id": "ch6-out",
+     "type": "socket",
+     "page": "ghosts",
+     "rect": [
+      219,
+      465,
+      34,
+      34
+     ],
+     "name": "OUT",
+     "op": 5,
+     "dir": "out",
+     "centre": [
+      236,
+      482
+     ],
+     "role": "drag a hose from here to a chamber below (higher number) = it haunts it",
+     "glow": "glow-socket"
+    },
+    {
+     "id": "ch6-in",
+     "type": "socket",
+     "page": "ghosts",
+     "rect": [
+      297,
+      413,
+      34,
+      34
+     ],
+     "name": "IN",
+     "op": 5,
+     "dir": "in",
+     "centre": [
+      314,
+      430
+     ],
+     "role": "hoses plug in here; legal ones light while a hose is dragged",
+     "glow": "glow-socket"
+    },
+    {
+     "id": "ch6-mix",
+     "type": "wheel",
+     "page": "ghosts",
+     "rect": [
+      343,
+      479,
+      34,
+      34
+     ],
+     "name": "OUT",
+     "op": 5,
+     "centre": [
+      360,
+      496
+     ],
+     "pivot": [
+      360,
+      496
+     ],
+     "param": "patch.mixerNodes[5].level",
+     "sprite": "valve-s",
+     "art_r": 13,
+     "also": "patch.mixerNodes[5].active (touching it wakes the mixer)",
+     "pname": "Op 6 Mixer Level",
+     "role": "mix valve on the pipe to the stacks: how loud you hear this ghost",
+     "fmt": "pct",
+     "glow": "glow-round"
+    },
+    {
+     "id": "bench-title",
+     "type": "plate",
+     "page": "ghosts",
+     "rect": [
+      718,
+      222,
+      166,
+      24
+     ],
+     "name": "TITLE",
+     "text": "bench-title",
+     "role": "panelTitle: GHOST n / GHOST a > GHOST b",
+     "glow": "glow-plate"
+    },
+    {
+     "id": "bench-lamp",
+     "type": "plate",
+     "page": "ghosts",
+     "rect": [
+      894,
+      221,
+      48,
+      26
+     ],
+     "name": "LAMP",
+     "text": "",
+     "role": "lamp in the selected ghost colour (two lamps for a link)",
+     "glow": "glow-plate"
+    },
+    {
+     "id": "g-wave",
+     "type": "selector",
+     "page": "ghosts",
+     "rect": [
+      718,
+      254,
+      122,
+      34
+     ],
+     "name": "WAVE",
+     "face": "ghost",
+     "options": [
+      "Sin",
+      "Sin^5 x",
+      "Squarish",
+      "Sawish",
+      "Triangle",
+      "Sin(x^3)",
+      "TX 2",
+      "TX 3",
+      "TX 4",
+      "TX 5",
+      "TX 6",
+      "TX 7",
+      "TX 8",
+      "Spiky TX 2",
+      "Spiky TX 4",
+      "Spiky TX 6",
+      "Spiky TX 8",
+      "Hann",
+      "Blackman Harris",
+      "1/2 Blackman Harris",
+      "Tukey",
+      "Wavetable",
+      "Audio In"
+     ],
+     "param": "patch.sourceNodes[op].waveForm",
+     "pname": "Op N Source Waveform",
+     "text": "value"
+    },
+    {
+     "id": "g-awake",
+     "type": "switch",
+     "page": "ghosts",
+     "rect": [
+      852,
+      250,
+      98,
+      40
+     ],
+     "name": "AWAKE",
+     "face": "ghost",
+     "pivot": [
+      868,
+      278
+     ],
+     "label": [
+      884,
+      262,
+      64,
+      18
+     ],
+     "param": "patch.sourceNodes[op].active",
+     "pname": "Op N Source Active",
+     "sprite": "switch-arm",
+     "flash": "spark",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "g-ratio",
+     "type": "wheel",
+     "page": "ghosts",
+     "rect": [
+      730,
+      306,
+      48,
+      48
+     ],
+     "name": "RATIO",
+     "face": "ghost",
+     "centre": [
+      754,
+      330
+     ],
+     "pivot": [
+      754,
+      330
+     ],
+     "label": [
+      720,
+      361,
+      68,
+      24
+     ],
+     "param": "patch.sourceNodes[op].ratio",
+     "pname": "Op N Source Ratio",
+     "fmt": "ratio",
+     "min": -5,
+     "max": 5,
+     "note": "stored as log2 of the ratio; snaps to musical ratios (SHIFT = free)",
+     "sprite": "tap-b",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "g-octave",
+     "type": "wheel",
+     "page": "ghosts",
+     "rect": [
+      814,
+      306,
+      48,
+      48
+     ],
+     "name": "OCTAVE",
+     "face": "ghost",
+     "centre": [
+      838,
+      330
+     ],
+     "pivot": [
+      838,
+      330
+     ],
+     "label": [
+      804,
+      361,
+      68,
+      24
+     ],
+     "param": "patch.sourceNodes[op].octTranspose",
+     "pname": "Op N Source Octave Transpose",
+     "fmt": "int",
+     "min": -3,
+     "max": 3,
+     "sprite": "tap-b",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "g-out",
+     "type": "wheel",
+     "page": "ghosts",
+     "rect": [
+      898,
+      306,
+      48,
+      48
+     ],
+     "name": "OUT",
+     "face": "ghost",
+     "centre": [
+      922,
+      330
+     ],
+     "pivot": [
+      922,
+      330
+     ],
+     "label": [
+      888,
+      361,
+      68,
+      24
+     ],
+     "param": "patch.mixerNodes[op].level",
+     "pname": "Op N Mixer Level",
+     "fmt": "pct",
+     "sprite": "tap-a",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "g-pan",
+     "type": "wheel",
+     "page": "ghosts",
+     "rect": [
+      730,
+      394,
+      48,
+      48
+     ],
+     "name": "PAN",
+     "face": "ghost",
+     "centre": [
+      754,
+      418
+     ],
+     "pivot": [
+      754,
+      418
+     ],
+     "label": [
+      720,
+      449,
+      68,
+      24
+     ],
+     "param": "patch.mixerNodes[op].pan",
+     "pname": "Op N Mixer Pan",
+     "fmt": "pan",
+     "min": -1,
+     "max": 1,
+     "sprite": "tap-c",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "g-fb",
+     "type": "wheel",
+     "page": "ghosts",
+     "rect": [
+      814,
+      394,
+      48,
+      48
+     ],
+     "name": "FEEDBACK",
+     "face": "ghost",
+     "centre": [
+      838,
+      418
+     ],
+     "pivot": [
+      838,
+      418
+     ],
+     "label": [
+      804,
+      449,
+      68,
+      24
+     ],
+     "param": "patch.selfNodes[op].fbLevel",
+     "pname": "Op N Feedback Level",
+     "fmt": "bip",
+     "min": -1,
+     "max": 1,
+     "sprite": "tap-a",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "g-envamt",
+     "type": "wheel",
+     "page": "ghosts",
+     "rect": [
+      898,
+      394,
+      48,
+      48
+     ],
+     "name": "ENV > OUT",
+     "face": "ghost",
+     "centre": [
+      922,
+      418
+     ],
+     "pivot": [
+      922,
+      418
+     ],
+     "label": [
+      888,
+      449,
+      68,
+      24
+     ],
+     "param": "patch.mixerNodes[op].envToLevel | selfNodes[op].envToFB | sourceNodes[op].envToRatio (by ENV tab)",
+     "pname": "Op N Mixer EnvToLevel | Op N Feedback Env to FB Amplitude | Op N Source Env to Ratio",
+     "fmt": "bip",
+     "min": -1,
+     "max": 1,
+     "sprite": "tap-b",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "g-env",
+     "type": "pin",
+     "page": "ghosts",
+     "rect": [
+      488,
+      298,
+      210,
+      102
+     ],
+     "name": "ENVELOPE",
+     "face": "ghost",
+     "pins": [
+      "delay",
+      "attack",
+      "hold",
+      "decay",
+      "sustain",
+      "release"
+     ],
+     "param": "patch.{mixerNodes|selfNodes|sourceNodes}[op].{delay,attack,hold,decay,sustain,release} (by ENV tab)",
+     "role": "DAHDSR as a bent brass rail behind glass; five pins: delay, attack, hold, decay + sustain (x and y), release",
+     "sprite": "pin",
+     "sprite_lit": "pin-hot"
+    },
+    {
+     "id": "g-tab-heard",
+     "type": "plunger",
+     "page": "ghosts",
+     "rect": [
+      486,
+      410,
+      66,
+      34
+     ],
+     "name": "HEARD",
+     "face": "ghost",
+     "group": "envtab",
+     "index": 0,
+     "action": "envMode = 0; rebindPanel()",
+     "role": "envelope of how loud you hear this ghost (mixer)",
+     "sprite": "rod-knob",
+     "glow": "glow-round"
+    },
+    {
+     "id": "g-tab-feedback",
+     "type": "plunger",
+     "page": "ghosts",
+     "rect": [
+      556,
+      410,
+      84,
+      34
+     ],
+     "name": "FEEDBACK",
+     "face": "ghost",
+     "group": "envtab",
+     "index": 1,
+     "action": "envMode = 1; rebindPanel()",
+     "role": "envelope of this ghost's feedback (self)",
+     "sprite": "rod-knob",
+     "glow": "glow-round"
+    },
+    {
+     "id": "g-tab-pitch",
+     "type": "plunger",
+     "page": "ghosts",
+     "rect": [
+      644,
+      410,
+      56,
+      34
+     ],
+     "name": "PITCH",
+     "face": "ghost",
+     "group": "envtab",
+     "index": 2,
+     "action": "envMode = 2; rebindPanel()",
+     "role": "envelope that bends this ghost's pitch (source)",
+     "sprite": "rod-knob",
+     "glow": "glow-round"
+    },
+    {
+     "id": "g-envon",
+     "type": "switch",
+     "page": "ghosts",
+     "rect": [
+      486,
+      452,
+      98,
+      40
+     ],
+     "name": "ENV ON",
+     "face": "ghost",
+     "pivot": [
+      502,
+      480
+     ],
+     "label": [
+      518,
+      464,
+      64,
+      18
+     ],
+     "param": "patch.{mixerNodes|selfNodes|sourceNodes}[op].envPower",
+     "pname": "... Env Power",
+     "sprite": "switch-arm",
+     "flash": "spark",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "g-scope",
+     "type": "plate",
+     "page": "ghosts",
+     "rect": [
+      720,
+      484,
+      226,
+      46
+     ],
+     "name": "SCOPE",
+     "text": "",
+     "role": "the output scope behind a glass slit (scopeSample)",
+     "glow": "glow-plate"
+    },
+    {
+     "id": "l-mode",
+     "type": "selector",
+     "page": "ghosts",
+     "rect": [
+      718,
+      254,
+      122,
+      34
+     ],
+     "name": "MODE",
+     "face": "link",
+     "options": [
+      "Phase Modulation",
+      "Ring Modulation",
+      "Linear FM",
+      "Exponential FM"
+     ],
+     "param": "patch.matrixNodes[link].modulationMode",
+     "pname": "Op A to Op B modulation mode",
+     "text": "value"
+    },
+    {
+     "id": "l-linked",
+     "type": "switch",
+     "page": "ghosts",
+     "rect": [
+      852,
+      250,
+      98,
+      40
+     ],
+     "name": "LINKED",
+     "face": "link",
+     "pivot": [
+      868,
+      278
+     ],
+     "label": [
+      884,
+      262,
+      64,
+      18
+     ],
+     "param": "patch.matrixNodes[link].active",
+     "pname": "Op A to Op B Active",
+     "sprite": "switch-arm",
+     "flash": "spark",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "l-depth",
+     "type": "wheel",
+     "page": "ghosts",
+     "rect": [
+      730,
+      306,
+      48,
+      48
+     ],
+     "name": "DEPTH",
+     "face": "link",
+     "centre": [
+      754,
+      330
+     ],
+     "pivot": [
+      754,
+      330
+     ],
+     "label": [
+      720,
+      361,
+      68,
+      24
+     ],
+     "param": "patch.matrixNodes[link].level",
+     "pname": "Op A to Op B Depth",
+     "fmt": "pct",
+     "sprite": "tap-c",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "l-lfo",
+     "type": "wheel",
+     "page": "ghosts",
+     "rect": [
+      814,
+      306,
+      48,
+      48
+     ],
+     "name": "LFO AMT",
+     "face": "link",
+     "centre": [
+      838,
+      330
+     ],
+     "pivot": [
+      838,
+      330
+     ],
+     "label": [
+      804,
+      361,
+      68,
+      24
+     ],
+     "param": "patch.matrixNodes[link].lfoToDepth",
+     "pname": "Op A to Op B LFO to Depth",
+     "fmt": "bip",
+     "min": -1,
+     "max": 1,
+     "sprite": "tap-a",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "l-envamt",
+     "type": "wheel",
+     "page": "ghosts",
+     "rect": [
+      898,
+      306,
+      48,
+      48
+     ],
+     "name": "ENV AMT",
+     "face": "link",
+     "centre": [
+      922,
+      330
+     ],
+     "pivot": [
+      922,
+      330
+     ],
+     "label": [
+      888,
+      361,
+      68,
+      24
+     ],
+     "param": "patch.matrixNodes[link].envToLevel",
+     "pname": "Op A to Op B EnvToLevel",
+     "fmt": "bip",
+     "min": -1,
+     "max": 1,
+     "sprite": "tap-a",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "l-view",
+     "type": "plate",
+     "page": "ghosts",
+     "rect": [
+      720,
+      392,
+      226,
+      76
+     ],
+     "name": "LINK",
+     "face": "link",
+     "text": "",
+     "role": "which ghost haunts which: two lamps in the ghosts' colours and the pipe between them",
+     "glow": "glow-plate"
+    },
+    {
+     "id": "l-env",
+     "type": "pin",
+     "page": "ghosts",
+     "rect": [
+      488,
+      298,
+      210,
+      102
+     ],
+     "name": "ENVELOPE",
+     "face": "link",
+     "pins": [
+      "delay",
+      "attack",
+      "hold",
+      "decay",
+      "sustain",
+      "release"
+     ],
+     "param": "patch.matrixNodes[link].{delay,attack,hold,decay,sustain,release}",
+     "role": "the HAUNT envelope",
+     "sprite": "pin",
+     "sprite_lit": "pin-hot"
+    },
+    {
+     "id": "l-break",
+     "type": "plunger",
+     "page": "ghosts",
+     "rect": [
+      486,
+      410,
+      110,
+      34
+     ],
+     "name": "BREAK LINK",
+     "face": "link",
+     "momentary": true,
+     "action": "setOnce(matrixNodes[link].active, 0) (double-click on the dot in the plugin)",
+     "sprite": "rod-knob",
+     "glow": "glow-round"
+    },
+    {
+     "id": "l-envon",
+     "type": "switch",
+     "page": "ghosts",
+     "rect": [
+      486,
+      452,
+      98,
+      40
+     ],
+     "name": "ENV ON",
+     "face": "link",
+     "pivot": [
+      502,
+      480
+     ],
+     "label": [
+      518,
+      464,
+      64,
+      18
+     ],
+     "param": "patch.matrixNodes[link].envPower",
+     "sprite": "switch-arm",
+     "flash": "spark",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "l-drive",
+     "type": "switch",
+     "page": "ghosts",
+     "rect": [
+      600,
+      452,
+      100,
+      40
+     ],
+     "name": "DRIVE",
+     "face": "link",
+     "pivot": [
+      616,
+      480
+     ],
+     "label": [
+      632,
+      464,
+      64,
+      18
+     ],
+     "param": "patch.matrixNodes[link].overdrive",
+     "pname": "Op A to Op B Overdrive",
+     "sprite": "switch-arm",
+     "flash": "spark",
+     "label_glow": "glow-plate"
+    }
+   ],
+   "hull": [
+    [
+     126,
+     690
+    ],
+    [
+     120,
+     650
+    ],
+    [
+     118,
+     604
+    ],
+    [
+     120,
+     566
+    ],
+    [
+     104,
+     548
+    ],
+    [
+     82,
+     524
+    ],
+    [
+     64,
+     480
+    ],
+    [
+     56,
+     420
+    ],
+    [
+     54,
+     340
+    ],
+    [
+     56,
+     270
+    ],
+    [
+     60,
+     230
+    ],
+    [
+     70,
+     205
+    ],
+    [
+     88,
+     189
+    ],
+    [
+     112,
+     181
+    ],
+    [
+     150,
+     177
+    ],
+    [
+     210,
+     175
+    ],
+    [
+     280,
+     175
+    ],
+    [
+     340,
+     177
+    ],
+    [
+     370,
+     181
+    ],
+    [
+     384,
+     189
+    ],
+    [
+     392,
+     197
+    ],
+    [
+     399,
+     190
+    ],
+    [
+     402,
+     172
+    ],
+    [
+     404,
+     150
+    ],
+    [
+     408,
+     122
+    ],
+    [
+     418,
+     100
+    ],
+    [
+     432,
+     84
+    ],
+    [
+     452,
+     72
+    ],
+    [
+     484,
+     62
+    ],
+    [
+     520,
+     57
+    ],
+    [
+     548,
+     56
+    ],
+    [
+     584,
+     58
+    ],
+    [
+     616,
+     64
+    ],
+    [
+     646,
+     75
+    ],
+    [
+     666,
+     88
+    ],
+    [
+     681,
+     105
+    ],
+    [
+     692,
+     128
+    ],
+    [
+     698,
+     152
+    ],
+    [
+     701,
+     170
+    ],
+    [
+     710,
+     178
+    ],
+    [
+     760,
+     178
+    ],
+    [
+     830,
+     177
+    ],
+    [
+     890,
+     178
+    ],
+    [
+     928,
+     181
+    ],
+    [
+     952,
+     189
+    ],
+    [
+     970,
+     205
+    ],
+    [
+     980,
+     230
+    ],
+    [
+     984,
+     270
+    ],
+    [
+     986,
+     340
+    ],
+    [
+     984,
+     420
+    ],
+    [
+     976,
+     480
+    ],
+    [
+     958,
+     524
+    ],
+    [
+     936,
+     548
+    ],
+    [
+     922,
+     566
+    ],
+    [
+     922,
+     604
+    ],
+    [
+     920,
+     650
+    ],
+    [
+     914,
+     690
+    ]
+   ],
+   "regions": {
+    "field": [
+     126,
+     184,
+     342,
+     360
+    ],
+    "bench_a": [
+     482,
+     286,
+     222,
+     256
+    ],
+    "bench_b": [
+     714,
+     216,
+     262,
+     326
+    ],
+    "scope": [
+     720,
+     484,
+     226,
+     46
+    ],
+    "link_view": [
+     720,
+     392,
+     226,
+     76
+    ]
+   },
+   "faces": [
+    "ghost",
+    "link"
+   ],
+   "chambers": [
+    {
+     "op": 0,
+     "centre": [
+      296,
+      240
+     ],
+     "shape": "globe",
+     "colour": "#fff0cc",
+     "out": [
+      279,
+      309
+     ],
+     "inn": [
+      354,
+      266
+     ],
+     "mix_valve": [
+      366,
+      212
+     ],
+     "mix_pipe": [
+      [
+       334,
+       216
+      ],
+      [
+       350,
+       213
+      ],
+      [
+       366,
+       212
+      ],
+      [
+       374,
+       198
+      ],
+      [
+       360,
+       187
+      ],
+      [
+       332,
+       182
+      ]
+     ]
+    },
+    {
+     "op": 1,
+     "centre": [
+      186,
+      314
+     ],
+     "shape": "arch",
+     "colour": "#84e092",
+     "out": [
+      245,
+      337
+     ],
+     "inn": [
+      245,
+      292
+     ],
+     "mix_valve": [
+      186,
+      252
+     ],
+     "mix_pipe": [
+      [
+       186,
+       266
+      ],
+      [
+       186,
+       252
+      ],
+      [
+       184,
+       230
+      ],
+      [
+       178,
+       206
+      ],
+      [
+       172,
+       186
+      ]
+     ]
+    },
+    {
+     "op": 2,
+     "centre": [
+      406,
+      320
+     ],
+     "shape": "hex",
+     "colour": "#bda2ff",
+     "out": [
+      347,
+      343
+     ],
+     "inn": [
+      347,
+      298
+     ],
+     "mix_valve": [
+      406,
+      258
+     ],
+     "mix_pipe": [
+      [
+       406,
+       272
+      ],
+      [
+       406,
+       258
+      ],
+      [
+       402,
+       238
+      ],
+      [
+       392,
+       220
+      ],
+      [
+       382,
+       204
+      ],
+      [
+       366,
+       190
+      ]
+     ]
+    },
+    {
+     "op": 3,
+     "centre": [
+      186,
+      428
+     ],
+     "shape": "heart",
+     "colour": "#86d8ff",
+     "out": [
+      243,
+      450
+     ],
+     "inn": [
+      245,
+      406
+     ],
+     "mix_valve": [
+      186,
+      380
+     ],
+     "mix_pipe": [
+      [
+       186,
+       394
+      ],
+      [
+       186,
+       380
+      ],
+      [
+       164,
+       372
+      ],
+      [
+       142,
+       360
+      ],
+      [
+       133,
+       332
+      ],
+      [
+       132,
+       262
+      ],
+      [
+       136,
+       214
+      ],
+      [
+       150,
+       190
+      ]
+     ]
+    },
+    {
+     "op": 4,
+     "centre": [
+      406,
+      435
+     ],
+     "shape": "drum",
+     "colour": "#ffb340",
+     "out": [
+      349,
+      458
+     ],
+     "inn": [
+      347,
+      413
+     ],
+     "mix_valve": [
+      406,
+      387
+     ],
+     "mix_pipe": [
+      [
+       406,
+       401
+      ],
+      [
+       406,
+       387
+      ],
+      [
+       432,
+       379
+      ],
+      [
+       454,
+       362
+      ],
+      [
+       462,
+       328
+      ],
+      [
+       463,
+       292
+      ]
+     ]
+    },
+    {
+     "op": 5,
+     "centre": [
+      296,
+      490
+     ],
+     "shape": "retort",
+     "colour": "#ff93a8",
+     "out": [
+      236,
+      482
+     ],
+     "inn": [
+      314,
+      430
+     ],
+     "mix_valve": [
+      360,
+      496
+     ],
+     "mix_pipe": [
+      [
+       342,
+       498
+      ],
+      [
+       360,
+       496
+      ],
+      [
+       378,
+       500
+      ],
+      [
+       392,
+       514
+      ],
+      [
+       402,
+       532
+      ]
+     ]
+    }
+   ],
+   "links": {
+    "rule": "a ghost may haunt only the ghosts BELOW it (a higher number): src < dst. matrix index = MatrixIndex::positionForSourceTarget(src, dst)",
+    "valve_radius": 11,
+    "valve_hit": 17,
+    "default_depth": 0.5,
+    "items": [
+     {
+      "index": 0,
+      "src": 0,
+      "dst": 1,
+      "param": "patch.matrixNodes[0].level",
+      "active": "patch.matrixNodes[0].active",
+      "pname": "Op 1 to Op 2 Depth"
+     },
+     {
+      "index": 1,
+      "src": 0,
+      "dst": 2,
+      "param": "patch.matrixNodes[1].level",
+      "active": "patch.matrixNodes[1].active",
+      "pname": "Op 1 to Op 3 Depth"
+     },
+     {
+      "index": 2,
+      "src": 1,
+      "dst": 2,
+      "param": "patch.matrixNodes[2].level",
+      "active": "patch.matrixNodes[2].active",
+      "pname": "Op 2 to Op 3 Depth"
+     },
+     {
+      "index": 3,
+      "src": 0,
+      "dst": 3,
+      "param": "patch.matrixNodes[3].level",
+      "active": "patch.matrixNodes[3].active",
+      "pname": "Op 1 to Op 4 Depth"
+     },
+     {
+      "index": 4,
+      "src": 1,
+      "dst": 3,
+      "param": "patch.matrixNodes[4].level",
+      "active": "patch.matrixNodes[4].active",
+      "pname": "Op 2 to Op 4 Depth"
+     },
+     {
+      "index": 5,
+      "src": 2,
+      "dst": 3,
+      "param": "patch.matrixNodes[5].level",
+      "active": "patch.matrixNodes[5].active",
+      "pname": "Op 3 to Op 4 Depth"
+     },
+     {
+      "index": 6,
+      "src": 0,
+      "dst": 4,
+      "param": "patch.matrixNodes[6].level",
+      "active": "patch.matrixNodes[6].active",
+      "pname": "Op 1 to Op 5 Depth"
+     },
+     {
+      "index": 7,
+      "src": 1,
+      "dst": 4,
+      "param": "patch.matrixNodes[7].level",
+      "active": "patch.matrixNodes[7].active",
+      "pname": "Op 2 to Op 5 Depth"
+     },
+     {
+      "index": 8,
+      "src": 2,
+      "dst": 4,
+      "param": "patch.matrixNodes[8].level",
+      "active": "patch.matrixNodes[8].active",
+      "pname": "Op 3 to Op 5 Depth"
+     },
+     {
+      "index": 9,
+      "src": 3,
+      "dst": 4,
+      "param": "patch.matrixNodes[9].level",
+      "active": "patch.matrixNodes[9].active",
+      "pname": "Op 4 to Op 5 Depth"
+     },
+     {
+      "index": 10,
+      "src": 0,
+      "dst": 5,
+      "param": "patch.matrixNodes[10].level",
+      "active": "patch.matrixNodes[10].active",
+      "pname": "Op 1 to Op 6 Depth"
+     },
+     {
+      "index": 11,
+      "src": 1,
+      "dst": 5,
+      "param": "patch.matrixNodes[11].level",
+      "active": "patch.matrixNodes[11].active",
+      "pname": "Op 2 to Op 6 Depth"
+     },
+     {
+      "index": 12,
+      "src": 2,
+      "dst": 5,
+      "param": "patch.matrixNodes[12].level",
+      "active": "patch.matrixNodes[12].active",
+      "pname": "Op 3 to Op 6 Depth"
+     },
+     {
+      "index": 13,
+      "src": 3,
+      "dst": 5,
+      "param": "patch.matrixNodes[13].level",
+      "active": "patch.matrixNodes[13].active",
+      "pname": "Op 4 to Op 6 Depth"
+     },
+     {
+      "index": 14,
+      "src": 4,
+      "dst": 5,
+      "param": "patch.matrixNodes[14].level",
+      "active": "patch.matrixNodes[14].active",
+      "pname": "Op 5 to Op 6 Depth"
+     }
+    ],
+    "feedback": [
+     {
+      "op": 0,
+      "param": "patch.selfNodes[0].fbLevel",
+      "active": "patch.selfNodes[0].active",
+      "pname": "Op 1 Feedback Level"
+     },
+     {
+      "op": 1,
+      "param": "patch.selfNodes[1].fbLevel",
+      "active": "patch.selfNodes[1].active",
+      "pname": "Op 2 Feedback Level"
+     },
+     {
+      "op": 2,
+      "param": "patch.selfNodes[2].fbLevel",
+      "active": "patch.selfNodes[2].active",
+      "pname": "Op 3 Feedback Level"
+     },
+     {
+      "op": 3,
+      "param": "patch.selfNodes[3].fbLevel",
+      "active": "patch.selfNodes[3].active",
+      "pname": "Op 4 Feedback Level"
+     },
+     {
+      "op": 4,
+      "param": "patch.selfNodes[4].fbLevel",
+      "active": "patch.selfNodes[4].active",
+      "pname": "Op 5 Feedback Level"
+     },
+     {
+      "op": 5,
+      "param": "patch.selfNodes[5].fbLevel",
+      "active": "patch.selfNodes[5].active",
+      "pname": "Op 6 Feedback Level"
+     }
+    ],
+    "hose": "drawn live: a sagging cubic from the source OUT socket to the target IN socket (see JUCE-NOTES: hose geometry); its depth valve rides on it"
+   },
+   "about": "the six FM ghosts and how they haunt each other. The workbench shows one face: \"ghost\" (a chamber was touched) or \"link\" (a hose valve was touched). TONE / PITCH DROP / DRIFT / VOICE, which the plugin draws under this page, live on MAIN in this design."
+  },
+  "main": {
+   "controls": [
+    {
+     "id": "asm-drift",
+     "type": "plate",
+     "page": "main",
+     "rect": [
+      124,
+      249,
+      50,
+      12
+     ],
+     "name": "DRIFT",
+     "text": "fixed",
+     "role": "assembly name tag"
+    },
+    {
+     "id": "asm-pitch",
+     "type": "plate",
+     "page": "main",
+     "rect": [
+      124,
+      337,
+      76,
+      12
+     ],
+     "name": "PITCH DROP",
+     "text": "fixed",
+     "role": "assembly name tag"
+    },
+    {
+     "id": "asm-tone",
+     "type": "plate",
+     "page": "main",
+     "rect": [
+      188,
+      423,
+      44,
+      12
+     ],
+     "name": "TONE",
+     "text": "fixed",
+     "role": "assembly name tag"
+    },
+    {
+     "id": "asm-env",
+     "type": "plate",
+     "page": "main",
+     "rect": [
+      424,
+      269,
+      60,
+      12
+     ],
+     "name": "VOLUME",
+     "text": "fixed",
+     "role": "assembly name tag"
+    },
+    {
+     "id": "asm-output",
+     "type": "plate",
+     "page": "main",
+     "rect": [
+      836,
+      249,
+      58,
+      12
+     ],
+     "name": "OUTPUT",
+     "text": "fixed",
+     "role": "assembly name tag"
+    },
+    {
+     "id": "asm-voice",
+     "type": "plate",
+     "page": "main",
+     "rect": [
+      772,
+      337,
+      50,
+      12
+     ],
+     "name": "VOICE",
+     "text": "fixed",
+     "role": "assembly name tag"
+    },
+    {
+     "id": "dr-rate",
+     "type": "wheel",
+     "page": "main",
+     "rect": [
+      78,
+      264,
+      40,
+      40
+     ],
+     "name": "RATE",
+     "centre": [
+      98,
+      284
+     ],
+     "pivot": [
+      98,
+      284
+     ],
+     "label": [
+      67,
+      310,
+      62,
+      24
+     ],
+     "param": "patch.fineTuneMod.lfoRate",
+     "pname": "Main Tune LFO Rate",
+     "fmt": "rate",
+     "min": -7,
+     "max": 11,
+     "drives": "windmill speed",
+     "sprite": "tap-a",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "dr-amount",
+     "type": "wheel",
+     "page": "main",
+     "rect": [
+      142,
+      264,
+      40,
+      40
+     ],
+     "name": "AMOUNT",
+     "centre": [
+      162,
+      284
+     ],
+     "pivot": [
+      162,
+      284
+     ],
+     "label": [
+      131,
+      310,
+      62,
+      24
+     ],
+     "param": "patch.fineTuneMod.lfoCoarseDepth",
+     "pname": "Main Tune Coarse LFO Depth",
+     "drives": "pendulum swing",
+     "fmt": "bip",
+     "min": -1,
+     "max": 1,
+     "sprite": "tap-b",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "dr-shape",
+     "type": "selector",
+     "page": "main",
+     "rect": [
+      208,
+      266,
+      36,
+      36
+     ],
+     "name": "SHAPE",
+     "centre": [
+      226,
+      284
+     ],
+     "pivot": [
+      226,
+      284
+     ],
+     "label": [
+      195,
+      308,
+      62,
+      24
+     ],
+     "param": "patch.fineTuneMod.lfoShape",
+     "pname": "Main Tune LFO Shape",
+     "options": [
+      "Sine",
+      "Ramp",
+      "Sawtooth",
+      "Triangle",
+      "Pulse",
+      "Noise",
+      "S and H",
+      "Step"
+     ],
+     "sprite": "sel-knob",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "dr-sync",
+     "type": "switch",
+     "page": "main",
+     "rect": [
+      268,
+      260,
+      44,
+      46
+     ],
+     "name": "SYNC",
+     "pivot": [
+      290,
+      296
+     ],
+     "label": [
+      259,
+      310,
+      62,
+      24
+     ],
+     "param": "patch.fineTuneMod.tempoSync",
+     "pname": "Main Tune Temposync",
+     "sprite": "switch-arm",
+     "flash": "spark",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "pd-amount",
+     "type": "wheel",
+     "page": "main",
+     "rect": [
+      78,
+      350,
+      40,
+      40
+     ],
+     "name": "AMOUNT",
+     "centre": [
+      98,
+      370
+     ],
+     "pivot": [
+      98,
+      370
+     ],
+     "label": [
+      67,
+      396,
+      62,
+      24
+     ],
+     "param": "patch.fineTuneMod.envCoarseDepth",
+     "pname": "Main Tune Env Coarse Depth",
+     "drives": "how far the weight drops on each note",
+     "fmt": "bip",
+     "min": -1,
+     "max": 1,
+     "sprite": "tap-c",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "pd-decay",
+     "type": "wheel",
+     "page": "main",
+     "rect": [
+      142,
+      350,
+      40,
+      40
+     ],
+     "name": "DECAY",
+     "centre": [
+      162,
+      370
+     ],
+     "pivot": [
+      162,
+      370
+     ],
+     "label": [
+      131,
+      396,
+      62,
+      24
+     ],
+     "param": "patch.fineTuneMod.decay",
+     "pname": "Main Tune Env Decay",
+     "fmt": "time",
+     "drives": "how fast the weight climbs back",
+     "sprite": "tap-b",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "m-tune",
+     "type": "wheel",
+     "page": "main",
+     "rect": [
+      206,
+      350,
+      40,
+      40
+     ],
+     "name": "TUNE",
+     "centre": [
+      226,
+      370
+     ],
+     "pivot": [
+      226,
+      370
+     ],
+     "label": [
+      195,
+      396,
+      62,
+      24
+     ],
+     "param": "patch.output.fineTune",
+     "pname": "Main Tune Fine Tuning",
+     "fmt": "cents",
+     "min": -200,
+     "max": 200,
+     "sprite": "tap-b",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "m-bendup",
+     "type": "wheel",
+     "page": "main",
+     "rect": [
+      270,
+      350,
+      40,
+      40
+     ],
+     "name": "BEND UP",
+     "centre": [
+      290,
+      370
+     ],
+     "pivot": [
+      290,
+      370
+     ],
+     "label": [
+      259,
+      396,
+      62,
+      24
+     ],
+     "param": "patch.output.bendUp",
+     "pname": "Main PB Up",
+     "fmt": "int",
+     "min": 0,
+     "max": 48,
+     "sprite": "tap-a",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "m-benddn",
+     "type": "wheel",
+     "page": "main",
+     "rect": [
+      334,
+      350,
+      40,
+      40
+     ],
+     "name": "BEND DOWN",
+     "centre": [
+      354,
+      370
+     ],
+     "pivot": [
+      354,
+      370
+     ],
+     "label": [
+      323,
+      396,
+      62,
+      24
+     ],
+     "param": "patch.output.bendDown",
+     "pname": "Main PB Down",
+     "fmt": "int",
+     "min": 0,
+     "max": 48,
+     "sprite": "tap-c",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "tone-sat",
+     "type": "selector",
+     "page": "main",
+     "rect": [
+      144,
+      438,
+      36,
+      36
+     ],
+     "name": "SATURATION",
+     "centre": [
+      162,
+      456
+     ],
+     "pivot": [
+      162,
+      456
+     ],
+     "label": [
+      131,
+      480,
+      62,
+      24
+     ],
+     "param": "patch.output.saturationType",
+     "pname": "Main Saturation Type",
+     "options": [
+      "None",
+      "Soft",
+      "OJD"
+     ],
+     "sprite": "sel-knob",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "tone-drive",
+     "type": "wheel",
+     "page": "main",
+     "rect": [
+      206,
+      436,
+      40,
+      40
+     ],
+     "name": "DRIVE",
+     "centre": [
+      226,
+      456
+     ],
+     "pivot": [
+      226,
+      456
+     ],
+     "label": [
+      195,
+      482,
+      62,
+      24
+     ],
+     "param": "patch.output.saturationDrive",
+     "pname": "Main Saturation Drive",
+     "fmt": "x",
+     "min": 1,
+     "max": 3,
+     "drives": "bellows stroke",
+     "sprite": "tap-b",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "tone-lp",
+     "type": "selector",
+     "page": "main",
+     "rect": [
+      272,
+      438,
+      36,
+      36
+     ],
+     "name": "LOW PASS",
+     "centre": [
+      290,
+      456
+     ],
+     "pivot": [
+      290,
+      456
+     ],
+     "label": [
+      259,
+      480,
+      62,
+      24
+     ],
+     "param": "patch.output.lowpass",
+     "pname": "Main Low Pass",
+     "options": [
+      "None",
+      "7.5 kHz",
+      "10 kHz",
+      "13 kHz",
+      "16 kHz",
+      "20 kHz"
+     ],
+     "sprite": "sel-knob",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "tone-hp",
+     "type": "selector",
+     "page": "main",
+     "rect": [
+      336,
+      438,
+      36,
+      36
+     ],
+     "name": "HIGH PASS",
+     "centre": [
+      354,
+      456
+     ],
+     "pivot": [
+      354,
+      456
+     ],
+     "label": [
+      323,
+      480,
+      62,
+      24
+     ],
+     "param": "patch.output.highpass",
+     "pname": "Main High Pass",
+     "options": [
+      "None",
+      "10 Hz",
+      "20 Hz",
+      "50 Hz"
+     ],
+     "sprite": "sel-knob",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "m-bitrate",
+     "type": "selector",
+     "page": "main",
+     "rect": [
+      400,
+      438,
+      36,
+      36
+     ],
+     "name": "BIT RATE",
+     "centre": [
+      418,
+      456
+     ],
+     "pivot": [
+      418,
+      456
+     ],
+     "label": [
+      387,
+      480,
+      62,
+      24
+     ],
+     "param": "patch.output.bitRateAdjust",
+     "pname": "Main Bit Rate Adjust",
+     "options": [
+      "None",
+      "12 kHz",
+      "16 kHz",
+      "18 kHz",
+      "20 kHz",
+      "22 kHz",
+      "24 kHz",
+      "28 kHz",
+      "32 kHz",
+      "48 kHz"
+     ],
+     "sprite": "sel-knob",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "m-bits",
+     "type": "selector",
+     "page": "main",
+     "rect": [
+      464,
+      438,
+      36,
+      36
+     ],
+     "name": "BITS",
+     "centre": [
+      482,
+      456
+     ],
+     "pivot": [
+      482,
+      456
+     ],
+     "label": [
+      451,
+      480,
+      62,
+      24
+     ],
+     "param": "patch.output.bitDepthAdjust",
+     "pname": "Main Bit Depth Adjust",
+     "options": [
+      "None",
+      "8 bit",
+      "12 bit",
+      "16 bit"
+     ],
+     "sprite": "sel-knob",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "m-env",
+     "type": "pin",
+     "page": "main",
+     "rect": [
+      424,
+      284,
+      204,
+      102
+     ],
+     "name": "VOLUME ENVELOPE",
+     "pins": [
+      "delay",
+      "attack",
+      "hold",
+      "decay",
+      "sustain",
+      "release"
+     ],
+     "param": "patch.output.{delay,attack,hold,decay,sustain,release}",
+     "role": "the main volume envelope (every note)",
+     "sprite": "pin",
+     "sprite_lit": "pin-hot"
+    },
+    {
+     "id": "m-vel",
+     "type": "wheel",
+     "page": "main",
+     "rect": [
+      642,
+      300,
+      40,
+      40
+     ],
+     "name": "VELOCITY",
+     "centre": [
+      662,
+      320
+     ],
+     "pivot": [
+      662,
+      320
+     ],
+     "label": [
+      631,
+      346,
+      62,
+      24
+     ],
+     "param": "patch.output.velSensitivity",
+     "pname": "Main Velocity Sensitivity",
+     "fmt": "pct",
+     "sprite": "tap-b",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "v-master",
+     "type": "wheel",
+     "page": "main",
+     "rect": [
+      790,
+      264,
+      40,
+      40
+     ],
+     "name": "MASTER",
+     "centre": [
+      810,
+      284
+     ],
+     "pivot": [
+      810,
+      284
+     ],
+     "label": [
+      779,
+      310,
+      62,
+      24
+     ],
+     "param": "patch.output.level",
+     "pname": "Main Level",
+     "drives": "lighthouse lamp",
+     "fmt": "pct",
+     "sprite": "tap-c",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "m-gain",
+     "type": "wheel",
+     "page": "main",
+     "rect": [
+      854,
+      264,
+      40,
+      40
+     ],
+     "name": "GAIN",
+     "centre": [
+      874,
+      284
+     ],
+     "pivot": [
+      874,
+      284
+     ],
+     "label": [
+      843,
+      310,
+      62,
+      24
+     ],
+     "param": "patch.output.outputGain",
+     "pname": "Main Output Gain",
+     "fmt": "gain",
+     "min": 0,
+     "max": 2,
+     "sprite": "tap-c",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "m-pan",
+     "type": "wheel",
+     "page": "main",
+     "rect": [
+      918,
+      264,
+      40,
+      40
+     ],
+     "name": "PAN",
+     "centre": [
+      938,
+      284
+     ],
+     "pivot": [
+      938,
+      284
+     ],
+     "label": [
+      907,
+      310,
+      62,
+      24
+     ],
+     "param": "patch.output.pan",
+     "pname": "Main Pan",
+     "fmt": "pan",
+     "min": -1,
+     "max": 1,
+     "sprite": "tap-c",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "v-mono",
+     "type": "switch",
+     "page": "main",
+     "rect": [
+      724,
+      346,
+      44,
+      46
+     ],
+     "name": "MONO",
+     "pivot": [
+      746,
+      382
+     ],
+     "label": [
+      715,
+      396,
+      62,
+      24
+     ],
+     "param": "patch.output.playMode",
+     "pname": "Main Play Mode",
+     "options": [
+      "Poly",
+      "Mono"
+     ],
+     "sprite": "switch-arm",
+     "flash": "spark",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "m-voices",
+     "type": "wheel",
+     "page": "main",
+     "rect": [
+      790,
+      350,
+      40,
+      40
+     ],
+     "name": "VOICES",
+     "centre": [
+      810,
+      370
+     ],
+     "pivot": [
+      810,
+      370
+     ],
+     "label": [
+      779,
+      396,
+      62,
+      24
+     ],
+     "param": "patch.output.polyLimit",
+     "pname": "Main PolyLimit",
+     "fmt": "int",
+     "min": 1,
+     "max": 64,
+     "sprite": "tap-c",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "v-glide",
+     "type": "wheel",
+     "page": "main",
+     "rect": [
+      854,
+      350,
+      40,
+      40
+     ],
+     "name": "GLIDE",
+     "centre": [
+      874,
+      370
+     ],
+     "pivot": [
+      874,
+      370
+     ],
+     "label": [
+      843,
+      396,
+      62,
+      24
+     ],
+     "param": "patch.output.portaTime",
+     "pname": "Main Portamento Time",
+     "fmt": "time",
+     "sprite": "tap-c",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "m-glidefrom",
+     "type": "selector",
+     "page": "main",
+     "rect": [
+      920,
+      352,
+      36,
+      36
+     ],
+     "name": "GLIDE FROM",
+     "centre": [
+      938,
+      370
+     ],
+     "pivot": [
+      938,
+      370
+     ],
+     "label": [
+      907,
+      394,
+      62,
+      24
+     ],
+     "param": "patch.output.portaContMode",
+     "pname": "Main Porta Continuation",
+     "options": [
+      "Reset",
+      "Pause",
+      "Continue"
+     ],
+     "sprite": "sel-knob",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "v-octave",
+     "type": "wheel",
+     "page": "main",
+     "rect": [
+      726,
+      436,
+      40,
+      40
+     ],
+     "name": "OCTAVE",
+     "centre": [
+      746,
+      456
+     ],
+     "pivot": [
+      746,
+      456
+     ],
+     "label": [
+      715,
+      482,
+      62,
+      24
+     ],
+     "param": "patch.output.octTranspose",
+     "pname": "Main Octave Transpose",
+     "fmt": "int",
+     "min": -3,
+     "max": 3,
+     "sprite": "tap-b",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "v-unison",
+     "type": "wheel",
+     "page": "main",
+     "rect": [
+      790,
+      436,
+      40,
+      40
+     ],
+     "name": "UNISON",
+     "centre": [
+      810,
+      456
+     ],
+     "pivot": [
+      810,
+      456
+     ],
+     "label": [
+      779,
+      482,
+      62,
+      24
+     ],
+     "param": "patch.output.unisonCount",
+     "pname": "Main Unison Voice Count",
+     "fmt": "int",
+     "min": 1,
+     "max": 5,
+     "sprite": "tap-a",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "m-spread",
+     "type": "wheel",
+     "page": "main",
+     "rect": [
+      854,
+      436,
+      40,
+      40
+     ],
+     "name": "SPREAD",
+     "centre": [
+      874,
+      456
+     ],
+     "pivot": [
+      874,
+      456
+     ],
+     "label": [
+      843,
+      482,
+      62,
+      24
+     ],
+     "param": "patch.output.unisonSpread",
+     "pname": "Main Unison Ratio Shift",
+     "fmt": "pct",
+     "sprite": "tap-b",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "m-stereo",
+     "type": "wheel",
+     "page": "main",
+     "rect": [
+      918,
+      436,
+      40,
+      40
+     ],
+     "name": "STEREO",
+     "centre": [
+      938,
+      456
+     ],
+     "pivot": [
+      938,
+      456
+     ],
+     "label": [
+      907,
+      482,
+      62,
+      24
+     ],
+     "param": "patch.output.unisonPan",
+     "pname": "Main Unison Stereo Field",
+     "fmt": "pct",
+     "sprite": "tap-c",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    }
+   ],
+   "hull": [
+    [
+     126,
+     690
+    ],
+    [
+     120,
+     650
+    ],
+    [
+     118,
+     604
+    ],
+    [
+     120,
+     566
+    ],
+    [
+     104,
+     548
+    ],
+    [
+     82,
+     524
+    ],
+    [
+     64,
+     480
+    ],
+    [
+     56,
+     420
+    ],
+    [
+     54,
+     350
+    ],
+    [
+     58,
+     300
+    ],
+    [
+     66,
+     272
+    ],
+    [
+     84,
+     254
+    ],
+    [
+     110,
+     245
+    ],
+    [
+     150,
+     240
+    ],
+    [
+     210,
+     238
+    ],
+    [
+     280,
+     238
+    ],
+    [
+     340,
+     240
+    ],
+    [
+     370,
+     244
+    ],
+    [
+     384,
+     252
+    ],
+    [
+     392,
+     260
+    ],
+    [
+     399,
+     253
+    ],
+    [
+     401,
+     232
+    ],
+    [
+     402,
+     200
+    ],
+    [
+     402,
+     172
+    ],
+    [
+     404,
+     150
+    ],
+    [
+     408,
+     122
+    ],
+    [
+     418,
+     100
+    ],
+    [
+     432,
+     84
+    ],
+    [
+     452,
+     72
+    ],
+    [
+     484,
+     62
+    ],
+    [
+     520,
+     57
+    ],
+    [
+     548,
+     56
+    ],
+    [
+     584,
+     58
+    ],
+    [
+     616,
+     64
+    ],
+    [
+     646,
+     75
+    ],
+    [
+     666,
+     88
+    ],
+    [
+     681,
+     105
+    ],
+    [
+     692,
+     128
+    ],
+    [
+     698,
+     152
+    ],
+    [
+     701,
+     170
+    ],
+    [
+     701,
+     200
+    ],
+    [
+     702,
+     232
+    ],
+    [
+     710,
+     241
+    ],
+    [
+     760,
+     240
+    ],
+    [
+     830,
+     239
+    ],
+    [
+     890,
+     240
+    ],
+    [
+     928,
+     245
+    ],
+    [
+     952,
+     254
+    ],
+    [
+     970,
+     270
+    ],
+    [
+     980,
+     296
+    ],
+    [
+     986,
+     350
+    ],
+    [
+     984,
+     420
+    ],
+    [
+     976,
+     480
+    ],
+    [
+     958,
+     524
+    ],
+    [
+     936,
+     548
+    ],
+    [
+     922,
+     566
+    ],
+    [
+     922,
+     604
+    ],
+    [
+     920,
+     650
+    ],
+    [
+     914,
+     690
+    ]
+   ],
+   "regions": {
+    "assemblies": {
+     "drift": [
+      70,
+      248,
+      310,
+      92
+     ],
+     "pitch": [
+      70,
+      336,
+      310,
+      86
+     ],
+     "tone": [
+      70,
+      422,
+      440,
+      88
+     ],
+     "env": [
+      418,
+      280,
+      276,
+      110
+     ],
+     "output": [
+      780,
+      248,
+      196,
+      92
+     ],
+     "voice": [
+      718,
+      336,
+      258,
+      174
+     ]
+    },
+    "envelope": [
+     424,
+     284,
+     204,
+     102
+    ]
+   },
+   "windmill": {
+    "hub": [
+     100,
+     104
+    ],
+    "r": 80,
+    "base": [
+     100,
+     240
+    ]
+   },
+   "lighthouse": {
+    "x": 846,
+    "lamp": [
+     846,
+     62
+    ],
+    "base": 240
+   },
+   "stacks": [
+    {
+     "x": 330,
+     "base": 242,
+     "top": 96,
+     "r": 9
+    },
+    {
+     "x": 354,
+     "base": 243,
+     "top": 64,
+     "r": 11
+    },
+    {
+     "x": 380,
+     "base": 244,
+     "top": 112,
+     "r": 8
+    }
+   ],
+   "about": "the roof-town. Every control of the plugin's MAIN page, plus the four cards the plugin draws under GHOSTS (TONE, PITCH DROP, DRIFT, VOICE)."
+  },
+  "morph": {
+   "controls": [
+    {
+     "id": "morph-puck",
+     "type": "lens",
+     "page": "morph",
+     "rect": [
+      560,
+      376,
+      36,
+      36
+     ],
+     "name": "PUCK",
+     "travel": [
+      470,
+      308,
+      216,
+      172
+     ],
+     "param": "Morph::pX / Morph::pY (900002 / 900003)",
+     "role": "the blend puck: an amber lens on brass rails; drag it; while ORBIT runs you drag the centre it orbits",
+     "sprite": "lens",
+     "also_sprites": [
+      "rail",
+      "orbit-arm"
+     ]
+    },
+    {
+     "id": "morph-A",
+     "type": "lantern",
+     "page": "morph",
+     "rect": [
+      432,
+      274,
+      44,
+      44
+     ],
+     "name": "CORNER A",
+     "corner": 0,
+     "colour": "#84e092",
+     "centre": [
+      454,
+      296
+     ],
+     "param": "morph.kind[0] / names[0]",
+     "action": "cornerMenu(0)",
+     "label": [
+      482,
+      285,
+      48,
+      14
+     ],
+     "text": "weight",
+     "role": "corner lantern-chamber: a click opens the ledger to pick its sound, a double click jumps the puck onto it; its flame = its share of the blend",
+     "sprite": "lantern-A",
+     "sprite_lit": "lantern-A-lit",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "morph-B",
+     "type": "lantern",
+     "page": "morph",
+     "rect": [
+      680,
+      274,
+      44,
+      44
+     ],
+     "name": "CORNER B",
+     "corner": 1,
+     "colour": "#ff93a8",
+     "centre": [
+      702,
+      296
+     ],
+     "param": "morph.kind[1] / names[1]",
+     "action": "cornerMenu(1)",
+     "label": [
+      626,
+      285,
+      48,
+      14
+     ],
+     "text": "weight",
+     "role": "corner lantern-chamber: a click opens the ledger to pick its sound, a double click jumps the puck onto it; its flame = its share of the blend",
+     "sprite": "lantern-B",
+     "sprite_lit": "lantern-B-lit",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "morph-C",
+     "type": "lantern",
+     "page": "morph",
+     "rect": [
+      432,
+      470,
+      44,
+      44
+     ],
+     "name": "CORNER C",
+     "corner": 2,
+     "colour": "#86d8ff",
+     "centre": [
+      454,
+      492
+     ],
+     "param": "morph.kind[2] / names[2]",
+     "action": "cornerMenu(2)",
+     "label": [
+      482,
+      489,
+      48,
+      14
+     ],
+     "text": "weight",
+     "role": "corner lantern-chamber: a click opens the ledger to pick its sound, a double click jumps the puck onto it; its flame = its share of the blend",
+     "sprite": "lantern-C",
+     "sprite_lit": "lantern-C-lit",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "morph-D",
+     "type": "lantern",
+     "page": "morph",
+     "rect": [
+      680,
+      470,
+      44,
+      44
+     ],
+     "name": "CORNER D",
+     "corner": 3,
+     "colour": "#ffb340",
+     "centre": [
+      702,
+      492
+     ],
+     "param": "morph.kind[3] / names[3]",
+     "action": "cornerMenu(3)",
+     "label": [
+      626,
+      489,
+      48,
+      14
+     ],
+     "text": "weight",
+     "role": "corner lantern-chamber: a click opens the ledger to pick its sound, a double click jumps the puck onto it; its flame = its share of the blend",
+     "sprite": "lantern-D",
+     "sprite_lit": "lantern-D-lit",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "morph-on",
+     "type": "switch",
+     "page": "morph",
+     "rect": [
+      352,
+      300,
+      78,
+      46
+     ],
+     "name": "MORPH",
+     "pivot": [
+      370,
+      332
+     ],
+     "label": [
+      388,
+      314,
+      42,
+      18
+     ],
+     "param": "Morph::pOn (900001)",
+     "role": "MORPH ON / OFF",
+     "sprite": "switch-arm",
+     "flash": "spark",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "o-size",
+     "type": "wheel",
+     "page": "morph",
+     "rect": [
+      375,
+      382,
+      40,
+      40
+     ],
+     "name": "SIZE",
+     "centre": [
+      395,
+      402
+     ],
+     "pivot": [
+      395,
+      402
+     ],
+     "label": [
+      363,
+      428,
+      64,
+      24
+     ],
+     "param": "Morph::pSize (900006)",
+     "role": "how far the orbit takes the puck from its centre",
+     "fmt": "pct",
+     "sprite": "tap-c",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "morph-orbit",
+     "type": "selector",
+     "page": "morph",
+     "rect": [
+      742,
+      302,
+      40,
+      40
+     ],
+     "name": "ORBIT",
+     "centre": [
+      762,
+      322
+     ],
+     "label": [
+      730,
+      348,
+      64,
+      24
+     ],
+     "param": "Morph::pOrbit (900004)",
+     "options": [
+      "OFF",
+      "CIRCLE",
+      "FIGURE 8",
+      "SQUARE",
+      "SWING",
+      "DRIFT"
+     ],
+     "role": "orbit shape: the clockwork arm carries the puck round",
+     "sprite": "sel-knob",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "morph-rate",
+     "type": "selector",
+     "page": "morph",
+     "rect": [
+      742,
+      394,
+      40,
+      40
+     ],
+     "name": "EVERY",
+     "centre": [
+      762,
+      414
+     ],
+     "label": [
+      730,
+      440,
+      64,
+      24
+     ],
+     "param": "Morph::pRate (900005)",
+     "options": [
+      "1/4 BAR",
+      "1/2 BAR",
+      "1 BAR",
+      "2 BARS",
+      "4 BARS",
+      "8 BARS",
+      "16 BARS"
+     ],
+     "role": "orbit speed dial: one trip round, locked to the bars",
+     "sprite": "sel-knob",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "o-spectrum",
+     "type": "plate",
+     "page": "morph",
+     "rect": [
+      486,
+      506,
+      184,
+      28
+     ],
+     "name": "WHAT YOU HEAR",
+     "text": "",
+     "role": "the output spectrum behind a glass slit in the sill (also drawn as fire traces along the bottom of the furnace window)",
+     "glow": "glow-plate"
+    },
+    {
+     "id": "o-A-sound",
+     "type": "plate",
+     "page": "morph",
+     "rect": [
+      170,
+      236,
+      148,
+      32
+     ],
+     "name": "CORNER A",
+     "corner": 0,
+     "text": "sound",
+     "lamp": [
+      140,
+      238,
+      28,
+      28
+     ],
+     "action": "cornerMenu(0)",
+     "param": "morph.kind[0] / names[0] (cornerMenu)",
+     "role": "this corner's sound (cornerBtn): a click opens the ledger - THIS SOUND, A COPY OF THIS SOUND, any sound, EMPTY",
+     "glow": "glow-plate"
+    },
+    {
+     "id": "o-A-vol",
+     "type": "wheel",
+     "page": "morph",
+     "rect": [
+      173,
+      279,
+      38,
+      38
+     ],
+     "name": "VOLUME",
+     "corner": 0,
+     "centre": [
+      192,
+      298
+     ],
+     "pivot": [
+      192,
+      298
+     ],
+     "label": [
+      160,
+      322,
+      64,
+      24
+     ],
+     "param": "morph.volDb[0]",
+     "fmt": "db",
+     "min": -24,
+     "max": 6,
+     "sprite": "tap-a",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "o-A-pan",
+     "type": "wheel",
+     "page": "morph",
+     "rect": [
+      249,
+      279,
+      38,
+      38
+     ],
+     "name": "PAN",
+     "corner": 0,
+     "centre": [
+      268,
+      298
+     ],
+     "pivot": [
+      268,
+      298
+     ],
+     "label": [
+      236,
+      322,
+      64,
+      24
+     ],
+     "param": "morph.pan[0]",
+     "fmt": "pan",
+     "min": -1,
+     "max": 1,
+     "sprite": "tap-a",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "o-A-oct",
+     "type": "plate",
+     "page": "morph",
+     "rect": [
+      213,
+      276,
+      34,
+      40
+     ],
+     "name": "OCTAVE A",
+     "corner": 0,
+     "text": "state",
+     "action": "cornerOctave(0)",
+     "param": "morph.octave[0] (-3 .. +3)",
+     "role": "this corner's OCTAVE: the notes its sound hears move up / down by octaves (owner, 2026-11-12). Top half = up, bottom half = down, wheel, right-click = the list; greyed while the corner is empty"
+    },
+    {
+     "id": "o-B-sound",
+     "type": "plate",
+     "page": "morph",
+     "rect": [
+      878,
+      236,
+      148,
+      32
+     ],
+     "name": "CORNER B",
+     "corner": 1,
+     "text": "sound",
+     "lamp": [
+      848,
+      238,
+      28,
+      28
+     ],
+     "action": "cornerMenu(1)",
+     "param": "morph.kind[1] / names[1] (cornerMenu)",
+     "role": "this corner's sound (cornerBtn): a click opens the ledger - THIS SOUND, A COPY OF THIS SOUND, any sound, EMPTY",
+     "glow": "glow-plate"
+    },
+    {
+     "id": "o-B-vol",
+     "type": "wheel",
+     "page": "morph",
+     "rect": [
+      881,
+      279,
+      38,
+      38
+     ],
+     "name": "VOLUME",
+     "corner": 1,
+     "centre": [
+      900,
+      298
+     ],
+     "pivot": [
+      900,
+      298
+     ],
+     "label": [
+      868,
+      322,
+      64,
+      24
+     ],
+     "param": "morph.volDb[1]",
+     "fmt": "db",
+     "min": -24,
+     "max": 6,
+     "sprite": "tap-b",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "o-B-pan",
+     "type": "wheel",
+     "page": "morph",
+     "rect": [
+      957,
+      279,
+      38,
+      38
+     ],
+     "name": "PAN",
+     "corner": 1,
+     "centre": [
+      976,
+      298
+     ],
+     "pivot": [
+      976,
+      298
+     ],
+     "label": [
+      944,
+      322,
+      64,
+      24
+     ],
+     "param": "morph.pan[1]",
+     "fmt": "pan",
+     "min": -1,
+     "max": 1,
+     "sprite": "tap-b",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "o-B-oct",
+     "type": "plate",
+     "page": "morph",
+     "rect": [
+      921,
+      276,
+      34,
+      40
+     ],
+     "name": "OCTAVE B",
+     "corner": 1,
+     "text": "state",
+     "action": "cornerOctave(1)",
+     "param": "morph.octave[1] (-3 .. +3)",
+     "role": "this corner's OCTAVE: the notes its sound hears move up / down by octaves (owner, 2026-11-12). Top half = up, bottom half = down, wheel, right-click = the list; greyed while the corner is empty"
+    },
+    {
+     "id": "o-C-sound",
+     "type": "plate",
+     "page": "morph",
+     "rect": [
+      170,
+      396,
+      148,
+      32
+     ],
+     "name": "CORNER C",
+     "corner": 2,
+     "text": "sound",
+     "lamp": [
+      140,
+      398,
+      28,
+      28
+     ],
+     "action": "cornerMenu(2)",
+     "param": "morph.kind[2] / names[2] (cornerMenu)",
+     "role": "this corner's sound (cornerBtn): a click opens the ledger - THIS SOUND, A COPY OF THIS SOUND, any sound, EMPTY",
+     "glow": "glow-plate"
+    },
+    {
+     "id": "o-C-vol",
+     "type": "wheel",
+     "page": "morph",
+     "rect": [
+      173,
+      439,
+      38,
+      38
+     ],
+     "name": "VOLUME",
+     "corner": 2,
+     "centre": [
+      192,
+      458
+     ],
+     "pivot": [
+      192,
+      458
+     ],
+     "label": [
+      160,
+      482,
+      64,
+      24
+     ],
+     "param": "morph.volDb[2]",
+     "fmt": "db",
+     "min": -24,
+     "max": 6,
+     "sprite": "tap-c",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "o-C-pan",
+     "type": "wheel",
+     "page": "morph",
+     "rect": [
+      249,
+      439,
+      38,
+      38
+     ],
+     "name": "PAN",
+     "corner": 2,
+     "centre": [
+      268,
+      458
+     ],
+     "pivot": [
+      268,
+      458
+     ],
+     "label": [
+      236,
+      482,
+      64,
+      24
+     ],
+     "param": "morph.pan[2]",
+     "fmt": "pan",
+     "min": -1,
+     "max": 1,
+     "sprite": "tap-c",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "o-C-oct",
+     "type": "plate",
+     "page": "morph",
+     "rect": [
+      213,
+      436,
+      34,
+      40
+     ],
+     "name": "OCTAVE C",
+     "corner": 2,
+     "text": "state",
+     "action": "cornerOctave(2)",
+     "param": "morph.octave[2] (-3 .. +3)",
+     "role": "this corner's OCTAVE: the notes its sound hears move up / down by octaves (owner, 2026-11-12). Top half = up, bottom half = down, wheel, right-click = the list; greyed while the corner is empty"
+    },
+    {
+     "id": "o-D-sound",
+     "type": "plate",
+     "page": "morph",
+     "rect": [
+      878,
+      396,
+      148,
+      32
+     ],
+     "name": "CORNER D",
+     "corner": 3,
+     "text": "sound",
+     "lamp": [
+      848,
+      398,
+      28,
+      28
+     ],
+     "action": "cornerMenu(3)",
+     "param": "morph.kind[3] / names[3] (cornerMenu)",
+     "role": "this corner's sound (cornerBtn): a click opens the ledger - THIS SOUND, A COPY OF THIS SOUND, any sound, EMPTY",
+     "glow": "glow-plate"
+    },
+    {
+     "id": "o-D-vol",
+     "type": "wheel",
+     "page": "morph",
+     "rect": [
+      881,
+      439,
+      38,
+      38
+     ],
+     "name": "VOLUME",
+     "corner": 3,
+     "centre": [
+      900,
+      458
+     ],
+     "pivot": [
+      900,
+      458
+     ],
+     "label": [
+      868,
+      482,
+      64,
+      24
+     ],
+     "param": "morph.volDb[3]",
+     "fmt": "db",
+     "min": -24,
+     "max": 6,
+     "sprite": "tap-a",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "o-D-pan",
+     "type": "wheel",
+     "page": "morph",
+     "rect": [
+      957,
+      439,
+      38,
+      38
+     ],
+     "name": "PAN",
+     "corner": 3,
+     "centre": [
+      976,
+      458
+     ],
+     "pivot": [
+      976,
+      458
+     ],
+     "label": [
+      944,
+      482,
+      64,
+      24
+     ],
+     "param": "morph.pan[3]",
+     "fmt": "pan",
+     "min": -1,
+     "max": 1,
+     "sprite": "tap-a",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "o-D-oct",
+     "type": "plate",
+     "page": "morph",
+     "rect": [
+      921,
+      436,
+      34,
+      40
+     ],
+     "name": "OCTAVE D",
+     "corner": 3,
+     "text": "state",
+     "action": "cornerOctave(3)",
+     "param": "morph.octave[3] (-3 .. +3)",
+     "role": "this corner's OCTAVE: the notes its sound hears move up / down by octaves (owner, 2026-11-12). Top half = up, bottom half = down, wheel, right-click = the list; greyed while the corner is empty"
+    }
+   ],
+   "hull": [
+    [
+     126,
+     690
+    ],
+    [
+     120,
+     650
+    ],
+    [
+     118,
+     604
+    ],
+    [
+     119,
+     566
+    ],
+    [
+     130,
+     548
+    ],
+    [
+     178,
+     536
+    ],
+    [
+     246,
+     520
+    ],
+    [
+     300,
+     500
+    ],
+    [
+     330,
+     474
+    ],
+    [
+     345,
+     440
+    ],
+    [
+     350,
+     380
+    ],
+    [
+     348,
+     300
+    ],
+    [
+     344,
+     240
+    ],
+    [
+     348,
+     210
+    ],
+    [
+     360,
+     193
+    ],
+    [
+     378,
+     185
+    ],
+    [
+     392,
+     197
+    ],
+    [
+     399,
+     190
+    ],
+    [
+     402,
+     172
+    ],
+    [
+     404,
+     150
+    ],
+    [
+     408,
+     122
+    ],
+    [
+     418,
+     100
+    ],
+    [
+     432,
+     84
+    ],
+    [
+     452,
+     72
+    ],
+    [
+     484,
+     62
+    ],
+    [
+     520,
+     57
+    ],
+    [
+     548,
+     56
+    ],
+    [
+     584,
+     58
+    ],
+    [
+     616,
+     64
+    ],
+    [
+     646,
+     75
+    ],
+    [
+     666,
+     88
+    ],
+    [
+     681,
+     105
+    ],
+    [
+     692,
+     128
+    ],
+    [
+     698,
+     152
+    ],
+    [
+     701,
+     170
+    ],
+    [
+     710,
+     178
+    ],
+    [
+     748,
+     180
+    ],
+    [
+     780,
+     187
+    ],
+    [
+     798,
+     202
+    ],
+    [
+     808,
+     226
+    ],
+    [
+     812,
+     300
+    ],
+    [
+     810,
+     380
+    ],
+    [
+     813,
+     440
+    ],
+    [
+     826,
+     474
+    ],
+    [
+     852,
+     500
+    ],
+    [
+     896,
+     520
+    ],
+    [
+     918,
+     538
+    ],
+    [
+     922,
+     566
+    ],
+    [
+     922,
+     604
+    ],
+    [
+     920,
+     650
+    ],
+    [
+     914,
+     690
+    ]
+   ],
+   "regions": {
+    "window": [
+     444,
+     284,
+     268,
+     258
+    ],
+    "glass": [
+     454,
+     294,
+     248,
+     200
+    ],
+    "pad": [
+     470,
+     308,
+     216,
+     172
+    ],
+    "sill": [
+     476,
+     498,
+     204,
+     40
+    ]
+   },
+   "lanterns": [
+    {
+     "corner": 0,
+     "name": "A",
+     "centre": [
+      454,
+      296
+     ],
+     "colour": "#84e092"
+    },
+    {
+     "corner": 1,
+     "name": "B",
+     "centre": [
+      702,
+      296
+     ],
+     "colour": "#ff93a8"
+    },
+    {
+     "corner": 2,
+     "name": "C",
+     "centre": [
+      454,
+      492
+     ],
+     "colour": "#86d8ff"
+    },
+    {
+     "corner": 3,
+     "name": "D",
+     "centre": [
+      702,
+      492
+     ],
+     "colour": "#ffb340"
+    }
+   ],
+   "about": "the tall ghost. Corner i of Morph (0 top-left A, 1 top-right B, 2 bottom-left C, 3 bottom-right D) = lantern i at that corner of the furnace window."
+  },
+  "fx": {
+   "controls": [
+    {
+     "id": "fx-slot1",
+     "type": "plate",
+     "page": "fx",
+     "rect": [
+      232,
+      210,
+      40,
+      40
+     ],
+     "grp": "ghost",
+     "name": "SLOT 1",
+     "slot": 0,
+     "text": "",
+     "action": "selectSlot(0)",
+     "role": "the slot's chamber: a glass with a tiny live spectrum of what the slot does (SpectralFx::slotLevel / spectrum); a tap puts this slot on the workbench",
+     "glow": "glow-plate"
+    },
+    {
+     "id": "fx-slot1-name",
+     "type": "plate",
+     "page": "fx",
+     "rect": [
+      274,
+      210,
+      64,
+      40
+     ],
+     "grp": "ghost",
+     "name": "EFFECT",
+     "slot": 0,
+     "text": "effect",
+     "action": "effectMenu(0)",
+     "param": "SpectralFx::pSlotType(0) = 910100",
+     "role": "brass name-plate: the slot's effect (live text, two lines); a tap opens the effect ledger (8 folders + WARPCORE + EMPTY)",
+     "glow": "glow-plate"
+    },
+    {
+     "id": "fx-slot1-on",
+     "type": "plunger",
+     "page": "fx",
+     "rect": [
+      340,
+      213,
+      34,
+      34
+     ],
+     "grp": "ghost",
+     "name": "ON",
+     "slot": 0,
+     "toggle": true,
+     "param": "SpectralFx::pSlotOn(0) = 910101",
+     "role": "pull-plunger: out (lit) = the slot runs, in = bypassed",
+     "sprite": "rod-knob",
+     "glow": "glow-round"
+    },
+    {
+     "id": "fx-slot2",
+     "type": "plate",
+     "page": "fx",
+     "rect": [
+      232,
+      256,
+      40,
+      40
+     ],
+     "grp": "ghost",
+     "name": "SLOT 2",
+     "slot": 1,
+     "text": "",
+     "action": "selectSlot(1)",
+     "role": "the slot's chamber: a glass with a tiny live spectrum of what the slot does (SpectralFx::slotLevel / spectrum); a tap puts this slot on the workbench",
+     "glow": "glow-plate"
+    },
+    {
+     "id": "fx-slot2-name",
+     "type": "plate",
+     "page": "fx",
+     "rect": [
+      274,
+      256,
+      64,
+      40
+     ],
+     "grp": "ghost",
+     "name": "EFFECT",
+     "slot": 1,
+     "text": "effect",
+     "action": "effectMenu(1)",
+     "param": "SpectralFx::pSlotType(1) = 910200",
+     "role": "brass name-plate: the slot's effect (live text, two lines); a tap opens the effect ledger (8 folders + WARPCORE + EMPTY)",
+     "glow": "glow-plate"
+    },
+    {
+     "id": "fx-slot2-on",
+     "type": "plunger",
+     "page": "fx",
+     "rect": [
+      340,
+      259,
+      34,
+      34
+     ],
+     "grp": "ghost",
+     "name": "ON",
+     "slot": 1,
+     "toggle": true,
+     "param": "SpectralFx::pSlotOn(1) = 910201",
+     "role": "pull-plunger: out (lit) = the slot runs, in = bypassed",
+     "sprite": "rod-knob",
+     "glow": "glow-round"
+    },
+    {
+     "id": "fx-slot3",
+     "type": "plate",
+     "page": "fx",
+     "rect": [
+      232,
+      302,
+      40,
+      40
+     ],
+     "grp": "ghost",
+     "name": "SLOT 3",
+     "slot": 2,
+     "text": "",
+     "action": "selectSlot(2)",
+     "role": "the slot's chamber: a glass with a tiny live spectrum of what the slot does (SpectralFx::slotLevel / spectrum); a tap puts this slot on the workbench",
+     "glow": "glow-plate"
+    },
+    {
+     "id": "fx-slot3-name",
+     "type": "plate",
+     "page": "fx",
+     "rect": [
+      274,
+      302,
+      64,
+      40
+     ],
+     "grp": "ghost",
+     "name": "EFFECT",
+     "slot": 2,
+     "text": "effect",
+     "action": "effectMenu(2)",
+     "param": "SpectralFx::pSlotType(2) = 910300",
+     "role": "brass name-plate: the slot's effect (live text, two lines); a tap opens the effect ledger (8 folders + WARPCORE + EMPTY)",
+     "glow": "glow-plate"
+    },
+    {
+     "id": "fx-slot3-on",
+     "type": "plunger",
+     "page": "fx",
+     "rect": [
+      340,
+      305,
+      34,
+      34
+     ],
+     "grp": "ghost",
+     "name": "ON",
+     "slot": 2,
+     "toggle": true,
+     "param": "SpectralFx::pSlotOn(2) = 910301",
+     "role": "pull-plunger: out (lit) = the slot runs, in = bypassed",
+     "sprite": "rod-knob",
+     "glow": "glow-round"
+    },
+    {
+     "id": "fx-slot4",
+     "type": "plate",
+     "page": "fx",
+     "rect": [
+      232,
+      348,
+      40,
+      40
+     ],
+     "grp": "ghost",
+     "name": "SLOT 4",
+     "slot": 3,
+     "text": "",
+     "action": "selectSlot(3)",
+     "role": "the slot's chamber: a glass with a tiny live spectrum of what the slot does (SpectralFx::slotLevel / spectrum); a tap puts this slot on the workbench",
+     "glow": "glow-plate"
+    },
+    {
+     "id": "fx-slot4-name",
+     "type": "plate",
+     "page": "fx",
+     "rect": [
+      274,
+      348,
+      64,
+      40
+     ],
+     "grp": "ghost",
+     "name": "EFFECT",
+     "slot": 3,
+     "text": "effect",
+     "action": "effectMenu(3)",
+     "param": "SpectralFx::pSlotType(3) = 910400",
+     "role": "brass name-plate: the slot's effect (live text, two lines); a tap opens the effect ledger (8 folders + WARPCORE + EMPTY)",
+     "glow": "glow-plate"
+    },
+    {
+     "id": "fx-slot4-on",
+     "type": "plunger",
+     "page": "fx",
+     "rect": [
+      340,
+      351,
+      34,
+      34
+     ],
+     "grp": "ghost",
+     "name": "ON",
+     "slot": 3,
+     "toggle": true,
+     "param": "SpectralFx::pSlotOn(3) = 910401",
+     "role": "pull-plunger: out (lit) = the slot runs, in = bypassed",
+     "sprite": "rod-knob",
+     "glow": "glow-round"
+    },
+    {
+     "id": "fx-mix",
+     "type": "wheel",
+     "page": "fx",
+     "rect": [
+      165,
+      248,
+      40,
+      40
+     ],
+     "grp": "ghost",
+     "name": "MIX",
+     "centre": [
+      185,
+      268
+     ],
+     "pivot": [
+      185,
+      268
+     ],
+     "label": [
+      154,
+      300,
+      62,
+      24
+     ],
+     "param": "SpectralFx::pMix = 910002",
+     "pname": "Spectral Mix",
+     "role": "the wheel in the ghost's mouth: dry / wet of the whole rack",
+     "sprite": "tap-b",
+     "fmt": "pct",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "fx-fft",
+     "type": "selector",
+     "page": "fx",
+     "rect": [
+      94,
+      340,
+      66,
+      34
+     ],
+     "grp": "ghost",
+     "name": "FFT",
+     "options": [
+      "128",
+      "256",
+      "512",
+      "1024",
+      "2048",
+      "4096",
+      "8192",
+      "16384"
+     ],
+     "param": "SpectralFx::pFft = 910003",
+     "pname": "Spectral FFT Size",
+     "text": "value",
+     "default": 4
+    },
+    {
+     "id": "fx-window",
+     "type": "selector",
+     "page": "fx",
+     "rect": [
+      162,
+      340,
+      66,
+      34
+     ],
+     "grp": "ghost",
+     "name": "WINDOW",
+     "options": [
+      "Hann",
+      "Hamming",
+      "Blackman",
+      "Rectangular",
+      "Blackman-Harris",
+      "Gaussian",
+      "Flat Top",
+      "Welch",
+      "Triangle"
+     ],
+     "param": "SpectralFx::pWindow = 910004",
+     "pname": "Spectral Window",
+     "text": "value"
+    },
+    {
+     "id": "fx-overlap",
+     "type": "selector",
+     "page": "fx",
+     "rect": [
+      94,
+      376,
+      66,
+      34
+     ],
+     "grp": "ghost",
+     "name": "OVERLAP",
+     "options": [
+      "2x",
+      "3x",
+      "4x",
+      "5x",
+      "6x",
+      "7x",
+      "8x",
+      "9x",
+      "10x",
+      "11x",
+      "12x",
+      "13x",
+      "14x",
+      "15x",
+      "16x"
+     ],
+     "param": "SpectralFx::pOverlap = 910005 (2..16, continuous in the engine; whole steps here)",
+     "pname": "Spectral Overlap",
+     "text": "value",
+     "default": 2
+    },
+    {
+     "id": "fx-limit",
+     "type": "selector",
+     "page": "fx",
+     "rect": [
+      162,
+      376,
+      66,
+      34
+     ],
+     "grp": "ghost",
+     "name": "LIMIT",
+     "options": [
+      "11025 Hz",
+      "16000 Hz",
+      "22050 Hz",
+      "24000 Hz",
+      "44100 Hz",
+      "48000 Hz",
+      "96000 Hz"
+     ],
+     "param": "SpectralFx::pLimit = 910006",
+     "pname": "Spectral Frequency Limit",
+     "text": "value",
+     "default": 2
+    },
+    {
+     "id": "fx-from",
+     "type": "plate",
+     "page": "fx",
+     "rect": [
+      322,
+      178,
+      62,
+      12
+     ],
+     "grp": "ghost",
+     "name": "FROM THE SYNTH",
+     "text": "fixed",
+     "role": "tag on the organ rank: the six pipes pump with what arrives from the synth (SpectralFx::inLevel)"
+    },
+    {
+     "id": "fx-bench-title",
+     "type": "plate",
+     "page": "fx",
+     "rect": [
+      414,
+      266,
+      178,
+      34
+     ],
+     "name": "SLOT",
+     "text": "bench",
+     "action": "effectMenu(selected slot)",
+     "role": "which slot is on the bench and its effect; a tap opens the effect ledger too",
+     "glow": "glow-plate"
+    },
+    {
+     "id": "fx-slot-mix",
+     "type": "wheel",
+     "page": "fx",
+     "rect": [
+      599,
+      266,
+      34,
+      34
+     ],
+     "name": "SLOT MIX",
+     "centre": [
+      616,
+      283
+     ],
+     "pivot": [
+      616,
+      283
+     ],
+     "label": [
+      637,
+      271,
+      52,
+      24
+     ],
+     "param": "SpectralFx::pSlotMix(slot) = 910102 + 100 * slot",
+     "pname": "Slot N Mix",
+     "role": "dry / wet of the selected slot",
+     "sprite": "tap-c",
+     "fmt": "pct",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "fx-p1",
+     "type": "wheel",
+     "page": "fx",
+     "rect": [
+      427,
+      315,
+      38,
+      38
+     ],
+     "name": "P1",
+     "centre": [
+      446,
+      334
+     ],
+     "pivot": [
+      446,
+      334
+     ],
+     "label": [
+      413,
+      358,
+      66,
+      24
+     ],
+     "pindex": 0,
+     "param": "SpectralFx::pSlotParam(slot, 0) = 910110 + 100 * slot  (0..1; the name, range and value text follow the slot's effect: SpectralFx::paramInfo / valueToText)",
+     "role": "one of the eight parameters of the selected slot's effect; blank when the effect has fewer",
+     "sprite": "tap-c",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "fx-p2",
+     "type": "wheel",
+     "page": "fx",
+     "rect": [
+      497,
+      315,
+      38,
+      38
+     ],
+     "name": "P2",
+     "centre": [
+      516,
+      334
+     ],
+     "pivot": [
+      516,
+      334
+     ],
+     "label": [
+      483,
+      358,
+      66,
+      24
+     ],
+     "pindex": 1,
+     "param": "SpectralFx::pSlotParam(slot, 1) = 910111 + 100 * slot  (0..1; the name, range and value text follow the slot's effect: SpectralFx::paramInfo / valueToText)",
+     "role": "one of the eight parameters of the selected slot's effect; blank when the effect has fewer",
+     "sprite": "tap-a",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "fx-p3",
+     "type": "wheel",
+     "page": "fx",
+     "rect": [
+      567,
+      315,
+      38,
+      38
+     ],
+     "name": "P3",
+     "centre": [
+      586,
+      334
+     ],
+     "pivot": [
+      586,
+      334
+     ],
+     "label": [
+      553,
+      358,
+      66,
+      24
+     ],
+     "pindex": 2,
+     "param": "SpectralFx::pSlotParam(slot, 2) = 910112 + 100 * slot  (0..1; the name, range and value text follow the slot's effect: SpectralFx::paramInfo / valueToText)",
+     "role": "one of the eight parameters of the selected slot's effect; blank when the effect has fewer",
+     "sprite": "tap-b",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "fx-p4",
+     "type": "wheel",
+     "page": "fx",
+     "rect": [
+      637,
+      315,
+      38,
+      38
+     ],
+     "name": "P4",
+     "centre": [
+      656,
+      334
+     ],
+     "pivot": [
+      656,
+      334
+     ],
+     "label": [
+      623,
+      358,
+      66,
+      24
+     ],
+     "pindex": 3,
+     "param": "SpectralFx::pSlotParam(slot, 3) = 910113 + 100 * slot  (0..1; the name, range and value text follow the slot's effect: SpectralFx::paramInfo / valueToText)",
+     "role": "one of the eight parameters of the selected slot's effect; blank when the effect has fewer",
+     "sprite": "tap-c",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "fx-p5",
+     "type": "wheel",
+     "page": "fx",
+     "rect": [
+      427,
+      387,
+      38,
+      38
+     ],
+     "name": "P5",
+     "centre": [
+      446,
+      406
+     ],
+     "pivot": [
+      446,
+      406
+     ],
+     "label": [
+      413,
+      430,
+      66,
+      24
+     ],
+     "pindex": 4,
+     "param": "SpectralFx::pSlotParam(slot, 4) = 910114 + 100 * slot  (0..1; the name, range and value text follow the slot's effect: SpectralFx::paramInfo / valueToText)",
+     "role": "one of the eight parameters of the selected slot's effect; blank when the effect has fewer",
+     "sprite": "tap-a",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "fx-p6",
+     "type": "wheel",
+     "page": "fx",
+     "rect": [
+      497,
+      387,
+      38,
+      38
+     ],
+     "name": "P6",
+     "centre": [
+      516,
+      406
+     ],
+     "pivot": [
+      516,
+      406
+     ],
+     "label": [
+      483,
+      430,
+      66,
+      24
+     ],
+     "pindex": 5,
+     "param": "SpectralFx::pSlotParam(slot, 5) = 910115 + 100 * slot  (0..1; the name, range and value text follow the slot's effect: SpectralFx::paramInfo / valueToText)",
+     "role": "one of the eight parameters of the selected slot's effect; blank when the effect has fewer",
+     "sprite": "tap-b",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "fx-p7",
+     "type": "wheel",
+     "page": "fx",
+     "rect": [
+      567,
+      387,
+      38,
+      38
+     ],
+     "name": "P7",
+     "centre": [
+      586,
+      406
+     ],
+     "pivot": [
+      586,
+      406
+     ],
+     "label": [
+      553,
+      430,
+      66,
+      24
+     ],
+     "pindex": 6,
+     "param": "SpectralFx::pSlotParam(slot, 6) = 910116 + 100 * slot  (0..1; the name, range and value text follow the slot's effect: SpectralFx::paramInfo / valueToText)",
+     "role": "one of the eight parameters of the selected slot's effect; blank when the effect has fewer",
+     "sprite": "tap-c",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "fx-p8",
+     "type": "wheel",
+     "page": "fx",
+     "rect": [
+      637,
+      387,
+      38,
+      38
+     ],
+     "name": "P8",
+     "centre": [
+      656,
+      406
+     ],
+     "pivot": [
+      656,
+      406
+     ],
+     "label": [
+      623,
+      430,
+      66,
+      24
+     ],
+     "pindex": 7,
+     "param": "SpectralFx::pSlotParam(slot, 7) = 910117 + 100 * slot  (0..1; the name, range and value text follow the slot's effect: SpectralFx::paramInfo / valueToText)",
+     "role": "one of the eight parameters of the selected slot's effect; blank when the effect has fewer",
+     "sprite": "tap-a",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "fx-on",
+     "type": "switch",
+     "page": "fx",
+     "rect": [
+      476,
+      470,
+      44,
+      46
+     ],
+     "name": "SPECTRAL FX",
+     "pivot": [
+      498,
+      506
+     ],
+     "label": [
+      468,
+      518,
+      60,
+      11
+     ],
+     "param": "SpectralFx::pOn = 910001",
+     "pname": "Spectral On",
+     "role": "the whole rack on / off (off = the plugin's output is not touched at all)",
+     "sprite": "switch-arm",
+     "flash": "spark",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "fx-in",
+     "type": "gauge",
+     "page": "fx",
+     "rect": [
+      545,
+      483,
+      22,
+      22
+     ],
+     "name": "IN",
+     "pivot": [
+      556,
+      494
+     ],
+     "angle": [
+      -110,
+      110
+     ],
+     "label": [
+      536,
+      510,
+      40,
+      11
+     ],
+     "role": "level into the rack (SpectralFx::inLevel)",
+     "sprite": "needle-small",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "fx-out",
+     "type": "gauge",
+     "page": "fx",
+     "rect": [
+      591,
+      483,
+      22,
+      22
+     ],
+     "name": "OUT",
+     "pivot": [
+      602,
+      494
+     ],
+     "angle": [
+      -110,
+      110
+     ],
+     "label": [
+      582,
+      510,
+      40,
+      11
+     ],
+     "role": "level out of the rack (SpectralFx::outLevel)",
+     "sprite": "needle-small",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "fx-w-warp",
+     "type": "wheel",
+     "page": "fx",
+     "rect": [
+      725,
+      379,
+      38,
+      38
+     ],
+     "grp": "town",
+     "name": "WARP",
+     "centre": [
+      744,
+      398
+     ],
+     "pivot": [
+      744,
+      398
+     ],
+     "label": [
+      713,
+      422,
+      62,
+      24
+     ],
+     "upstream": "warp",
+     "param": "WarpCore \"warp\" = a parameter of the slot that holds WarpCore (SpectralFx::uiSlotValue(slot, index of \"warp\", ...))",
+     "fmt": "int",
+     "min": 1,
+     "max": 256,
+     "default": 50,
+     "drives": "the windmill: it turns faster the more bands",
+     "sprite": "tap-a",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "fx-w-freqmode",
+     "type": "selector",
+     "page": "fx",
+     "rect": [
+      790,
+      380,
+      36,
+      36
+     ],
+     "grp": "town",
+     "name": "FREQ MODE",
+     "centre": [
+      808,
+      398
+     ],
+     "pivot": [
+      808,
+      398
+     ],
+     "label": [
+      777,
+      421,
+      62,
+      24
+     ],
+     "upstream": "freq_mode",
+     "param": "WarpCore \"freq_mode\" = a parameter of the slot that holds WarpCore (SpectralFx::uiSlotValue(slot, index of \"freq_mode\", ...))",
+     "options": [
+      "voice: 0 + n",
+      "voice: 1 + n",
+      "music: 0 + 2n",
+      "music: 1 + 2n"
+     ],
+     "default": 2,
+     "sprite": "sel-knob",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "fx-w-fhigh",
+     "type": "wheel",
+     "page": "fx",
+     "rect": [
+      853,
+      379,
+      38,
+      38
+     ],
+     "grp": "town",
+     "name": "FREQ HIGH",
+     "centre": [
+      872,
+      398
+     ],
+     "pivot": [
+      872,
+      398
+     ],
+     "label": [
+      841,
+      422,
+      62,
+      24
+     ],
+     "upstream": "f_high",
+     "param": "WarpCore \"f_high\" = a parameter of the slot that holds WarpCore (SpectralFx::uiSlotValue(slot, index of \"f_high\", ...))",
+     "fmt": "hz",
+     "min": 4000,
+     "max": 20010,
+     "default": 20010,
+     "drives": "the lighthouse lamp and beam (Full = brightest)",
+     "sprite": "tap-b",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "fx-w-scale",
+     "type": "wheel",
+     "page": "fx",
+     "rect": [
+      917,
+      379,
+      38,
+      38
+     ],
+     "grp": "town",
+     "name": "SCALE",
+     "centre": [
+      936,
+      398
+     ],
+     "pivot": [
+      936,
+      398
+     ],
+     "label": [
+      905,
+      422,
+      62,
+      24
+     ],
+     "upstream": "scale",
+     "param": "WarpCore \"scale\" = a parameter of the slot that holds WarpCore (SpectralFx::uiSlotValue(slot, index of \"scale\", ...))",
+     "fmt": "x",
+     "min": 0.1,
+     "max": 3.0,
+     "default": 1.0,
+     "drives": "the big gears",
+     "sprite": "tap-a",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "fx-w-poles",
+     "type": "selector",
+     "page": "fx",
+     "rect": [
+      982,
+      380,
+      36,
+      36
+     ],
+     "grp": "town",
+     "name": "POLES",
+     "centre": [
+      1000,
+      398
+     ],
+     "pivot": [
+      1000,
+      398
+     ],
+     "label": [
+      969,
+      421,
+      62,
+      24
+     ],
+     "upstream": "poles",
+     "param": "WarpCore \"poles\" = a parameter of the slot that holds WarpCore (SpectralFx::uiSlotValue(slot, index of \"poles\", ...))",
+     "options": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8"
+     ],
+     "default": 1,
+     "drives": "how many of the eight stacks are lit and smoking",
+     "sprite": "sel-knob",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "fx-w-on",
+     "type": "switch",
+     "page": "fx",
+     "rect": [
+      722,
+      442,
+      44,
+      46
+     ],
+     "grp": "town",
+     "name": "WARPCORE",
+     "pivot": [
+      744,
+      478
+     ],
+     "label": [
+      713,
+      490,
+      62,
+      24
+     ],
+     "upstream": "slot on",
+     "param": "WarpCore \"slot on\" = a parameter of the slot that holds WarpCore (SpectralFx::uiSlotValue(slot, index of \"slot on\", ...))",
+     "role": "big throw switch: ON puts WarpCore into a slot (the first empty one, else the last) and runs it; OFF bypasses that slot (pSlotOn)",
+     "sprite": "switch-arm",
+     "flash": "spark",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "fx-w-pitch",
+     "type": "wheel",
+     "page": "fx",
+     "rect": [
+      789,
+      447,
+      38,
+      38
+     ],
+     "grp": "town",
+     "name": "PITCH",
+     "centre": [
+      808,
+      466
+     ],
+     "pivot": [
+      808,
+      466
+     ],
+     "label": [
+      777,
+      490,
+      62,
+      24
+     ],
+     "upstream": "pitch",
+     "param": "WarpCore \"pitch\" = a parameter of the slot that holds WarpCore (SpectralFx::uiSlotValue(slot, index of \"pitch\", ...))",
+     "fmt": "st",
+     "min": -24,
+     "max": 24,
+     "default": 0,
+     "drives": "the boiler gauge",
+     "sprite": "tap-b",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "fx-w-formant",
+     "type": "switch",
+     "page": "fx",
+     "rect": [
+      850,
+      442,
+      44,
+      46
+     ],
+     "grp": "town",
+     "name": "FORMANT",
+     "pivot": [
+      872,
+      478
+     ],
+     "label": [
+      841,
+      490,
+      62,
+      24
+     ],
+     "upstream": "pitch_affect",
+     "param": "WarpCore \"pitch_affect\" = a parameter of the slot that holds WarpCore (SpectralFx::uiSlotValue(slot, index of \"pitch_affect\", ...))",
+     "options": [
+      "Formant",
+      "Pitch"
+     ],
+     "role": "Formant Mode: off = PITCH moves the formants, on = PITCH moves the pitch (upstream default: on)",
+     "sprite": "switch-arm",
+     "flash": "spark",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "fx-w-fill",
+     "type": "switch",
+     "page": "fx",
+     "rect": [
+      914,
+      442,
+      44,
+      46
+     ],
+     "grp": "town",
+     "name": "FILL GAP",
+     "pivot": [
+      936,
+      478
+     ],
+     "label": [
+      905,
+      490,
+      62,
+      24
+     ],
+     "upstream": "fill_gap",
+     "param": "WarpCore \"fill_gap\" = a parameter of the slot that holds WarpCore (SpectralFx::uiSlotValue(slot, index of \"fill_gap\", ...))",
+     "sprite": "switch-arm",
+     "flash": "spark",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "fx-w-drywet",
+     "type": "wheel",
+     "page": "fx",
+     "rect": [
+      981,
+      447,
+      38,
+      38
+     ],
+     "grp": "town",
+     "name": "DRY / WET",
+     "centre": [
+      1000,
+      466
+     ],
+     "pivot": [
+      1000,
+      466
+     ],
+     "label": [
+      969,
+      490,
+      62,
+      24
+     ],
+     "upstream": "drywet",
+     "param": "WarpCore \"drywet\" = a parameter of the slot that holds WarpCore (SpectralFx::uiSlotValue(slot, index of \"drywet\", ...))",
+     "drives": "the bridge hose glows with it",
+     "fmt": "pct",
+     "sprite": "tap-b",
+     "glow": "glow-round",
+     "label_glow": "glow-plate"
+    },
+    {
+     "id": "fx-w-gauge",
+     "type": "gauge",
+     "page": "fx",
+     "rect": [
+      807.9,
+      427.9,
+      0.2,
+      0.2
+     ],
+     "grp": "town",
+     "name": "",
+     "pivot": [
+      840,
+      459
+     ],
+     "angle": [
+      -110,
+      110
+     ],
+     "role": "the needle of the boiler gauge = PITCH (read-only)",
+     "sprite": "needle-small"
+    }
+   ],
+   "hull": [
+    [
+     126,
+     690
+    ],
+    [
+     120,
+     650
+    ],
+    [
+     118,
+     604
+    ],
+    [
+     119,
+     566
+    ],
+    [
+     111,
+     553
+    ],
+    [
+     108,
+     541
+    ],
+    [
+     117,
+     533
+    ],
+    [
+     150,
+     530
+    ],
+    [
+     330,
+     532
+    ],
+    [
+     520,
+     531
+    ],
+    [
+     720,
+     532
+    ],
+    [
+     890,
+     530
+    ],
+    [
+     923,
+     533
+    ],
+    [
+     932,
+     541
+    ],
+    [
+     929,
+     553
+    ],
+    [
+     922,
+     566
+    ],
+    [
+     922,
+     604
+    ],
+    [
+     920,
+     650
+    ],
+    [
+     914,
+     690
+    ]
+   ],
+   "regions": {
+    "bench": [
+     406,
+     260,
+     288,
+     200
+    ]
+   },
+   "ghost": {
+    "scale": 0.74,
+    "ox": -107.0,
+    "oy": 22.0
+   },
+   "town": {
+    "scale": 0.8,
+    "ox": 398.8,
+    "oy": 36.8
+   },
+   "slots": 4,
+   "signal": {
+    "main": [
+     [
+      352,
+      196
+     ],
+     [
+      383,
+      204
+     ],
+     [
+      383,
+      398
+     ]
+    ],
+    "out": [
+     384,
+     404
+    ],
+    "inn": [
+     714,
+     410
+    ]
+   },
+   "windmill": {
+    "hub": [
+     748,
+     250
+    ],
+    "r": 46
+   },
+   "lighthouse": {
+    "lamp": [
+     872,
+     112
+    ]
+   },
+   "stacks": 8,
+   "param_ids": {
+    "on": 910001,
+    "mix": 910002,
+    "fft": 910003,
+    "window": 910004,
+    "overlap": 910005,
+    "limit": 910006
+   },
+   "sign_alternative": {
+    "page-ghosts": [
+     700,
+     152,
+     72,
+     34
+    ],
+    "page-main": [
+     775,
+     152,
+     58,
+     34
+    ],
+    "page-morph": [
+     836,
+     152,
+     68,
+     34
+    ],
+    "page-fx": [
+     907,
+     152,
+     46,
+     34
+    ]
+   },
+   "about": "SPECTRAL FX (SpectralFx in src/ghostblock/spectral/spectral-fx.h): four slots in series after the synth. The tall ghost carries the rack; the flying town is WarpCore (the parameters of the slot whose effect is WarpCore). \"grp\" = which craft a control rides on (ghost / town; none = the bridge rig): the two craft bob out of phase. The effect names, folders and the parameters of each effect are in \"fx_effects\" (from the upstream sources; the catalogue order of the engine is not final)."
+  }
+ },
+ "keys": [
+  {
+   "note": 36,
+   "black": false,
+   "rect": [
+    132.0,
+    622,
+    27.71,
+    56.7
+   ]
+  },
+  {
+   "note": 37,
+   "black": true,
+   "rect": [
+    151.71,
+    622,
+    16,
+    35
+   ]
+  },
+  {
+   "note": 38,
+   "black": false,
+   "rect": [
+    159.71,
+    622,
+    27.71,
+    59.0
+   ]
+  },
+  {
+   "note": 39,
+   "black": true,
+   "rect": [
+    179.43,
+    622,
+    16,
+    35
+   ]
+  },
+  {
+   "note": 40,
+   "black": false,
+   "rect": [
+    187.43,
+    622,
+    27.71,
+    57.3
+   ]
+  },
+  {
+   "note": 41,
+   "black": false,
+   "rect": [
+    215.14,
+    622,
+    27.71,
+    57.2
+   ]
+  },
+  {
+   "note": 42,
+   "black": true,
+   "rect": [
+    234.86,
+    622,
+    16,
+    35
+   ]
+  },
+  {
+   "note": 43,
+   "black": false,
+   "rect": [
+    242.86,
+    622,
+    27.71,
+    59.1
+   ]
+  },
+  {
+   "note": 44,
+   "black": true,
+   "rect": [
+    262.57,
+    622,
+    16,
+    35
+   ]
+  },
+  {
+   "note": 45,
+   "black": false,
+   "rect": [
+    270.57,
+    622,
+    27.71,
+    57.1
+   ]
+  },
+  {
+   "note": 46,
+   "black": true,
+   "rect": [
+    290.29,
+    622,
+    16,
+    35
+   ]
+  },
+  {
+   "note": 47,
+   "black": false,
+   "rect": [
+    298.29,
+    622,
+    27.71,
+    53.1
+   ]
+  },
+  {
+   "note": 48,
+   "black": false,
+   "rect": [
+    326.0,
+    622,
+    27.71,
+    53.2
+   ]
+  },
+  {
+   "note": 49,
+   "black": true,
+   "rect": [
+    345.71,
+    622,
+    16,
+    35
+   ]
+  },
+  {
+   "note": 50,
+   "black": false,
+   "rect": [
+    353.71,
+    622,
+    27.71,
+    55.2
+   ]
+  },
+  {
+   "note": 51,
+   "black": true,
+   "rect": [
+    373.43,
+    622,
+    16,
+    35
+   ]
+  },
+  {
+   "note": 52,
+   "black": false,
+   "rect": [
+    381.43,
+    622,
+    27.71,
+    54.2
+   ]
+  },
+  {
+   "note": 53,
+   "black": false,
+   "rect": [
+    409.14,
+    622,
+    27.71,
+    53.7
+   ]
+  },
+  {
+   "note": 54,
+   "black": true,
+   "rect": [
+    428.86,
+    622,
+    16,
+    35
+   ]
+  },
+  {
+   "note": 55,
+   "black": false,
+   "rect": [
+    436.86,
+    622,
+    27.71,
+    57.5
+   ]
+  },
+  {
+   "note": 56,
+   "black": true,
+   "rect": [
+    456.57,
+    622,
+    16,
+    35
+   ]
+  },
+  {
+   "note": 57,
+   "black": false,
+   "rect": [
+    464.57,
+    622,
+    27.71,
+    59.9
+   ]
+  },
+  {
+   "note": 58,
+   "black": true,
+   "rect": [
+    484.29,
+    622,
+    16,
+    35
+   ]
+  },
+  {
+   "note": 59,
+   "black": false,
+   "rect": [
+    492.29,
+    622,
+    27.71,
+    57.7
+   ]
+  },
+  {
+   "note": 60,
+   "black": false,
+   "rect": [
+    520.0,
+    622,
+    27.71,
+    56.6
+   ]
+  },
+  {
+   "note": 61,
+   "black": true,
+   "rect": [
+    539.71,
+    622,
+    16,
+    35
+   ]
+  },
+  {
+   "note": 62,
+   "black": false,
+   "rect": [
+    547.71,
+    622,
+    27.71,
+    58.0
+   ]
+  },
+  {
+   "note": 63,
+   "black": true,
+   "rect": [
+    567.43,
+    622,
+    16,
+    35
+   ]
+  },
+  {
+   "note": 64,
+   "black": false,
+   "rect": [
+    575.43,
+    622,
+    27.71,
+    56.3
+   ]
+  },
+  {
+   "note": 65,
+   "black": false,
+   "rect": [
+    603.14,
+    622,
+    27.71,
+    52.4
+   ]
+  },
+  {
+   "note": 66,
+   "black": true,
+   "rect": [
+    622.86,
+    622,
+    16,
+    35
+   ]
+  },
+  {
+   "note": 67,
+   "black": false,
+   "rect": [
+    630.86,
+    622,
+    27.71,
+    52.7
+   ]
+  },
+  {
+   "note": 68,
+   "black": true,
+   "rect": [
+    650.57,
+    622,
+    16,
+    35
+   ]
+  },
+  {
+   "note": 69,
+   "black": false,
+   "rect": [
+    658.57,
+    622,
+    27.71,
+    55.6
+   ]
+  },
+  {
+   "note": 70,
+   "black": true,
+   "rect": [
+    678.29,
+    622,
+    16,
+    35
+   ]
+  },
+  {
+   "note": 71,
+   "black": false,
+   "rect": [
+    686.29,
+    622,
+    27.71,
+    55.4
+   ]
+  },
+  {
+   "note": 72,
+   "black": false,
+   "rect": [
+    714.0,
+    622,
+    27.71,
+    54.8
+   ]
+  },
+  {
+   "note": 73,
+   "black": true,
+   "rect": [
+    733.71,
+    622,
+    16,
+    35
+   ]
+  },
+  {
+   "note": 74,
+   "black": false,
+   "rect": [
+    741.71,
+    622,
+    27.71,
+    58.1
+   ]
+  },
+  {
+   "note": 75,
+   "black": true,
+   "rect": [
+    761.43,
+    622,
+    16,
+    35
+   ]
+  },
+  {
+   "note": 76,
+   "black": false,
+   "rect": [
+    769.43,
+    622,
+    27.71,
+    60.3
+   ]
+  },
+  {
+   "note": 77,
+   "black": false,
+   "rect": [
+    797.14,
+    622,
+    27.71,
+    57.6
+   ]
+  },
+  {
+   "note": 78,
+   "black": true,
+   "rect": [
+    816.86,
+    622,
+    16,
+    35
+   ]
+  },
+  {
+   "note": 79,
+   "black": false,
+   "rect": [
+    824.86,
+    622,
+    27.71,
+    55.6
+   ]
+  },
+  {
+   "note": 80,
+   "black": true,
+   "rect": [
+    844.57,
+    622,
+    16,
+    35
+   ]
+  },
+  {
+   "note": 81,
+   "black": false,
+   "rect": [
+    852.57,
+    622,
+    27.71,
+    56.6
+   ]
+  },
+  {
+   "note": 82,
+   "black": true,
+   "rect": [
+    872.29,
+    622,
+    16,
+    35
+   ]
+  },
+  {
+   "note": 83,
+   "black": false,
+   "rect": [
+    880.29,
+    622,
+    27.71,
+    55.5
+   ]
+  }
+ ],
+ "key_sprites": {
+  "white": [
+   "key-white-0",
+   "key-white-1",
+   "key-white-2"
+  ],
+  "white_down": "key-white-down",
+  "black": "key-black",
+  "black_down": "key-black-down"
+ },
+ "roll": {
+  "rect": [
+   132,
+   510,
+   776,
+   176
+  ],
+  "grid": [
+   190,
+   536,
+   714,
+   146
+  ],
+  "keys": [
+   136,
+   536,
+   50,
+   146
+  ],
+  "head": [
+   136,
+   513,
+   768,
+   20
+  ],
+  "steps": 32,
+  "rows": 12,
+  "new_feature": true
+ },
+ "ledger": {
+  "rect": [
+   336,
+   112,
+   424,
+   506
+  ],
+  "roller": [
+   327,
+   107,
+   442,
+   15
+  ],
+  "head": [
+   340,
+   121,
+   416,
+   15
+  ],
+  "tabs": [
+   340,
+   138,
+   116,
+   476
+  ],
+  "slats": [
+   460,
+   138,
+   296,
+   442
+  ],
+  "foot": [
+   460,
+   580,
+   296,
+   34
+  ],
+  "slat_h": 34,
+  "tab_h": 34,
+  "rows": 13,
+  "corner_x": [
+   400,
+   330
+  ],
+  "sprite_origin": [
+   14,
+   80
+  ]
+ },
+ "console": {
+  "lip_y": 546,
+  "keyboard": [
+   132,
+   620,
+   776,
+   62
+  ],
+  "status": [
+   262,
+   547,
+   516,
+   13
+  ]
+ },
+ "colours": {
+  "ghosts": [
+   "#fff0cc",
+   "#84e092",
+   "#bda2ff",
+   "#86d8ff",
+   "#ffb340",
+   "#ff93a8"
+  ],
+  "corners": [
+   "#84e092",
+   "#ff93a8",
+   "#86d8ff",
+   "#ffb340"
+  ],
+  "amber": "#ffb23e"
+ },
+ "fx_effects": {
+  "about": "the slot effects. A slot runs in the order of its domain: Spectral + Partial (one shared STFT), then Time, then Warp (fixed by the engine: there is no order switch). The 8 wheels of the workbench are a slot's first 8 parameters (SpectralFx::pSlotParam, 0..1); \"kind\", range, unit and choices give the value text. Names and ranges are upstream's; the engine's catalogue ORDER is not final (provisional): refer to effects by \"id\".",
+  "run_order": [
+   "Spectral",
+   "Partial",
+   "Time",
+   "Warp"
+  ],
+  "count": 39,
+  "folders": [
+   {
+    "name": "DESTRUCTION",
+    "domain": "Spectral",
+    "source": "Spectral Corruptor (Dirty Octopus, MPL-2.0)",
+    "effects": [
+     {
+      "id": "BinShuffle",
+      "name": "Bin Shuffle",
+      "params": [
+       {
+        "id": "amount",
+        "label": "Amount",
+        "kind": "float",
+        "min": 0,
+        "max": 1,
+        "default": 0,
+        "unit": ""
+       },
+       {
+        "id": "seed",
+        "label": "Seed",
+        "kind": "int",
+        "min": 0,
+        "max": 999999,
+        "default": 0,
+        "unit": ""
+       }
+      ],
+      "host_params": 2
+     },
+     {
+      "id": "RandomBinDeath",
+      "name": "Random Bin Death",
+      "params": [
+       {
+        "id": "amount",
+        "label": "Amount",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 0,
+        "unit": " %"
+       },
+       {
+        "id": "seed",
+        "label": "Seed",
+        "kind": "int",
+        "min": 0,
+        "max": 999999,
+        "default": 0,
+        "unit": ""
+       }
+      ],
+      "host_params": 2
+     },
+     {
+      "id": "SpectralDropout",
+      "name": "Spectral Dropout",
+      "params": [
+       {
+        "id": "amount",
+        "label": "Amount",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 0,
+        "unit": " %"
+       },
+       {
+        "id": "density",
+        "label": "Density",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 50,
+        "unit": " %"
+       }
+      ],
+      "host_params": 2
+     },
+     {
+      "id": "SpectralPixelation",
+      "name": "Spectral Pixelation",
+      "params": [
+       {
+        "id": "amount",
+        "label": "Amount",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 0,
+        "unit": " %"
+       },
+       {
+        "id": "blockSize",
+        "label": "Block Size",
+        "kind": "int",
+        "min": 1,
+        "max": 64,
+        "default": 64,
+        "unit": " bins"
+       }
+      ],
+      "host_params": 2
+     },
+     {
+      "id": "SpectralJPEG",
+      "name": "Spectral JPEG",
+      "params": [
+       {
+        "id": "amount",
+        "label": "Amount",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 0,
+        "unit": " %"
+       },
+       {
+        "id": "blockSize",
+        "label": "Block Size",
+        "kind": "int",
+        "min": 1,
+        "max": 64,
+        "default": 8,
+        "unit": " bins"
+       }
+      ],
+      "host_params": 2
+     },
+     {
+      "id": "SpectralClipper",
+      "name": "Spectral Clipper",
+      "params": [
+       {
+        "id": "threshold",
+        "label": "Threshold",
+        "kind": "float",
+        "min": -96,
+        "max": 0,
+        "default": -12,
+        "unit": " dBFS"
+       },
+       {
+        "id": "drive",
+        "label": "Drive",
+        "kind": "float",
+        "min": 0,
+        "max": 48,
+        "default": 0,
+        "unit": " dB"
+       },
+       {
+        "id": "knee",
+        "label": "Knee",
+        "kind": "float",
+        "min": 0,
+        "max": 24,
+        "default": 0,
+        "unit": " dB"
+       },
+       {
+        "id": "output",
+        "label": "Output",
+        "kind": "float",
+        "min": -48,
+        "max": 24,
+        "default": 0,
+        "unit": " dB"
+       }
+      ],
+      "host_params": 4
+     }
+    ]
+   },
+   {
+    "name": "FREQUENCY",
+    "domain": "Spectral",
+    "source": "Spectral Corruptor (Dirty Octopus, MPL-2.0)",
+    "effects": [
+     {
+      "id": "FrequencyRemap",
+      "name": "Frequency Remap",
+      "params": [
+       {
+        "id": "amount",
+        "label": "Remap",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 100,
+        "unit": " %"
+       }
+      ],
+      "host_params": 1
+     },
+     {
+      "id": "FrequencyWarp",
+      "name": "Frequency Warp",
+      "params": [
+       {
+        "id": "amount",
+        "label": "Amount",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 0,
+        "unit": " %"
+       },
+       {
+        "id": "shape",
+        "label": "Shape",
+        "kind": "float",
+        "min": -100,
+        "max": 100,
+        "default": 50,
+        "unit": ""
+       }
+      ],
+      "host_params": 2
+     },
+     {
+      "id": "FrequencyDrift",
+      "name": "Frequency Drift",
+      "params": [
+       {
+        "id": "rate",
+        "label": "Rate",
+        "kind": "float",
+        "min": 0.01,
+        "max": 10,
+        "default": 0.25,
+        "unit": " Hz"
+       },
+       {
+        "id": "depth",
+        "label": "Depth",
+        "kind": "float",
+        "min": 0,
+        "max": 64,
+        "default": 0,
+        "unit": " bins"
+       }
+      ],
+      "host_params": 2
+     },
+     {
+      "id": "FrequencyShift",
+      "name": "Frequency Shift",
+      "params": [
+       {
+        "id": "shift",
+        "label": "Shift",
+        "kind": "float",
+        "min": -5000,
+        "max": 5000,
+        "default": 0,
+        "unit": " Hz"
+       }
+      ],
+      "host_params": 1
+     },
+     {
+      "id": "SpectralMirror",
+      "name": "Spectral Mirror",
+      "params": [
+       {
+        "id": "amount",
+        "label": "Amount",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 0,
+        "unit": " %"
+       },
+       {
+        "id": "pivot",
+        "label": "Mirror Centre",
+        "kind": "float",
+        "min": 20,
+        "max": 10000,
+        "default": 1000,
+        "unit": " Hz",
+        "log": true
+       }
+      ],
+      "host_params": 2
+     },
+     {
+      "id": "BinTeleport",
+      "name": "Bin Teleport",
+      "params": [
+       {
+        "id": "amount",
+        "label": "Amount",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 0,
+        "unit": " %"
+       },
+       {
+        "id": "seed",
+        "label": "Seed",
+        "kind": "int",
+        "min": 0,
+        "max": 999999,
+        "default": 0,
+        "unit": ""
+       }
+      ],
+      "host_params": 2
+     }
+    ]
+   },
+   {
+    "name": "PHASE",
+    "domain": "Spectral",
+    "source": "Spectral Corruptor (Dirty Octopus, MPL-2.0)",
+    "effects": [
+     {
+      "id": "PhaseCorruption",
+      "name": "Phase Corruption",
+      "params": [
+       {
+        "id": "amount",
+        "label": "Amount",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 0,
+        "unit": " %"
+       },
+       {
+        "id": "seed",
+        "label": "Seed",
+        "kind": "int",
+        "min": 0,
+        "max": 999999,
+        "default": 0,
+        "unit": ""
+       }
+      ],
+      "host_params": 2
+     },
+     {
+      "id": "PhaseNoise",
+      "name": "Phase Noise",
+      "params": [
+       {
+        "id": "amount",
+        "label": "Amount",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 0,
+        "unit": " %"
+       },
+       {
+        "id": "rate",
+        "label": "Rate",
+        "kind": "float",
+        "min": 0.01,
+        "max": 64,
+        "default": 8,
+        "unit": " Hz"
+       }
+      ],
+      "host_params": 2
+     },
+     {
+      "id": "ComplexRotation",
+      "name": "Complex Rotation",
+      "params": [
+       {
+        "id": "amount",
+        "label": "Amount",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 0,
+        "unit": " %"
+       },
+       {
+        "id": "randomAmount",
+        "label": "Random Amount",
+        "kind": "bool",
+        "min": 0,
+        "max": 1,
+        "default": 0
+       },
+       {
+        "id": "randomRate",
+        "label": "Random Rate",
+        "kind": "float",
+        "min": 0.01,
+        "max": 10,
+        "default": 2,
+        "unit": " Hz"
+       }
+      ],
+      "host_params": 3
+     },
+     {
+      "id": "MagnitudePhaseSwap",
+      "name": "Magnitude Phase Swap",
+      "params": [
+       {
+        "id": "amount",
+        "label": "Amount",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 0,
+        "unit": " %"
+       }
+      ],
+      "host_params": 1
+     },
+     {
+      "id": "SpectralDispersion",
+      "name": "Spectral Dispersion",
+      "params": [
+       {
+        "id": "amount",
+        "label": "Amount",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 0,
+        "unit": " %"
+       },
+       {
+        "id": "curve",
+        "label": "Curve",
+        "kind": "float",
+        "min": 0,
+        "max": 200,
+        "default": 50,
+        "unit": ""
+       }
+      ],
+      "host_params": 2
+     }
+    ]
+   },
+   {
+    "name": "TEXTURE / TIME",
+    "domain": "Spectral",
+    "source": "Spectral Corruptor (Dirty Octopus, MPL-2.0)",
+    "effects": [
+     {
+      "id": "BinHold",
+      "name": "Bin Hold",
+      "params": [
+       {
+        "id": "amount",
+        "label": "Amount",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 0,
+        "unit": " %"
+       },
+       {
+        "id": "rate",
+        "label": "Rate",
+        "kind": "float",
+        "min": 1,
+        "max": 128,
+        "default": 8,
+        "unit": " frames"
+       },
+       {
+        "id": "length",
+        "label": "Length",
+        "kind": "int",
+        "min": 1,
+        "max": 128,
+        "default": 8,
+        "unit": " frames"
+       },
+       {
+        "id": "seed",
+        "label": "Seed",
+        "kind": "int",
+        "min": 0,
+        "max": 999999,
+        "default": 0,
+        "unit": ""
+       }
+      ],
+      "host_params": 4
+     },
+     {
+      "id": "FrameHold",
+      "name": "Frame Hold",
+      "params": [
+       {
+        "id": "amount",
+        "label": "Amount",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 0,
+        "unit": " %"
+       },
+       {
+        "id": "rate",
+        "label": "Rate",
+        "kind": "float",
+        "min": 1,
+        "max": 128,
+        "default": 8,
+        "unit": " frames"
+       },
+       {
+        "id": "length",
+        "label": "Length",
+        "kind": "int",
+        "min": 1,
+        "max": 128,
+        "default": 8,
+        "unit": " frames"
+       }
+      ],
+      "host_params": 3
+     },
+     {
+      "id": "TemporalSmear",
+      "name": "Temporal Smear",
+      "params": [
+       {
+        "id": "amount",
+        "label": "Amount",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 0,
+        "unit": " %"
+       },
+       {
+        "id": "length",
+        "label": "Length",
+        "kind": "int",
+        "min": 1,
+        "max": 64,
+        "default": 12,
+        "unit": " frames"
+       }
+      ],
+      "host_params": 2
+     },
+     {
+      "id": "TimeDesync",
+      "name": "Time Desync",
+      "params": [
+       {
+        "id": "amount",
+        "label": "Amount",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 0,
+        "unit": " %"
+       },
+       {
+        "id": "magDelay",
+        "label": "Mag Delay",
+        "kind": "int",
+        "min": 0,
+        "max": 63,
+        "default": 1,
+        "unit": " frames"
+       },
+       {
+        "id": "phaseDelay",
+        "label": "Phase Delay",
+        "kind": "int",
+        "min": 0,
+        "max": 63,
+        "default": 8,
+        "unit": " frames"
+       }
+      ],
+      "host_params": 3
+     },
+     {
+      "id": "SpectralBloom",
+      "name": "Spectral Bloom",
+      "params": [
+       {
+        "id": "amount",
+        "label": "Amount",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 0,
+        "unit": " %"
+       },
+       {
+        "id": "spread",
+        "label": "Spread",
+        "kind": "float",
+        "min": 10,
+        "max": 3000,
+        "default": 150,
+        "unit": " Hz",
+        "log": true
+       }
+      ],
+      "host_params": 2
+     }
+    ]
+   },
+   {
+    "name": "HARMONICS",
+    "domain": "Spectral",
+    "source": "Spectral Corruptor (Dirty Octopus, MPL-2.0)",
+    "effects": [
+     {
+      "id": "SpectralContrast",
+      "name": "Spectral Contrast",
+      "params": [
+       {
+        "id": "amount",
+        "label": "Contrast",
+        "kind": "float",
+        "min": -100,
+        "max": 100,
+        "default": 0,
+        "unit": " %"
+       }
+      ],
+      "host_params": 1
+     },
+     {
+      "id": "HarmonicSculpt",
+      "name": "Harmonic Sculpt",
+      "params": [
+       {
+        "id": "amount",
+        "label": "Amount",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 0,
+        "unit": " %"
+       },
+       {
+        "id": "track",
+        "label": "Auto Track",
+        "kind": "bool",
+        "min": 0,
+        "max": 1,
+        "default": 1
+       },
+       {
+        "id": "fundamental",
+        "label": "Fundamental",
+        "kind": "float",
+        "min": 40,
+        "max": 2000,
+        "default": 220,
+        "unit": " Hz",
+        "log": true
+       },
+       {
+        "id": "odd",
+        "label": "Odd Harmonics",
+        "kind": "float",
+        "min": -48,
+        "max": 12,
+        "default": 0,
+        "unit": " dB"
+       },
+       {
+        "id": "even",
+        "label": "Even Harmonics",
+        "kind": "float",
+        "min": -48,
+        "max": 12,
+        "default": 0,
+        "unit": " dB"
+       },
+       {
+        "id": "width",
+        "label": "Band Width",
+        "kind": "float",
+        "min": 5,
+        "max": 95,
+        "default": 30,
+        "unit": " %"
+       }
+      ],
+      "host_params": 6
+     },
+     {
+      "id": "HarmonicMatch",
+      "name": "Harmonic Match",
+      "params": [
+       {
+        "id": "shape",
+        "label": "Shape",
+        "kind": "choice",
+        "min": 0,
+        "max": 4,
+        "default": 0,
+        "choices": [
+         "Triangle",
+         "Square",
+         "Saw",
+         "Pointy",
+         "Sweep"
+        ]
+       },
+       {
+        "id": "mode",
+        "label": "Mode",
+        "kind": "choice",
+        "min": 0,
+        "max": 1,
+        "default": 0,
+        "choices": [
+         "Scale",
+         "Resynth"
+        ]
+       },
+       {
+        "id": "amount",
+        "label": "Amount",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 0,
+        "unit": " %"
+       },
+       {
+        "id": "colour",
+        "label": "Colour / Sweep",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 50,
+        "unit": " %"
+       },
+       {
+        "id": "track",
+        "label": "Auto Track",
+        "kind": "bool",
+        "min": 0,
+        "max": 1,
+        "default": 1
+       },
+       {
+        "id": "fundamental",
+        "label": "Fundamental",
+        "kind": "float",
+        "min": 40,
+        "max": 2000,
+        "default": 220,
+        "unit": " Hz",
+        "log": true
+       },
+       {
+        "id": "width",
+        "label": "Band Width",
+        "kind": "float",
+        "min": 5,
+        "max": 95,
+        "default": 50,
+        "unit": " %"
+       }
+      ],
+      "host_params": 7
+     }
+    ]
+   },
+   {
+    "name": "PARTIAL",
+    "domain": "Partial",
+    "source": "Spectral Corruptor (Dirty Octopus, MPL-2.0)",
+    "effects": [
+     {
+      "id": "PartialStretcher",
+      "name": "Stretcher",
+      "params": [
+       {
+        "id": "mode",
+        "label": "Mode",
+        "kind": "choice",
+        "min": 0,
+        "max": 1,
+        "default": 0,
+        "choices": [
+         "Scale",
+         "Resynth"
+        ]
+       },
+       {
+        "id": "shape",
+        "label": "Shape",
+        "kind": "choice",
+        "min": 0,
+        "max": 3,
+        "default": 0,
+        "choices": [
+         "Sine",
+         "Triangle",
+         "Saw",
+         "Square"
+        ]
+       },
+       {
+        "id": "anchor",
+        "label": "Anchor",
+        "kind": "choice",
+        "min": 0,
+        "max": 1,
+        "default": 0,
+        "choices": [
+         "Band Centre",
+         "Energy Centroid"
+        ]
+       },
+       {
+        "id": "amount",
+        "label": "Stretch",
+        "kind": "float",
+        "min": -48,
+        "max": 48,
+        "default": 0,
+        "unit": " st"
+       },
+       {
+        "id": "reference",
+        "label": "Reference",
+        "kind": "float",
+        "min": 20,
+        "max": 2000,
+        "default": 110,
+        "unit": " Hz",
+        "log": true
+       }
+      ],
+      "host_params": 5
+     },
+     {
+      "id": "PartialStiffString",
+      "name": "Stiff String",
+      "params": [
+       {
+        "id": "mode",
+        "label": "Mode",
+        "kind": "choice",
+        "min": 0,
+        "max": 1,
+        "default": 0,
+        "choices": [
+         "Scale",
+         "Resynth"
+        ]
+       },
+       {
+        "id": "shape",
+        "label": "Shape",
+        "kind": "choice",
+        "min": 0,
+        "max": 3,
+        "default": 0,
+        "choices": [
+         "Sine",
+         "Triangle",
+         "Saw",
+         "Square"
+        ]
+       },
+       {
+        "id": "anchor",
+        "label": "Anchor",
+        "kind": "choice",
+        "min": 0,
+        "max": 1,
+        "default": 0,
+        "choices": [
+         "Band Centre",
+         "Energy Centroid"
+        ]
+       },
+       {
+        "id": "amount",
+        "label": "Stiffness",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 0,
+        "unit": " %"
+       },
+       {
+        "id": "reference",
+        "label": "Reference",
+        "kind": "float",
+        "min": 20,
+        "max": 2000,
+        "default": 110,
+        "unit": " Hz",
+        "log": true
+       }
+      ],
+      "host_params": 5
+     },
+     {
+      "id": "PartialCentroid",
+      "name": "Centroid",
+      "params": [
+       {
+        "id": "mode",
+        "label": "Mode",
+        "kind": "choice",
+        "min": 0,
+        "max": 1,
+        "default": 0,
+        "choices": [
+         "Scale",
+         "Resynth"
+        ]
+       },
+       {
+        "id": "shape",
+        "label": "Shape",
+        "kind": "choice",
+        "min": 0,
+        "max": 3,
+        "default": 0,
+        "choices": [
+         "Sine",
+         "Triangle",
+         "Saw",
+         "Square"
+        ]
+       },
+       {
+        "id": "anchor",
+        "label": "Anchor",
+        "kind": "choice",
+        "min": 0,
+        "max": 1,
+        "default": 0,
+        "choices": [
+         "Band Centre",
+         "Energy Centroid"
+        ]
+       },
+       {
+        "id": "amount",
+        "label": "Converge",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 0,
+        "unit": " %"
+       },
+       {
+        "id": "target",
+        "label": "Target",
+        "kind": "float",
+        "min": 20,
+        "max": 20000,
+        "default": 1000,
+        "unit": " Hz",
+        "log": true
+       }
+      ],
+      "host_params": 5
+     },
+     {
+      "id": "PartialPGrid",
+      "name": "P Grid",
+      "params": [
+       {
+        "id": "mode",
+        "label": "Mode",
+        "kind": "choice",
+        "min": 0,
+        "max": 1,
+        "default": 0,
+        "choices": [
+         "Scale",
+         "Resynth"
+        ]
+       },
+       {
+        "id": "shape",
+        "label": "Shape",
+        "kind": "choice",
+        "min": 0,
+        "max": 3,
+        "default": 0,
+        "choices": [
+         "Sine",
+         "Triangle",
+         "Saw",
+         "Square"
+        ]
+       },
+       {
+        "id": "anchor",
+        "label": "Anchor",
+        "kind": "choice",
+        "min": 0,
+        "max": 1,
+        "default": 0,
+        "choices": [
+         "Band Centre",
+         "Energy Centroid"
+        ]
+       },
+       {
+        "id": "amount",
+        "label": "Quantize",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 0,
+        "unit": " %"
+       },
+       {
+        "id": "pitch",
+        "label": "Grid Spacing",
+        "kind": "float",
+        "min": 0.1,
+        "max": 48,
+        "default": 12,
+        "unit": " st"
+       },
+       {
+        "id": "reference",
+        "label": "Reference",
+        "kind": "float",
+        "min": 20,
+        "max": 2000,
+        "default": 110,
+        "unit": " Hz",
+        "log": true
+       }
+      ],
+      "host_params": 6
+     },
+     {
+      "id": "PartialFGrid",
+      "name": "F Grid",
+      "params": [
+       {
+        "id": "mode",
+        "label": "Mode",
+        "kind": "choice",
+        "min": 0,
+        "max": 1,
+        "default": 0,
+        "choices": [
+         "Scale",
+         "Resynth"
+        ]
+       },
+       {
+        "id": "shape",
+        "label": "Shape",
+        "kind": "choice",
+        "min": 0,
+        "max": 3,
+        "default": 0,
+        "choices": [
+         "Sine",
+         "Triangle",
+         "Saw",
+         "Square"
+        ]
+       },
+       {
+        "id": "anchor",
+        "label": "Anchor",
+        "kind": "choice",
+        "min": 0,
+        "max": 1,
+        "default": 0,
+        "choices": [
+         "Band Centre",
+         "Energy Centroid"
+        ]
+       },
+       {
+        "id": "amount",
+        "label": "Quantize",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 0,
+        "unit": " %"
+       },
+       {
+        "id": "pitch",
+        "label": "Grid Spacing",
+        "kind": "float",
+        "min": 1,
+        "max": 4000,
+        "default": 110,
+        "unit": " Hz",
+        "log": true
+       }
+      ],
+      "host_params": 5
+     }
+    ]
+   },
+   {
+    "name": "FILTER / UTILITY",
+    "domain": "Spectral",
+    "source": "Spectral Corruptor (Dirty Octopus, MPL-2.0)",
+    "effects": [
+     {
+      "id": "SpectralFilter",
+      "name": "Spectral Filter",
+      "params": [
+       {
+        "id": "filterType",
+        "label": "Type",
+        "kind": "choice",
+        "min": 0,
+        "max": 3,
+        "default": 0,
+        "choices": [
+         "Low Pass",
+         "High Pass",
+         "Band Pass",
+         "Notch"
+        ]
+       },
+       {
+        "id": "freq",
+        "label": "Frequency",
+        "kind": "float",
+        "min": 20,
+        "max": 20000,
+        "default": 1000,
+        "unit": " Hz",
+        "log": true
+       },
+       {
+        "id": "slope",
+        "label": "Slope",
+        "kind": "choice",
+        "min": 0,
+        "max": 3,
+        "default": 1,
+        "choices": [
+         "6 dB/oct",
+         "12 dB/oct",
+         "24 dB/oct",
+         "48 dB/oct"
+        ]
+       },
+       {
+        "id": "q",
+        "label": "Q",
+        "kind": "float",
+        "min": 0.1,
+        "max": 20,
+        "default": 0.707,
+        "unit": ""
+       },
+       {
+        "id": "mix",
+        "label": "Mix",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 100,
+        "unit": " %"
+       }
+      ],
+      "host_params": 5
+     },
+     {
+      "id": "SpectralComb",
+      "name": "Spectral Comb",
+      "params": [
+       {
+        "id": "amount",
+        "label": "Depth",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 0,
+        "unit": " %"
+       },
+       {
+        "id": "spacing",
+        "label": "Tooth Spacing",
+        "kind": "float",
+        "min": 20,
+        "max": 4000,
+        "default": 220,
+        "unit": " Hz",
+        "log": true
+       },
+       {
+        "id": "offset",
+        "label": "Offset",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 0,
+        "unit": " %"
+       },
+       {
+        "id": "width",
+        "label": "Tooth Width",
+        "kind": "float",
+        "min": 2,
+        "max": 98,
+        "default": 35,
+        "unit": " %"
+       }
+      ],
+      "host_params": 4
+     },
+     {
+      "id": "SpectralEqualizer",
+      "name": "Spectral Equalizer",
+      "params": [
+       {
+        "id": "band1Enabled",
+        "label": "Band 1 On",
+        "kind": "bool",
+        "min": 0,
+        "max": 1,
+        "default": 1
+       },
+       {
+        "id": "band1Type",
+        "label": "Band 1 Shape",
+        "kind": "choice",
+        "min": 0,
+        "max": 4,
+        "default": 0,
+        "choices": [
+         "Bell",
+         "Low Shelf",
+         "High Shelf",
+         "Low Cut",
+         "High Cut"
+        ]
+       },
+       {
+        "id": "band1Freq",
+        "label": "Band 1 Frequency",
+        "kind": "float",
+        "min": 20,
+        "max": 20000,
+        "default": 40,
+        "unit": " Hz",
+        "log": true
+       },
+       {
+        "id": "band1Gain",
+        "label": "Band 1 Gain",
+        "kind": "float",
+        "min": -24,
+        "max": 24,
+        "default": 0,
+        "unit": " dB"
+       },
+       {
+        "id": "band1Q",
+        "label": "Band 1 Q",
+        "kind": "float",
+        "min": 0.1,
+        "max": 18,
+        "default": 0.7071,
+        "unit": "",
+        "log": true
+       },
+       {
+        "id": "band2Enabled",
+        "label": "Band 2 On",
+        "kind": "bool",
+        "min": 0,
+        "max": 1,
+        "default": 1
+       },
+       {
+        "id": "band2Type",
+        "label": "Band 2 Shape",
+        "kind": "choice",
+        "min": 0,
+        "max": 4,
+        "default": 0,
+        "choices": [
+         "Bell",
+         "Low Shelf",
+         "High Shelf",
+         "Low Cut",
+         "High Cut"
+        ]
+       },
+       {
+        "id": "band2Freq",
+        "label": "Band 2 Frequency",
+        "kind": "float",
+        "min": 20,
+        "max": 20000,
+        "default": 100,
+        "unit": " Hz",
+        "log": true
+       },
+       {
+        "id": "band2Gain",
+        "label": "Band 2 Gain",
+        "kind": "float",
+        "min": -24,
+        "max": 24,
+        "default": 0,
+        "unit": " dB"
+       },
+       {
+        "id": "band2Q",
+        "label": "Band 2 Q",
+        "kind": "float",
+        "min": 0.1,
+        "max": 18,
+        "default": 0.7071,
+        "unit": "",
+        "log": true
+       },
+       {
+        "id": "band3Enabled",
+        "label": "Band 3 On",
+        "kind": "bool",
+        "min": 0,
+        "max": 1,
+        "default": 1
+       },
+       {
+        "id": "band3Type",
+        "label": "Band 3 Shape",
+        "kind": "choice",
+        "min": 0,
+        "max": 4,
+        "default": 0,
+        "choices": [
+         "Bell",
+         "Low Shelf",
+         "High Shelf",
+         "Low Cut",
+         "High Cut"
+        ]
+       },
+       {
+        "id": "band3Freq",
+        "label": "Band 3 Frequency",
+        "kind": "float",
+        "min": 20,
+        "max": 20000,
+        "default": 250,
+        "unit": " Hz",
+        "log": true
+       },
+       {
+        "id": "band3Gain",
+        "label": "Band 3 Gain",
+        "kind": "float",
+        "min": -24,
+        "max": 24,
+        "default": 0,
+        "unit": " dB"
+       },
+       {
+        "id": "band3Q",
+        "label": "Band 3 Q",
+        "kind": "float",
+        "min": 0.1,
+        "max": 18,
+        "default": 0.7071,
+        "unit": "",
+        "log": true
+       },
+       {
+        "id": "band4Enabled",
+        "label": "Band 4 On",
+        "kind": "bool",
+        "min": 0,
+        "max": 1,
+        "default": 1
+       },
+       {
+        "id": "band4Type",
+        "label": "Band 4 Shape",
+        "kind": "choice",
+        "min": 0,
+        "max": 4,
+        "default": 0,
+        "choices": [
+         "Bell",
+         "Low Shelf",
+         "High Shelf",
+         "Low Cut",
+         "High Cut"
+        ]
+       },
+       {
+        "id": "band4Freq",
+        "label": "Band 4 Frequency",
+        "kind": "float",
+        "min": 20,
+        "max": 20000,
+        "default": 630,
+        "unit": " Hz",
+        "log": true
+       },
+       {
+        "id": "band4Gain",
+        "label": "Band 4 Gain",
+        "kind": "float",
+        "min": -24,
+        "max": 24,
+        "default": 0,
+        "unit": " dB"
+       },
+       {
+        "id": "band4Q",
+        "label": "Band 4 Q",
+        "kind": "float",
+        "min": 0.1,
+        "max": 18,
+        "default": 0.7071,
+        "unit": "",
+        "log": true
+       },
+       {
+        "id": "band5Enabled",
+        "label": "Band 5 On",
+        "kind": "bool",
+        "min": 0,
+        "max": 1,
+        "default": 1
+       },
+       {
+        "id": "band5Type",
+        "label": "Band 5 Shape",
+        "kind": "choice",
+        "min": 0,
+        "max": 4,
+        "default": 0,
+        "choices": [
+         "Bell",
+         "Low Shelf",
+         "High Shelf",
+         "Low Cut",
+         "High Cut"
+        ]
+       },
+       {
+        "id": "band5Freq",
+        "label": "Band 5 Frequency",
+        "kind": "float",
+        "min": 20,
+        "max": 20000,
+        "default": 1600,
+        "unit": " Hz",
+        "log": true
+       },
+       {
+        "id": "band5Gain",
+        "label": "Band 5 Gain",
+        "kind": "float",
+        "min": -24,
+        "max": 24,
+        "default": 0,
+        "unit": " dB"
+       },
+       {
+        "id": "band5Q",
+        "label": "Band 5 Q",
+        "kind": "float",
+        "min": 0.1,
+        "max": 18,
+        "default": 0.7071,
+        "unit": "",
+        "log": true
+       },
+       {
+        "id": "band6Enabled",
+        "label": "Band 6 On",
+        "kind": "bool",
+        "min": 0,
+        "max": 1,
+        "default": 1
+       },
+       {
+        "id": "band6Type",
+        "label": "Band 6 Shape",
+        "kind": "choice",
+        "min": 0,
+        "max": 4,
+        "default": 0,
+        "choices": [
+         "Bell",
+         "Low Shelf",
+         "High Shelf",
+         "Low Cut",
+         "High Cut"
+        ]
+       },
+       {
+        "id": "band6Freq",
+        "label": "Band 6 Frequency",
+        "kind": "float",
+        "min": 20,
+        "max": 20000,
+        "default": 4000,
+        "unit": " Hz",
+        "log": true
+       },
+       {
+        "id": "band6Gain",
+        "label": "Band 6 Gain",
+        "kind": "float",
+        "min": -24,
+        "max": 24,
+        "default": 0,
+        "unit": " dB"
+       },
+       {
+        "id": "band6Q",
+        "label": "Band 6 Q",
+        "kind": "float",
+        "min": 0.1,
+        "max": 18,
+        "default": 0.7071,
+        "unit": "",
+        "log": true
+       },
+       {
+        "id": "band7Enabled",
+        "label": "Band 7 On",
+        "kind": "bool",
+        "min": 0,
+        "max": 1,
+        "default": 1
+       },
+       {
+        "id": "band7Type",
+        "label": "Band 7 Shape",
+        "kind": "choice",
+        "min": 0,
+        "max": 4,
+        "default": 0,
+        "choices": [
+         "Bell",
+         "Low Shelf",
+         "High Shelf",
+         "Low Cut",
+         "High Cut"
+        ]
+       },
+       {
+        "id": "band7Freq",
+        "label": "Band 7 Frequency",
+        "kind": "float",
+        "min": 20,
+        "max": 20000,
+        "default": 10000,
+        "unit": " Hz",
+        "log": true
+       },
+       {
+        "id": "band7Gain",
+        "label": "Band 7 Gain",
+        "kind": "float",
+        "min": -24,
+        "max": 24,
+        "default": 0,
+        "unit": " dB"
+       },
+       {
+        "id": "band7Q",
+        "label": "Band 7 Q",
+        "kind": "float",
+        "min": 0.1,
+        "max": 18,
+        "default": 0.7071,
+        "unit": "",
+        "log": true
+       },
+       {
+        "id": "band8Enabled",
+        "label": "Band 8 On",
+        "kind": "bool",
+        "min": 0,
+        "max": 1,
+        "default": 1
+       },
+       {
+        "id": "band8Type",
+        "label": "Band 8 Shape",
+        "kind": "choice",
+        "min": 0,
+        "max": 4,
+        "default": 0,
+        "choices": [
+         "Bell",
+         "Low Shelf",
+         "High Shelf",
+         "Low Cut",
+         "High Cut"
+        ]
+       },
+       {
+        "id": "band8Freq",
+        "label": "Band 8 Frequency",
+        "kind": "float",
+        "min": 20,
+        "max": 20000,
+        "default": 16000,
+        "unit": " Hz",
+        "log": true
+       },
+       {
+        "id": "band8Gain",
+        "label": "Band 8 Gain",
+        "kind": "float",
+        "min": -24,
+        "max": 24,
+        "default": 0,
+        "unit": " dB"
+       },
+       {
+        "id": "band8Q",
+        "label": "Band 8 Q",
+        "kind": "float",
+        "min": 0.1,
+        "max": 18,
+        "default": 0.7071,
+        "unit": "",
+        "log": true
+       }
+      ],
+      "host_params": 8
+     }
+    ]
+   },
+   {
+    "name": "GENERIC",
+    "domain": "Time",
+    "source": "Spectral Corruptor (Dirty Octopus, MPL-2.0)",
+    "effects": [
+     {
+      "id": "Reverb",
+      "name": "Reverb",
+      "params": [
+       {
+        "id": "mode",
+        "label": "Space",
+        "kind": "choice",
+        "min": 0,
+        "max": 2,
+        "default": 0,
+        "choices": [
+         "Plate",
+         "Hall",
+         "Room"
+        ]
+       },
+       {
+        "id": "decay",
+        "label": "Decay",
+        "kind": "float",
+        "min": 0.1,
+        "max": 12,
+        "default": 2.5,
+        "unit": " s"
+       },
+       {
+        "id": "size",
+        "label": "Size",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 60,
+        "unit": " %"
+       },
+       {
+        "id": "predelay",
+        "label": "Pre-delay",
+        "kind": "float",
+        "min": 0,
+        "max": 200,
+        "default": 20,
+        "unit": " ms"
+       },
+       {
+        "id": "damping",
+        "label": "Damping",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 45,
+        "unit": " %"
+       },
+       {
+        "id": "mix",
+        "label": "Mix",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 25,
+        "unit": " %"
+       }
+      ],
+      "host_params": 6
+     },
+     {
+      "id": "Delay",
+      "name": "Delay",
+      "params": [
+       {
+        "id": "mode",
+        "label": "Mode",
+        "kind": "choice",
+        "min": 0,
+        "max": 2,
+        "default": 0,
+        "choices": [
+         "Normal",
+         "Tap Delay",
+         "Ping-Pong"
+        ]
+       },
+       {
+        "id": "sync",
+        "label": "Sync",
+        "kind": "bool",
+        "min": 0,
+        "max": 1,
+        "default": 0
+       },
+       {
+        "id": "division",
+        "label": "Beat",
+        "kind": "choice",
+        "min": 0,
+        "max": 20,
+        "default": 13,
+        "choices": [
+         "1/64 T",
+         "1/64",
+         "1/64 D",
+         "1/32 T",
+         "1/32",
+         "1/32 D",
+         "1/16 T",
+         "1/16",
+         "1/16 D",
+         "1/8 T",
+         "1/8",
+         "1/8 D",
+         "1/4 T",
+         "1/4",
+         "1/4 D",
+         "1/2 T",
+         "1/2",
+         "1/2 D",
+         "1/1 T",
+         "1/1",
+         "1/1 D"
+        ]
+       },
+       {
+        "id": "time",
+        "label": "Time",
+        "kind": "float",
+        "min": 1,
+        "max": 2000,
+        "default": 300,
+        "unit": " ms",
+        "log": true
+       },
+       {
+        "id": "feedback",
+        "label": "Feedback",
+        "kind": "float",
+        "min": 0,
+        "max": 95,
+        "default": 35,
+        "unit": " %"
+       },
+       {
+        "id": "mix",
+        "label": "Mix",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 30,
+        "unit": " %"
+       }
+      ],
+      "host_params": 6
+     },
+     {
+      "id": "Compressor",
+      "name": "Compressor",
+      "params": [
+       {
+        "id": "threshold",
+        "label": "Threshold",
+        "kind": "float",
+        "min": -60,
+        "max": 0,
+        "default": -18,
+        "unit": " dB"
+       },
+       {
+        "id": "ratio",
+        "label": "Ratio",
+        "kind": "float",
+        "min": 1,
+        "max": 20,
+        "default": 4,
+        "unit": " :1"
+       },
+       {
+        "id": "attack",
+        "label": "Attack",
+        "kind": "float",
+        "min": 0.1,
+        "max": 200,
+        "default": 10,
+        "unit": " ms",
+        "log": true
+       },
+       {
+        "id": "release",
+        "label": "Release",
+        "kind": "float",
+        "min": 10,
+        "max": 2000,
+        "default": 100,
+        "unit": " ms",
+        "log": true
+       },
+       {
+        "id": "knee",
+        "label": "Knee",
+        "kind": "float",
+        "min": 0,
+        "max": 24,
+        "default": 6,
+        "unit": " dB"
+       },
+       {
+        "id": "makeup",
+        "label": "Makeup",
+        "kind": "float",
+        "min": 0,
+        "max": 24,
+        "default": 0,
+        "unit": " dB"
+       },
+       {
+        "id": "mix",
+        "label": "Mix",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 100,
+        "unit": " %"
+       }
+      ],
+      "host_params": 7
+     },
+     {
+      "id": "Distortion",
+      "name": "Distortion",
+      "params": [
+       {
+        "id": "mode",
+        "label": "Shape",
+        "kind": "choice",
+        "min": 0,
+        "max": 3,
+        "default": 0,
+        "choices": [
+         "Tube",
+         "Overdrive",
+         "Sin Fold",
+         "Lin Fold"
+        ]
+       },
+       {
+        "id": "drive",
+        "label": "Drive",
+        "kind": "float",
+        "min": 0,
+        "max": 36,
+        "default": 6,
+        "unit": " dB"
+       },
+       {
+        "id": "bias",
+        "label": "Bias",
+        "kind": "float",
+        "min": -1,
+        "max": 1,
+        "default": 0,
+        "unit": ""
+       },
+       {
+        "id": "tone",
+        "label": "Tone",
+        "kind": "float",
+        "min": 200,
+        "max": 20000,
+        "default": 16000,
+        "unit": " Hz",
+        "log": true
+       },
+       {
+        "id": "output",
+        "label": "Output",
+        "kind": "float",
+        "min": -36,
+        "max": 12,
+        "default": -6,
+        "unit": " dB"
+       },
+       {
+        "id": "mix",
+        "label": "Mix",
+        "kind": "float",
+        "min": 0,
+        "max": 100,
+        "default": 100,
+        "unit": " %"
+       }
+      ],
+      "host_params": 6
+     },
+     {
+      "id": "Utility",
+      "name": "Utility",
+      "params": [
+       {
+        "id": "invert",
+        "label": "Phase Invert",
+        "kind": "choice",
+        "min": 0,
+        "max": 3,
+        "default": 0,
+        "choices": [
+         "None",
+         "Left",
+         "Right",
+         "Both"
+        ]
+       },
+       {
+        "id": "mode",
+        "label": "Channel Mode",
+        "kind": "choice",
+        "min": 0,
+        "max": 2,
+        "default": 0,
+        "choices": [
+         "Stereo",
+         "Left Only",
+         "Right Only"
+        ]
+       },
+       {
+        "id": "swap",
+        "label": "Swap L/R",
+        "kind": "bool",
+        "min": 0,
+        "max": 1,
+        "default": 0
+       },
+       {
+        "id": "width",
+        "label": "Width",
+        "kind": "float",
+        "min": 0,
+        "max": 200,
+        "default": 100,
+        "unit": " %"
+       },
+       {
+        "id": "mono",
+        "label": "Mono",
+        "kind": "bool",
+        "min": 0,
+        "max": 1,
+        "default": 0
+       },
+       {
+        "id": "gain",
+        "label": "Gain",
+        "kind": "float",
+        "min": -48,
+        "max": 12,
+        "default": 0,
+        "unit": " dB"
+       },
+       {
+        "id": "balance",
+        "label": "Balance",
+        "kind": "float",
+        "min": -100,
+        "max": 100,
+        "default": 0,
+        "unit": ""
+       }
+      ],
+      "host_params": 7
+     }
+    ]
+   },
+   {
+    "name": "WARPCORE",
+    "domain": "Warp",
+    "source": "WarpCore (ManasWolrd, GPL-3)",
+    "effects": [
+     {
+      "id": "WarpCore",
+      "name": "WarpCore",
+      "params": [
+       {
+        "id": "warp",
+        "label": "Warp",
+        "kind": "int",
+        "min": 1,
+        "max": 256,
+        "default": 50,
+        "unit": ""
+       },
+       {
+        "id": "f_high",
+        "label": "Freq High",
+        "kind": "float",
+        "min": 4000,
+        "max": 20010,
+        "default": 20010,
+        "unit": " Hz",
+        "skew": 0.4,
+        "top_text": "Full"
+       },
+       {
+        "id": "scale",
+        "label": "Scale",
+        "kind": "float",
+        "min": 0.1,
+        "max": 3.0,
+        "default": 1.0,
+        "unit": ""
+       },
+       {
+        "id": "pitch",
+        "label": "Pitch",
+        "kind": "float",
+        "min": -24,
+        "max": 24,
+        "default": 0,
+        "unit": " st"
+       },
+       {
+        "id": "pitch_affect",
+        "label": "Formant Mode",
+        "kind": "bool",
+        "min": 0,
+        "max": 1,
+        "default": 1
+       },
+       {
+        "id": "fill_gap",
+        "label": "Fill Gap",
+        "kind": "bool",
+        "min": 0,
+        "max": 1,
+        "default": 0
+       },
+       {
+        "id": "drywet",
+        "label": "Dry/Wet",
+        "kind": "float",
+        "min": 0,
+        "max": 1,
+        "default": 1,
+        "unit": ""
+       },
+       {
+        "id": "poles",
+        "label": "Poles",
+        "kind": "int",
+        "min": 1,
+        "max": 8,
+        "default": 2,
+        "unit": ""
+       },
+       {
+        "id": "freq_mode",
+        "label": "Freq Mode",
+        "kind": "choice",
+        "min": 0,
+        "max": 3,
+        "default": 2,
+        "choices": [
+         "voice: 0 + n",
+         "voice: 1 + n",
+         "music: 0 + 2n",
+         "music: 1 + 2n"
+        ]
+       }
+      ],
+      "host_params": 8
+     }
+    ]
+   }
+  ]
+ },
+ "not_placed": [
+  "SHIFT while dragging RATIO = free ratio (a modifier, no control)",
+  "right-click a knob = type a value (the plugin's AlertWindow); double-click = default",
+  "the SAVE name dialog (the plugin's AlertWindow): in this design SAVE writes the nameplate's name; a text field on the ledger would be the place",
+  "macroHint text beside each macro: shown in the status slit when a macro is touched",
+  "the version text and the \"FM SPIRIT SYNTH - GHOSTBLOCK\" line under the wordmark",
+  "panelRole (one help line under the ghost / link panel): its words go to the status slit"
+ ]
+}

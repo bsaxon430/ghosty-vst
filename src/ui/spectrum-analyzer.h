@@ -1,0 +1,183 @@
+/*
+ * Six Sines
+ *
+ * A synth with audio rate modulation.
+ *
+ * Copyright 2024-2025, Paul Walker and Various authors, as described in the github
+ * transaction log.
+ *
+ * This source repo is released under the MIT license, but has
+ * GPL3 dependencies, as such the combined work will be
+ * released under GPL3.
+ *
+ * The source code and license are at https://github.com/baconpaul/six-sines
+ */
+
+#ifndef BACONPAUL_SIX_SINES_UI_SPECTRUM_ANALYZER_H
+#define BACONPAUL_SIX_SINES_UI_SPECTRUM_ANALYZER_H
+
+#include <array>
+#include <atomic>
+#include <functional>
+#include <memory>
+#include <mutex>
+#include <optional> // GHOSTBLOCK: colour only (Look)
+#include <thread>
+#include <vector>
+
+#include <juce_gui_basics/juce_gui_basics.h>
+#include <juce_dsp/juce_dsp.h>
+
+#include <sst/jucegui/components/WindowPanel.h>
+#include <sst/jucegui/components/ToggleButton.h>
+#include <sst/jucegui/component-adapters/DiscreteToReference.h>
+
+#include "synth/synth.h"
+#include "ui-defaults.h"
+#include "six-sines-skin.h"
+
+namespace baconpaul::six_sines::ui
+{
+
+struct SpectrumAnalyzerComponent : sst::jucegui::components::WindowPanel, private juce::AsyncUpdater
+{
+    static constexpr int spectrogramColumns = 256;
+
+    struct Mode
+    {
+        int fftOrder;
+        int hopSize;
+        const char *label;
+    };
+    static constexpr std::array<Mode, 4> modes{{
+        {11, 512, "2048 / 512"},
+        {12, 512, "4096 / 512"},
+        {13, 512, "8192 / 512"},
+        {14, 1024, "16384 / 1024"},
+    }};
+    static constexpr int defaultModeIdx = 2;
+
+    static constexpr std::array<int, 3> scopeScales{1, 2, 3};
+    static constexpr int defaultScopeScale = 1;
+
+    SpectrumAnalyzerComponent(Synth::audioOutputQueue_t &ring, float hostSampleRate,
+                              defaultsProvder_t *defaults = nullptr,
+                              const SixSinesSkin &initialSkin = SixSinesSkin::darkDefault());
+    ~SpectrumAnalyzerComponent() override;
+
+    void paint(juce::Graphics &) override;
+    void resized() override;
+    void mouseDown(const juce::MouseEvent &) override;
+
+    // Pushed by the editor when the host sample rate changes; rebuilds buffers if needed.
+    void setHostSampleRate(float sr);
+
+    // Pushed by the editor when the skin changes (theme swap or live colour edit). Updates
+    // the colours used by paint() and re-propagates the (shared) stylesheet to child widgets.
+    void setSkin(const SixSinesSkin &skin);
+
+    // Fired by the always-on-top toggle. The window wires this to setAlwaysOnTop().
+    std::function<void(bool)> onAlwaysOnTopChanged;
+
+    // GHOSTBLOCK: colour only - optional look overrides for an embedding window (Poltergeist 2's SPYGLASS).
+    // Every default is upstream's look, so without setLook() nothing is drawn differently. Only colours,
+    // stroke widths, the label typeface and the right-click menu's LookAndFeel; no sizes, layout or behaviour.
+    struct Look
+    {
+        std::optional<juce::Colour> scopeTrace;      // scope trace colour (default: AnalyzerCurve, as upstream)
+        float lineGlowWidth{0.f};                    // > 0: a soft wider stroke under the live spectrum line
+        float lineGlowAlpha{0.f};                    // its alpha (of AnalyzerCurve)
+        juce::Typeface::Ptr labelTypeface;           // plot labels at the same sizes (null: JUCE's default font)
+        juce::LookAndFeel *menuLookAndFeel{nullptr}; // right-click menu look (null: the default); must outlive it
+    };
+    void setLook(const Look &l); // GHOSTBLOCK: colour only
+
+  private:
+    void handleAsyncUpdate() override;
+    void analysisThreadMain();
+
+    // Tear down the worker, resize buffers, rebuild FFT/window for the given mode,
+    // then restart the worker. Called from the UI thread.
+    void applyMode(int modeIdx);
+    void setScopeScale(int s);
+
+    float magInRange(const float *col, float b0, float b1) const;
+
+    Synth::audioOutputQueue_t &ring;
+    float hostSampleRate{48000.f};
+    defaultsProvder_t *defaults{nullptr};
+    // Colour source for paint(). Kept in sync with the editor via setSkin().
+    SixSinesSkin skin{SixSinesSkin::darkDefault()};
+    int scopeScale{defaultScopeScale};
+    Look look; // GHOSTBLOCK: colour only
+
+    int modeIdx{defaultModeIdx};
+    int lastSavedModeIdx{-1};
+    int fftOrder{};
+    int fftSize{};
+    int hopSize{};
+    int numBins{};
+
+    std::unique_ptr<juce::dsp::FFT> fft;
+    std::unique_ptr<juce::dsp::WindowingFunction<float>> hann;
+
+    // owned by the analysis thread
+    std::vector<float> windowBuffer;
+    int windowFill{0};
+    std::vector<float> fftScratch;
+    std::vector<float> col; // reused per-frame magnitude scratch
+
+    // Scope (raw oscilloscope), 20 ms window with positive zero-crossing retrigger.
+    int scopeFrameLen{};
+    std::vector<float> scopeBuilding; // analysis-thread only
+    int scopeFill{0};
+    bool scopeWaitingForTrigger{false};
+    float scopePrev{0.f};
+
+    // shared between analysis thread (writer) and UI thread (reader)
+    std::mutex snapshotMutex;
+    std::vector<float> columns; // flat: spectrogramColumns * numBins
+    int nextColumn{0};
+    std::vector<float> latestLine;
+    std::vector<float> peakLine;
+    std::vector<float> scopeFrame; // latest complete frame
+    // Bumped under the lock when columns/latestLine/peakLine change. Paint compares this
+    // against lastPaintedSpectrumVersion to skip the spectrogram-image rebuild when
+    // nothing new has arrived (e.g. a paint triggered by hover or resize).
+    std::atomic<uint32_t> spectrumVersion{0};
+
+    // UI-thread paint scratch — sized in applyMode so paint never allocates.
+    std::vector<float> paintCols;
+    std::vector<float> paintLine;
+    std::vector<float> paintPeak;
+    std::vector<float> paintScope;
+    int paintNextColumn{0};
+    juce::Image cachedSpecImage;
+    int cachedSpecImageW{0};
+    uint32_t lastPaintedSpectrumVersion{(uint32_t)-1};
+
+    // Peak-hold decay per analysis frame; depends on hop period and target half-life.
+    float peakDecay{0.995f};
+
+    std::thread analysisThread;
+    std::atomic<bool> running{false};
+
+    // Always-on-top toggle. Declared after `alwaysOnTopState` so the adapter (and its
+    // owned widget) is destroyed before the bool it references.
+    bool alwaysOnTopState{true};
+    std::unique_ptr<sst::jucegui::component_adapters::DiscreteToValueReference<
+        sst::jucegui::components::ToggleButton, bool>>
+        alwaysOnTopAdapter;
+};
+
+struct SpectrumAnalyzerWindow : juce::DocumentWindow
+{
+    explicit SpectrumAnalyzerWindow(std::unique_ptr<SpectrumAnalyzerComponent> content);
+    void closeButtonPressed() override;
+
+    std::function<void()> onCloseRequested;
+};
+
+} // namespace baconpaul::six_sines::ui
+
+#endif // BACONPAUL_SIX_SINES_UI_SPECTRUM_ANALYZER_H

@@ -1,0 +1,167 @@
+/*
+ * Six Sines
+ *
+ * A synth with audio rate modulation.
+ *
+ * Copyright 2024-2025, Paul Walker and Various authors, as described in the github
+ * transaction log.
+ *
+ * This source repo is released under the MIT license, but has
+ * GPL3 dependencies, as such the combined work will be
+ * released under GPL3.
+ *
+ * The source code and license are at https://github.com/baconpaul/six-sines
+ */
+
+#include "self-sub-panel.h"
+#include "patch-data-bindings.h"
+#include "dsp/sintable.h"
+
+namespace baconpaul::six_sines::ui
+{
+SelfSubPanel::SelfSubPanel(SixSinesEditor &e) : HasEditor(e) { setSelectedIndex(0); };
+SelfSubPanel::~SelfSubPanel() {}
+void SelfSubPanel::setSelectedIndex(int idx)
+{
+    index = idx;
+    repaint();
+
+    removeAllChildren();
+
+    auto &n = editor.patchMainRef.selfNodes[idx];
+    setupDAHDSR(editor, editor.patchMainRef.selfNodes[idx]);
+    setupLFO(editor, editor.patchMainRef.selfNodes[idx]);
+    setupModulation(editor, editor.patchMainRef.selfNodes[idx]);
+
+    auto travidx{400};
+    auto traverse = [&travidx](auto &c)
+    { sst::jucegui::component_adapters::setTraversalId(c.get(), travidx++); };
+
+    createRescaledComponent(editor, *this, n.lfoToFB, lfoToFb, lfoToFbDA);
+    addAndMakeVisible(*lfoToFb);
+    lfoToFbL = std::make_unique<jcmp::Label>();
+    lfoToFbL->setText("Depth");
+    addAndMakeVisible(*lfoToFbL);
+    traverse(lfoToFb);
+
+    createRescaledComponent(editor, *this, n.envToFB, envToLev, envToLevDA);
+    addAndMakeVisible(*envToLev);
+    envToLevL = std::make_unique<jcmp::Label>();
+    envToLevL->setText("Level");
+    addAndMakeVisible(*envToLevL);
+    traverse(envToLev);
+
+    createComponent(editor, *this, n.envIsMultiplcative, envMul, envMulD);
+    addAndMakeVisible(*envMul);
+    traverse(envMul);
+
+    createComponent(editor, *this, n.lfoFBMode, lfoMode, lfoModeD);
+    addAndMakeVisible(*lfoMode);
+    traverse(lfoMode);
+
+    modLabelE = std::make_unique<jcmp::RuledLabel>();
+    modLabelE->setText(std::string() + "Env" + u8"\U00002192");
+    addAndMakeVisible(*modLabelE);
+
+    modLabelL = std::make_unique<jcmp::RuledLabel>();
+    modLabelL->setText(std::string() + "LFO" + u8"\U00002192");
+    addAndMakeVisible(*modLabelL);
+
+    overdriveTitle = std::make_unique<jcmp::RuledLabel>();
+    overdriveTitle->setText("OverDrv");
+    addAndMakeVisible(*overdriveTitle);
+    createComponent(editor, *this, n.overdrive, overdrive, overdriveD);
+    addAndMakeVisible(*overdrive);
+    overdrive->setLabel("10x");
+    traverse(overdrive);
+
+    auto op = [w = juce::Component::SafePointer(this)]()
+    {
+        if (w)
+            w->setEnabledState();
+    };
+
+    editor.componentRefreshByID[n.envIsMultiplcative.meta.id] = op;
+    envMulD->onGuiSetValue = op;
+    setEnabledState();
+
+    resized();
+}
+
+void SelfSubPanel::resized()
+{
+    auto p = getLocalBounds().reduced(uicMargin, 0);
+    auto pn = layoutDAHDSRAt(p.getX(), p.getY());
+    pn = pn.translated(uicMargin, 0);
+    auto r = layoutLFOAt(pn.getX(), p.getY());
+
+    auto depx = p.getX();
+    auto depy = std::min(pn.getBottom(), r.getBottom()) + uicMargin;
+
+    namespace jlo = sst::jucegui::layouts;
+    auto lo = jlo::HList().at(depx, depy).withAutoGap(uicMargin * 2);
+
+    auto el = jlo::VList().withWidth(uicSubPanelColumnWidth).withAutoGap(uicMargin);
+    el.add(titleLabelGaplessLayout(modLabelE));
+    el.add(labelKnobLayout(envToLev, envToLevL).centerInParent());
+    el.add(jlo::Component(*envMul).withHeight(2 * uicLabelHeight + uicMargin));
+    lo.add(el);
+
+    auto ll = jlo::VList().withWidth(uicSubPanelColumnWidth).withAutoGap(uicMargin);
+    ll.add(titleLabelGaplessLayout(modLabelL));
+    ll.add(labelKnobLayout(lfoToFb, lfoToFbL).centerInParent());
+
+    auto sl = jlo::HList().withHeight(3 * uicLabelHeight + uicMargin).withAutoGap(uicMargin);
+    sl.add(jlo::Component(*lfoMode).withWidth(uicSubPanelColumnWidth));
+    ll.add(sl);
+
+    lo.add(ll);
+
+    auto od = jlo::VList().withWidth(uicSubPanelColumnWidth).withAutoGap(uicMargin);
+    od.add(titleLabelGaplessLayout(overdriveTitle));
+    od.add(jlo::Component(*overdrive).withHeight(uicLabelHeight).withWidth(uicSubPanelColumnWidth));
+    lo.add(od);
+
+    lo.doLayout();
+    layoutModulation(p);
+}
+
+void SelfSubPanel::setEnabledState()
+{
+    // When op1 (index 0) is in AUDIO_IN mode, feedback is skipped — grey everything out
+    auto isAudioIn =
+        (index == 0) &&
+        ((int)std::round(editor.patchMainRef.sourceNodes[0].waveForm.value) == SinTable::AUDIO_IN);
+
+    auto en = envMulD->getValue() < 0.5;
+    envToLev->setEnabled(en && !isAudioIn);
+    envToLevL->setEnabled(en && !isAudioIn);
+    lfoToFb->setEnabled(!isAudioIn);
+    lfoToFbL->setEnabled(!isAudioIn);
+    overdrive->setEnabled(!isAudioIn);
+    envMul->setEnabled(!isAudioIn);
+
+    // DAHDSR envelope controls
+    for (int i = 0; i < DAHDSRComponents::nels; ++i)
+        slider[i]->setEnabled(!isAudioIn);
+    for (int i = 0; i < DAHDSRComponents::nShape; ++i)
+        shapes[i]->setEnabled(!isAudioIn);
+    triggerButton->setEnabled(!isAudioIn);
+
+    // LFO controls
+    rate->setEnabled(!isAudioIn);
+    deform->setEnabled(!isAudioIn);
+    phase->setEnabled(!isAudioIn);
+    shape->setEnabled(!isAudioIn);
+    tempoSync->setEnabled(!isAudioIn);
+    bipolar->setEnabled(!isAudioIn);
+    isEnv->setEnabled(!isAudioIn);
+
+    repaint();
+    editor.repaint();
+}
+
+IMPLEMENTS_CLIPBOARD_SUPPORT(SelfSubPanel, selfNodes[index],
+                             Clipboard::ClipboardType::FEEDBACK_FULLNODE);
+
+} // namespace baconpaul::six_sines::ui
