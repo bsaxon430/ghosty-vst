@@ -3,6 +3,8 @@
 #   build-beast.sh <surge checkout> <build dir> [cmake args...]      ->  <build dir>/seance-beast.o
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"; SURGE="$1"; B="$2"; shift 2
+# -DCMAKE_OSX_ARCHITECTURES=<one arch> among the extra args also picks the object's architecture (universal SEANCE builds)
+for a in "$@"; do case "$a" in -DCMAKE_OSX_ARCHITECTURES=x86_64|-DCMAKE_OSX_ARCHITECTURES=arm64) BEAST_ARCH="${BEAST_ARCH:-${a#*=}}";; esac; done
 EXTRA=()
 # GCC marks some inline statics "unique", which cannot be made local afterwards: ask it not to (Linux only; the Mac has none)
 if [ "$(uname)" != Darwin ]; then EXTRA+=("-DCMAKE_CXX_FLAGS=-fno-gnu-unique"); fi
