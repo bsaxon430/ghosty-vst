@@ -135,9 +135,21 @@ target_include_directories(phantom_thirdparty INTERFACE ${CMAKE_BINARY_DIR}/inc 
 target_compile_definitions(phantom_thirdparty INTERFACE FMT_HEADER_ONLY=1 SST_EFFECTS_EURORACK=1)
 target_include_directories(phantom_thirdparty INTERFACE ${eurorack_SOURCE_DIR})
 target_compile_definitions(phantom_thirdparty INTERFACE SST_FILTERS_COMB_EXTENSION_FACTOR=1)
-# the sst libraries are SSE code: native on x86_64 (Brandon's Mac, Linux CI); an arm64 build would need simde (not wired yet: DECISIONS.md)
-if(CMAKE_OSX_ARCHITECTURES MATCHES "arm64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64")
-  message(WARNING "Phantom FX: arm64 needs simde for the sst libraries; this build will fail until it is added")
+# the sst libraries are SSE code: native on x86_64; on Apple Silicon they go through simde (SIMD Everywhere, MIT),
+# which sst-basic-blocks' own setup.h includes when it is not on x86. A universal (arm64;x86_64) build keeps the Intel slice
+# native (-Xarch_x86_64 flags) and gives the arm64 slice simde.
+FetchContent_Declare(simde GIT_REPOSITORY https://github.com/simd-everywhere/simde.git GIT_TAG v0.8.2 GIT_PROGRESS FALSE)
+FetchContent_GetProperties(simde)
+if(NOT simde_POPULATED)
+  FetchContent_Populate(simde)
+endif()
+target_include_directories(phantom_thirdparty INTERFACE ${simde_SOURCE_DIR})
+if(APPLE AND CMAKE_OSX_ARCHITECTURES MATCHES "arm64")
+  if(CMAKE_OSX_ARCHITECTURES MATCHES "x86_64")
+    target_compile_options(phantom_thirdparty INTERFACE "SHELL:-Xarch_x86_64 -msse4.1" "SHELL:-Xarch_x86_64 -DSST_SIMD_NATIVE_X86=1" "SHELL:-Xarch_x86_64 -DSIMDE_UNAVAILABLE=1")
+  endif()
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64")
+  # arm64 only: simde for everything
 else()
   target_compile_definitions(phantom_thirdparty INTERFACE SST_SIMD_NATIVE_X86=1 SIMDE_UNAVAILABLE=1)
   target_compile_options(phantom_thirdparty INTERFACE -msse4.1)
