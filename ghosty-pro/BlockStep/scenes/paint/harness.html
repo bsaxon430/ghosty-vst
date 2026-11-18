@@ -1,0 +1,32 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="../node_modules/@fontsource/dela-gothic-one/index.css">
+<link rel="stylesheet" href="../node_modules/@fontsource/zen-maru-gothic/700.css">
+<link rel="stylesheet" href="../node_modules/@fontsource/zen-maru-gothic/900.css">
+<link rel="stylesheet" href="../node_modules/@fontsource/dotgothic16/index.css">
+<link rel="stylesheet" href="../node_modules/@fontsource/yusei-magic/index.css">
+<link rel="stylesheet" href="../node_modules/@fontsource/rocknroll-one/index.css">
+<link rel="stylesheet" href="../node_modules/@fontsource/reggae-one/index.css">
+<link rel="stylesheet" href="../node_modules/@fontsource/potta-one/index.css">
+<link rel="stylesheet" href="../node_modules/@fontsource/rampart-one/index.css">
+<link rel="stylesheet" href="../node_modules/@fontsource/mochiy-pop-one/index.css">
+<link rel="stylesheet" href="../node_modules/@fontsource/kaisei-decol/700.css">
+<link rel="stylesheet" href="../node_modules/@fontsource/fredoka/700.css">
+<link rel="stylesheet" href="../node_modules/@fontsource/rajdhani/600.css">
+<link rel="stylesheet" href="../node_modules/@fontsource/rajdhani/700.css">
+<link rel="stylesheet" href="../node_modules/@fontsource/orbitron/700.css">
+<link rel="stylesheet" href="../node_modules/@fontsource/orbitron/900.css">
+<link rel="stylesheet" href="../node_modules/@fontsource/monoton/index.css">
+<link rel="stylesheet" href="../node_modules/@fontsource/tilt-neon/index.css">
+<link rel="stylesheet" href="../node_modules/@fontsource/audiowide/index.css">
+<style>body{margin:0;background:#222}</style></head><body>
+<script src="lib.js"></script><script src="gh.js"></script>
+<script>
+// every font + every glyph we draw must be loaded before painting
+window.loadFonts = async (text) => { const fams = ['Dela Gothic One', 'Zen Maru Gothic', 'DotGothic16', 'Yusei Magic', 'RocknRoll One', 'Reggae One', 'Potta One', 'Rampart One', 'Mochiy Pop One', 'Kaisei Decol', 'Fredoka', 'Rajdhani', 'Orbitron', 'Monoton', 'Tilt Neon', 'Audiowide'];
+  for (const f of fams) for (const w of ['400', '600', '700', '900']) { try { await document.fonts.load(`${w} 40px "${f}"`, text); } catch (e) {} }
+  await document.fonts.ready; return [...document.fonts].filter(f => f.status === 'loaded').length; };
+// ghost sprite: the GhostBlock ghost `tag` rasterised at `px` (design px * S)
+window.ghostImg = (tag, px) => new Promise(res => { const svg = GH.ghostSvg(tag, 0, 128); const img = new Image(); img.onload = () => res(img); img.onerror = () => res(null); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); });
+window.out = {};   // name -> canvas (the driver saves them)
+</script>
+</body></html>

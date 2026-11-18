@@ -1,0 +1,1540 @@
+CASE euphoric progressive pluck|1|0
+G genre=progressive;moods=euphoric;key=2;scale=minor;bars=8;colour=489116754;style=motif;preset=pluck;rate=1/16;bpm=129;master=582610511;oct=2;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=487672739;progSeed=578641072
+P i,160447572,746346341,0,4,,;III,802248847,495225614,0,4,,;VII,628866547,205025603,0,4,,;VI,805431646,85955942,0,4,,;VI,368303054,29479750,0,4,,;III,993662748,851971905,0,4,,;VII,323857684,68105681,0,4,,;i,224726279,453282108,0,4,,
+C Dm(add9),i,50.53.57.64,38,0,4;Fmaj7/D,III,53.57.60.64,38,384,4;C7/D,VII,55.58.60.64,38,768,4;Bbmaj7/D,VI,58.62.65.69,38,1152,4;Bbmaj7/D,VI,58.62.65.69,38,1536,4;Fmaj9/D,III,52.55.65.69,38,1920,4;C7/D,VII,55.60.64.70,38,2304,4;Dm7,i,53.60.62.69,38,2688,4
+N i,663171422,202162701,0,4,,;i,542119591,70763869,0,4,,;VI,4537842,920926401,0,4,,;VII,970555641,210052858,0,4,,;i,933996392,382739426,0,4,,;VI,22351829,51540492,0,4,,;III,452995874,784234106,0,4,,;VII,631273614,481046940,0,4,,
+M dreamy
+A Dm(add9),Dsus2,Dm7,Dm11,Dm(add9)/F,Bbadd9,Fadd9,Dadd9
+CASE euphoric progressive pluck|1|0.5
+G genre=progressive;moods=euphoric;key=2;scale=minor;bars=4;colour=403808377;style=motif;preset=pluck;rate=1/16;bpm=129;master=582610511;oct=3;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=487672739;progSeed=578641072
+P i,610201774,321280428,0,4,ext,3rd;VI,311692154,321047239,0,4,add9,;VII,130068243,978069803,0,2,add9,3rd;v,735538390,999284121,0,2,add9,;i,299032421,418918974,0,4,sus,
+C Dm11/F,i,50.53.60.64,41,0,4;Bbadd9/D,VI,50.53.60.70,38,384,4;Cadd9/E,VII,50.52.60.67,40,768,2;Am/D,v,52.57.60,38,960,2;Dsus2,Isus,52.57.62,38,1152,4
+N i,2343547,663171422,0,4,,;i,202162701,542119591,0,4,tri,;VI,70763869,4537842,0,4,,;VII,920926401,970555641,0,4,add9,
+M dreamy
+A Dm11/F,Dsus2,Dm7,Dm11,Dm7/F,Bbmaj7,Fmaj7,Dmaj7
+CASE euphoric progressive pluck|1|1
+G genre=progressive;moods=euphoric;key=2;scale=minor;bars=4;colour=318500000;style=motif;preset=pluck;rate=1/16;bpm=129;master=582610511;oct=3;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=487672739;progSeed=578641072
+P i,610201774,321280428,0,4,ext,3rd;VI,311692154,321047239,0,4,add9,;VII,130068243,978069803,0,2,add9,3rd;v,735538390,999284121,0,2,add9,;i,299032421,418918974,0,4,sus,
+C Dm11/F,i,50.53.60.64,41,0,4;Bbadd9/D,VI,50.53.60.70,38,384,4;Cadd9/E,VII,50.52.60.67,40,768,2;Am/D,v,52.57.60,38,960,2;Dsus2,Isus,52.57.62,38,1152,4
+N i,787474225,463909273,0,4,tri,3rd;III,869441840,608772965,0,4,tri,;VII,101182972,997884814,0,4,tri,;i,904332859,806432611,0,4,sev,
+M dreamy
+A Dm11/F,Dsus2,Dm7,Dm11,Dsus2/E,Bbsus2,Fsus2,Dsus2
+CASE euphoric progressive pluck|128|0
+G genre=progressive;moods=euphoric;key=3;scale=major;bars=4;colour=629707961;style=motif;preset=pluck;rate=1/16;bpm=130;master=649067111;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=294499114;progSeed=330541722
+P I,125142358,580960413,0,4,,;V,941160782,169496039,0,4,,;vi,211341226,145474050,0,4,,;IV,643987781,642938683,0,4,,
+C Ebmaj7,I,51.58.62.67,39,0,4;Bb9/D,V,48.58.62.68,38,384,4;Cm7,vi,51.58.60.67,48,768,4;Abmaj9,IV,56.60.67.70,44,1152,4
+N IV,918817369,764531243,0,4,,;I,842056121,859712641,0,4,,;vi,558812785,503594695,0,4,,;V,425922150,511116918,0,4,,
+M dreamy
+A Ebmaj7,Ebsus2,Ebmaj7,Eb6/9,Ebmaj7/G,Cm7,Gm7,Ebm7
+CASE euphoric progressive pluck|128|0.5
+G genre=progressive;moods=euphoric;key=3;scale=major;bars=4;colour=474103980;style=motif;preset=pluck;rate=1/8;bpm=130;master=649067111;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=294499114;progSeed=330541722
+P I,20310066,445295517,0,8,add9,;bVI,317218578,661089416,0,4,tri,;bVII,227729188,531277406,0,4,tri,ped
+C Ebadd9,I,51.55.58.65,39,0,8;B,bVI,54.59.63,47,768,4;Db/Eb,bVII,56.61.65,39,1152,4
+N I,412360231,479778013,0,4,sus,;bVII,457146643,685603342,0,4,ext,;IV,198317787,765509434,0,8,tri,
+M happy
+A Ebadd9,Ebsus2,Ebmaj7,Eb6/9,Ebadd9/G,Cm(add9),Gm,Ebm(add9)
+CASE euphoric progressive pluck|128|1
+G genre=progressive;moods=euphoric;key=3;scale=major;bars=4;colour=318500000;style=motif;preset=pluck;rate=1/8;bpm=130;master=649067111;oct=3;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=294499114;progSeed=330541722
+P I,20310066,445295517,0,8,add9,;bVI,317218578,661089416,0,4,tri,;bVII,227729188,531277406,0,4,tri,ped
+C Ebadd9,I,51.55.58.65,39,0,8;B,bVI,54.59.63,47,768,4;Db/Eb,bVII,56.61.65,39,1152,4
+N I,412360231,479778013,0,4,sus,;bVII,457146643,685603342,0,4,ext,;IV,198317787,765509434,0,8,tri,
+M happy
+A Ebadd9,Ebsus2,Ebmaj7,Eb6/9,Ebadd9/G,Cm(add9),Gm,Ebm(add9)
+CASE euphoric progressive pluck|4242|0
+G genre=progressive;moods=euphoric;key=2;scale=major;bars=4;colour=621485780;style=broken;preset=pluck;rate=1/16;bpm=128;master=613530757;oct=2;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=921977115;progSeed=702834151
+P vi,471685666,448810059,0,4,,;IV,830905679,126198546,0,4,,;V,225508193,363456643,0,4,,;iii,372137613,569725763,0,4,,
+C Bm7,vi,59.62.66.69,47,0,4;Gmaj9/D,IV,55.59.66.69,38,384,4;A7,V,55.61.64.69,45,768,4;F#m7,iii,54.61.64.69,42,1152,4
+N IV,762293350,87871948,0,4,,;V,400202184,114441385,0,4,,;vi,66830938,565181501,0,4,,;I,928897247,794531422,0,4,,
+M dreamy
+A Bm7,Bsus2,Bm7,Bm11,Bm7/D,Gmaj7,Dmaj7,A#maj7
+CASE euphoric progressive pluck|99999|0
+G genre=progressive;moods=euphoric;key=0;scale=major;bars=2;colour=481795388;style=motif;preset=pluck;rate=1/16;bpm=129;master=552015396;oct=2;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=791277370;progSeed=318145680
+P I,762167451,487806001,0,4,,;IV,880579947,468393950,0,4,,
+C Cmaj7,I,60.64.67.71,48,0,4;Fmaj7/C,IV,53.60.64.69,48,384,4
+N vi,215195612,68747540,0,4,,;IV,139217983,348641131,0,4,,
+M happy
+A Cmaj7,Csus2,Cmaj7,Cmaj9,Cmaj7/E,Am7,Em7,Cm7
+CASE euphoric progressive pluck|99999|0.5
+G genre=progressive;moods=euphoric;key=0;scale=major;bars=8;colour=400147694;style=motif;preset=pluck;rate=1/16;bpm=129;master=552015396;oct=2;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=791277370;progSeed=318145680
+P IV,45273952,965644195,0,4,sus,;V,201681949,353133814,0,4,sev,;I,465168588,991746208,0,4,ext,;IV,925946670,291424675,0,4,add9,;I,244947675,263890504,0,4,tri,;V,448874078,409301935,0,2,sev,;IV,874201517,533251598,0,2,add9,;V,924483633,470015557,0,8,sus,3rd
+C Fsus2,IVsus,53.55.60,41,0,4;G7,V,53.55.59.62,43,384,4;Cmaj9,I,52.59.62.72,48,768,4;Fadd9/C,IV,55.57.65.72,48,1152,4;C,I,55.60.64,48,1536,4;G7,V,55.59.62.65,43,1920,2;Fadd9/C,IV,55.57.65.72,48,2112,2;Gsus2/C,Vsus,57.62.67,48,2304,8
+N vi,68747540,139217983,0,4,,;IV,348641131,8659400,0,4,tri,ped;V,433937853,833873589,0,4,,;iii,776294278,630418791,0,4,,;IV,628775967,115784988,0,4,,;I,507857939,768293233,0,4,add9,;V,689273048,346666871,0,4,,;vi,840780499,916382722,0,4,,
+M happy
+A Fsus2,Fsus2,Fmaj7,F6/9,Fadd9/A,Dm(add9),Am(add9),Fm(add9)
+CASE euphoric progressive pluck|99999|1
+G genre=progressive;moods=euphoric;key=0;scale=major;bars=8;colour=318500000;style=motif;preset=pluck;rate=1/16;bpm=129;master=552015396;oct=3;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=791277370;progSeed=318145680
+P IV,45273952,965644195,0,4,sus,;V,201681949,353133814,0,4,sev,;I,465168588,991746208,0,4,ext,;IV,925946670,291424675,0,4,add9,;I,244947675,263890504,0,4,tri,;V,448874078,409301935,0,2,sev,;IV,874201517,533251598,0,2,add9,;V,924483633,470015557,0,8,sus,3rd
+C Fsus2,IVsus,53.55.60,41,0,4;G7,V,53.55.59.62,43,384,4;Cmaj9,I,52.59.62.72,48,768,4;Fadd9/C,IV,55.57.65.72,48,1152,4;C,I,55.60.64,48,1536,4;G7,V,55.59.62.65,43,1920,2;Fadd9/C,IV,55.57.65.72,48,2112,2;Gsus2/C,Vsus,57.62.67,48,2304,8
+N ii,726330372,15107230,0,8,tri,ped;I,845457199,570434156,0,4,add9,;IV,518903288,717973381,0,4,sus,;V,776530854,483525460,0,8,sus,;iii,301171402,564167793,0,4,sev,;vi,659474188,852260859,0,4,tri,
+M happy
+A Fsus2,Fsus2,Fmaj7,F6/9,Fadd9/A,Dm(add9),Am(add9),Fm(add9)
+CASE dreamy lofi chill keys|1|0
+G genre=lofi;moods=dreamy,chill;key=0;scale=lydian;bars=4;colour=1000000000;style=up;preset=keys;rate=1/8;bpm=70;master=126987358;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=381740676;progSeed=894000483
+P I,593897340,496229340,0,4,,;II,454218204,9615823,0,4,,;I,9103858,879417599,0,4,,;II,325405963,679138810,0,4,,
+C Cmaj9,I,60.64.71.74,48,0,4;D9,II,54.60.64.74,38,384,4;Cmaj9,I,60.64.71.74,48,768,4;D9,II,54.60.64.74,38,1152,4
+N I,2343547,663171422,0,4,,;II,202162701,542119591,0,4,,;vii,70763869,4537842,0,4,,;iii,920926401,970555641,0,4,,
+M dreamy
+A Cmaj9,Csus2,Cmaj7,Cmaj9,Cmaj9/E,Am11,Em11,Cm11
+CASE dreamy lofi chill keys|1|0.5
+G genre=lofi;moods=dreamy,chill;key=0;scale=lydian;bars=4;colour=659250000;style=motif;preset=keys;rate=1/8;bpm=70;master=126987358;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=381740676;progSeed=894000483
+P vi,403176160,139867471,0,4,ext,;V,442333164,764230899,0,8,sus,;I,149099465,908816006,0,2,add9,ped;iii,393266305,18630398,0,2,tri,
+C Am9,vi,57.60.67.71,45,0,4;Gsus2,Vsus,57.62.67,43,384,8;Cadd9,I,50.60.64.67,48,1152,2;Em,iii,59.64.67,40,1344,2
+N I,2343547,663171422,0,4,,;II,202162701,542119591,0,4,tri,;vii,70763869,4537842,0,4,,;iii,920926401,970555641,0,4,add9,
+M dreamy
+A Am9,Asus2,Am7,Am11,Am9/C,F#m7b5,Cmaj9,G#maj9
+CASE dreamy lofi chill keys|1|1
+G genre=lofi;moods=dreamy,chill;key=0;scale=lydian;bars=4;colour=318500000;style=motif;preset=keys;rate=1/16;bpm=70;master=126987358;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=381740676;progSeed=894000483
+P vi,403176160,139867471,0,4,ext,;V,442333164,764230899,0,8,sus,;I,149099465,908816006,0,2,add9,ped;iii,393266305,18630398,0,2,tri,
+C Am9,vi,57.60.67.71,45,0,4;Gsus2,Vsus,57.62.67,43,384,8;Cadd9,I,50.60.64.67,48,1152,2;Em,iii,59.64.67,40,1344,2
+N I,787474225,463909273,0,4,tri,3rd;iii,62027479,677648212,0,4,add9,;ii,314835231,822588791,0,2,ext,;I,837851371,710977579,0,2,tri,ped;V,281427440,320180324,0,2,add9,;vi,802618289,329950639,0,2,tri,3rd
+M dreamy
+A Am9,Asus2,Am7,Am11,Asus2/B,F#dim,Csus2,G#sus2
+CASE dreamy lofi chill keys|128|0
+G genre=lofi;moods=dreamy,chill;key=2;scale=major;bars=4;colour=1000000000;style=up;preset=keys;rate=1/8;bpm=69;master=83068458;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=616793820;progSeed=584684874
+P I,201643618,499427696,0,4,,;vi,290329685,922585318,0,4,,;ii,486943540,470760333,0,4,,;V,673437314,144588654,0,4,,
+C D6/9,I,50.54.59.64,38,0,4;Bm11,vi,49.59.62.69,47,384,4;Em11,ii,52.55.62.66,40,768,4;A9,V,55.57.61.71,45,1152,4
+N I,918817369,764531243,0,4,,;vi,842056121,859712641,0,4,,;ii,558812785,503594695,0,4,,;V,425922150,511116918,0,4,,
+M dreamy
+A D6/9,Dsus2,Dmaj7,D6/9,D6/9/F#,Bm11,F#m7,Dm11
+CASE dreamy lofi chill keys|128|0.5
+G genre=lofi;moods=dreamy,chill;key=2;scale=major;bars=8;colour=659250000;style=motif;preset=keys;rate=1/16;bpm=69;master=83068458;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=616793820;progSeed=584684874
+P I,782745682,709526721,0,4,tri,;vi,368849588,661831585,0,2,tri,;ii,149128731,990492831,0,2,add9,;IV,89683993,175947836,0,2,sev,;V,153465965,853745637,0,2,ext,;vi,716818880,104523600,0,4,add9,;V,915571969,764906452,0,4,add9,3rd;IV,4275196,664716678,0,12,sus,
+C D,I,57.62.66,38,0,4;Bm,vi,59.62.66,47,384,2;Em(add9),ii,52.55.59.66,40,576,2;Gmaj7,IV,55.59.62.66,43,768,2;A9,V,57.61.67.71,45,960,2;Bm(add9),vi,54.61.71.74,47,1152,4;Aadd9/C#,V,52.57.61.71,49,1536,4;Gsus2,IVsus,57.62.67,43,1920,12
+N I,412360231,479778013,0,4,sus,;bVII,457146643,685603342,0,4,ext,;IV,198317787,765509434,0,8,tri,;V,734836512,668112436,0,2,sus,;vi,115540827,595940630,0,2,tri,;V,835143941,953752347,0,4,sus,;I,22819248,513284193,0,4,sus,;vi,915606408,231860757,0,4,sus,
+M dreamy
+A D,Dsus2,Dmaj7,Dmaj9,Dmaj9/F#,Bm9,F#m7,Dm9
+CASE dreamy lofi chill keys|128|1
+G genre=lofi;moods=dreamy,chill;key=2;scale=major;bars=8;colour=318500000;style=motif;preset=keys;rate=1/16;bpm=69;master=83068458;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=616793820;progSeed=584684874
+P I,782745682,709526721,0,4,tri,;vi,368849588,661831585,0,2,tri,;ii,149128731,990492831,0,2,add9,;IV,89683993,175947836,0,2,sev,;V,153465965,853745637,0,2,ext,;vi,716818880,104523600,0,4,add9,;V,915571969,764906452,0,4,add9,3rd;IV,4275196,664716678,0,12,sus,
+C D,I,57.62.66,38,0,4;Bm,vi,59.62.66,47,384,2;Em(add9),ii,52.55.59.66,40,576,2;Gmaj7,IV,55.59.62.66,43,768,2;A9,V,57.61.67.71,45,960,2;Bm(add9),vi,54.61.71.74,47,1152,4;Aadd9/C#,V,52.57.61.71,49,1536,4;Gsus2,IVsus,57.62.67,43,1920,12
+N I,412360231,479778013,0,4,sus,;bVII,457146643,685603342,0,4,ext,;IV,198317787,765509434,0,8,tri,;V,734836512,668112436,0,2,sus,;vi,115540827,595940630,0,2,tri,;V,835143941,953752347,0,4,sus,;I,22819248,513284193,0,4,sus,;vi,915606408,231860757,0,4,sus,
+M dreamy
+A D,Dsus2,Dmaj7,Dmaj9,Dmaj7/F#,Bm7,F#m7,Dm7
+CASE dreamy lofi chill keys|4242|0
+G genre=lofi;moods=dreamy,chill;key=2;scale=lydian;bars=4;colour=1000000000;style=updown;preset=keys;rate=1/8;bpm=70;master=81566087;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=318089268;progSeed=571867671
+P I,92675748,253888888,0,4,,;II,476010814,420977023,0,4,,;I,955064667,206853143,0,4,,;II,667983612,454327421,0,4,,
+C Dmaj9,I,50.54.61.64,38,0,4;E9,II,50.54.64.68,40,384,4;Dmaj9,I,50.54.61.64,38,768,4;E9,II,50.54.64.68,40,1152,4
+N vi,762293350,87871948,0,4,,;II,400202184,114441385,0,4,,;I,66830938,565181501,0,4,,;I,928897247,794531422,0,4,,
+M dreamy
+A Dmaj9,Dsus2,Dmaj7,D6/9,Dmaj9/F#,Bm9,F#m9,Dm9
+CASE dreamy lofi chill keys|99999|0
+G genre=lofi;moods=dreamy,chill;key=5;scale=major;bars=8;colour=1000000000;style=broken;preset=keys;rate=1/8;bpm=71;master=120561215;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=13551856;progSeed=46537783
+P IV,850375127,36667439,0,4,,;vi,727928903,914752763,0,4,,;I,712277323,381527880,0,4,,;V,517861963,384857152,0,4,,;IV,239390709,642958679,0,4,,;V,89765647,964888854,0,4,,;vi,256837557,106800721,0,4,,;I,659394834,588177096,0,4,,
+C Bbmaj9,IV,58.62.69.72,46,0,4;Dm11,vi,52.62.65.72,38,384,4;Fmaj9,I,52.55.65.69,41,768,4;C9,V,52.58.62.72,48,1152,4;Bb6/9,IV,55.58.62.72,46,1536,4;C9,V,52.58.62.72,48,1920,4;Dm11,vi,52.62.65.72,38,2304,4;Fmaj9,I,52.55.65.69,41,2688,4
+N IV,68747540,139217983,0,4,,;iii,348641131,8659400,0,4,,;ii,433937853,833873589,0,4,,;I,776294278,630418791,0,4,,;IV,628775967,115784988,0,4,,;vi,507857939,768293233,0,4,,;I,689273048,346666871,0,4,,;V,840780499,916382722,0,4,,
+M dreamy
+A Bbmaj9,Bbsus2,Bbmaj7,Bbmaj9,Bbmaj9/D,Gm11,Dm11,Bbm11
+CASE dreamy lofi chill keys|99999|0.5
+G genre=lofi;moods=dreamy,chill;key=5;scale=major;bars=4;colour=659250000;style=motif;preset=keys;rate=1/16;bpm=71;master=120561215;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=13551856;progSeed=46537783
+P I,777172990,28886754,0,4,tri,;V,601031072,889359011,0,4,sus,3rd;IV,74198757,641114701,0,4,add9,;vi,910569061,639994455,0,4,sus,
+C F,I,53.57.60,41,0,4;Csus2,Vsus,55.60.62,48,384,4;Bbadd9,IV,53.58.62.72,46,768,4;Dsus2,VIsus,57.62.64,38,1152,4
+N IV,215195612,68747540,0,4,,;iii,139217983,348641131,0,4,tri,ped;ii,8659400,433937853,0,4,,;I,833873589,776294278,0,4,,
+M happy
+A F,Fsus2,Fmaj7,Fmaj9,Fmaj9/A,Dm9,Am7,Fm9
+CASE dreamy lofi chill keys|99999|1
+G genre=lofi;moods=dreamy,chill;key=5;scale=major;bars=4;colour=318500000;style=motif;preset=keys;rate=1/16;bpm=71;master=120561215;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=13551856;progSeed=46537783
+P I,777172990,28886754,0,4,tri,;V,601031072,889359011,0,4,sus,3rd;IV,74198757,641114701,0,4,add9,;vi,910569061,639994455,0,4,sus,
+C F,I,53.57.60,41,0,4;Csus2,Vsus,55.60.62,48,384,4;Bbadd9,IV,53.58.62.72,46,768,4;Dsus2,VIsus,57.62.64,38,1152,4
+N ii,726330372,15107230,0,8,tri,ped;I,845457199,570434156,0,4,add9,;IV,518903288,717973381,0,4,sus,
+M happy
+A F,Fsus2,Fmaj7,Fmaj9,Fmaj7/A,Dm7,Am7,Fm7
+CASE dark techno rolling acid|1|0
+G genre=techno;moods=dark;key=2;scale=phrygian;bars=2;colour=51433313;style=walk;preset=acid;rate=1/16;bpm=130;master=464976922;oct=1;reg=0;glide=1;pedal=0;gate=600000000;swing=0;groove=600000000;arpSeed=436023951;progSeed=148144954
+P i,571309189,646065936,0,4,,;II,979699686,111690238,0,4,,
+C Dm,i,57.62.65,38,0,4;Ebadd9,II,51.55.58.65,39,384,4
+N i,2343547,663171422,0,4,,;II,202162701,542119591,0,4,,
+M sad
+A Dm,Dsus4,Dm7,Dm7,Dm/F,Bb,F,D
+CASE dark techno rolling acid|1|0.5
+G genre=techno;moods=dark;key=2;scale=phrygian;bars=2;colour=184966657;style=motif;preset=acid;rate=1/16;bpm=130;master=464976922;oct=2;reg=0;glide=1;pedal=0;gate=600000000;swing=0;groove=600000000;arpSeed=436023951;progSeed=148144954
+P i,571309189,646065936,0,4,tri,;VI,979699686,111690238,0,4,sev,
+C Dm,i,57.62.65,38,0,4;Bbmaj7,VI,58.62.65.69,46,384,4
+N i,2343547,663171422,0,4,,;II,202162701,542119591,0,4,tri,
+M sad
+A Dm,Dsus4,Dm7,Dm7,Dm/F,Bbsus2,Fsus2,Dsus2
+CASE dark techno rolling acid|1|1
+G genre=techno;moods=dark;key=2;scale=phrygian;bars=4;colour=318500000;style=motif;preset=acid;rate=1/16;bpm=130;master=464976922;oct=3;reg=0;glide=1;pedal=0;gate=600000000;swing=0;groove=600000000;arpSeed=436023951;progSeed=148144954
+P i,408807274,6423546,0,2,tri,;VI,567368067,710422375,0,2,sus,;VII,343657156,207214569,0,2,sus,;i,482256946,113122011,0,2,add9,3rd;VI,337961945,530692499,0,8,tri,3rd
+C Dm,i,57.62.65,38,0,2;Bbsus2,VIsus,58.60.65,46,192,2;Csus2,VIIsus,60.62.67,48,384,2;Dm/F,i,57.62.65,41,576,2;Bb/D,VI,58.62.65,38,768,8
+N i,787474225,463909273,0,4,tri,3rd;III,869441840,608772965,0,4,tri,;VII,101182972,997884814,0,4,tri,;i,904332859,806432611,0,4,sev,
+M tense
+A Dm,Dsus4,Dm7,Dm7,Dm/F,Bbsus2,Fsus2,Dsus2
+CASE dark techno rolling acid|128|0
+G genre=techno;moods=dark;key=5;scale=phrygian;bars=2;colour=0;style=motif;preset=acid;rate=1/16;bpm=129;master=467096998;oct=1;reg=0;glide=1;pedal=1;gate=600000000;swing=0;groove=600000000;arpSeed=260856556;progSeed=932297861
+P i,461142412,603520714,0,4,,;II,338725320,566516925,0,4,,
+C Fm,i,53.56.60,41,0,4;Gb,II,54.58.61,42,384,4
+N i,918817369,764531243,0,4,,;II,842056121,859712641,0,4,,
+M sad
+A Fm,Fsus4,Fm7,Fm7,Fm/Ab,Db,Ab,F
+CASE dark techno rolling acid|128|0.5
+G genre=techno;moods=dark;key=5;scale=phrygian;bars=2;colour=159250000;style=motif;preset=acid;rate=1/8;bpm=129;master=467096998;oct=2;reg=0;glide=1;pedal=1;gate=600000000;swing=0;groove=600000000;arpSeed=260856556;progSeed=932297861
+P i,461142412,603520714,0,4,,;II,338725320,566516925,0,4,,
+C Fm,i,53.56.60,41,0,4;Gb,II,54.58.61,42,384,4
+N i,412360231,479778013,0,4,sus,;VII,685603342,952537889,0,4,tri,
+M sad
+A Fm,Fsus4,Fm7,Fm7,Fm/Ab,Dbsus2,Absus2,Fsus2
+CASE dark techno rolling acid|128|1
+G genre=techno;moods=dark;key=5;scale=phrygian;bars=8;colour=318500000;style=motif;preset=acid;rate=1/16;bpm=129;master=467096998;oct=3;reg=0;glide=1;pedal=1;gate=600000000;swing=0;groove=600000000;arpSeed=260856556;progSeed=932297861
+P i,787543027,868862337,0,4,add9,;VI,435176197,865071147,0,8,add9,;VII,879386241,326206088,0,4,add9,;i,302322548,358785328,0,2,sev,;iv,213026564,178112287,0,2,sev,;VI,577239553,538047469,0,4,ext,;VII,693682380,228947813,0,4,add9,;iv,422425116,769547784,0,4,tri,
+C Fm,i,53.56.60,41,0,4;Dbadd9/F,VI,49.53.56.63,41,384,8;Ebm(add9),vii,53.63.66.70,39,1152,4;Fm7,i,53.60.63.68,41,1536,2;Bbm7/F,iv,53.58.61.68,41,1728,2;Dbmaj9/F,VI,51.53.61.72,41,1920,4;Ebm(add9),vii,53.63.66.70,39,2304,4;Bbm/F,iv,61.65.70,41,2688,4
+N i,412360231,479778013,0,4,sus,;VII,685603342,952537889,0,4,tri,;i,765509434,109849004,0,4,sev,;iv,668112436,572978196,0,8,add9,;VI,595940630,34863798,0,2,sus,;i,953752347,394370995,0,2,add9,;VI,513284193,585413356,0,4,ext,;i,231860757,471267312,0,4,sus,3rd
+M sad
+A Fm,Fsus4,Fm7,Fm7,Fm7/Ab,Dbmaj7,Ab7,Fmaj7
+CASE dark techno rolling acid|4242|0
+G genre=techno;moods=dark;key=8;scale=minor;bars=4;colour=0;style=motif;preset=acid;rate=1/16;bpm=129;master=540464091;oct=1;reg=0;glide=1;pedal=0;gate=600000000;swing=0;groove=600000000;arpSeed=704347954;progSeed=57079269
+P i,934898241,968824519,0,4,,;iv,400427352,164098333,0,4,,;VII,696788965,790222789,0,4,,;III,788298918,945770897,0,4,,
+C Abm,i,56.59.63,44,0,4;Dbm,iv,56.61.64,49,384,4;Gb,VII,58.61.66,42,768,4;B,III,59.63.66,47,1152,4
+N VI,762293350,87871948,0,4,,;VII,400202184,114441385,0,4,,;v,66830938,565181501,0,4,,;i,928897247,794531422,0,4,,
+M sad
+A Abm,Absus2,Abm7,Abm11,Abm/B,E,B,Ab
+CASE dark techno rolling acid|99999|0
+G genre=techno;moods=dark;key=4;scale=minor;bars=4;colour=75391764;style=walk;preset=acid;rate=1/16;bpm=129;master=471833998;oct=1;reg=0;glide=1;pedal=1;gate=600000000;swing=0;groove=600000000;arpSeed=103873043;progSeed=204022137
+P i,868256031,986207748,0,4,,;VII,738009507,107022278,0,4,,;i,640498938,3286220,0,4,,;VI,370315801,863520759,0,4,,
+C Em(add9),i,52.55.59.66,40,0,4;Dsus4/E,VIIsus,57.62.67,40,384,4;Em,i,59.64.67,40,768,4;C/E,VI,60.64.67,40,1152,4
+N i,215195612,68747540,0,4,,;bII,139217983,348641131,0,4,,;i,8659400,433937853,0,4,,;VII,833873589,776294278,0,4,,
+M sad
+A Em(add9),Esus2,Em7,Em11,Em(add9)/G,Cadd9,Gsus4,Esus4
+CASE dark techno rolling acid|99999|0.5
+G genre=techno;moods=dark;key=4;scale=minor;bars=4;colour=196945882;style=motif;preset=acid;rate=1/16;bpm=129;master=471833998;oct=3;reg=0;glide=1;pedal=1;gate=600000000;swing=0;groove=600000000;arpSeed=103873043;progSeed=204022137
+P i,549423182,39460930,0,2,tri,;VI,552108035,735987275,0,2,sus,;VII,131713606,421020408,0,8,ext,;i,783417929,937183434,0,2,add9,;VII,672281296,127109746,0,2,add9,
+C Em,i,52.55.59,40,0,2;Csus2/E,VIsus,55.60.62,40,192,2;D9/E,VII,50.54.60.64,40,384,8;Em(add9),i,52.55.59.66,40,1152,2;Dadd9/E,VII,52.62.66.69,40,1344,2
+N i,215195612,68747540,0,4,,;bII,139217983,348641131,0,4,tri,ped;i,8659400,433937853,0,4,,;VII,833873589,776294278,0,4,,
+M dreamy
+A Em,Esus2,Em7,Em11,Esus2/F#,Csus2,Gsus2,Esus2
+CASE dark techno rolling acid|99999|1
+G genre=techno;moods=dark;key=4;scale=minor;bars=4;colour=318500000;style=motif;preset=acid;rate=1/16;bpm=129;master=471833998;oct=2;reg=0;glide=1;pedal=1;gate=600000000;swing=0;groove=600000000;arpSeed=103873043;progSeed=204022137
+P i,549423182,39460930,0,2,tri,;VI,552108035,735987275,0,2,sus,;VII,131713606,421020408,0,8,ext,;i,783417929,937183434,0,2,add9,;VII,672281296,127109746,0,2,add9,
+C Em,i,52.55.59,40,0,2;Csus2/E,VIsus,55.60.62,40,192,2;D9/E,VII,50.54.60.64,40,384,8;Em(add9),i,52.55.59.66,40,1152,2;Dadd9/E,VII,52.62.66.69,40,1344,2
+N iv,726330372,15107230,0,8,tri,ped;i,845457199,570434156,0,4,add9,;iv,518903288,717973381,0,4,sus,
+M dreamy
+A Em,Esus2,Em7,Em11,Esus2/F#,Csus2,Gsus2,Esus2
+CASE epic trance 1/16 octave up|1|0
+G genre=trance;moods=epic;key=11;scale=major;bars=8;colour=322436195;style=up;preset=pluck;rate=1/16;bpm=142;master=679191412;oct=3;reg=1;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=298484726;progSeed=171474477
+P IV,562802022,546214861,0,4,,;V,371555449,755545826,0,4,,;vi,28043959,167862115,0,4,,;I,846862348,21535791,0,4,,;IV,263342377,321774335,0,4,,;V,928887101,199218701,0,4,,;vi,816345066,883250676,0,4,,;ii,99051158,454748268,0,4,,
+C Esus2,IVsus,52.54.59,40,0,4;F#add9,V,54.58.61.68,42,384,4;G#m(add9),vi,51.58.68.71,44,768,4;Bmaj7,I,54.59.63.70,47,1152,4;Eadd9,IV,54.56.64.71,40,1536,4;F#7,V,54.61.64.70,42,1920,4;G#m7,vi,54.59.63.68,44,2304,4;C#m(add9),ii,51.61.64.68,49,2688,4
+N I,663171422,202162701,0,4,,;bVII,542119591,70763869,0,4,,;IV,4537842,920926401,0,4,,;I,970555641,210052858,0,4,,;I,933996392,382739426,0,4,,;V,22351829,51540492,0,4,,;vi,452995874,784234106,0,4,,;IV,631273614,481046940,0,4,,
+M epic
+A Esus2,Esus2,Emaj7,Emaj9,Esus2/F#,C#sus2,G#sus2,Esus2
+CASE epic trance 1/16 octave up|1|0.5
+G genre=trance;moods=epic;key=11;scale=major;bars=8;colour=320468098;style=up;preset=pluck;rate=1/16;bpm=142;master=679191412;oct=3;reg=1;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=298484726;progSeed=171474477
+P IV,562802022,546214861,0,4,tri,;V,371555449,755545826,0,4,sev,;vi,28043959,167862115,0,4,,;I,846862348,21535791,0,4,,;IV,263342377,321774335,0,4,,;V,928887101,199218701,0,4,,;vi,816345066,883250676,0,4,sus,;ii,99051158,454748268,0,4,tri,3rd
+C E,IV,52.56.59,40,0,4;F#7,V,52.54.58.61,42,384,4;G#m(add9),vi,51.56.58.71,44,768,4;Bmaj7,I,54.59.63.70,47,1152,4;Eadd9,IV,54.56.64.71,40,1536,4;F#7,V,54.61.64.70,42,1920,4;G#sus2,VIsus,58.63.68,44,2304,4;C#m/E,ii,61.64.68,40,2688,4
+N I,663171422,202162701,0,4,,;bVII,542119591,70763869,0,4,tri,;IV,4537842,920926401,0,4,,;I,970555641,210052858,0,4,add9,;I,933996392,382739426,0,4,six,;V,22351829,51540492,0,4,sev,;vi,452995874,784234106,0,4,,ped;IV,631273614,481046940,0,4,tri,
+M epic
+A E,Esus2,Emaj7,Emaj9,Esus2/F#,C#sus2,G#sus2,Esus2
+CASE epic trance 1/16 octave up|1|1
+G genre=trance;moods=epic;key=11;scale=major;bars=4;colour=318500000;style=up;preset=pluck;rate=1/16;bpm=142;master=679191412;oct=3;reg=1;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=298484726;progSeed=171474477
+P vi,328588340,466411776,0,4,sev,;I,783726528,428046975,0,4,ext,;IV,852220379,585812765,0,2,ext,;V,100314460,571280854,0,2,tri,;vi,333457558,284214962,0,4,tri,
+C G#m7,vi,56.59.63.66,44,0,4;Bmaj9,I,49.59.63.70,47,384,4;Emaj9,IV,52.56.63.66,40,768,2;F#,V,58.61.66,42,960,2;G#m,vi,59.63.68,44,1152,4
+N I,787474225,463909273,0,4,tri,3rd;IV,869441840,608772965,0,4,tri,;vi,101182972,997884814,0,4,tri,;I,904332859,806432611,0,4,sev,
+M dreamy
+A G#m7,G#sus2,G#m7,G#m11,G#m(add9)/B,Eadd9,Badd9,Gadd9
+CASE epic trance 1/16 octave up|128|0
+G genre=trance;moods=epic;key=7;scale=minor;bars=8;colour=356977802;style=up;preset=pluck;rate=1/16;bpm=141;master=728880893;oct=3;reg=1;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=595804893;progSeed=818365099
+P i,783199350,8721179,0,4,,;i,209194051,178578518,0,4,,;VI,637774359,850031268,0,4,,;VI,377416105,114791017,0,4,,;III,697247152,66293138,0,4,,;III,235659990,192903036,0,4,,;VII,483230032,108703654,0,4,,;VII,778339113,240157638,0,4,,
+C Gm7,i,55.58.62.65,43,0,4;Gm(add9),i,55.58.62.69,43,384,4;Ebmaj7,VI,51.58.62.67,39,768,4;Ebadd9,VI,51.55.58.65,39,1152,4;Bbmaj7/D,III,53.58.62.69,38,1536,4;Bbadd9,III,53.58.62.72,46,1920,4;Fsus2,VIIsus,55.60.65,41,2304,4;F7,VII,57.60.63.65,41,2688,4
+N i,764531243,842056121,0,4,,;i,859712641,558812785,0,4,,;VI,503594695,425922150,0,4,,;VII,511116918,20208962,0,4,,;i,652582235,604456631,0,4,,;VI,178873149,294533449,0,4,,;III,927214005,629157972,0,4,,;V,582291129,701797239,0,4,,
+M dreamy
+A Gm7,Gsus2,Gm7,Gm11,Gm7/Bb,Ebmaj7,Bbmaj7,Gmaj7
+CASE epic trance 1/16 octave up|128|0.5
+G genre=trance;moods=epic;key=7;scale=minor;bars=8;colour=337738901;style=up;preset=pluck;rate=1/16;bpm=141;master=728880893;oct=3;reg=1;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=595804893;progSeed=818365099
+P i,783199350,8721179,0,4,tri,;i,209194051,178578518,0,4,add9,;VI,637774359,850031268,0,4,sus,;VI,377416105,114791017,0,4,tri,;III,697247152,66293138,0,4,ext,;III,235659990,192903036,0,4,sus,;i,483230032,108703654,0,4,,;VII,778339113,240157638,0,4,,
+C Gm,i,55.58.62,43,0,4;Gm(add9),i,55.58.62.69,43,384,4;Ebsus2,VIsus,58.63.65,39,768,4;Eb,VI,58.63.67,39,1152,4;Bbmaj9/D,III,58.62.69.72,38,1536,4;Bbsus2,IIIsus,60.65.70,46,1920,4;Gsus2,Isus,57.62.67,43,2304,4;F7,VII,57.60.63.65,41,2688,4
+N i,412360231,479778013,0,4,sus,;v,457146643,685603342,0,4,ext,;VI,198317787,765509434,0,8,tri,;i,734836512,668112436,0,2,sus,;VI,115540827,595940630,0,2,tri,;iv,835143941,953752347,0,4,sus,;i,22819248,513284193,0,4,sus,;VII,915606408,231860757,0,4,sus,
+M epic
+A Gm,Gsus2,Gm7,Gm11,Gm7/Bb,Ebmaj7,Bbmaj7,Gmaj7
+CASE epic trance 1/16 octave up|128|1
+G genre=trance;moods=epic;key=7;scale=minor;bars=4;colour=318500000;style=up;preset=pluck;rate=1/16;bpm=141;master=728880893;oct=2;reg=1;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=595804893;progSeed=818365099
+P i,868369827,653508329,0,2,tri,;VII,16260146,383297530,0,2,tri,;i,56054190,836080672,0,4,sus,3rd;VI,712237981,196758454,0,4,sus,;VII,618517559,152619136,0,2,add9,;iv,909422876,273115307,0,2,add9,
+C Gm,i,55.58.62,43,0,2;F,VII,57.60.65,41,192,2;Gsus2,Isus,57.62.67,43,384,4;Ebsus2,VIsus,58.63.65,39,768,4;Fadd9,VII,55.57.65.72,41,1152,2;Cm(add9)/Eb,iv,51.55.62.72,39,1344,2
+N i,412360231,479778013,0,4,sus,;v,457146643,685603342,0,4,ext,;VI,198317787,765509434,0,8,tri,
+M epic
+A Gm,Gsus2,Gm7,Gm11,Gm7/Bb,Ebmaj7,Bbmaj7,Gmaj7
+CASE epic trance 1/16 octave up|4242|0
+G genre=trance;moods=epic;key=3;scale=minor;bars=8;colour=255595634;style=up;preset=supersaw;rate=1/16;bpm=141;master=711163615;oct=3;reg=1;glide=0;pedal=0;gate=700000000;swing=0;groove=0;arpSeed=678479164;progSeed=99171398
+P i,282599746,143650219,0,4,,;VI,529031756,922074470,0,4,,;VII,793700860,73073003,0,4,,;v,33203264,799101808,0,4,,;i,165280699,922368804,0,4,,;VII,942122158,778749739,0,4,,;v,992143201,299546395,0,4,,;VI,775832548,68133065,0,4,,
+C Ebm(add9),i,51.54.58.65,39,0,4;Bsus2,VIsus,54.59.61,47,384,4;Dbsus4,VIIsus,54.56.61,49,768,4;Bbm,v,53.58.61,46,1152,4;Ebm(add9),i,51.54.58.65,39,1536,4;Db7,VII,49.56.59.65,49,1920,4;Bbm7,v,49.56.58.65,46,2304,4;Badd9,VI,49.59.63.66,47,2688,4
+N VI,87871948,400202184,0,4,,;VII,114441385,66830938,0,4,,;v,565181501,928897247,0,4,,;i,794531422,878331575,0,4,,;i,516834934,575111850,0,4,,;iv,998206093,962297632,0,4,,;VII,63924238,832356840,0,4,,;III,913551681,100095136,0,4,,
+M epic
+A Ebm(add9),Ebsus2,Ebm7,Ebm11,Ebm(add9)/Gb,Badd9,Gbadd9,Ebadd9
+CASE epic trance 1/16 octave up|99999|0
+G genre=trance;moods=epic;key=5;scale=minor;bars=4;colour=325348547;style=up;preset=pluck;rate=1/16;bpm=140;master=720025177;oct=3;reg=1;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=178213170;progSeed=713211228
+P i,122386219,169888376,0,4,,;III,25781192,750908762,0,4,,;VII,797453187,520578451,0,4,,;VI,869726097,193966479,0,4,,
+C Fm(add9),i,53.56.60.67,41,0,4;Abadd9,III,51.56.60.70,44,384,4;Eb7,VII,55.61.63.70,39,768,4;Dbmaj7,VI,56.61.65.72,49,1152,4
+N i,215195612,68747540,0,4,,;iv,139217983,348641131,0,4,,;VII,8659400,433937853,0,4,,;III,833873589,776294278,0,4,,
+M dreamy
+A Fm(add9),Fsus2,Fm7,Fm11,Fm(add9)/Ab,Dbadd9,Abadd9,Fadd9
+CASE epic trance 1/16 octave up|99999|0.5
+G genre=trance;moods=epic;key=5;scale=minor;bars=4;colour=321924273;style=up;preset=pluck;rate=1/16;bpm=140;master=720025177;oct=3;reg=1;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=178213170;progSeed=713211228
+P i,270864821,286245806,0,4,ext,3rd;VII,931523013,489869085,0,2,add9,ped;iv,294539695,705036296,0,2,add9,;VI,3346406,683941466,0,4,add9,;iv,503040999,646761430,0,4,tri,
+C Fm9/Ab,i,53.56.63.67,44,0,4;Ebadd9/F,VII,53.63.67.70,41,384,2;Bbm(add9),iv,53.60.70.73,46,576,2;Dbadd9,VI,51.53.56.73,49,768,4;Bbm,iv,53.58.61,46,1152,4
+N i,215195612,68747540,0,4,,;iv,139217983,348641131,0,4,tri,ped;VII,8659400,433937853,0,4,,;III,833873589,776294278,0,4,,
+M sad
+A Fm9/Ab,Fsus2,Fm7,Fm11,Fm(add9)/Ab,Dbadd9,Abadd9,Fadd9
+CASE epic trance 1/16 octave up|99999|1
+G genre=trance;moods=epic;key=5;scale=minor;bars=4;colour=318500000;style=up;preset=pluck;rate=1/16;bpm=140;master=720025177;oct=3;reg=1;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=178213170;progSeed=713211228
+P i,270864821,286245806,0,4,ext,3rd;VII,931523013,489869085,0,2,add9,ped;iv,294539695,705036296,0,2,add9,;VI,3346406,683941466,0,4,add9,;iv,503040999,646761430,0,4,tri,
+C Fm9/Ab,i,53.56.63.67,44,0,4;Ebadd9/F,VII,53.63.67.70,41,384,2;Bbm(add9),iv,53.60.70.73,46,576,2;Dbadd9,VI,51.53.56.73,49,768,4;Bbm,iv,53.58.61,46,1152,4
+N iv,726330372,15107230,0,8,tri,ped;i,845457199,570434156,0,4,add9,;iv,518903288,717973381,0,4,sus,
+M sad
+A Fm9/Ab,Fsus2,Fm7,Fm11,Fm(add9)/Ab,Dbadd9,Abadd9,Fadd9
+CASE sad piano slow in F minor|1|0
+G genre=melodic;moods=sad;key=5;scale=minor;bars=4;colour=597554163;style=converge;preset=keys;rate=1/16;bpm=111;master=463795162;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=827895693;progSeed=171214141
+P i,510047976,658474001,0,4,,;iv,146267855,118235745,0,4,,;i,657285234,788405821,0,4,,;VII,323403106,211959968,0,4,,
+C Fm7,i,53.60.63.68,41,0,4;Bbm7,iv,53.58.61.68,46,384,4;Fm9,i,53.56.63.67,41,768,4;Eb7,VII,58.61.63.67,39,1152,4
+N i,2343547,663171422,0,4,,;i,202162701,542119591,0,4,,;VI,70763869,4537842,0,4,,;VII,920926401,970555641,0,4,,
+M sad
+A Fm7,Fsus2,Fm7,Fm11,Fm7/Ab,Dbmaj7,Abmaj7,Fmaj7
+CASE sad piano slow in F minor|1|0.5
+G genre=melodic;moods=sad;key=5;scale=minor;bars=8;colour=458027081;style=motif;preset=keys;rate=1/16;bpm=111;master=463795162;oct=3;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=827895693;progSeed=171214141
+P VI,112315544,635395421,0,2,tri,;VII,945314004,711193306,0,2,sus,;v,812867210,30537253,0,4,add9,;VI,589694286,957399341,0,4,tri,;III,895303957,984606371,0,4,tri,;VII,991030482,871736793,0,8,sus,;i,145727933,36713845,0,8,add9,
+C Db,VI,61.65.68,49,0,2;Ebsus2,VIIsus,58.63.65,39,192,2;Cm,v,60.63.67,48,384,4;Db,VI,61.65.68,49,768,4;Ab,III,60.63.68,44,1152,4;Ebsus2,VIIsus,58.63.65,39,1536,8;Fm(add9),i,55.65.68.72,41,2304,8
+N i,663171422,202162701,0,4,,;i,542119591,70763869,0,4,tri,;VI,4537842,920926401,0,4,,;VII,970555641,210052858,0,4,add9,;i,933996392,382739426,0,4,six,;VI,22351829,51540492,0,4,sev,;III,452995874,784234106,0,4,,ped;VII,631273614,481046940,0,4,tri,
+M dreamy
+A Db,Dbsus2,Dbmaj7,Db6/9,Dbadd9/F,Bbm(add9),Fm(add9),Dm(add9)
+CASE sad piano slow in F minor|1|1
+G genre=melodic;moods=sad;key=5;scale=minor;bars=8;colour=318500000;style=motif;preset=keys;rate=1/16;bpm=111;master=463795162;oct=3;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=827895693;progSeed=171214141
+P VI,112315544,635395421,0,2,tri,;VII,945314004,711193306,0,2,sus,;v,812867210,30537253,0,4,add9,;VI,589694286,957399341,0,4,tri,;III,895303957,984606371,0,4,tri,;VII,991030482,871736793,0,8,sus,;i,145727933,36713845,0,8,add9,
+C Db,VI,61.65.68,49,0,2;Ebsus2,VIIsus,58.63.65,39,192,2;Cm,v,60.63.67,48,384,4;Db,VI,61.65.68,49,768,4;Ab,III,60.63.68,44,1152,4;Ebsus2,VIIsus,58.63.65,39,1536,8;Fm(add9),i,55.65.68.72,41,2304,8
+N i,787474225,463909273,0,4,tri,3rd;III,869441840,608772965,0,4,tri,;VII,101182972,997884814,0,4,tri,;i,904332859,806432611,0,8,sev,;VI,190805793,65625414,0,2,tri,;VII,570218315,100469848,0,2,add9,;i,100591956,87062003,0,4,sev,;VI,424911418,325868616,0,4,tri,3rd
+M dreamy
+A Db,Dbsus2,Dbmaj7,Db6/9,Dbadd9/F,Bbm(add9),Fm(add9),Dm(add9)
+CASE sad piano slow in F minor|128|0
+G genre=house;moods=sad;key=5;scale=minor;bars=4;colour=774260438;style=motif;preset=keys;rate=1/16;bpm=107;master=425182358;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=344623887;progSeed=519698944
+P i,454243253,196932215,0,4,,;VI,268977516,847459104,0,4,,;III,658047515,741995528,0,4,,;VII,999567713,231246800,0,4,,
+C Fm9,i,53.56.63.67,41,0,4;Dbmaj9,VI,53.60.63.73,49,384,4;Abmaj9,III,56.60.67.70,44,768,4;Eb9/G,VII,53.63.67.73,43,1152,4
+N i,918817369,764531243,0,4,,;iv,842056121,859712641,0,4,,;i,558812785,503594695,0,4,,;VII,425922150,511116918,0,4,,
+M dreamy
+A Fm9,Fsus2,Fm7,Fm11,Fm9/Ab,Dbmaj9,Abmaj9,Fmaj9
+CASE sad piano slow in F minor|128|0.5
+G genre=house;moods=sad;key=5;scale=minor;bars=4;colour=546380219;style=motif;preset=keys;rate=1/16;bpm=107;master=425182358;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=344623887;progSeed=519698944
+P i,454243253,196932215,0,4,sus,3rd;VI,268977516,847459104,0,4,sus,;III,658047515,741995528,0,4,add9,;VII,999567713,231246800,0,4,add9,
+C Fsus2,Isus,53.55.60,41,0,4;Dbsus2,VIsus,56.61.63,49,384,4;Abadd9,III,56.60.63.70,44,768,4;Ebadd9/G,VII,53.55.63.70,43,1152,4
+N i,412360231,479778013,0,4,sus,;v,457146643,685603342,0,4,ext,;VI,198317787,765509434,0,8,tri,
+M dreamy
+A Fsus2,Fsus2,Fm7,Fm11,Fm7/Ab,Dbmaj7,Abmaj7,Fmaj7
+CASE sad piano slow in F minor|128|1
+G genre=house;moods=sad;key=5;scale=minor;bars=4;colour=318500000;style=motif;preset=keys;rate=1/16;bpm=107;master=425182358;oct=3;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=344623887;progSeed=519698944
+P i,1355647,391250866,0,4,ext,;VI,729056943,493391216,0,4,tri,;VII,434403273,727723054,0,4,sus,;i,382655600,482997982,0,4,sev,
+C Fm9,i,53.56.63.67,41,0,4;Db,VI,56.61.65,49,384,4;Ebsus2,VIIsus,58.63.65,39,768,4;Fm7,i,56.60.63.65,41,1152,4
+N i,412360231,479778013,0,4,sus,;v,457146643,685603342,0,4,ext,;VI,198317787,765509434,0,8,tri,
+M sad
+A Fm9,Fsus2,Fm7,Fm11,Fm(add9)/Ab,Dbadd9,Abadd9,Fadd9
+CASE sad piano slow in F minor|4242|0
+G genre=melodic;moods=sad;key=5;scale=minor;bars=8;colour=580268473;style=motif;preset=keys;rate=1/16;bpm=108;master=480386181;oct=2;reg=0;glide=0;pedal=1;gate=850000000;swing=0;groove=0;arpSeed=888531955;progSeed=275952656
+P i,139858859,468371170,0,4,,;i,163008292,580334848,0,4,,;VI,448331602,352924702,0,4,,;VI,99198207,842453984,0,4,,;III,902235180,377364857,0,4,,;III,494031081,757918179,0,4,,;VII,358128188,4138015,0,4,,;VII,672456339,374537296,0,4,,
+C Fm7,i,53.60.63.68,41,0,4;Fm7,i,53.60.63.68,41,384,4;Dbmaj7/F,VI,53.60.61.68,41,768,4;Dbmaj7/F,VI,53.60.61.68,41,1152,4;Abmaj9/F,III,56.60.67.70,41,1536,4;Abmaj7/F,III,56.60.63.67,41,1920,4;Eb7/F,VII,58.61.63.67,41,2304,4;Eb9/F,VII,53.63.67.73,41,2688,4
+N i,87871948,400202184,0,4,,;bII,114441385,66830938,0,4,,;i,565181501,928897247,0,4,,;VII,794531422,878331575,0,4,,;i,516834934,575111850,0,4,,;III,998206093,962297632,0,4,,;iv,63924238,832356840,0,4,,;VI,913551681,100095136,0,4,,
+M dreamy
+A Fm7,Fsus2,Fm7,Fm11,Fm7/Ab,Dbmaj7,Abmaj7,Fmaj7
+CASE sad piano slow in F minor|99999|0
+G genre=melodic;moods=sad;key=5;scale=minor;bars=4;colour=712485129;style=motif;preset=keys;rate=1/16;bpm=112;master=419920975;oct=2;reg=0;glide=0;pedal=1;gate=850000000;swing=0;groove=0;arpSeed=829742180;progSeed=548155948
+P i,75621959,602949120,0,4,,;III,747474614,430162580,0,4,,;iv,700272320,909781910,0,4,,;VI,960745071,359233085,0,4,,
+C Fm7,i,53.60.63.68,41,0,4;Abmaj9/F,III,56.60.67.70,41,384,4;Bbm9/F,iv,56.60.70.73,41,768,4;Dbmaj9/F,VI,53.60.63.73,41,1152,4
+N i,215195612,68747540,0,4,,;III,139217983,348641131,0,4,,;iv,8659400,433937853,0,4,,;VI,833873589,776294278,0,4,,
+M dreamy
+A Fm7,Fsus2,Fm7,Fm11,Fm7/Ab,Dbmaj7,Abmaj7,Fmaj7
+CASE sad piano slow in F minor|99999|0.5
+G genre=melodic;moods=sad;key=5;scale=minor;bars=4;colour=515492565;style=motif;preset=keys;rate=1/16;bpm=112;master=419920975;oct=2;reg=0;glide=0;pedal=1;gate=850000000;swing=0;groove=0;arpSeed=829742180;progSeed=548155948
+P i,75621959,602949120,0,4,,;III,747474614,430162580,0,4,add9,;iv,700272320,909781910,0,4,,;VI,960745071,359233085,0,4,sus,
+C Fm(add9),i,53.56.60.67,41,0,4;Abadd9/F,III,51.56.60.70,41,384,4;Bbm7/F,iv,56.61.65.70,41,768,4;Dbsus2/F,VIsus,56.61.63,41,1152,4
+N i,215195612,68747540,0,4,,;III,139217983,348641131,0,4,tri,ped;iv,8659400,433937853,0,4,,;VI,833873589,776294278,0,4,,
+M sad
+A Fm(add9),Fsus2,Fm7,Fm11,Fm(add9)/Ab,Dbadd9,Abadd9,Fadd9
+CASE sad piano slow in F minor|99999|1
+G genre=melodic;moods=sad;key=5;scale=minor;bars=8;colour=318500000;style=motif;preset=keys;rate=1/16;bpm=112;master=419920975;oct=2;reg=0;glide=0;pedal=1;gate=850000000;swing=0;groove=0;arpSeed=829742180;progSeed=548155948
+P i,411839855,679116246,0,8,tri,;VII,867110693,886866789,0,4,tri,;i,189569162,220737288,0,8,tri,ped;VI,808947270,354930939,0,2,ext,;VII,119341687,869997443,0,2,tri,;i,195417149,129830154,0,4,add9,;VI,836667884,4779590,0,4,tri,
+C Fm,i,53.56.60,41,0,8;Eb/F,VII,55.58.63,41,768,4;Fm,i,56.60.65,41,1152,8;Dbmaj9/F,VI,53.60.63.73,41,1920,2;Eb/F,VII,58.63.67,41,2112,2;Fm(add9),i,53.56.60.67,41,2304,4;Db/F,VI,56.61.65,41,2688,4
+N iv,726330372,15107230,0,8,tri,ped;i,845457199,570434156,0,4,add9,;iv,518903288,717973381,0,4,sus,;VII,776530854,483525460,0,8,sus,;III,301171402,564167793,0,4,sev,;VII,659474188,852260859,0,4,tri,
+M sad
+A Fm,Fsus2,Fm7,Fm11,Fsus2/G,Dbsus2,Absus2,Fsus2
+CASE melodic minor pluck|1|0
+G genre=melodic;moods=;key=0;scale=minor;bars=4;colour=613690284;style=motif;preset=pluck;rate=1/16;bpm=126;master=456642979;oct=2;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=820917281;progSeed=602341239
+P iv,257970302,807850696,0,4,,;VI,421072707,210603636,0,4,,;i,383555551,796562911,0,4,,;VII,836039794,95672574,0,4,,
+C Fm7,iv,53.60.63.68,41,0,4;Abmaj7/C,VI,55.60.63.68,48,384,4;Cm7,i,55.60.63.70,48,768,4;Bb9/C,VII,56.60.70.74,48,1152,4
+N i,2343547,663171422,0,4,,;i,202162701,542119591,0,4,,;VI,70763869,4537842,0,4,,;VII,920926401,970555641,0,4,,
+M dreamy
+A Fm7,Fsus2,Fm7,Fm11,Fm7/Ab,Dm7b5,Abmaj7,Fmaj7
+CASE melodic minor pluck|1|0.5
+G genre=melodic;moods=;key=0;scale=minor;bars=4;colour=466095142;style=motif;preset=pluck;rate=1/8;bpm=126;master=456642979;oct=2;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=820917281;progSeed=602341239
+P iv,257970302,807850696,0,4,,;VI,421072707,210603636,0,4,,;i,383555551,796562911,0,4,add9,;VII,836039794,95672574,0,4,,
+C Fm7,iv,53.60.63.68,41,0,4;Abmaj7/C,VI,55.60.63.68,48,384,4;Cm(add9),i,55.60.63.74,48,768,4;Bb7/C,VII,56.58.62.65,48,1152,4
+N i,2343547,663171422,0,4,,;i,202162701,542119591,0,4,tri,;VI,70763869,4537842,0,4,,;VII,920926401,970555641,0,4,add9,
+M dreamy
+A Fm7,Fsus2,Fm7,Fm11,Fm7/Ab,Dm7b5,Abmaj7,Fmaj7
+CASE melodic minor pluck|1|1
+G genre=melodic;moods=;key=0;scale=minor;bars=8;colour=318500000;style=motif;preset=pluck;rate=1/16;bpm=126;master=456642979;oct=2;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=820917281;progSeed=602341239
+P i,923190244,596332943,0,4,tri,;VI,764010670,710779897,0,4,sus,;VII,354189032,921007885,0,2,tri,;iv,24247061,802432005,0,2,sev,;i,155361644,63844180,0,4,tri,;v,22477874,921053251,0,4,sus,;VI,535848048,671067586,0,4,sev,3rd;VII,643137459,682152880,0,8,ext,
+C Cm,i,60.63.67,48,0,4;Absus2/C,VIsus,58.63.68,48,384,4;Bb/C,VII,58.62.65,48,768,2;Fm7/C,iv,56.60.63.65,48,960,2;Cm,i,55.60.63,48,1152,4;Gsus4/C,Vsus,55.60.62,48,1536,4;Abmaj7/C,VI,55.60.63.68,48,1920,4;Bb9/C,VII,58.62.68.72,48,2304,8
+N i,787474225,463909273,0,4,tri,3rd;III,869441840,608772965,0,4,tri,;VII,101182972,997884814,0,4,tri,;i,904332859,806432611,0,8,sev,;VI,190805793,65625414,0,2,tri,;VII,570218315,100469848,0,2,add9,;i,100591956,87062003,0,4,sev,;VI,424911418,325868616,0,4,tri,3rd
+M dreamy
+A Cm,Csus2,Cm7,Cm11,Cm7/Eb,Abmaj7,Ebmaj7,Cmaj7
+CASE melodic minor pluck|128|0
+G genre=melodic;moods=;key=6;scale=minor;bars=4;colour=626575232;style=broken;preset=pluck;rate=1/16;bpm=127;master=462189240;oct=2;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=20487295;progSeed=577473591
+P iv,332340411,89343482,0,4,,;i,66876461,320568176,0,4,,;VI,374058513,101864379,0,4,,;VII,462588167,557395724,0,4,,
+C Bm7,iv,59.62.66.69,47,0,4;F#m7,i,61.64.66.69,42,384,4;Dmaj7/F#,VI,61.62.66.69,42,768,4;E7/F#,VII,59.62.64.68,42,1152,4
+N i,918817369,764531243,0,4,,;VII,842056121,859712641,0,4,,;v,558812785,503594695,0,4,,;VI,425922150,511116918,0,4,,
+M dreamy
+A Bm7,Bsus2,Bm7,Bm11,Bm7/D,G#m7b5,Dmaj7,Bmaj7
+CASE melodic minor pluck|128|0.5
+G genre=melodic;moods=;key=6;scale=minor;bars=4;colour=472537616;style=motif;preset=pluck;rate=1/16;bpm=127;master=462189240;oct=3;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=20487295;progSeed=577473591
+P VI,461169857,58544610,0,2,tri,;III,30759256,223099469,0,2,sev,;VII,355575852,228712022,0,8,sus,;i,107166633,658520704,0,4,add9,
+C D,VI,57.62.66,38,0,2;Amaj7/F#,III,57.61.64.68,42,192,2;Esus2/F#,VIIsus,59.64.66,42,384,8;F#m(add9),i,54.57.61.68,42,1152,4
+N i,412360231,479778013,0,4,sus,;v,457146643,685603342,0,4,ext,;VI,198317787,765509434,0,8,tri,
+M dreamy
+A D,Dsus2,Dmaj7,D6/9,Dmaj7/F#,Bm7,F#m7,D#m7
+CASE melodic minor pluck|128|1
+G genre=melodic;moods=;key=6;scale=minor;bars=4;colour=318500000;style=motif;preset=pluck;rate=1/16;bpm=127;master=462189240;oct=2;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=20487295;progSeed=577473591
+P VI,461169857,58544610,0,2,tri,;III,30759256,223099469,0,2,sev,;VII,355575852,228712022,0,8,sus,;i,107166633,658520704,0,4,add9,
+C D,VI,57.62.66,38,0,2;Amaj7/F#,III,57.61.64.68,42,192,2;Esus2/F#,VIIsus,59.64.66,42,384,8;F#m(add9),i,54.57.61.68,42,1152,4
+N i,412360231,479778013,0,4,sus,;v,457146643,685603342,0,4,ext,;VI,198317787,765509434,0,8,tri,
+M dreamy
+A D,Dsus2,Dmaj7,D6/9,Dsus2/E,Bsus2,F#sus2,D#sus2
+CASE melodic minor pluck|4242|0
+G genre=melodic;moods=;key=9;scale=minor;bars=8;colour=551259520;style=motif;preset=pluck;rate=1/16;bpm=127;master=450520811;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=547933742;progSeed=998572086
+P VI,854518043,486531184,0,4,,;VI,930280845,357105674,0,4,,;III,445828503,426053430,0,4,,;III,879080215,124311600,0,4,,;VII,134391306,138194799,0,4,,;VII,41432446,132560005,0,4,,;i,501777967,54386328,0,4,,;i,663058419,914397288,0,4,,
+C Fmaj9,VI,53.57.64.67,41,0,4;Fmaj9,VI,53.57.64.67,41,384,4;Cmaj7,III,55.60.64.71,48,768,4;Cmaj9,III,50.60.64.71,48,1152,4;G7/B,VII,50.55.59.65,47,1536,4;G7,VII,50.55.59.65,43,1920,4;Am7,i,55.60.64.69,45,2304,4;Am7,i,55.60.64.69,45,2688,4
+N VI,87871948,400202184,0,4,,;VII,114441385,66830938,0,4,,;v,565181501,928897247,0,4,,;i,794531422,878331575,0,4,,;i,516834934,575111850,0,4,,;III,998206093,962297632,0,4,,;iv,63924238,832356840,0,4,,;VI,913551681,100095136,0,4,,
+M dreamy
+A Fmaj9,Fsus2,Fmaj7,Fmaj9,Fmaj9/A,Dm9,Am9,F#m9
+CASE melodic minor pluck|99999|0
+G genre=melodic;moods=;key=2;scale=minor;bars=4;colour=579314002;style=pedal;preset=pluck;rate=1/16;bpm=127;master=475657723;oct=2;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=368766603;progSeed=246117628
+P iv,646119783,753666840,0,4,,;VI,484289143,601242987,0,4,,;i,670684989,196731986,0,4,,;VII,283372119,166325667,0,4,,
+C Gm9,iv,55.58.65.69,43,0,4;Bbmaj7/D,VI,58.62.65.69,38,384,4;Dm9,i,52.62.65.72,38,768,4;C7/D,VII,55.60.64.70,38,1152,4
+N i,215195612,68747540,0,4,,;III,139217983,348641131,0,4,,;iv,8659400,433937853,0,4,,;VI,833873589,776294278,0,4,,
+M dreamy
+A Gm9,Gsus2,Gm7,Gm11,Gm9/Bb,Em7b5,Bbmaj9,Gmaj9
+CASE melodic minor pluck|99999|0.5
+G genre=melodic;moods=;key=2;scale=minor;bars=8;colour=448907001;style=pedal;preset=pluck;rate=1/16;bpm=127;master=475657723;oct=2;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=368766603;progSeed=246117628
+P i,175740845,210858219,0,4,tri,;III,42219136,689439242,0,4,sus,;VII,733328674,754381841,0,8,sus,;i,6838823,977393326,0,8,tri,;VII,415143816,393559104,0,4,tri,ped;iv,241243878,845748153,0,2,add9,;i,251903797,420351092,0,2,tri,
+C Dm,i,57.62.65,38,0,4;Fsus2/D,IIIsus,55.60.65,38,384,4;Csus2/D,VIIsus,55.60.62,38,768,8;Dm,i,57.62.65,38,1536,8;C/D,VII,55.60.64,38,2304,4;Gm(add9)/D,iv,55.58.62.69,38,2688,2;Dm,i,57.62.65,38,2880,2
+N i,68747540,139217983,0,4,,;III,348641131,8659400,0,4,tri,ped;iv,433937853,833873589,0,4,,;VI,776294278,630418791,0,4,,;i,628775967,115784988,0,4,,;VI,507857939,768293233,0,4,add9,;iv,689273048,346666871,0,4,,;VII,840780499,916382722,0,4,,
+M sad
+A Dm,Dsus2,Dm7,Dm11,Dm(add9)/F,Bbadd9,Fadd9,Dadd9
+CASE melodic minor pluck|99999|1
+G genre=melodic;moods=;key=2;scale=minor;bars=8;colour=318500000;style=motif;preset=pluck;rate=1/16;bpm=127;master=475657723;oct=2;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=368766603;progSeed=246117628
+P i,175740845,210858219,0,4,tri,;III,42219136,689439242,0,4,sus,;VII,733328674,754381841,0,8,sus,;i,6838823,977393326,0,8,tri,;VII,415143816,393559104,0,4,tri,ped;iv,241243878,845748153,0,2,add9,;i,251903797,420351092,0,2,tri,
+C Dm,i,57.62.65,38,0,4;Fsus2/D,IIIsus,55.60.65,38,384,4;Csus2/D,VIIsus,55.60.62,38,768,8;Dm,i,57.62.65,38,1536,8;C/D,VII,55.60.64,38,2304,4;Gm(add9)/D,iv,55.58.62.69,38,2688,2;Dm,i,57.62.65,38,2880,2
+N iv,726330372,15107230,0,8,tri,ped;i,845457199,570434156,0,4,add9,;iv,518903288,717973381,0,4,sus,;VII,776530854,483525460,0,8,sus,;III,301171402,564167793,0,4,sev,;VII,659474188,852260859,0,4,tri,
+M sad
+A Dm,Dsus2,Dm7,Dm11,Dm(add9)/F,Bbadd9,Fadd9,Dadd9
+CASE happy house 124 bpm 8 bars|1|0
+G genre=house;moods=happy;key=7;scale=lydian;bars=8;colour=536920954;style=broken;preset=pluck;rate=1/16;bpm=124;master=474301052;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=59181825;progSeed=732301250
+P I,7741899,421714320,0,4,,;II,262197303,479048909,0,4,,;vii,493184589,453344444,0,4,,;iii,991166805,279973933,0,4,,;I,262043698,454254926,0,4,,;II,226186840,129012960,0,4,,;vii,474543701,355085641,0,4,,;IV,773480799,613509281,0,4,,
+C Gadd9,I,55.59.62.69,43,0,4;A7,II,55.61.64.69,45,384,4;F#m7,vii,54.61.64.69,42,768,4;Bm9,iii,50.57.61.71,47,1152,4;Gmaj7,I,50.55.59.66,43,1536,4;A7,II,49.55.57.64,45,1920,4;F#m7,vii,49.54.57.64,42,2304,4;C#m7b5,iv°,49.55.59.64,49,2688,4
+N I,663171422,202162701,0,4,,;II,542119591,70763869,0,4,,;vi,4537842,920926401,0,4,,;I,970555641,210052858,0,4,,;I,933996392,382739426,0,4,,;II,22351829,51540492,0,4,,;I,452995874,784234106,0,4,,;II,631273614,481046940,0,4,,
+M happy
+A Gadd9,Gsus2,Gmaj7,G6/9,Gadd9/B,Em(add9),Bm(add9),Gm(add9)
+CASE happy house 124 bpm 8 bars|1|0.5
+G genre=house;moods=happy;key=7;scale=lydian;bars=8;colour=427710477;style=broken;preset=pluck;rate=1/16;bpm=124;master=474301052;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=59181825;progSeed=732301250
+P I,7741899,421714320,0,4,,;II,262197303,479048909,0,4,,;vii,493184589,453344444,0,4,,;iii,991166805,279973933,0,4,tri,3rd;I,262043698,454254926,0,4,sus,;II,226186840,129012960,0,4,,;I,474543701,355085641,0,4,sus,;vi,773480799,613509281,0,4,,
+C Gadd9,I,55.59.62.69,43,0,4;Aadd9,II,52.59.69.73,45,384,4;F#m7,vii,54.61.64.69,42,768,4;Bm/D,iii,54.59.62,38,1152,4;Gsus2,Isus,55.57.62,43,1536,4;Aadd9,II,52.57.61.71,45,1920,4;Gsus2,Isus,57.62.67,43,2304,4;Em7,vi,59.62.64.67,40,2688,4
+N I,663171422,202162701,0,4,,;II,542119591,70763869,0,4,tri,;vi,4537842,920926401,0,4,,;I,970555641,210052858,0,4,add9,;I,933996392,382739426,0,4,six,;II,22351829,51540492,0,4,sev,;I,452995874,784234106,0,4,,ped;V,631273614,481046940,0,4,tri,
+M happy
+A Gadd9,Gsus2,Gmaj7,G6/9,Gadd9/B,Em(add9),Bm(add9),Gm(add9)
+CASE happy house 124 bpm 8 bars|1|1
+G genre=house;moods=happy;key=7;scale=lydian;bars=8;colour=318500000;style=motif;preset=pluck;rate=1/16;bpm=124;master=474301052;oct=3;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=59181825;progSeed=732301250
+P vi,935028245,821432859,0,4,sev,;II,131802459,917350445,0,4,sev,;I,900360649,391490570,0,4,sus,;V,55392521,588199773,0,4,sus,;vi,798378210,197831419,0,4,tri,;ii,6648540,121933560,0,4,add9,ped;V,579691862,960749321,0,4,sus,3rd;I,267479292,938646875,0,4,sus,
+C Em7,vi,52.59.62.67,40,0,4;A7,II,52.57.61.67,45,384,4;Gsus2,Isus,57.62.67,43,768,4;Dsus2,Vsus,57.62.64,38,1152,4;Em,vi,59.64.67,40,1536,4;Aadd9/G,II,57.61.64.71,43,1920,4;Dsus2,Vsus,57.62.64,38,2304,4;Gsus2,Isus,57.62.67,43,2688,4
+N I,787474225,463909273,0,4,tri,3rd;iii,62027479,677648212,0,4,add9,;ii,314835231,822588791,0,2,ext,;I,837851371,710977579,0,2,tri,ped;V,281427440,320180324,0,2,add9,;vi,802618289,329950639,0,2,tri,3rd;I,146534909,93621785,0,4,sev,;V,823493167,597289017,0,12,sus,
+M happy
+A Em7,Esus2,Em7,Em11,Em7/G,C#m7b5,Gmaj7,D#maj7
+CASE happy house 124 bpm 8 bars|128|0
+G genre=house;moods=happy;key=0;scale=major;bars=8;colour=562940348;style=up;preset=pluck;rate=1/16;bpm=124;master=533944533;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=3616467;progSeed=212750136
+P I,31765809,213155731,0,4,,;bVI,40206440,345232632,0,4,,;bVII,518734193,811083492,0,4,,;I,506498531,836757195,0,4,,;IV,88019115,560556261,0,4,,;I,750045565,759864583,0,4,,;V,368017033,253120599,0,4,,;vi,221134121,41174652,0,4,,
+C Cmaj7,I,60.64.67.71,48,0,4;G#maj7,bVI,56.60.63.67,44,384,4;A#7,bVII,56.58.62.65,46,768,4;Cmaj7,I,55.60.64.71,48,1152,4;Fmaj7,IV,53.60.64.69,41,1536,4;Cmaj9,I,50.60.64.71,48,1920,4;G7/B,V,50.55.59.65,47,2304,4;Am7,vi,55.60.64.69,45,2688,4
+N I,764531243,842056121,0,4,,;V,859712641,558812785,0,4,,;IV,503594695,425922150,0,4,,;IV,511116918,20208962,0,4,,;IV,652582235,604456631,0,4,,;V,178873149,294533449,0,4,,;vi,927214005,629157972,0,4,,;I,582291129,701797239,0,4,,
+M happy
+A Cmaj7,Csus2,Cmaj7,C6/9,Cmaj7/E,Am7,Em7,Cm7
+CASE happy house 124 bpm 8 bars|128|0.5
+G genre=house;moods=happy;key=0;scale=major;bars=8;colour=440720174;style=up;preset=pluck;rate=1/16;bpm=124;master=533944533;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=3616467;progSeed=212750136
+P vi,794712714,656211303,0,4,sev,;IV,43331713,739013955,0,4,sev,;V,303263658,764705938,0,4,add9,;vi,509986350,26682622,0,4,sev,;V,910423412,779014701,0,8,sus,;IV,624113053,797998051,0,2,tri,;I,817432356,306620697,0,2,sus,;V,45019877,655455816,0,4,sev,
+C Am7,vi,57.60.64.67,45,0,4;Fmaj7,IV,53.57.60.64,41,384,4;Gadd9,V,55.59.62.69,43,768,4;Am7,vi,55.60.64.69,45,1152,4;Gsus2,Vsus,57.62.67,43,1536,8;F,IV,57.60.65,41,2304,2;Csus2,Isus,60.62.67,48,2496,2;G7,V,59.62.65.67,43,2688,4
+N I,412360231,479778013,0,4,sus,;bVII,457146643,685603342,0,4,ext,;IV,198317787,765509434,0,8,tri,;V,734836512,668112436,0,2,sus,;vi,115540827,595940630,0,2,tri,;V,835143941,953752347,0,4,sus,;I,22819248,513284193,0,4,sus,;vi,915606408,231860757,0,4,sus,
+M happy
+A Am7,Asus2,Am7,Am11,Am7/C,Fmaj7,Cmaj7,G#maj7
+CASE happy house 124 bpm 8 bars|128|1
+G genre=house;moods=happy;key=0;scale=major;bars=8;colour=318500000;style=motif;preset=pluck;rate=1/16;bpm=124;master=533944533;oct=3;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=3616467;progSeed=212750136
+P vi,794712714,656211303,0,4,sev,;IV,43331713,739013955,0,4,sev,;V,303263658,764705938,0,4,add9,;vi,509986350,26682622,0,4,sev,;V,910423412,779014701,0,8,sus,;IV,624113053,797998051,0,2,tri,;I,817432356,306620697,0,2,sus,;V,45019877,655455816,0,4,sev,
+C Am7,vi,57.60.64.67,45,0,4;Fmaj7,IV,53.57.60.64,41,384,4;Gadd9,V,55.59.62.69,43,768,4;Am7,vi,55.60.64.69,45,1152,4;Gsus2,Vsus,57.62.67,43,1536,8;F,IV,57.60.65,41,2304,2;Csus2,Isus,60.62.67,48,2496,2;G7,V,59.62.65.67,43,2688,4
+N I,412360231,479778013,0,4,sus,;bVII,457146643,685603342,0,4,ext,;IV,198317787,765509434,0,8,tri,;V,734836512,668112436,0,2,sus,;vi,115540827,595940630,0,2,tri,;V,835143941,953752347,0,4,sus,;I,22819248,513284193,0,4,sus,;vi,915606408,231860757,0,4,sus,
+M happy
+A Am7,Asus2,Am7,Am11,Am7/C,Fmaj7,Cmaj7,G#maj7
+CASE happy house 124 bpm 8 bars|4242|0
+G genre=house;moods=happy;key=6;scale=major;bars=8;colour=545335655;style=broken;preset=pluck;rate=1/16;bpm=124;master=532329475;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=391323483;progSeed=768514301
+P IV,54366388,982661380,0,4,,;IV,582388516,26343058,0,4,,;vi,344070127,923700694,0,4,,;vi,668129551,316530549,0,4,,;I,847626748,281399900,0,4,,;I,220993779,531280062,0,4,,;V,668898553,892878979,0,4,,;V,110738118,31037266,0,4,,
+C Bmaj7,IV,59.63.66.70,47,0,4;Bmaj7,IV,59.63.66.70,47,384,4;Ebm7,vi,61.63.66.70,39,768,4;Ebm7,vi,61.63.66.70,39,1152,4;Gbmaj9,I,53.56.66.70,42,1536,4;Gbmaj7,I,54.61.65.70,42,1920,4;Db7,V,56.61.65.71,49,2304,4;Db7,V,56.61.65.71,49,2688,4
+N I,87871948,400202184,0,4,,;vi,114441385,66830938,0,4,,;ii,565181501,928897247,0,4,,;V,794531422,878331575,0,4,,;ii,516834934,575111850,0,4,,;V,998206093,962297632,0,4,,;I,63924238,832356840,0,4,,;vi,913551681,100095136,0,4,,
+M happy
+A Bmaj7,Bsus2,Bmaj7,B6/9,Bmaj7/Eb,Abm7,Ebm7,Bm7
+CASE happy house 124 bpm 8 bars|99999|0
+G genre=house;moods=happy;key=5;scale=dorian;bars=8;colour=521838013;style=motif;preset=pluck;rate=1/8;bpm=124;master=491665577;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=786048823;progSeed=781830100
+P i,189940893,246539274,0,4,,;IV,644888446,731559524,0,4,,;VII,529641512,349873569,0,4,,;i,503794615,390386168,0,4,,;i,793223091,2786351,0,4,,;IV,24694531,809350699,0,4,,;VII,828082560,128387281,0,4,,;iv,413291557,867722556,0,4,,
+C Fm7,i,53.60.63.68,41,0,4;Bb7,IV,53.58.62.68,46,384,4;Ebmaj7,VII,51.58.62.67,39,768,4;Fm7,i,53.60.63.68,41,1152,4;Fm7,i,53.60.63.68,41,1536,4;Bbadd9,IV,50.53.60.70,46,1920,4;Ebmaj9,VII,50.53.63.67,39,2304,4;Bb7,IV,53.58.62.68,46,2688,4
+N i,68747540,139217983,0,4,,;IV,348641131,8659400,0,4,,;VII,433937853,833873589,0,4,,;i,776294278,630418791,0,4,,;i,628775967,115784988,0,4,,;IV,507857939,768293233,0,4,,;i,689273048,346666871,0,4,,;IV,840780499,916382722,0,4,,
+M dreamy
+A Fm7,Fsus2,Fm7,Fm11,Fm7/Ab,Dm7b5,Abmaj7,Fmaj7
+CASE happy house 124 bpm 8 bars|99999|0.5
+G genre=house;moods=happy;key=5;scale=dorian;bars=8;colour=420169007;style=motif;preset=pluck;rate=1/16;bpm=124;master=491665577;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=786048823;progSeed=781830100
+P i,609465516,329355508,0,4,add9,;VII,858778145,600016101,0,2,sus,;i,799799949,3248471,0,2,sus,3rd;iv,162567739,251448381,0,4,sev,;i,502900046,246757389,0,2,tri,;v,370034541,606317860,0,2,sev,;i,696492882,680111653,0,4,add9,;iv,4988668,926740352,0,12,sus,
+C Fm(add9),i,53.56.60.67,41,0,4;Ebsus2,VIIsus,53.58.63,39,384,2;Fsus2,Isus,53.55.60,41,576,2;Bb7,IV,53.56.58.62,46,768,4;Fm/Ab,i,53.56.60,44,1152,2;Cm7,v,55.58.60.63,48,1344,2;Fm(add9),i,53.56.60.67,41,1536,4;Bbsus2,IVsus,58.60.65,46,1920,12
+N i,68747540,139217983,0,4,,;IV,348641131,8659400,0,4,tri,ped;VII,433937853,833873589,0,4,,;i,776294278,630418791,0,4,,;i,628775967,115784988,0,4,,;IV,507857939,768293233,0,4,add9,;i,689273048,346666871,0,4,,;IV,840780499,916382722,0,4,,
+M dreamy
+A Fm(add9),Fsus2,Fm7,Fm11,Fm7/Ab,Dm7b5,Abmaj7,Fmaj7
+CASE happy house 124 bpm 8 bars|99999|1
+G genre=house;moods=happy;key=5;scale=dorian;bars=8;colour=318500000;style=motif;preset=pluck;rate=1/16;bpm=124;master=491665577;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=786048823;progSeed=781830100
+P i,609465516,329355508,0,4,add9,;VII,858778145,600016101,0,2,sus,;i,799799949,3248471,0,2,sus,3rd;iv,162567739,251448381,0,4,sev,;i,502900046,246757389,0,2,tri,;v,370034541,606317860,0,2,sev,;i,696492882,680111653,0,4,add9,;iv,4988668,926740352,0,12,sus,
+C Fm(add9),i,53.56.60.67,41,0,4;Ebsus2,VIIsus,53.58.63,39,384,2;Fsus2,Isus,53.55.60,41,576,2;Bb7,IV,53.56.58.62,46,768,4;Fm/Ab,i,53.56.60,44,1152,2;Cm7,v,55.58.60.63,48,1344,2;Fm(add9),i,53.56.60.67,41,1536,4;Bbsus2,IVsus,58.60.65,46,1920,12
+N iv,726330372,15107230,0,8,tri,ped;i,845457199,570434156,0,4,add9,;iv,518903288,717973381,0,4,sus,;VII,776530854,483525460,0,8,sus,;III,301171402,564167793,0,4,sev,;VII,659474188,852260859,0,4,tri,
+M dreamy
+A Fm(add9),Fsus2,Fm7,Fm11,Fsus2/G,Ddim,Absus2,Fsus2
+CASE |1|0
+G genre=melodic;moods=;key=7;scale=minor;bars=4;colour=525305533;style=broken;preset=keys;rate=1/16;bpm=129;master=489811041;oct=2;reg=0;glide=0;pedal=1;gate=850000000;swing=0;groove=0;arpSeed=518872652;progSeed=588119682
+P i,614010185,127368777,0,4,,;VI,950004915,659132528,0,4,,;VII,305509893,578378737,0,4,,;v,592713568,25897183,0,4,,
+C Gm7,i,55.58.62.65,43,0,4;Ebmaj9/G,VI,51.55.62.65,43,384,4;F7/G,VII,51.57.60.65,43,768,4;Dm7/G,v,50.57.60.65,43,1152,4
+N i,2343547,663171422,0,4,,;i,202162701,542119591,0,4,,;VI,70763869,4537842,0,4,,;VII,920926401,970555641,0,4,,
+M dreamy
+A Gm7,Gsus2,Gm7,Gm11,Gm7/Bb,Ebmaj7,Bbmaj7,Gmaj7
+CASE |1|0.5
+G genre=melodic;moods=;key=7;scale=minor;bars=4;colour=421902766;style=motif;preset=keys;rate=1/16;bpm=129;master=489811041;oct=2;reg=0;glide=0;pedal=1;gate=850000000;swing=0;groove=0;arpSeed=518872652;progSeed=588119682
+P iv,550997171,100877988,0,4,tri,;VI,900354704,306951616,0,4,sus,;III,384398021,39033229,0,4,tri,;i,537240986,490200403,0,2,sev,;iv,879629520,80021136,0,2,ext,
+C Cm,iv,60.63.67,48,0,4;Ebsus2/G,VIsus,58.63.65,43,384,4;Bb/G,III,58.62.65,43,768,4;Gm7,i,58.62.65.67,43,1152,2;Cm11/G,iv,51.58.62.72,43,1344,2
+N i,2343547,663171422,0,4,,;i,202162701,542119591,0,4,tri,;VI,70763869,4537842,0,4,,;VII,920926401,970555641,0,4,add9,
+M sad
+A Cm,Csus2,Cm7,Cm11,Cm7/Eb,Am7b5,Ebmaj7,Cmaj7
+CASE |1|1
+G genre=melodic;moods=;key=7;scale=minor;bars=4;colour=318500000;style=motif;preset=keys;rate=1/16;bpm=129;master=489811041;oct=2;reg=0;glide=0;pedal=1;gate=850000000;swing=0;groove=0;arpSeed=518872652;progSeed=588119682
+P iv,550997171,100877988,0,4,tri,;VI,900354704,306951616,0,4,sus,;III,384398021,39033229,0,4,tri,;i,537240986,490200403,0,2,sev,;iv,879629520,80021136,0,2,ext,
+C Cm,iv,60.63.67,48,0,4;Ebsus2/G,VIsus,58.63.65,43,384,4;Bb/G,III,58.62.65,43,768,4;Gm7,i,58.62.65.67,43,1152,2;Cm11/G,iv,51.58.62.72,43,1344,2
+N i,787474225,463909273,0,4,tri,3rd;III,869441840,608772965,0,4,tri,;VII,101182972,997884814,0,4,tri,;i,904332859,806432611,0,4,sev,
+M sad
+A Cm,Csus2,Cm7,Cm11,Csus2/D,Adim,Ebsus2,Csus2
+CASE |128|0
+G genre=melodic;moods=;key=10;scale=minor;bars=2;colour=574980658;style=motif;preset=pluck;rate=1/16;bpm=128;master=535864199;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=830413345;progSeed=277908885
+P VI,789080470,623097323,0,4,,;III,770466618,928367370,0,4,,
+C Gbmaj9,VI,54.58.65.68,42,0,4;Dbmaj9,III,51.61.65.72,49,384,4
+N i,918817369,764531243,0,4,,;VII,842056121,859712641,0,4,,
+M dreamy
+A Gbmaj9,Gbsus2,Gbmaj7,Gbmaj9,Gbmaj9/Bb,Ebm9,Bbm9,Gm9
+CASE |128|0.5
+G genre=melodic;moods=;key=10;scale=minor;bars=8;colour=446740329;style=motif;preset=pluck;rate=1/16;bpm=128;master=535864199;oct=3;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=830413345;progSeed=277908885
+P i,248177286,476641563,0,8,tri,;iv,432653676,445253551,0,8,ext,;VI,666343055,523645067,0,4,sus,;i,232586307,624015533,0,2,sev,;VII,934083089,777665749,0,2,tri,;iv,35977611,377215049,0,4,tri,;VI,96262836,752466109,0,2,tri,3rd;VII,447683265,845610736,0,2,sev,
+C Bbm,i,58.61.65,46,0,8;Ebm9,iv,51.54.61.65,39,768,8;Gbsus2,VIsus,56.61.66,42,1536,4;Bbm7,i,56.58.61.65,46,1920,2;Ab,VII,56.60.63,44,2112,2;Ebm,iv,58.63.66,39,2304,4;Gb/Bb,VI,58.61.66,46,2688,2;Ab7,VII,56.60.63.66,44,2880,2
+N i,412360231,479778013,0,4,sus,;v,457146643,685603342,0,4,ext,;VI,198317787,765509434,0,8,tri,;i,734836512,668112436,0,2,sus,;VI,115540827,595940630,0,2,tri,;iv,835143941,953752347,0,4,sus,;i,22819248,513284193,0,4,sus,;VII,915606408,231860757,0,4,sus,
+M sad
+A Bbm,Bbsus2,Bbm7,Bbm11,Bbm(add9)/Db,Gbadd9,Dbadd9,Bbadd9
+CASE |128|1
+G genre=melodic;moods=;key=10;scale=minor;bars=8;colour=318500000;style=motif;preset=pluck;rate=1/16;bpm=128;master=535864199;oct=3;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=830413345;progSeed=277908885
+P i,248177286,476641563,0,8,tri,;iv,432653676,445253551,0,8,ext,;VI,666343055,523645067,0,4,sus,;i,232586307,624015533,0,2,sev,;VII,934083089,777665749,0,2,tri,;iv,35977611,377215049,0,4,tri,;VI,96262836,752466109,0,2,tri,3rd;VII,447683265,845610736,0,2,sev,
+C Bbm,i,58.61.65,46,0,8;Ebm9,iv,51.54.61.65,39,768,8;Gbsus2,VIsus,56.61.66,42,1536,4;Bbm7,i,56.58.61.65,46,1920,2;Ab,VII,56.60.63,44,2112,2;Ebm,iv,58.63.66,39,2304,4;Gb/Bb,VI,58.61.66,46,2688,2;Ab7,VII,56.60.63.66,44,2880,2
+N i,412360231,479778013,0,4,sus,;v,457146643,685603342,0,4,ext,;VI,198317787,765509434,0,8,tri,;i,734836512,668112436,0,2,sus,;VI,115540827,595940630,0,2,tri,;iv,835143941,953752347,0,4,sus,;i,22819248,513284193,0,4,sus,;VII,915606408,231860757,0,4,sus,
+M sad
+A Bbm,Bbsus2,Bbm7,Bbm11,Bbm(add9)/Db,Gbadd9,Dbadd9,Bbadd9
+CASE |4242|0
+G genre=melodic;moods=;key=2;scale=minor;bars=4;colour=512961317;style=pedal;preset=bell;rate=1/16;bpm=128;master=546162280;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=298980998;progSeed=547316699
+P VI,281829417,919268379,0,4,,;VII,937946768,809688122,0,4,,;v,340687923,918710108,0,4,,;i,109061658,244515157,0,4,,
+C Bbmaj7,VI,58.62.65.69,46,0,4;C9,VII,52.58.62.72,48,384,4;Am7,v,52.57.60.67,45,768,4;Dm7,i,57.60.62.65,38,1152,4
+N VI,762293350,87871948,0,4,,;VII,400202184,114441385,0,4,,;v,66830938,565181501,0,4,,;i,928897247,794531422,0,4,,
+M dreamy
+A Bbmaj7,Bbsus2,Bbmaj7,Bb6/9,Bbmaj7/D,Gm7,Dm7,Bm7
+CASE |99999|0
+G genre=melodic;moods=;key=5;scale=phrygian;bars=8;colour=592974373;style=motif;preset=pluck;rate=1/16;bpm=129;master=530645967;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=423350642;progSeed=507805004
+P i,283251260,798903759,0,4,,;VI,755109101,785677095,0,4,,;iv,430775891,267549225,0,4,,;VII,285554652,566025024,0,4,,;i,269103811,802155259,0,4,,;iv,818739882,90596720,0,4,,;VI,601273761,428201416,0,4,,;V,586694736,664265304,0,4,,
+C Fm7,i,53.60.63.68,41,0,4;Dbmaj9,VI,53.60.63.73,49,384,4;Bbm7,iv,53.58.61.68,46,768,4;Ebm7,vii,58.61.63.66,39,1152,4;Fm7,i,56.60.63.65,41,1536,4;Bbm9,iv,56.58.61.72,46,1920,4;Dbmaj9,VI,51.53.61.72,49,2304,4;Cm7b5,v°,54.60.63.70,48,2688,4
+N i,68747540,139217983,0,4,,;II,348641131,8659400,0,4,,;i,433937853,833873589,0,4,,;VII,776294278,630418791,0,4,,;i,628775967,115784988,0,4,,;II,507857939,768293233,0,4,,;i,689273048,346666871,0,4,,;i,840780499,916382722,0,4,,
+M sad
+A Fm7,Fsus4,Fm7,Fm7,Fm7/Ab,Dbmaj7,Ab7,Fmaj7
+CASE |99999|0.5
+G genre=melodic;moods=;key=5;scale=phrygian;bars=8;colour=455737186;style=motif;preset=pluck;rate=1/16;bpm=129;master=530645967;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=423350642;progSeed=507805004
+P i,283251260,798903759,0,4,sus,;iv,755109101,785677095,0,4,,;i,430775891,267549225,0,4,,;VII,285554652,566025024,0,4,add9,;i,269103811,802155259,0,4,,;iv,818739882,90596720,0,4,tri,;VI,601273761,428201416,0,4,tri,;V,586694736,664265304,0,4,,
+C Fsus4,Isus,53.58.60,41,0,4;Bbm7,iv,53.56.58.61,46,384,4;Fm7/Ab,i,53.56.60.63,44,768,4;Ebm(add9),vii,53.63.66.70,39,1152,4;Fm,i,56.60.65,41,1536,4;Bbm,iv,58.61.65,46,1920,4;Db,VI,56.61.65,49,2304,4;Cm7b5,v°,58.60.63.66,48,2688,4
+N i,68747540,139217983,0,4,,;II,348641131,8659400,0,4,tri,ped;i,433937853,833873589,0,4,,;VII,776294278,630418791,0,4,,;i,628775967,115784988,0,4,,;II,507857939,768293233,0,4,add9,;i,689273048,346666871,0,4,,;i,840780499,916382722,0,4,,
+M sad
+A Fsus4,Fsus4,Fm7,Fm7,Fm7/Ab,Dbmaj7,Ab7,Fmaj7
+CASE |99999|1
+G genre=melodic;moods=;key=5;scale=phrygian;bars=4;colour=318500000;style=motif;preset=pluck;rate=1/16;bpm=129;master=530645967;oct=3;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=423350642;progSeed=507805004
+P i,769523429,249320736,0,4,add9,;VI,720851723,903019584,0,4,tri,;III,733903107,738068854,0,4,add9,;VII,946467941,383992676,0,2,tri,3rd;i,145735667,802025206,0,2,sus,
+C Fm,i,53.56.60,41,0,4;Db,VI,53.56.61,49,384,4;Abadd9,III,51.56.60.70,44,768,4;Ebm/Gb,vii,54.58.63,42,1152,2;Fsus4,Isus,58.60.65,41,1344,2
+N iv,726330372,15107230,0,8,tri,ped;i,845457199,570434156,0,4,add9,;iv,518903288,717973381,0,4,sus,
+M tense
+A Fm,Fsus4,Fm7,Fm7,Fm7/Ab,Dbmaj7,Ab7,Fmaj7
+CASE euphoric happy progressive 4 bars|1|0
+G genre=progressive;moods=euphoric,happy;key=8;scale=major;bars=4;colour=514734296;style=updown;preset=supersaw;rate=1/16;bpm=132;master=639131357;oct=2;reg=0;glide=0;pedal=0;gate=700000000;swing=0;groove=0;arpSeed=576994582;progSeed=648780823
+P IV,989270384,756881423,0,4,,;V,248232387,32225804,0,4,,;vi,83436568,140784410,0,4,,;I,409764025,490212607,0,4,,
+C Dbmaj9,IV,49.53.60.63,49,0,4;Eb7,V,49.55.58.63,39,384,4;Fm(add9),vi,48.55.65.68,41,768,4;Abmaj7,I,55.60.63.68,44,1152,4
+N vi,2343547,663171422,0,4,,;V,202162701,542119591,0,4,,;IV,70763869,4537842,0,4,,;V,920926401,970555641,0,4,,
+M epic
+A Dbmaj9,Dbsus2,Dbmaj7,Dbmaj9,Dbmaj9/F,Bbm9,Fm9,Dbm9
+CASE euphoric happy progressive 4 bars|1|0.5
+G genre=progressive;moods=euphoric,happy;key=8;scale=major;bars=4;colour=416617148;style=updown;preset=supersaw;rate=1/16;bpm=132;master=639131357;oct=3;reg=0;glide=0;pedal=0;gate=700000000;swing=0;groove=0;arpSeed=576994582;progSeed=648780823
+P IV,989270384,756881423,0,4,tri,;V,248232387,32225804,0,4,,;vi,83436568,140784410,0,4,tri,;IV,409764025,490212607,0,4,tri,
+C Db,IV,61.65.68,49,0,4;Ebadd9,V,53.63.67.70,39,384,4;Fm,vi,60.65.68,41,768,4;Db,IV,61.65.68,49,1152,4
+N vi,2343547,663171422,0,4,,;V,202162701,542119591,0,4,tri,;IV,70763869,4537842,0,4,,;V,920926401,970555641,0,4,add9,
+M happy
+A Db,Dbsus2,Dbmaj7,Dbmaj9,Dbmaj7/F,Bbm7,Fm7,Dbm7
+CASE euphoric happy progressive 4 bars|1|1
+G genre=progressive;moods=euphoric,happy;key=8;scale=major;bars=4;colour=318500000;style=motif;preset=supersaw;rate=1/16;bpm=132;master=639131357;oct=3;reg=0;glide=0;pedal=0;gate=700000000;swing=0;groove=0;arpSeed=576994582;progSeed=648780823
+P I,789906312,640613029,0,4,sev,;vi,403494759,222950405,0,4,sus,;IV,336785790,314743769,0,2,tri,ped;V,706671736,650342888,0,2,tri,;iii,32627332,108177465,0,4,tri,
+C Abmaj7,I,56.60.63.67,44,0,4;Fsus2,VIsus,60.65.67,41,384,4;Db/Ab,IV,61.65.68,44,768,2;Eb,V,58.63.67,39,960,2;Cm,iii,60.63.67,48,1152,4
+N I,787474225,463909273,0,4,tri,3rd;IV,869441840,608772965,0,4,tri,;vi,101182972,997884814,0,4,tri,;I,904332859,806432611,0,4,sev,
+M happy
+A Abmaj7,Absus2,Abmaj7,Abmaj9,Abmaj7/C,Fm7,Cm7,Abm7
+CASE euphoric happy progressive 4 bars|128|0
+G genre=progressive;moods=euphoric,happy;key=7;scale=major;bars=4;colour=529656098;style=motif;preset=pluck;rate=1/8;bpm=129;master=577746148;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=478113166;progSeed=920233119
+P IV,825194376,538163572,0,4,,;V,149870823,125500857,0,4,,;vi,619375486,927365899,0,4,,;I,579520474,710028228,0,4,,
+C Cmaj9,IV,60.64.71.74,48,0,4;D7,V,60.62.66.69,38,384,4;Em7,vi,59.62.64.67,40,768,4;Gmaj7,I,54.59.62.67,43,1152,4
+N IV,918817369,764531243,0,4,,;I,842056121,859712641,0,4,,;vi,558812785,503594695,0,4,,;V,425922150,511116918,0,4,,
+M dreamy
+A Cmaj9,Csus2,Cmaj7,Cmaj9,Cmaj9/E,Am9,Em9,Cm9
+CASE euphoric happy progressive 4 bars|128|0.5
+G genre=progressive;moods=euphoric,happy;key=7;scale=major;bars=4;colour=424078049;style=motif;preset=pluck;rate=1/16;bpm=129;master=577746148;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=478113166;progSeed=920233119
+P I,518489427,410020655,0,4,sev,3rd;V,401430270,588174846,0,4,add9,;IV,345908318,543333163,0,2,sev,;I,394009294,507512204,0,2,tri,;IV,692353124,16800349,0,4,sev,
+C Gmaj7/B,I,55.59.62.66,47,0,4;Dadd9,V,52.62.66.69,38,384,4;Cmaj7,IV,55.60.64.71,48,768,2;G,I,55.59.62,43,960,2;Cmaj7,IV,48.55.59.64,48,1152,4
+N I,412360231,479778013,0,4,sus,;bVII,457146643,685603342,0,4,ext,;IV,198317787,765509434,0,8,tri,
+M happy
+A Gmaj7/B,Gsus2,Gmaj7,Gmaj9,Gmaj7/B,Em7,Bm7,Gm7
+CASE euphoric happy progressive 4 bars|128|1
+G genre=progressive;moods=euphoric,happy;key=7;scale=major;bars=4;colour=318500000;style=motif;preset=pluck;rate=1/16;bpm=129;master=577746148;oct=3;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=478113166;progSeed=920233119
+P I,518489427,410020655,0,4,sev,3rd;V,401430270,588174846,0,4,add9,;IV,345908318,543333163,0,2,sev,;I,394009294,507512204,0,2,tri,;IV,692353124,16800349,0,4,sev,
+C Gmaj7/B,I,55.59.62.66,47,0,4;Dadd9,V,52.62.66.69,38,384,4;Cmaj7,IV,55.60.64.71,48,768,2;G,I,55.59.62,43,960,2;Cmaj7,IV,48.55.59.64,48,1152,4
+N I,412360231,479778013,0,4,sus,;bVII,457146643,685603342,0,4,ext,;IV,198317787,765509434,0,8,tri,
+M happy
+A Gmaj7/B,Gsus2,Gmaj7,Gmaj9,Gsus2/A,Esus2,Bm,Gsus2
+CASE euphoric happy progressive 4 bars|4242|0
+G genre=progressive;moods=euphoric,happy;key=9;scale=minor;bars=4;colour=544590330;style=converge;preset=pluck;rate=1/16;bpm=129;master=565904671;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=143622999;progSeed=262584463
+P i,469624016,597328176,0,4,,;VI,677798180,641378338,0,4,,;III,378590999,889135284,0,4,,;VII,232918901,591480865,0,4,,
+C Am7,i,57.60.64.67,45,0,4;Fmaj7,VI,53.57.60.64,41,384,4;Cmaj7,III,55.60.64.71,48,768,4;G7,VII,55.59.62.65,43,1152,4
+N VI,762293350,87871948,0,4,,;VII,400202184,114441385,0,4,,;v,66830938,565181501,0,4,,;i,928897247,794531422,0,4,,
+M dreamy
+A Am7,Asus2,Am7,Am11,Am7/C,Fmaj7,Cmaj7,Amaj7
+CASE euphoric happy progressive 4 bars|99999|0
+G genre=progressive;moods=euphoric,happy;key=6;scale=minor;bars=4;colour=498615943;style=motif;preset=pluck;rate=1/16;bpm=130;master=640167617;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=485685744;progSeed=133310573
+P VI,655529940,169448794,0,4,,;iv,523437853,491703565,0,4,,;i,241708854,789821022,0,4,,;VII,330372179,183702983,0,4,,
+C Dmaj7,VI,50.57.61.66,38,0,4;Bm7,iv,50.57.59.66,47,384,4;F#m7,i,52.57.61.66,42,768,4;E7,VII,52.59.62.68,40,1152,4
+N i,215195612,68747540,0,4,,;VII,139217983,348641131,0,4,,;i,8659400,433937853,0,4,,;VI,833873589,776294278,0,4,,
+M dreamy
+A Dmaj7,Dsus2,Dmaj7,Dmaj9,Dmaj7/F#,Bm7,F#m7,D#m7
+CASE euphoric happy progressive 4 bars|99999|0.5
+G genre=progressive;moods=euphoric,happy;key=6;scale=minor;bars=4;colour=408557971;style=motif;preset=pluck;rate=1/16;bpm=130;master=640167617;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=485685744;progSeed=133310573
+P i,74156007,358995488,0,4,ext,;iv,391425792,233109950,0,4,tri,;VI,963683389,97132992,0,2,sus,3rd;i,344652193,299410271,0,2,tri,;VII,173107743,494969672,0,4,sus,
+C F#m9,i,54.57.64.68,42,0,4;Bm,iv,54.59.62,47,384,4;Dsus2,VIsus,57.62.64,38,768,2;F#m,i,57.61.66,42,960,2;Esus2,VIIsus,59.64.66,40,1152,4
+N i,215195612,68747540,0,4,,;VII,139217983,348641131,0,4,tri,ped;i,8659400,433937853,0,4,,;VI,833873589,776294278,0,4,,
+M sad
+A F#m9,F#sus2,F#m7,F#m11,F#m(add9)/A,Dadd9,Aadd9,F#add9
+CASE euphoric happy progressive 4 bars|99999|1
+G genre=progressive;moods=euphoric,happy;key=6;scale=minor;bars=4;colour=318500000;style=motif;preset=pluck;rate=1/16;bpm=130;master=640167617;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=485685744;progSeed=133310573
+P i,74156007,358995488,0,4,ext,;iv,391425792,233109950,0,4,tri,;VI,963683389,97132992,0,2,sus,3rd;i,344652193,299410271,0,2,tri,;VII,173107743,494969672,0,4,sus,
+C F#m9,i,54.57.64.68,42,0,4;Bm,iv,54.59.62,47,384,4;Dsus2,VIsus,57.62.64,38,768,2;F#m,i,57.61.66,42,960,2;Esus2,VIIsus,59.64.66,40,1152,4
+N iv,726330372,15107230,0,8,tri,ped;i,845457199,570434156,0,4,add9,;iv,518903288,717973381,0,4,sus,
+M sad
+A F#m9,F#sus2,F#m7,F#m11,F#m(add9)/A,Dadd9,Aadd9,F#add9
+CASE bittersweet euphoric progressive 4 bars|1|0
+G genre=progressive;moods=euphoric,sad;key=5;scale=minor;bars=4;colour=690231148;style=converge;preset=supersaw;rate=1/16;bpm=126;master=526748642;oct=2;reg=0;glide=0;pedal=0;gate=700000000;swing=0;groove=0;arpSeed=103448288;progSeed=428554121
+P i,757003564,622719004,0,4,,;v,649106379,844997658,0,4,,;VI,79956472,939161169,0,4,,;iv,7256461,174446199,0,4,,
+C Fm9,i,53.56.63.67,41,0,4;Cm7,v,58.60.63.67,48,384,4;Dbmaj7,VI,56.61.65.72,49,768,4;Bbm7,iv,56.61.65.70,46,1152,4
+N i,2343547,663171422,0,4,,;VII,202162701,542119591,0,4,,;v,70763869,4537842,0,4,,;VI,920926401,970555641,0,4,,
+M sad
+A Fm9,Fsus2,Fm7,Fm11,Fm9/Ab,Dbmaj9,Abmaj9,Fmaj9
+CASE bittersweet euphoric progressive 4 bars|1|0.5
+G genre=progressive;moods=euphoric,sad;key=5;scale=minor;bars=4;colour=504365574;style=motif;preset=supersaw;rate=1/16;bpm=126;master=526748642;oct=2;reg=0;glide=0;pedal=0;gate=700000000;swing=0;groove=0;arpSeed=103448288;progSeed=428554121
+P i,934969410,359399928,0,8,tri,;VI,961649752,779100498,0,2,ext,;i,645446896,874101166,0,2,add9,;iv,190463344,781326041,0,4,tri,ped
+C Fm,i,53.56.60,41,0,8;Dbmaj9,VI,49.53.60.63,49,768,2;Fm(add9),i,53.56.60.67,41,960,2;Bbm/F,iv,58.61.65,41,1152,4
+N i,2343547,663171422,0,4,,;VII,202162701,542119591,0,4,tri,;v,70763869,4537842,0,4,,;VI,920926401,970555641,0,4,add9,
+M sad
+A Fm,Fsus2,Fm7,Fm11,Fm9/Ab,Dbmaj9,Abmaj9,Fmaj9
+CASE bittersweet euphoric progressive 4 bars|1|1
+G genre=progressive;moods=euphoric,sad;key=5;scale=minor;bars=4;colour=318500000;style=motif;preset=supersaw;rate=1/16;bpm=126;master=526748642;oct=2;reg=0;glide=0;pedal=0;gate=700000000;swing=0;groove=0;arpSeed=103448288;progSeed=428554121
+P i,934969410,359399928,0,8,tri,;VI,961649752,779100498,0,2,ext,;i,645446896,874101166,0,2,add9,;iv,190463344,781326041,0,4,tri,ped
+C Fm,i,53.56.60,41,0,8;Dbmaj9,VI,49.53.60.63,49,768,2;Fm(add9),i,53.56.60.67,41,960,2;Bbm/F,iv,58.61.65,41,1152,4
+N i,787474225,463909273,0,4,tri,3rd;III,869441840,608772965,0,4,tri,;VII,101182972,997884814,0,4,tri,;i,904332859,806432611,0,4,sev,
+M sad
+A Fm,Fsus2,Fm7,Fm11,Fm7/Ab,Dbmaj7,Abmaj7,Fmaj7
+CASE bittersweet euphoric progressive 4 bars|128|0
+G genre=progressive;moods=euphoric,sad;key=9;scale=major;bars=4;colour=693971176;style=pedal;preset=bell;rate=1/8;bpm=124;master=577362383;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=685791086;progSeed=465977879
+P vi,651321760,466235084,0,4,,;IV,807898557,326877657,0,4,,;I,932102339,446836697,0,4,,;V,934410186,330617578,0,4,,
+C F#m9,vi,54.57.64.68,42,0,4;Dmaj9,IV,54.61.64.74,38,384,4;Amaj9,I,57.61.68.71,45,768,4;E9,V,54.64.68.74,40,1152,4
+N IV,918817369,764531243,0,4,,;I,842056121,859712641,0,4,,;vi,558812785,503594695,0,4,,;V,425922150,511116918,0,4,,
+M dreamy
+A F#m9,F#sus2,F#m7,F#m11,F#m9/A,Dmaj9,Amaj9,Fmaj9
+CASE bittersweet euphoric progressive 4 bars|128|0.5
+G genre=progressive;moods=euphoric,sad;key=9;scale=major;bars=4;colour=506235588;style=pedal;preset=bell;rate=1/8;bpm=124;master=577362383;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=685791086;progSeed=465977879
+P vi,651321760,466235084,0,4,,;IV,807898557,326877657,0,4,tri,;I,932102339,446836697,0,4,,;V,934410186,330617578,0,4,,
+C F#m7,vi,54.61.64.69,42,0,4;D,IV,57.62.66,38,384,4;Amaj9,I,57.61.68.71,45,768,4;E9,V,54.64.68.74,40,1152,4
+N I,412360231,479778013,0,4,sus,;bVII,457146643,685603342,0,4,ext,;IV,198317787,765509434,0,8,tri,
+M dreamy
+A F#m7,F#sus2,F#m7,F#m11,F#m7/A,Dmaj7,Amaj7,Fmaj7
+CASE bittersweet euphoric progressive 4 bars|128|1
+G genre=progressive;moods=euphoric,sad;key=9;scale=major;bars=4;colour=318500000;style=motif;preset=bell;rate=1/8;bpm=124;master=577362383;oct=3;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=685791086;progSeed=465977879
+P vi,622609666,60854201,0,8,tri,;I,564545553,568091871,0,4,sev,;IV,573171535,326938063,0,4,tri,
+C F#m,vi,54.57.61,42,0,8;Amaj7,I,52.57.61.68,45,768,4;D,IV,57.62.66,38,1152,4
+N I,412360231,479778013,0,4,sus,;bVII,457146643,685603342,0,4,ext,;IV,198317787,765509434,0,8,tri,
+M happy
+A F#m,F#sus2,F#m7,F#m11,F#sus2/G#,Dsus2,Asus2,Fsus2
+CASE bittersweet euphoric progressive 4 bars|4242|0
+G genre=progressive;moods=euphoric,sad;key=7;scale=lydian;bars=4;colour=590101585;style=motif;preset=bell;rate=1/16;bpm=122;master=559776745;oct=2;reg=0;glide=0;pedal=1;gate=850000000;swing=0;groove=0;arpSeed=459302669;progSeed=370757812
+P vi,544246788,164782252,0,4,,;IV,475045846,719179696,0,4,,;I,301775244,881491489,0,4,,;V,315634071,144139701,0,4,,
+C Em7,vi,52.59.62.67,40,0,4;C#m7b5/G,iv°,52.59.61.67,43,384,4;Gmaj7,I,54.59.62.67,43,768,4;Dmaj7/F#,V,50.57.61.66,42,1152,4
+N vi,762293350,87871948,0,4,,;II,400202184,114441385,0,4,,;I,66830938,565181501,0,4,,;I,928897247,794531422,0,4,,
+M dreamy
+A Em7,Esus2,Em7,Em11,Em7/G,C#m7b5,Gmaj7,D#maj7
+CASE bittersweet euphoric progressive 4 bars|99999|0
+G genre=progressive;moods=euphoric,sad;key=9;scale=minor;bars=4;colour=674349903;style=broken;preset=pluck;rate=1/16;bpm=126;master=545687381;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=372708461;progSeed=719187563
+P VI,741338440,383913859,0,4,,;VII,134358013,327583220,0,4,,;v,185831123,715647386,0,4,,;i,601329823,438334103,0,4,,
+C Fmaj9,VI,53.57.64.67,41,0,4;G7,VII,53.59.62.67,43,384,4;Em7,v,52.59.62.67,40,768,4;Am9,i,57.60.67.71,45,1152,4
+N i,215195612,68747540,0,4,,;III,139217983,348641131,0,4,,;iv,8659400,433937853,0,4,,;VI,833873589,776294278,0,4,,
+M dreamy
+A Fmaj9,Fsus2,Fmaj7,Fmaj9,Fmaj9/A,Dm9,Am9,F#m9
+CASE bittersweet euphoric progressive 4 bars|99999|0.5
+G genre=progressive;moods=euphoric,sad;key=9;scale=minor;bars=4;colour=496424952;style=motif;preset=pluck;rate=1/16;bpm=126;master=545687381;oct=3;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=372708461;progSeed=719187563
+P VI,741338440,383913859,0,4,,3rd;VII,134358013,327583220,0,4,tri,;v,185831123,715647386,0,4,tri,;i,601329823,438334103,0,4,,
+C Fmaj7/A,VI,53.60.64.69,45,0,4;G,VII,59.62.67,43,384,4;Em,v,59.64.67,40,768,4;Am7,i,57.60.64.67,45,1152,4
+N i,215195612,68747540,0,4,,;III,139217983,348641131,0,4,tri,ped;iv,8659400,433937853,0,4,,;VI,833873589,776294278,0,4,,
+M dreamy
+A Fmaj7/A,Fsus2,Fmaj7,Fmaj9,Fmaj7/A,Dm7,Am7,F#m7
+CASE bittersweet euphoric progressive 4 bars|99999|1
+G genre=progressive;moods=euphoric,sad;key=9;scale=minor;bars=4;colour=318500000;style=motif;preset=pluck;rate=1/16;bpm=126;master=545687381;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=372708461;progSeed=719187563
+P i,155740175,920563010,0,8,sev,ped;VI,803365111,144387776,0,8,tri,
+C Am7,i,57.60.64.67,45,0,8;F,VI,57.60.65,41,768,8
+N iv,726330372,15107230,0,8,tri,ped;i,845457199,570434156,0,4,add9,;iv,518903288,717973381,0,4,sus,
+M sad
+A Am7,Asus2,Am7,Am11,Am(add9)/C,Fadd9,Cadd9,Aadd9
+CASE dark hypnotic progressive|1|0
+G genre=progressive;moods=dark;key=5;scale=dorian;bars=2;colour=332553223;style=motif;preset=pluck;rate=1/16;bpm=126;master=452584225;oct=2;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=178653360;progSeed=420359259
+P i,68018993,184464592,0,4,,;IV,585129875,131884852,0,4,,
+C Fm(add9),i,53.56.60.67,41,0,4;Bbsus2/F,IVsus,58.60.65,41,384,4
+N i,2343547,663171422,0,4,,;v,202162701,542119591,0,4,,
+M sad
+A Fm(add9),Fsus2,Fm7,Fm11,Fm(add9)/Ab,Ddim,Abadd9,Fadd9
+CASE dark hypnotic progressive|1|0.5
+G genre=progressive;moods=dark;key=5;scale=dorian;bars=8;colour=325526611;style=motif;preset=pluck;rate=1/16;bpm=126;master=452584225;oct=2;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=178653360;progSeed=420359259
+P i,946197577,919643453,0,2,tri,;iv,538006061,319015021,0,2,sus,3rd;v,569660771,409875999,0,8,add9,;iv,757611790,834478041,0,4,sus,;i,184313840,44892157,0,8,tri,;VII,471663392,909008024,0,2,sus,;III,53154558,613319760,0,2,sev,3rd;VII,407133746,462876685,0,4,sev,
+C Fm,i,53.56.60,41,0,2;Bbsus2/F,IVsus,53.58.60,41,192,2;Cm(add9)/F,v,50.60.63.67,41,384,8;Bbsus2/F,IVsus,58.60.65,41,1152,4;Fm,i,56.60.65,41,1536,8;Ebsus2/F,VIIsus,58.63.65,41,2304,2;Abmaj7/C,III,56.60.63.67,48,2496,2;Ebmaj7/F,VII,51.58.62.67,41,2688,4
+N i,663171422,202162701,0,4,,;v,542119591,70763869,0,4,tri,;IV,4537842,920926401,0,4,,;i,970555641,210052858,0,4,add9,;i,933996392,382739426,0,4,six,;IV,22351829,51540492,0,4,sev,;i,452995874,784234106,0,4,,ped;VII,631273614,481046940,0,4,,
+M sad
+A Fm,Fsus2,Fm7,Fm11,Fm7/Ab,Dm7b5,Abmaj7,Fmaj7
+CASE dark hypnotic progressive|1|1
+G genre=progressive;moods=dark;key=5;scale=dorian;bars=8;colour=318500000;style=motif;preset=pluck;rate=1/16;bpm=126;master=452584225;oct=2;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=178653360;progSeed=420359259
+P i,946197577,919643453,0,2,tri,;iv,538006061,319015021,0,2,sus,3rd;v,569660771,409875999,0,8,add9,;iv,757611790,834478041,0,4,sus,;i,184313840,44892157,0,8,tri,;VII,471663392,909008024,0,2,sus,;III,53154558,613319760,0,2,sev,3rd;VII,407133746,462876685,0,4,sev,
+C Fm,i,53.56.60,41,0,2;Bbsus2/F,IVsus,53.58.60,41,192,2;Cm(add9)/F,v,50.60.63.67,41,384,8;Bbsus2/F,IVsus,58.60.65,41,1152,4;Fm,i,56.60.65,41,1536,8;Ebsus2/F,VIIsus,58.63.65,41,2304,2;Abmaj7/C,III,56.60.63.67,48,2496,2;Ebmaj7/F,VII,51.58.62.67,41,2688,4
+N i,787474225,463909273,0,4,tri,3rd;III,869441840,608772965,0,4,tri,;VII,101182972,997884814,0,4,tri,;i,904332859,806432611,0,8,sev,;i,281427440,320180324,0,2,add9,;iv,388702890,802618289,0,2,tri,ped;i,411213159,332205050,0,8,sus,
+M sad
+A Fm,Fsus2,Fm7,Fm11,Fm7/Ab,Dm7b5,Abmaj7,Fmaj7
+CASE dark hypnotic progressive|128|0
+G genre=progressive;moods=dark;key=5;scale=phrygian;bars=2;colour=371739532;style=motif;preset=pluck;rate=1/16;bpm=126;master=543000210;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=688321314;progSeed=178357694
+P i,151754104,458238838,0,4,,;III,783240979,639298991,0,4,,
+C Fm,i,53.56.60,41,0,4;Ab7,III,54.56.60.63,44,384,4
+N i,918817369,764531243,0,4,,;II,842056121,859712641,0,4,,
+M tense
+A Fm,Fsus4,Fm7,Fm7,Fm/Ab,Dbadd9,Abadd9,Fadd9
+CASE dark hypnotic progressive|128|0.5
+G genre=progressive;moods=dark;key=5;scale=phrygian;bars=4;colour=345119766;style=motif;preset=pluck;rate=1/16;bpm=126;master=543000210;oct=3;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=688321314;progSeed=178357694
+P VI,298507539,794768862,0,2,sus,;VII,528707905,826112214,0,2,ext,;i,401159923,280388204,0,8,ext,;VI,29413456,563684229,0,4,sus,
+C Dbsus2,VIsus,61.63.68,49,0,2;Ebm11,vii,53.63.66.73,39,192,2;Fm7,i,53.60.63.68,41,384,8;Dbsus2,VIsus,61.63.68,49,1152,4
+N i,412360231,479778013,0,4,sus,;VII,685603342,952537889,0,4,tri,;i,765509434,109849004,0,4,sev,;iv,668112436,572978196,0,4,add9,
+M sad
+A Dbsus2,Dbsus2,Dbmaj7,Db6/9,Dbadd9/F,Bbm(add9),Fm,Dm(add9)
+CASE dark hypnotic progressive|128|1
+G genre=progressive;moods=dark;key=5;scale=phrygian;bars=4;colour=318500000;style=motif;preset=pluck;rate=1/16;bpm=126;master=543000210;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=688321314;progSeed=178357694
+P VI,298507539,794768862,0,2,sus,;VII,528707905,826112214,0,2,ext,;i,401159923,280388204,0,8,ext,;VI,29413456,563684229,0,4,sus,
+C Dbsus2,VIsus,61.63.68,49,0,2;Ebm11,vii,53.63.66.73,39,192,2;Fm7,i,53.60.63.68,41,384,8;Dbsus2,VIsus,61.63.68,49,1152,4
+N i,412360231,479778013,0,4,sus,;VII,685603342,952537889,0,4,tri,;i,765509434,109849004,0,4,sev,;iv,668112436,572978196,0,4,add9,
+M sad
+A Dbsus2,Dbsus2,Dbmaj7,Db6/9,Dbadd9/F,Bbm(add9),Fm,Dm(add9)
+CASE dark hypnotic progressive|4242|0
+G genre=progressive;moods=dark;key=10;scale=minor;bars=8;colour=322364833;style=motif;preset=pluck;rate=1/16;bpm=126;master=522212486;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=894480202;progSeed=998666384
+P VI,988844302,709393557,0,4,,;III,636256487,902274716,0,4,,;VII,173291766,519588908,0,4,,;i,807441375,176261897,0,4,,;VI,81886544,285349542,0,4,,;III,436822398,241782487,0,4,,;VII,990704060,829039756,0,4,,;VII,700408497,572283181,0,4,,
+C Gbmaj7,VI,54.61.65.70,42,0,4;Dbsus2,IIIsus,61.63.68,49,384,4;Abadd9,VII,56.60.63.70,44,768,4;Bbm7,i,56.61.65.70,46,1152,4;Gbadd9,VI,56.66.70.73,42,1536,4;Dbsus2,IIIsus,61.63.68,49,1920,4;Ab7,VII,60.63.66.68,44,2304,4;Ab7,VII,60.63.66.68,44,2688,4
+N VI,87871948,400202184,0,4,,;VII,114441385,66830938,0,4,,;v,565181501,928897247,0,4,,;i,794531422,878331575,0,4,,;i,516834934,575111850,0,4,,;bII,998206093,962297632,0,4,,;i,63924238,832356840,0,4,,;VII,913551681,100095136,0,4,,
+M dreamy
+A Gbmaj7,Gbsus2,Gbmaj7,Gbmaj9,Gbmaj7/Bb,Ebm7,Bbm7,Gm7
+CASE dark hypnotic progressive|99999|0
+G genre=progressive;moods=dark;key=9;scale=phrygian;bars=4;colour=380698146;style=motif;preset=acid;rate=1/16;bpm=127;master=478537099;oct=2;reg=0;glide=1;pedal=0;gate=600000000;swing=0;groove=0;arpSeed=348500067;progSeed=897497438
+P i,625841028,666520147,0,4,,;II,483810222,232336070,0,4,,;VII,207404983,896359799,0,4,,;i,199192435,674580659,0,4,,
+C Am7,i,57.60.64.67,45,0,4;Bbmaj7,II,58.62.65.69,46,384,4;Gm(add9),vii,55.58.62.69,43,768,4;Am,i,60.64.69,45,1152,4
+N i,215195612,68747540,0,4,,;II,139217983,348641131,0,4,,;i,8659400,433937853,0,4,,;VII,833873589,776294278,0,4,,
+M sad
+A Am7,Asus4,Am7,Am7,Am7/C,Fmaj7,C7,Amaj7
+CASE dark hypnotic progressive|99999|0.5
+G genre=progressive;moods=dark;key=9;scale=phrygian;bars=4;colour=349599073;style=motif;preset=acid;rate=1/16;bpm=127;master=478537099;oct=2;reg=0;glide=1;pedal=0;gate=600000000;swing=0;groove=0;arpSeed=348500067;progSeed=897497438
+P i,625841028,666520147,0,4,add9,;II,483810222,232336070,0,4,tri,;VII,207404983,896359799,0,4,sus,;i,199192435,674580659,0,4,sev,
+C Am,i,57.60.64,45,0,4;Bb,II,58.62.65,46,384,4;Gsus2,VIIsus,57.62.67,43,768,4;Am7,i,57.60.64.67,45,1152,4
+N i,215195612,68747540,0,4,,;II,139217983,348641131,0,4,tri,ped;i,8659400,433937853,0,4,,;VII,833873589,776294278,0,4,,
+M sad
+A Am,Asus4,Am7,Am7,Am7/C,Fmaj7,C7,Amaj7
+CASE dark hypnotic progressive|99999|1
+G genre=progressive;moods=dark;key=9;scale=phrygian;bars=4;colour=318500000;style=motif;preset=acid;rate=1/16;bpm=127;master=478537099;oct=3;reg=0;glide=1;pedal=0;gate=600000000;swing=0;groove=0;arpSeed=348500067;progSeed=897497438
+P i,286588437,655463533,0,4,tri,;VI,132416425,409643167,0,4,tri,;VII,847699202,487514180,0,4,add9,;VI,532053766,576573097,0,4,ext,
+C Am,i,57.60.64,45,0,4;F,VI,57.60.65,41,384,4;Gm(add9),vii,55.58.62.69,43,768,4;Fmaj9,VI,52.55.65.69,41,1152,4
+N iv,726330372,15107230,0,8,tri,ped;i,845457199,570434156,0,4,add9,;iv,518903288,717973381,0,4,sus,
+M sad
+A Am,Asus4,Am7,Am7,Am/C,Fadd9,Cadd9,Aadd9
+CASE tense cinematic triplet|1|0
+G genre=cinematic;moods=tense;key=8;scale=lydian;bars=4;colour=479873352;style=motif;preset=pluck;rate=1/16T;bpm=95;master=593762398;oct=3;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=835814268;progSeed=76669898
+P I,639350530,918724106,0,4,,;II,69256081,524578807,0,4,,;vi,863291252,877391476,0,4,,;I,46602652,838436212,0,4,,
+C Abmaj7,I,56.60.63.67,44,0,4;Bbadd9,II,58.62.65.72,46,384,4;Fm7,vi,60.63.65.68,41,768,4;Abadd9,I,56.60.63.70,44,1152,4
+N I,2343547,663171422,0,4,,;II,202162701,542119591,0,4,,;I,70763869,4537842,0,4,,;II,920926401,970555641,0,4,,
+M happy
+A Abmaj7,Absus2,Abmaj7,Abmaj9,Abmaj7/C,Fm7,Cm7,Abm7
+CASE tense cinematic triplet|1|0.5
+G genre=cinematic;moods=tense;key=8;scale=lydian;bars=8;colour=399186676;style=motif;preset=pluck;rate=1/16T;bpm=95;master=593762398;oct=3;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=835814268;progSeed=76669898
+P vi,986607150,356603291,0,8,sus,;V,722397883,324726868,0,2,sev,3rd;vi,114775922,334283388,0,2,tri,;ii,541303250,29376859,0,4,ext,;I,145886810,211375283,0,2,sev,;vi,313852323,758740227,0,2,tri,;ii,221026625,593262739,0,4,tri,;V,910574102,794662396,0,8,sev,ped
+C Fsus2,VIsus,53.55.60,41,0,8;Ebmaj7/G,V,51.55.58.62,43,768,2;Fm,vi,53.56.60,41,960,2;Bb9,II,50.56.60.70,46,1152,4;Abmaj7,I,51.56.60.67,44,1536,2;Fm,vi,56.60.65,41,1728,2;Bb,II,58.62.65,46,1920,4;Ebmaj7,V,51.58.62.67,39,2304,8
+N I,663171422,202162701,0,4,,;II,542119591,70763869,0,4,tri,;I,4537842,920926401,0,4,,;II,970555641,210052858,0,4,add9,;I,933996392,382739426,0,4,six,;II,22351829,51540492,0,4,sev,;I,452995874,784234106,0,4,,ped;V,631273614,481046940,0,4,tri,
+M happy
+A Fsus2,Fsus2,Fm7,Fm11,Fm7/Ab,Dm7b5,Abmaj7,Emaj7
+CASE tense cinematic triplet|1|1
+G genre=cinematic;moods=tense;key=8;scale=lydian;bars=8;colour=318500000;style=motif;preset=pluck;rate=1/16T;bpm=95;master=593762398;oct=3;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=835814268;progSeed=76669898
+P vi,986607150,356603291,0,8,sus,;V,722397883,324726868,0,2,sev,3rd;vi,114775922,334283388,0,2,tri,;ii,541303250,29376859,0,4,ext,;I,145886810,211375283,0,2,sev,;vi,313852323,758740227,0,2,tri,;ii,221026625,593262739,0,4,tri,;V,910574102,794662396,0,8,sev,ped
+C Fsus2,VIsus,53.55.60,41,0,8;Ebmaj7/G,V,51.55.58.62,43,768,2;Fm,vi,53.56.60,41,960,2;Bb9,II,50.56.60.70,46,1152,4;Abmaj7,I,51.56.60.67,44,1536,2;Fm,vi,56.60.65,41,1728,2;Bb,II,58.62.65,46,1920,4;Ebmaj7,V,51.58.62.67,39,2304,8
+N I,787474225,463909273,0,4,tri,3rd;iii,62027479,677648212,0,4,add9,;ii,314835231,822588791,0,2,ext,;I,837851371,710977579,0,2,tri,ped;V,281427440,320180324,0,2,add9,;vi,802618289,329950639,0,2,tri,3rd;I,146534909,93621785,0,4,sev,;V,823493167,597289017,0,12,sus,
+M happy
+A Fsus2,Fsus2,Fm7,Fm11,Fm7/Ab,Dm7b5,Abmaj7,Emaj7
+CASE tense cinematic triplet|128|0
+G genre=cinematic;moods=tense;key=5;scale=harmonic;bars=4;colour=469399228;style=updown;preset=pluck;rate=1/16T;bpm=95;master=568215264;oct=3;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=12494625;progSeed=626319201
+P i,881010369,841581377,0,4,,;iv,383419787,980925134,0,4,,;i,725086362,785828096,0,4,,;VII,607568758,603427278,0,4,,
+C Fm7,i,53.60.63.68,41,0,4;Bbm7,iv,53.58.61.68,46,384,4;Fm7,i,53.60.63.68,41,768,4;Edim7,vii°,52.58.61.67,40,1152,4
+N i,918817369,764531243,0,4,,;III,842056121,859712641,0,4,,;iv,558812785,503594695,0,4,,;VI,425922150,511116918,0,4,,
+M tense
+A Fm7,Fsus2,Fm7,Fm11,Fm7/Ab,Dbmaj7,Abmaj7#5,Fmaj7
+CASE tense cinematic triplet|128|0.5
+G genre=cinematic;moods=tense;key=5;scale=harmonic;bars=4;colour=393949614;style=motif;preset=pluck;rate=1/16T;bpm=95;master=568215264;oct=3;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=12494625;progSeed=626319201
+P iv,234638896,486642316,0,8,sus,;i,48285567,173530150,0,4,tri,ped;v,86443716,923055413,0,2,tri,;VI,62512456,464904801,0,2,sev,
+C Bbsus2,IVsus,58.60.65,46,0,8;Fm/Ab,i,56.60.65,44,768,4;C,V,55.60.64,48,1152,2;Dbmaj7,VI,49.56.60.65,49,1344,2
+N i,412360231,479778013,0,4,sus,;v,457146643,685603342,0,4,ext,;VI,198317787,765509434,0,8,tri,
+M tense
+A Bbsus2,Bbsus2,Bbm7,Bbm11,Bbm(add9)/Db,Gdim,Db,Bbadd9
+CASE tense cinematic triplet|128|1
+G genre=cinematic;moods=tense;key=5;scale=harmonic;bars=4;colour=318500000;style=motif;preset=pluck;rate=1/16T;bpm=95;master=568215264;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=12494625;progSeed=626319201
+P iv,234638896,486642316,0,8,sus,;i,48285567,173530150,0,4,tri,ped;v,86443716,923055413,0,2,tri,;VI,62512456,464904801,0,2,sev,
+C Bbsus2,IVsus,58.60.65,46,0,8;Fm/Ab,i,56.60.65,44,768,4;C,V,55.60.64,48,1152,2;Dbmaj7,VI,49.56.60.65,49,1344,2
+N i,412360231,479778013,0,4,sus,;v,457146643,685603342,0,4,ext,;VI,198317787,765509434,0,8,tri,
+M tense
+A Bbsus2,Bbsus2,Bbm7,Bbm11,Bbm(add9)/Db,Gdim,Db,Bbadd9
+CASE tense cinematic triplet|4242|0
+G genre=cinematic;moods=tense;key=0;scale=harmonic;bars=4;colour=491265050;style=converge;preset=pluck;rate=1/16T;bpm=95;master=616242451;oct=3;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=674841134;progSeed=197341796
+P VI,901294342,687072707,0,4,,;VII,633495247,160371438,0,4,,;v,180767839,531336813,0,4,,;i,566340944,256367000,0,4,,
+C Abmaj9,VI,56.60.67.70,44,0,4;Bdim7,vii°,59.62.65.68,47,384,4;G7,V,59.62.65.67,43,768,4;Cm7,i,58.60.63.67,48,1152,4
+N i,762293350,87871948,0,4,,;VI,400202184,114441385,0,4,,;III,66830938,565181501,0,4,,;V,928897247,794531422,0,4,,
+M tense
+A Abmaj9,Absus2,Abmaj7,Abmaj9,Abmaj9/C,Fm9,Cm(maj7),Am9
+CASE tense cinematic triplet|99999|0
+G genre=cinematic;moods=tense;key=9;scale=phrygian;bars=8;colour=528538450;style=updown;preset=supersaw;rate=1/16T;bpm=96;master=589863547;oct=3;reg=0;glide=0;pedal=0;gate=700000000;swing=0;groove=0;arpSeed=291740144;progSeed=954757245
+P i,91028688,11185284,0,4,,;II,752772148,780074757,0,4,,;VII,484205661,526473637,0,4,,;i,946865709,847709222,0,4,,;i,317806665,231038708,0,4,,;II,928257156,419761615,0,4,,;VII,678946849,632155024,0,4,,;VI,150281820,351041009,0,4,,
+C Am7,i,57.60.64.67,45,0,4;Bbmaj7,II,58.62.65.69,46,384,4;Gm7,vii,58.62.65.67,43,768,4;Am7,i,57.60.64.67,45,1152,4;Am7,i,57.60.64.67,45,1536,4;Bbmaj9,II,50.57.60.70,46,1920,4;Gm7,vii,53.58.62.67,43,2304,4;Fmaj7,VI,53.60.64.69,41,2688,4
+N i,68747540,139217983,0,4,,;II,348641131,8659400,0,4,,;VII,433937853,833873589,0,4,,;i,776294278,630418791,0,4,,;i,628775967,115784988,0,4,,;II,507857939,768293233,0,4,,;i,689273048,346666871,0,4,,;i,840780499,916382722,0,4,,
+M sad
+A Am7,Asus4,Am7,Am7,Am7/C,Fmaj7,C7,Amaj7
+CASE tense cinematic triplet|99999|0.5
+G genre=cinematic;moods=tense;key=9;scale=phrygian;bars=8;colour=423519225;style=motif;preset=supersaw;rate=1/16T;bpm=96;master=589863547;oct=3;reg=0;glide=0;pedal=0;gate=700000000;swing=0;groove=0;arpSeed=291740144;progSeed=954757245
+P i,91028688,11185284,0,4,sus,;II,752772148,780074757,0,4,tri,;i,484205661,526473637,0,4,,;i,946865709,847709222,0,4,tri,;i,317806665,231038708,0,4,add9,;II,928257156,419761615,0,4,sus,;i,678946849,632155024,0,4,,;VI,150281820,351041009,0,4,,
+C Asus4,Isus,57.62.64,45,0,4;Bb,II,58.62.65,46,384,4;Am7,i,57.60.64.67,45,768,4;Am,i,57.60.64,45,1152,4;Am,i,57.60.64,45,1536,4;Bbsus2,IIsus,58.60.65,46,1920,4;Am7,i,57.60.64.67,45,2304,4;Fadd9,VI,53.57.60.67,41,2688,4
+N i,68747540,139217983,0,4,,;II,348641131,8659400,0,4,tri,ped;VII,433937853,833873589,0,4,,;i,776294278,630418791,0,4,,;i,628775967,115784988,0,4,,;II,507857939,768293233,0,4,add9,;i,689273048,346666871,0,4,,;i,840780499,916382722,0,4,,
+M sad
+A Asus4,Asus4,Am7,Am7,Am/C,Fadd9,Cadd9,Aadd9
+CASE tense cinematic triplet|99999|1
+G genre=cinematic;moods=tense;key=9;scale=phrygian;bars=4;colour=318500000;style=motif;preset=supersaw;rate=1/16T;bpm=96;master=589863547;oct=3;reg=0;glide=0;pedal=0;gate=700000000;swing=0;groove=0;arpSeed=291740144;progSeed=954757245
+P iv,813748616,324470025,0,4,tri,;i,810948299,964639450,0,2,add9,ped;bII,504508082,297356769,0,2,add9,;i,525232350,930012326,0,8,tri,
+C Dm,iv,57.62.65,38,0,4;Am,i,57.60.64,45,384,2;Bbadd9,II,58.62.65.72,46,576,2;Am,i,60.64.69,45,768,8
+N iv,726330372,15107230,0,8,tri,ped;i,845457199,570434156,0,4,add9,;iv,518903288,717973381,0,4,sus,
+M sad
+A Dm,Dsus2,Dm7,Dm11,Dm7/F,Bbmaj7,Fmaj7,Dmaj7
+CASE hypnotic sparse bell in A minor|1|0
+G genre=progressive;moods=;key=9;scale=minor;bars=8;colour=545903726;style=motif;preset=bell;rate=1/16;bpm=127;master=200000000;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=700348491;progSeed=121694363
+P i,655650353,482117947,0,4,,;i,829196629,9059063,0,4,,;III,986444806,432524,0,4,,;III,889112915,812224555,0,4,,;VII,111468231,500719282,0,4,,;VII,741459946,858533927,0,4,,;VI,911465001,432259547,0,4,,;VI,793239468,723443413,0,4,,
+C Am7,i,57.60.64.67,45,0,4;Am9,i,57.60.67.71,45,384,4;Cmaj9,III,60.64.71.74,48,768,4;Cmaj9,III,60.64.71.74,48,1152,4;G7,VII,59.62.65.67,43,1536,4;G9,VII,55.59.65.69,43,1920,4;Fmaj9,VI,52.55.65.69,41,2304,4;Fmaj9,VI,52.55.65.69,41,2688,4
+N i,663171422,202162701,0,4,,;VII,542119591,70763869,0,4,,;v,4537842,920926401,0,4,,;VI,970555641,210052858,0,4,,;i,933996392,382739426,0,4,,;VI,22351829,51540492,0,4,,;III,452995874,784234106,0,4,,;VII,631273614,481046940,0,4,,
+M dreamy
+A Am7,Asus2,Am7,Am11,Am7/C,Fmaj7,Cmaj7,Amaj7
+CASE hypnotic sparse bell in A minor|1|0.5
+G genre=progressive;moods=;key=9;scale=minor;bars=4;colour=432201863;style=motif;preset=bell;rate=1/16;bpm=127;master=200000000;oct=3;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=700348491;progSeed=121694363
+P iv,571856972,463518998,0,4,sus,ped;i,154697264,393823549,0,2,sev,ped;iv,166701627,751707390,0,2,tri,;i,904360572,324335944,0,4,sev,3rd;VI,378178529,108282820,0,2,tri,;III,15650715,603797711,0,2,sus,
+C Dsus2,IVsus,57.62.64,38,0,4;Am7,i,57.60.64.67,45,384,2;Dm,iv,57.62.65,38,576,2;Am7/C,i,57.60.64.67,48,768,4;F,VI,57.60.65,41,1152,2;Csus2,IIIsus,60.62.67,48,1344,2
+N i,2343547,663171422,0,4,,;VII,202162701,542119591,0,4,tri,;v,70763869,4537842,0,4,,;VI,920926401,970555641,0,4,add9,
+M sad
+A Dsus2,Dsus2,Dm7,Dm11,Dm7/F,Bm7b5,Fmaj7,Dmaj7
+CASE hypnotic sparse bell in A minor|1|1
+G genre=progressive;moods=;key=9;scale=minor;bars=4;colour=318500000;style=motif;preset=bell;rate=1/16;bpm=127;master=200000000;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=700348491;progSeed=121694363
+P iv,571856972,463518998,0,4,sus,ped;i,154697264,393823549,0,2,sev,ped;iv,166701627,751707390,0,2,tri,;i,904360572,324335944,0,4,sev,3rd;VI,378178529,108282820,0,2,tri,;III,15650715,603797711,0,2,sus,
+C Dsus2,IVsus,57.62.64,38,0,4;Am7,i,57.60.64.67,45,384,2;Dm,iv,57.62.65,38,576,2;Am7/C,i,57.60.64.67,48,768,4;F,VI,57.60.65,41,1152,2;Csus2,IIIsus,60.62.67,48,1344,2
+N i,787474225,463909273,0,4,tri,3rd;III,869441840,608772965,0,4,tri,;VII,101182972,997884814,0,4,tri,;i,904332859,806432611,0,4,sev,
+M sad
+A Dsus2,Dsus2,Dm7,Dm11,Dsus2/E,Bdim,Fsus2,Dsus2
+CASE hypnotic sparse bell in A minor|128|0
+G genre=melodic;moods=;key=9;scale=minor;bars=2;colour=596951104;style=motif;preset=bell;rate=1/16;bpm=129;master=200000000;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=293061209;progSeed=44729122
+P i,622966948,886539665,0,4,,;VI,252007852,149614761,0,4,,
+C Am9,i,57.60.67.71,45,0,4;Fmaj7,VI,53.60.64.69,41,384,4
+N i,918817369,764531243,0,4,,;VII,842056121,859712641,0,4,,
+M dreamy
+A Am9,Asus2,Am7,Am11,Am9/C,Fmaj9,Cmaj9,Amaj9
+CASE hypnotic sparse bell in A minor|128|0.5
+G genre=melodic;moods=;key=9;scale=minor;bars=4;colour=457725552;style=motif;preset=bell;rate=1/16;bpm=129;master=200000000;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=293061209;progSeed=44729122
+P VI,525861032,614843418,0,4,sev,;i,319995528,802480716,0,2,tri,;VI,864883085,943599926,0,2,tri,;VII,697663769,748358247,0,4,sus,;i,865068225,49078222,0,2,sus,3rd;VI,172198191,494593701,0,2,six,
+C Fmaj7,VI,53.60.64.69,41,0,4;Am,i,60.64.69,45,384,2;F,VI,60.65.69,41,576,2;Gsus2,VIIsus,57.62.67,43,768,4;Asus2,Isus,57.59.64,45,1152,2;F6,VI,57.60.62.65,41,1344,2
+N i,412360231,479778013,0,4,sus,;v,457146643,685603342,0,4,ext,;VI,198317787,765509434,0,8,tri,
+M dreamy
+A Fmaj7,Fsus2,Fmaj7,Fmaj9,Fmaj7/A,Dm7,Am7,F#m7
+CASE hypnotic sparse bell in A minor|128|1
+G genre=melodic;moods=;key=9;scale=minor;bars=4;colour=318500000;style=motif;preset=bell;rate=1/16;bpm=129;master=200000000;oct=3;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=293061209;progSeed=44729122
+P VI,525861032,614843418,0,4,sev,;i,319995528,802480716,0,2,tri,;VI,864883085,943599926,0,2,tri,;VII,697663769,748358247,0,4,sus,;i,865068225,49078222,0,2,sus,3rd;VI,172198191,494593701,0,2,six,
+C Fmaj7,VI,53.60.64.69,41,0,4;Am,i,60.64.69,45,384,2;F,VI,60.65.69,41,576,2;Gsus2,VIIsus,57.62.67,43,768,4;Asus2,Isus,57.59.64,45,1152,2;F6,VI,57.60.62.65,41,1344,2
+N i,412360231,479778013,0,4,sus,;v,457146643,685603342,0,4,ext,;VI,198317787,765509434,0,8,tri,
+M dreamy
+A Fmaj7,Fsus2,Fmaj7,Fmaj9,Fsus2/G,Dsus2,Asus2,F#sus2
+CASE hypnotic sparse bell in A minor|4242|0
+G genre=melodic;moods=;key=9;scale=minor;bars=2;colour=611136750;style=motif;preset=bell;rate=1/16;bpm=127;master=200000000;oct=2;reg=0;glide=0;pedal=1;gate=850000000;swing=0;groove=0;arpSeed=455060000;progSeed=484124683
+P iv,61178715,756766903,0,4,,;VI,594153256,92948595,0,4,,
+C Dm7,iv,50.57.60.65,38,0,4;Fmaj9/A,VI,53.57.64.67,45,384,4
+N VI,762293350,87871948,0,4,,;VII,400202184,114441385,0,4,,
+M dreamy
+A Dm7,Dsus2,Dm7,Dm11,Dm7/F,Bm7b5,Fmaj7,Dmaj7
+CASE hypnotic sparse bell in A minor|99999|0
+G genre=melodic;moods=;key=9;scale=minor;bars=4;colour=533677440;style=motif;preset=bell;rate=1/16;bpm=129;master=200000000;oct=2;reg=0;glide=0;pedal=1;gate=850000000;swing=0;groove=0;arpSeed=680184006;progSeed=957933948
+P i,323381593,377734968,0,4,,;VII,378677208,305038959,0,4,,;v,658182123,672859611,0,4,,;VI,789407023,898730002,0,4,,
+C Am7,i,57.60.64.67,45,0,4;G7/A,VII,59.62.65.67,45,384,4;Em7/A,v,59.62.64.67,45,768,4;Fmaj9/A,VI,53.57.64.67,45,1152,4
+N i,215195612,68747540,0,4,,;III,139217983,348641131,0,4,,;iv,8659400,433937853,0,4,,;VI,833873589,776294278,0,4,,
+M dreamy
+A Am7,Asus2,Am7,Am11,Am7/C,Fmaj7,Cmaj7,Amaj7
+CASE hypnotic sparse bell in A minor|99999|0.5
+G genre=melodic;moods=;key=9;scale=minor;bars=4;colour=426088720;style=motif;preset=bell;rate=1/16;bpm=129;master=200000000;oct=3;reg=0;glide=0;pedal=1;gate=850000000;swing=0;groove=0;arpSeed=680184006;progSeed=957933948
+P i,323381593,377734968,0,4,sus,;iv,378677208,305038959,0,4,sus,;v,658182123,672859611,0,4,add9,;iv,789407023,898730002,0,4,sev,
+C Asus2,Isus,57.59.64,45,0,4;Dsus2/A,IVsus,57.62.64,45,384,4;Em/A,v,59.64.67,45,768,4;Dm7/A,iv,57.60.62.65,45,1152,4
+N i,215195612,68747540,0,4,,;III,139217983,348641131,0,4,tri,ped;iv,8659400,433937853,0,4,,;VI,833873589,776294278,0,4,,
+M sad
+A Asus2,Asus2,Am7,Am11,Am(add9)/C,Fadd9,Cadd9,Aadd9
+CASE hypnotic sparse bell in A minor|99999|1
+G genre=melodic;moods=;key=9;scale=minor;bars=4;colour=318500000;style=motif;preset=bell;rate=1/16;bpm=129;master=200000000;oct=2;reg=0;glide=0;pedal=1;gate=850000000;swing=0;groove=0;arpSeed=680184006;progSeed=957933948
+P iv,76848058,726955711,0,4,tri,;i,24014823,779499746,0,4,sus,;iv,404075406,827450457,0,2,tri,;VI,998844890,451782096,0,2,sev,;V,874736073,910438483,0,4,sev,
+C Dm,iv,57.62.65,38,0,4;Asus2,Isus,57.59.64,45,384,4;Dm/A,iv,57.62.65,45,768,2;Fmaj7/A,VI,52.57.60.65,45,960,2;E7,V,52.56.59.62,40,1152,4
+N iv,726330372,15107230,0,8,tri,ped;i,845457199,570434156,0,4,add9,;iv,518903288,717973381,0,4,sus,
+M sad
+A Dm,Dsus2,Dm7,Dm11,Dm(add9)/F,Bdim,Fadd9,Dadd9
+CASE busy wild glide supersaw|1|0
+G genre=progressive;moods=;key=3;scale=minor;bars=4;colour=488176924;style=pedal;preset=supersaw;rate=1/8;bpm=128;master=850000000;oct=2;reg=0;glide=1;pedal=1;gate=700000000;swing=0;groove=700000000;arpSeed=802680476;progSeed=442248133
+P i,150778232,654955213,0,4,,;III,850621162,207872167,0,4,,;iv,16713523,541896960,0,4,,;VI,270367916,177490361,0,4,,
+C Ebm(add9),i,51.54.58.65,39,0,4;Gbmaj7/Eb,III,54.58.61.65,39,384,4;Abm(add9)/Eb,iv,56.59.63.70,39,768,4;Bmaj7/Eb,VI,54.59.63.70,39,1152,4
+N i,2343547,663171422,0,4,,;VII,202162701,542119591,0,4,,;v,70763869,4537842,0,4,,;VI,920926401,970555641,0,4,,
+M dreamy
+A Ebm(add9),Ebsus2,Ebm7,Ebm11,Ebm(add9)/Gb,Badd9,Gbadd9,Ebadd9
+CASE busy wild glide supersaw|1|0.5
+G genre=progressive;moods=;key=3;scale=minor;bars=4;colour=403338462;style=pedal;preset=supersaw;rate=1/16;bpm=128;master=850000000;oct=2;reg=0;glide=1;pedal=1;gate=700000000;swing=0;groove=700000000;arpSeed=802680476;progSeed=442248133
+P i,967030769,774240480,0,2,tri,;v,6266215,849354476,0,2,sev,;VI,331429052,868817839,0,4,ext,;i,501673033,871129512,0,4,sus,3rd;VII,618160083,857475340,0,4,sev,ped
+C Ebm,i,58.63.66,39,0,2;Bbm7/Eb,v,58.61.65.68,39,192,2;Bmaj9/Eb,VI,51.58.61.71,39,384,4;Ebsus2,Isus,53.58.63,39,768,4;Db7/Eb,VII,53.56.59.61,39,1152,4
+N i,2343547,663171422,0,4,,;VII,202162701,542119591,0,4,tri,;v,70763869,4537842,0,4,,;VI,920926401,970555641,0,4,add9,
+M epic
+A Ebm,Ebsus2,Ebm7,Ebm11,Ebm7/Gb,Bmaj7,Gbmaj7,Ebmaj7
+CASE busy wild glide supersaw|1|1
+G genre=progressive;moods=;key=3;scale=minor;bars=4;colour=318500000;style=motif;preset=supersaw;rate=1/16;bpm=128;master=850000000;oct=3;reg=0;glide=1;pedal=1;gate=700000000;swing=0;groove=700000000;arpSeed=802680476;progSeed=442248133
+P i,967030769,774240480,0,2,tri,;v,6266215,849354476,0,2,sev,;VI,331429052,868817839,0,4,ext,;i,501673033,871129512,0,4,sus,3rd;VII,618160083,857475340,0,4,sev,ped
+C Ebm,i,58.63.66,39,0,2;Bbm7/Eb,v,58.61.65.68,39,192,2;Bmaj9/Eb,VI,51.58.61.71,39,384,4;Ebsus2,Isus,53.58.63,39,768,4;Db7/Eb,VII,53.56.59.61,39,1152,4
+N i,787474225,463909273,0,4,tri,3rd;III,869441840,608772965,0,4,tri,;VII,101182972,997884814,0,4,tri,;i,904332859,806432611,0,4,sev,
+M epic
+A Ebm,Ebsus2,Ebm7,Ebm11,Ebm7/Gb,Bmaj7,Gbmaj7,Ebmaj7
+CASE busy wild glide supersaw|128|0
+G genre=melodic;moods=;key=2;scale=minor;bars=4;colour=594176229;style=pedal;preset=supersaw;rate=1/16;bpm=128;master=850000000;oct=2;reg=0;glide=1;pedal=1;gate=700000000;swing=0;groove=700000000;arpSeed=80493349;progSeed=320453964
+P VI,627812453,486987473,0,4,,;VII,622318028,688917465,0,4,,;v,794556752,225874202,0,4,,;i,409560899,799196729,0,4,,
+C Bbmaj9,VI,58.62.69.72,46,0,4;C9/D,VII,52.58.62.72,38,384,4;Am7/D,v,52.57.60.67,38,768,4;Dm7,i,57.60.62.65,38,1152,4
+N i,918817369,764531243,0,4,,;VII,842056121,859712641,0,4,,;v,558812785,503594695,0,4,,;VI,425922150,511116918,0,4,,
+M epic
+A Bbmaj9,Bbsus2,Bbmaj7,Bbmaj9,Bbmaj9/D,Gm9,Dm9,Bm9
+CASE busy wild glide supersaw|128|0.5
+G genre=melodic;moods=;key=2;scale=minor;bars=8;colour=456338114;style=motif;preset=supersaw;rate=1/16;bpm=128;master=850000000;oct=2;reg=0;glide=1;pedal=1;gate=700000000;swing=0;groove=700000000;arpSeed=80493349;progSeed=320453964
+P i,741470200,366150965,0,4,sev,;VI,721090043,616614474,0,4,sus,;VII,710272492,323027629,0,4,tri,;iv,752706713,333458554,0,2,sus,;VII,740955650,909737893,0,2,tri,;VI,685832795,326380246,0,2,tri,ped;iv,50345131,969061795,0,2,sus,;VI,267936597,805363704,0,12,tri,ped
+C Dm7,i,50.57.60.65,38,0,4;Bbsus2/D,VIsus,58.60.65,38,384,4;C/D,VII,60.64.67,38,768,4;Gsus2/D,IVsus,57.62.67,38,1152,2;C/D,VII,60.64.67,38,1344,2;Bb/D,VI,58.62.65,38,1536,2;Gsus2/D,IVsus,57.62.67,38,1728,2;Bb/D,VI,58.62.65,38,1920,12
+N i,412360231,479778013,0,4,sus,;v,457146643,685603342,0,4,ext,;VI,198317787,765509434,0,8,tri,;i,734836512,668112436,0,2,sus,;VI,115540827,595940630,0,2,tri,;iv,835143941,953752347,0,4,sus,;i,22819248,513284193,0,4,sus,;VII,915606408,231860757,0,4,sus,
+M epic
+A Dm7,Dsus2,Dm7,Dm11,Dm7/F,Bbmaj7,Fmaj7,Dmaj7
+CASE busy wild glide supersaw|128|1
+G genre=melodic;moods=;key=2;scale=minor;bars=8;colour=318500000;style=motif;preset=supersaw;rate=1/16;bpm=128;master=850000000;oct=2;reg=0;glide=1;pedal=1;gate=700000000;swing=0;groove=700000000;arpSeed=80493349;progSeed=320453964
+P i,741470200,366150965,0,4,sev,;VI,721090043,616614474,0,4,sus,;VII,710272492,323027629,0,4,tri,;iv,752706713,333458554,0,2,sus,;VII,740955650,909737893,0,2,tri,;VI,685832795,326380246,0,2,tri,ped;iv,50345131,969061795,0,2,sus,;VI,267936597,805363704,0,12,tri,ped
+C Dm7,i,50.57.60.65,38,0,4;Bbsus2/D,VIsus,58.60.65,38,384,4;C/D,VII,60.64.67,38,768,4;Gsus2/D,IVsus,57.62.67,38,1152,2;C/D,VII,60.64.67,38,1344,2;Bb/D,VI,58.62.65,38,1536,2;Gsus2/D,IVsus,57.62.67,38,1728,2;Bb/D,VI,58.62.65,38,1920,12
+N i,412360231,479778013,0,4,sus,;v,457146643,685603342,0,4,ext,;VI,198317787,765509434,0,8,tri,;i,734836512,668112436,0,2,sus,;VI,115540827,595940630,0,2,tri,;iv,835143941,953752347,0,4,sus,;i,22819248,513284193,0,4,sus,;VII,915606408,231860757,0,4,sus,
+M epic
+A Dm7,Dsus2,Dm7,Dm11,Dm7/F,Bbmaj7,Fmaj7,Dmaj7
+CASE busy wild glide supersaw|4242|0
+G genre=progressive;moods=;key=3;scale=minor;bars=8;colour=568119157;style=pedal;preset=supersaw;rate=1/16;bpm=126;master=850000000;oct=2;reg=0;glide=1;pedal=0;gate=700000000;swing=0;groove=700000000;arpSeed=234651169;progSeed=583676916
+P VI,532254230,580340675,0,4,,;iv,222522569,852971209,0,4,,;i,704891072,136357989,0,4,,;VII,580795027,598568565,0,4,,;i,700055587,836504397,0,4,,;VI,383347095,942220253,0,4,,;VII,575138461,774985814,0,4,,;v,413455796,336582722,0,4,,
+C Bmaj7,VI,59.63.66.70,47,0,4;Abm7,iv,59.63.66.68,44,384,4;Ebm9/Gb,i,53.63.66.73,42,768,4;Db7,VII,56.61.65.71,49,1152,4;Ebm9,i,54.61.65.75,39,1536,4;Bmaj7,VI,54.59.63.70,47,1920,4;Db7,VII,53.59.61.68,49,2304,4;Bbm7,v,53.58.61.68,46,2688,4
+N VI,87871948,400202184,0,4,,;VII,114441385,66830938,0,4,,;v,565181501,928897247,0,4,,;i,794531422,878331575,0,4,,;i,516834934,575111850,0,4,,;VII,998206093,962297632,0,4,,;i,63924238,832356840,0,4,,;VI,913551681,100095136,0,4,,
+M epic
+A Bmaj7,Bsus2,Bmaj7,Bmaj9,Bmaj7/Eb,Abm7,Ebm7,Cm7
+CASE busy wild glide supersaw|99999|0
+G genre=melodic;moods=;key=11;scale=minor;bars=4;colour=604936828;style=converge;preset=supersaw;rate=1/16;bpm=127;master=850000000;oct=2;reg=0;glide=1;pedal=0;gate=700000000;swing=0;groove=700000000;arpSeed=611720349;progSeed=910903964
+P i,742637241,144190331,0,4,,;VI,954229087,555206362,0,4,,;VII,189570765,885755129,0,4,,;v,712983656,680596410,0,4,,
+C Bm9,i,59.62.69.73,47,0,4;Gmaj9,VI,55.59.66.69,43,384,4;A7,VII,55.61.64.69,45,768,4;F#m7,v,54.61.64.69,42,1152,4
+N i,215195612,68747540,0,4,,;III,139217983,348641131,0,4,,;iv,8659400,433937853,0,4,,;VI,833873589,776294278,0,4,,
+M epic
+A Bm9,Bsus2,Bm7,Bm11,Bm9/D,Gmaj9,Dmaj9,Bmaj9
+CASE busy wild glide supersaw|99999|0.5
+G genre=melodic;moods=;key=11;scale=minor;bars=8;colour=461718414;style=motif;preset=supersaw;rate=1/16;bpm=127;master=850000000;oct=2;reg=0;glide=1;pedal=0;gate=700000000;swing=0;groove=700000000;arpSeed=611720349;progSeed=910903964
+P i,643244831,360051733,0,2,sus,;iv,305498538,138345462,0,2,tri,;VII,157538680,621571381,0,8,sus,3rd;i,857000003,281200346,0,2,tri,;VI,936629754,504958742,0,2,tri,;VII,260583678,14740503,0,2,tri,;i,68926808,738369408,0,2,tri,;iv,495331604,903261356,0,12,tri,
+C Bsus2,Isus,59.61.66,47,0,2;Em,iv,59.64.67,40,192,2;Asus2,VIIsus,59.64.69,45,384,8;Bm,i,59.62.66,47,1152,2;G,VI,59.62.67,43,1344,2;A,VII,57.61.64,45,1536,2;Bm,i,59.62.66,47,1728,2;Em,iv,59.64.67,40,1920,12
+N i,68747540,139217983,0,4,,;III,348641131,8659400,0,4,tri,ped;iv,433937853,833873589,0,4,,;VI,776294278,630418791,0,4,,;i,628775967,115784988,0,4,,;VI,507857939,768293233,0,4,add9,;iv,689273048,346666871,0,4,,;VII,840780499,916382722,0,4,,
+M epic
+A Bsus2,Bsus2,Bm7,Bm11,Bm7/D,Gmaj7,Dmaj7,Bmaj7
+CASE busy wild glide supersaw|99999|1
+G genre=melodic;moods=;key=11;scale=minor;bars=8;colour=318500000;style=motif;preset=supersaw;rate=1/16;bpm=127;master=850000000;oct=2;reg=0;glide=1;pedal=0;gate=700000000;swing=0;groove=700000000;arpSeed=611720349;progSeed=910903964
+P i,643244831,360051733,0,2,sus,;iv,305498538,138345462,0,2,tri,;VII,157538680,621571381,0,8,sus,3rd;i,857000003,281200346,0,2,tri,;VI,936629754,504958742,0,2,tri,;VII,260583678,14740503,0,2,tri,;i,68926808,738369408,0,2,tri,;iv,495331604,903261356,0,12,tri,
+C Bsus2,Isus,59.61.66,47,0,2;Em,iv,59.64.67,40,192,2;Asus2,VIIsus,59.64.69,45,384,8;Bm,i,59.62.66,47,1152,2;G,VI,59.62.67,43,1344,2;A,VII,57.61.64,45,1536,2;Bm,i,59.62.66,47,1728,2;Em,iv,59.64.67,40,1920,12
+N iv,726330372,15107230,0,8,tri,ped;i,845457199,570434156,0,4,add9,;iv,518903288,717973381,0,4,sus,;VII,776530854,483525460,0,8,sus,;III,301171402,564167793,0,4,sev,;VII,659474188,852260859,0,4,tri,
+M epic
+A Bsus2,Bsus2,Bm7,Bm11,Bsus2/C#,Gsus2,Dsus2,Bsus2
+CASE c#m busy|1|0
+G genre=melodic;moods=;key=1;scale=minor;bars=4;colour=484836915;style=pedal;preset=pluck;rate=1/16;bpm=127;master=850000000;oct=2;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=700000000;arpSeed=382805850;progSeed=483385866
+P i,345217954,550535730,0,4,,;iv,484334774,12425552,0,4,,;v,581633696,734873972,0,4,,;iv,422495881,645371201,0,4,,
+C C#m7,i,61.64.68.71,49,0,4;F#m7/C#,iv,61.64.66.69,49,384,4;G#m7/C#,v,59.63.66.68,49,768,4;F#m7/C#,iv,57.61.64.66,49,1152,4
+N i,2343547,663171422,0,4,,;i,202162701,542119591,0,4,,;VI,70763869,4537842,0,4,,;VII,920926401,970555641,0,4,,
+M sad
+A C#m7,C#sus2,C#m7,C#m11,C#m7/E,Amaj7,Emaj7,C#maj7
+CASE c#m busy|1|0.5
+G genre=melodic;moods=;key=1;scale=minor;bars=8;colour=401668457;style=pedal;preset=pluck;rate=1/16;bpm=127;master=850000000;oct=2;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=700000000;arpSeed=382805850;progSeed=483385866
+P i,284942425,972428535,0,4,sus,;VI,114948350,606993572,0,4,sev,;III,408407700,95459200,0,8,six,;i,583031741,81873592,0,8,sus,;iv,507862629,662195389,0,2,add9,;VI,732129005,152667928,0,2,add9,;i,197043190,630705462,0,2,tri,;VII,454093582,226755097,0,2,tri,
+C C#sus2,Isus,61.63.68,49,0,4;Amaj7/C#,VI,57.61.64.68,49,384,4;E6/C#,III,59.61.64.68,49,768,8;C#sus2,Isus,61.63.68,49,1536,8;F#m(add9)/C#,iv,54.57.61.68,49,2304,2;Aadd9/C#,VI,52.57.61.71,49,2496,2;C#m,i,52.56.61,49,2688,2;B/C#,VII,54.59.63,49,2880,2
+N i,663171422,202162701,0,4,,;i,542119591,70763869,0,4,tri,;VI,4537842,920926401,0,4,,;VII,970555641,210052858,0,4,add9,;i,933996392,382739426,0,4,six,;VI,22351829,51540492,0,4,sev,;III,452995874,784234106,0,4,,ped;VII,631273614,481046940,0,4,tri,
+M dreamy
+A C#sus2,C#sus2,C#m7,C#m11,C#m(add9)/E,Aadd9,Eadd9,C#add9
+CASE c#m busy|1|1
+G genre=melodic;moods=;key=1;scale=minor;bars=8;colour=318500000;style=motif;preset=pluck;rate=1/16;bpm=127;master=850000000;oct=3;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=700000000;arpSeed=382805850;progSeed=483385866
+P i,284942425,972428535,0,4,sus,;VI,114948350,606993572,0,4,sev,;III,408407700,95459200,0,8,six,;i,583031741,81873592,0,8,sus,;iv,507862629,662195389,0,2,add9,;VI,732129005,152667928,0,2,add9,;i,197043190,630705462,0,2,tri,;VII,454093582,226755097,0,2,tri,
+C C#sus2,Isus,61.63.68,49,0,4;Amaj7/C#,VI,57.61.64.68,49,384,4;E6/C#,III,59.61.64.68,49,768,8;C#sus2,Isus,61.63.68,49,1536,8;F#m(add9)/C#,iv,54.57.61.68,49,2304,2;Aadd9/C#,VI,52.57.61.71,49,2496,2;C#m,i,52.56.61,49,2688,2;B/C#,VII,54.59.63,49,2880,2
+N i,787474225,463909273,0,4,tri,3rd;III,869441840,608772965,0,4,tri,;VII,101182972,997884814,0,4,tri,;i,904332859,806432611,0,8,sev,;VI,190805793,65625414,0,2,tri,;VII,570218315,100469848,0,2,add9,;i,100591956,87062003,0,4,sev,;VI,424911418,325868616,0,4,tri,3rd
+M dreamy
+A C#sus2,C#sus2,C#m7,C#m11,C#m(add9)/E,Aadd9,Eadd9,C#add9
+CASE c#m busy|128|0
+G genre=progressive;moods=;key=1;scale=minor;bars=4;colour=485693791;style=converge;preset=pluck;rate=1/16;bpm=125;master=850000000;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=700000000;arpSeed=557970058;progSeed=162806161
+P i,490534592,658057583,0,4,,;VII,214834024,810690005,0,4,,;VI,722321041,389116118,0,4,,;VII,281427386,879187033,0,4,,
+C C#m7,i,61.64.68.71,49,0,4;B7,VII,59.63.66.69,47,384,4;Amaj7,VI,56.61.64.69,45,768,4;B7,VII,54.59.63.69,47,1152,4
+N i,918817369,764531243,0,4,,;VI,842056121,859712641,0,4,,;VII,558812785,503594695,0,4,,;v,425922150,511116918,0,4,,
+M epic
+A C#m7,C#sus2,C#m7,C#m11,C#m7/E,Amaj7,Emaj7,C#maj7
+CASE c#m busy|128|0.5
+G genre=progressive;moods=;key=1;scale=minor;bars=4;colour=402096896;style=converge;preset=pluck;rate=1/16;bpm=125;master=850000000;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=700000000;arpSeed=557970058;progSeed=162806161
+P i,246310311,216245873,0,2,tri,;VII,282005013,901776579,0,2,add9,;i,504487716,642839905,0,2,sus,;VI,726620183,384099577,0,2,sus,;III,752585969,688500729,0,4,sus,;V,925561160,813529405,0,4,tri,
+C C#m,i,61.64.68,49,0,2;Badd9,VII,59.63.66.73,47,192,2;C#sus2,Isus,61.63.68,49,384,2;Asus2,VIsus,59.64.69,45,576,2;Esus2,IIIsus,59.64.66,40,768,4;G#,V,60.63.68,44,1152,4
+N i,412360231,479778013,0,4,sus,;v,457146643,685603342,0,4,ext,;VI,198317787,765509434,0,8,tri,
+M epic
+A C#m,C#sus2,C#m7,C#m11,C#m(add9)/E,Aadd9,Eadd9,C#add9
+CASE c#m busy|128|1
+G genre=progressive;moods=;key=1;scale=minor;bars=4;colour=318500000;style=motif;preset=pluck;rate=1/8;bpm=125;master=850000000;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=700000000;arpSeed=557970058;progSeed=162806161
+P i,246310311,216245873,0,2,tri,;VII,282005013,901776579,0,2,add9,;i,504487716,642839905,0,2,sus,;VI,726620183,384099577,0,2,sus,;III,752585969,688500729,0,4,sus,;V,925561160,813529405,0,4,tri,
+C C#m,i,61.64.68,49,0,2;Badd9,VII,59.63.66.73,47,192,2;C#sus2,Isus,61.63.68,49,384,2;Asus2,VIsus,59.64.69,45,576,2;Esus2,IIIsus,59.64.66,40,768,4;G#,V,60.63.68,44,1152,4
+N i,412360231,479778013,0,4,sus,;v,457146643,685603342,0,4,ext,;VI,198317787,765509434,0,8,tri,
+M epic
+A C#m,C#sus2,C#m7,C#m11,C#m(add9)/E,Aadd9,Eadd9,C#add9
+CASE c#m busy|4242|0
+G genre=progressive;moods=;key=1;scale=minor;bars=4;colour=557925255;style=converge;preset=pluck;rate=1/16;bpm=125;master=850000000;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=700000000;arpSeed=873658111;progSeed=980676001
+P VI,207681607,917105282,0,4,,;III,83065927,488147121,0,4,,;VII,111272132,830499784,0,4,,;i,475390621,82776478,0,4,,
+C Amaj7,VI,57.61.64.68,45,0,4;Emaj7,III,52.59.63.68,40,384,4;B7,VII,54.59.63.69,47,768,4;C#m7,i,52.59.61.68,49,1152,4
+N VI,762293350,87871948,0,4,,;VII,400202184,114441385,0,4,,;v,66830938,565181501,0,4,,;i,928897247,794531422,0,4,,
+M dreamy
+A Amaj7,Asus2,Amaj7,A6/9,Amaj7/C#,F#m7,C#m7,A#m7
+CASE c#m busy|99999|0
+G genre=progressive;moods=;key=1;scale=minor;bars=8;colour=428072541;style=pedal;preset=pluck;rate=1/16;bpm=126;master=850000000;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=700000000;arpSeed=773562270;progSeed=329911969
+P iv,453007559,249774323,0,4,,;iv,705098782,996277736,0,4,,;VI,688944963,133272326,0,4,,;VI,870825859,500136708,0,4,,;i,848040017,446963280,0,4,,;i,251903419,490362996,0,4,,;VII,925461337,457489354,0,4,,;VII,363268786,453692256,0,4,,
+C F#m7,iv,54.61.64.69,42,0,4;F#m7,iv,54.61.64.69,42,384,4;Amaj7,VI,56.61.64.69,45,768,4;Amaj7,VI,56.61.64.69,45,1152,4;C#m7,i,56.61.64.71,49,1536,4;C#m(add9),i,56.61.64.75,49,1920,4;B7,VII,57.59.63.66,47,2304,4;B7,VII,57.59.63.66,47,2688,4
+N i,68747540,139217983,0,4,,;VII,348641131,8659400,0,4,,;i,433937853,833873589,0,4,,;VI,776294278,630418791,0,4,,;i,628775967,115784988,0,4,,;VI,507857939,768293233,0,4,,;iv,689273048,346666871,0,4,,;VII,840780499,916382722,0,4,,
+M epic
+A F#m7,F#sus2,F#m7,F#m11,F#m7/A,D#m7b5,Amaj7,F#maj7
+CASE c#m busy|99999|0.5
+G genre=progressive;moods=;key=1;scale=minor;bars=8;colour=373286271;style=pedal;preset=pluck;rate=1/16;bpm=126;master=850000000;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=700000000;arpSeed=773562270;progSeed=329911969
+P iv,453007559,249774323,0,4,,;iv,705098782,996277736,0,4,tri,;VI,688944963,133272326,0,4,,;VI,870825859,500136708,0,4,,;i,848040017,446963280,0,4,sev,;i,251903419,490362996,0,4,,;VII,925461337,457489354,0,4,,;VII,363268786,453692256,0,4,,
+C F#sus2,IVsus,54.56.61,42,0,4;F#m,iv,54.57.61,42,384,4;Amaj7,VI,52.57.61.68,45,768,4;Amaj7,VI,52.57.61.68,45,1152,4;C#m7,i,52.59.61.68,49,1536,4;C#m(add9),i,51.61.64.68,49,1920,4;B7,VII,54.59.63.69,47,2304,4;Badd9,VII,54.59.63.73,47,2688,4
+N i,68747540,139217983,0,4,,;VII,348641131,8659400,0,4,tri,ped;i,433937853,833873589,0,4,,;VI,776294278,630418791,0,4,,;i,628775967,115784988,0,4,,;VI,507857939,768293233,0,4,add9,;iv,689273048,346666871,0,4,,;VII,840780499,916382722,0,4,,
+M dreamy
+A F#sus2,F#sus2,F#m7,F#m11,F#sus2/G#,D#dim,Asus2,F#sus2
+CASE c#m busy|99999|1
+G genre=progressive;moods=;key=1;scale=minor;bars=8;colour=318500000;style=motif;preset=pluck;rate=1/16;bpm=126;master=850000000;oct=3;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=700000000;arpSeed=773562270;progSeed=329911969
+P i,18042413,207364209,0,8,ext,;VII,668835475,535926230,0,4,sus,;i,818562414,860310836,0,4,sus,;iv,935298734,384538062,0,8,sus,;v,700847949,942452237,0,8,sev,
+C C#m9,i,49.52.59.63,49,0,8;Bsus2,VIIsus,49.54.59,47,768,4;C#sus2,Isus,49.51.56,49,1152,4;F#sus2,IVsus,49.54.56,42,1536,8;G#m7,v,51.54.56.59,44,2304,8
+N iv,726330372,15107230,0,8,tri,ped;i,845457199,570434156,0,4,add9,;iv,518903288,717973381,0,4,sus,;VII,776530854,483525460,0,8,sus,;III,301171402,564167793,0,4,sev,;VII,659474188,852260859,0,4,tri,
+M sad
+A C#m9,C#sus2,C#m7,C#m11,C#m(add9)/E,Aadd9,Eadd9,C#add9
+CASE a happy song in eb major|1|0
+G genre=melodic;moods=happy;key=3;scale=major;bars=4;colour=515496513;style=converge;preset=pluck;rate=1/16;bpm=129;master=487337029;oct=2;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=727221617;progSeed=219406522
+P vi,833375207,681418244,0,4,,;IV,291038693,266522453,0,4,,;I,802364269,181645600,0,4,,;V,475233094,548068642,0,4,,
+C Cm9,vi,60.63.70.74,48,0,4;Abmaj7/Eb,IV,55.60.63.68,39,384,4;Ebmaj7,I,51.58.62.67,39,768,4;Bb7,V,53.58.62.68,46,1152,4
+N vi,2343547,663171422,0,4,,;V,202162701,542119591,0,4,,;IV,70763869,4537842,0,4,,;V,920926401,970555641,0,4,,
+M dreamy
+A Cm9,Csus2,Cm7,Cm11,Cm9/Eb,Abmaj9,Ebmaj9,Bmaj9
+CASE a happy song in eb major|1|0.5
+G genre=melodic;moods=happy;key=3;scale=major;bars=8;colour=416998256;style=motif;preset=pluck;rate=1/16;bpm=129;master=487337029;oct=2;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=727221617;progSeed=219406522
+P I,338578726,512706938,0,4,sus,;V,306348363,346568190,0,4,sus,;vi,140413572,707492283,0,4,tri,;IV,874986190,790581476,0,4,tri,;V,518141960,865599289,0,4,tri,3rd;iii,701627129,851906193,0,4,sev,3rd;vi,388323995,131823114,0,4,sus,;IV,761686716,410239310,0,4,sus,3rd
+C Ebsus2,Isus,58.63.65,39,0,4;Bbsus2/Eb,Vsus,58.60.65,39,384,4;Cm/Eb,vi,60.63.67,39,768,4;Ab/Eb,IV,60.63.68,39,1152,4;Bb/D,V,58.62.65,38,1536,4;Gm7/Bb,iii,58.62.65.67,46,1920,4;Csus2,VIsus,60.62.67,48,2304,4;Absus2/Eb,IVsus,58.63.68,39,2688,4
+N vi,663171422,202162701,0,4,,;V,542119591,70763869,0,4,tri,;IV,4537842,920926401,0,4,,;V,970555641,210052858,0,4,add9,;I,933996392,382739426,0,4,six,;V,22351829,51540492,0,4,sev,;vi,452995874,784234106,0,4,,ped;IV,631273614,481046940,0,4,tri,
+M happy
+A Ebsus2,Ebsus2,Ebmaj7,Eb6/9,Ebadd9/G,Cm(add9),Gm,Ebm(add9)
+CASE a happy song in eb major|1|1
+G genre=melodic;moods=happy;key=3;scale=major;bars=8;colour=318500000;style=motif;preset=pluck;rate=1/16;bpm=129;master=487337029;oct=3;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=727221617;progSeed=219406522
+P I,338578726,512706938,0,4,sus,;V,306348363,346568190,0,4,sus,;vi,140413572,707492283,0,4,tri,;IV,874986190,790581476,0,4,tri,;V,518141960,865599289,0,4,tri,3rd;iii,701627129,851906193,0,4,sev,3rd;vi,388323995,131823114,0,4,sus,;IV,761686716,410239310,0,4,sus,3rd
+C Ebsus2,Isus,58.63.65,39,0,4;Bbsus2/Eb,Vsus,58.60.65,39,384,4;Cm/Eb,vi,60.63.67,39,768,4;Ab/Eb,IV,60.63.68,39,1152,4;Bb/D,V,58.62.65,38,1536,4;Gm7/Bb,iii,58.62.65.67,46,1920,4;Csus2,VIsus,60.62.67,48,2304,4;Absus2/Eb,IVsus,58.63.68,39,2688,4
+N I,787474225,463909273,0,4,tri,3rd;IV,869441840,608772965,0,4,tri,;vi,101182972,997884814,0,4,tri,;I,904332859,806432611,0,8,sev,;V,190805793,65625414,0,2,tri,;iii,570218315,100469848,0,2,add9,;vi,100591956,87062003,0,4,sev,;IV,424911418,325868616,0,4,tri,3rd
+M happy
+A Ebsus2,Ebsus2,Ebmaj7,Eb6/9,Ebadd9/G,Cm(add9),Gm,Ebm(add9)
+CASE a happy song in eb major|128|0
+G genre=melodic;moods=happy;key=3;scale=major;bars=2;colour=517771937;style=motif;preset=pluck;rate=1/16;bpm=132;master=474058971;oct=2;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=859439783;progSeed=764252670
+P vi,625344843,171899673,0,4,,;V,98540199,625243512,0,4,,
+C Cm7,vi,60.63.67.70,48,0,4;Bb7,V,58.62.65.68,46,384,4
+N I,918817369,764531243,0,4,,;V,842056121,859712641,0,4,,
+M tense
+A Cm7,Csus2,Cm7,Cm11,Cm7/Eb,Abmaj7,Ebmaj7,Bmaj7
+CASE a happy song in eb major|128|0.5
+G genre=melodic;moods=happy;key=3;scale=major;bars=2;colour=418135969;style=motif;preset=pluck;rate=1/16;bpm=132;master=474058971;oct=2;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=859439783;progSeed=764252670
+P vi,625344843,171899673,0,4,add9,;V,98540199,625243512,0,4,,3rd
+C Cm(add9),vi,60.63.67.74,48,0,4;Bbadd9/D,V,58.62.65.72,38,384,4
+N I,412360231,479778013,0,4,sus,;bVII,457146643,685603342,0,4,ext,
+M dreamy
+A Cm(add9),Csus2,Cm7,Cm11,Cm7/Eb,Abmaj7,Ebmaj7,Bmaj7
+CASE a happy song in eb major|128|1
+G genre=melodic;moods=happy;key=3;scale=major;bars=4;colour=318500000;style=motif;preset=pluck;rate=1/16;bpm=132;master=474058971;oct=2;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=859439783;progSeed=764252670
+P IV,875145423,827680328,0,4,tri,3rd;V,648543473,137531740,0,4,sus,;I,386073897,965748139,0,2,tri,ped;iii,614003633,930537210,0,2,sus,;ii,30755002,565490558,0,4,sev,3rd
+C Ab/C,IV,56.60.63,48,0,4;Bbsus2/Eb,Vsus,58.60.65,39,384,4;Eb,I,58.63.67,39,768,2;Gsus4,IIIsus,60.62.67,43,960,2;Fm7/Ab,ii,60.63.65.68,44,1152,4
+N I,412360231,479778013,0,4,sus,;bVII,457146643,685603342,0,4,ext,;IV,198317787,765509434,0,8,tri,
+M happy
+A Ab/C,Absus2,Abmaj7,Abmaj9,Abmaj7/C,Fm7,Cm7,Abm7
+CASE a happy song in eb major|4242|0
+G genre=melodic;moods=happy;key=3;scale=major;bars=4;colour=438250801;style=pedal;preset=pluck;rate=1/16;bpm=130;master=513816703;oct=2;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=996681503;progSeed=344182818
+P I,130715043,303533050,0,4,,;iii,882912277,820637250,0,4,,;IV,366699759,616520723,0,4,,;V,814035960,687864961,0,4,,
+C Ebadd9,I,51.55.58.65,39,0,4;Gm7,iii,50.55.58.65,43,384,4;Abmaj7/Eb,IV,51.56.60.67,39,768,4;Bb7,V,50.56.58.65,46,1152,4
+N I,762293350,87871948,0,4,,;vi,400202184,114441385,0,4,,;ii,66830938,565181501,0,4,,;V,928897247,794531422,0,4,,
+M happy
+A Ebadd9,Ebsus2,Ebmaj7,Eb6/9,Ebadd9/G,Cm(add9),Gm,Ebm(add9)
+CASE a happy song in eb major|99999|0
+G genre=house;moods=happy;key=3;scale=major;bars=4;colour=565438681;style=motif;preset=keys;rate=1/16;bpm=124;master=516162600;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=325805932;progSeed=838203542
+P IV,759655720,310859532,0,4,,;I,596220991,721741323,0,4,,;vi,37479450,506287783,0,4,,;V,270336481,642965670,0,4,,
+C Abmaj9,IV,56.60.67.70,44,0,4;Ebmaj7,I,51.58.62.67,39,384,4;Cm7,vi,51.58.60.67,48,768,4;Bb7,V,53.58.62.68,46,1152,4
+N ii,215195612,68747540,0,4,,;V,139217983,348641131,0,4,,;I,8659400,433937853,0,4,,;vi,833873589,776294278,0,4,,
+M dreamy
+A Abmaj9,Absus2,Abmaj7,Abmaj9,Abmaj9/C,Fm9,Cm9,Abm9
+CASE a happy song in eb major|99999|0.5
+G genre=house;moods=happy;key=3;scale=major;bars=4;colour=441969340;style=motif;preset=keys;rate=1/16;bpm=124;master=516162600;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=325805932;progSeed=838203542
+P IV,759655720,310859532,0,4,,;I,596220991,721741323,0,4,add9,;V,37479450,506287783,0,4,,;V,270336481,642965670,0,4,tri,
+C Abmaj7,IV,56.60.63.67,44,0,4;Ebadd9,I,53.63.67.70,39,384,4;Bbadd9,V,50.53.60.70,46,768,4;Bb,V,53.58.62,46,1152,4
+N ii,215195612,68747540,0,4,,;V,139217983,348641131,0,4,tri,ped;I,8659400,433937853,0,4,,;vi,833873589,776294278,0,4,,
+M happy
+A Abmaj7,Absus2,Abmaj7,Abmaj9,Abmaj7/C,Fm7,Cm7,Abm7
+CASE a happy song in eb major|99999|1
+G genre=house;moods=happy;key=3;scale=major;bars=8;colour=318500000;style=motif;preset=keys;rate=1/16;bpm=124;master=516162600;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=325805932;progSeed=838203542
+P ii,322297590,632178507,0,8,tri,;V,751938273,655854531,0,4,ext,;I,758373026,163004754,0,4,add9,;vi,67557910,605355449,0,2,tri,;I,421644878,745131352,0,2,sev,3rd;V,539934480,902091024,0,8,sus,;vi,149691415,547108293,0,2,sus,;IV,769329216,425442060,0,2,six,
+C Fm,ii,53.56.60,41,0,8;Bb9,V,50.56.60.70,46,768,4;Ebadd9,I,53.55.63.70,39,1152,4;Cm,vi,55.60.63,48,1536,2;Ebmaj7/G,I,50.55.58.63,43,1728,2;Bbsus2,Vsus,53.58.60,46,1920,8;Csus2,VIsus,55.60.62,48,2688,2;Ab6,IV,56.60.63.65,44,2880,2
+N ii,726330372,15107230,0,8,tri,ped;I,845457199,570434156,0,4,add9,;IV,518903288,717973381,0,4,sus,;V,776530854,483525460,0,8,sus,;iii,301171402,564167793,0,4,sev,;vi,659474188,852260859,0,4,tri,
+M epic
+A Fm,Fsus2,Fm7,Fm11,Fm(add9)/Ab,Ddim,Abadd9,Fdim
+CASE dreamy lydian 16 bars|1|0
+G genre=progressive;moods=dreamy;key=10;scale=lydian;bars=16;colour=792920810;style=broken;preset=pluck;rate=1/16;bpm=120;master=466466019;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=43332866;progSeed=261395844
+P I,846673295,450287442,0,4,,;II,736552749,793204409,0,4,,;I,39839216,991581351,0,4,,;II,284431308,766328140,0,4,,;I,250634482,797685254,0,4,,;II,190682634,266328820,0,4,,;I,290691417,218441662,0,4,,;ii,693187896,93799695,0,4,,;I,566855479,34590844,0,4,,;II,172711005,442940373,0,4,,;I,881725939,255343219,0,4,,;II,327215647,530368974,0,4,,;I,738373114,923880616,0,4,,;II,737194588,922933139,0,4,,;I,167966281,206861398,0,4,,;ii,127282156,275587843,0,4,,
+C Bbmaj9,I,58.62.69.72,46,0,4;C9,II,52.58.62.72,48,384,4;Bbmaj9,I,58.62.69.72,46,768,4;C9,II,52.58.62.72,48,1152,4;Bbmaj9,I,58.62.69.72,46,1536,4;C9,II,52.58.62.72,48,1920,4;Bbmaj9,I,58.62.69.72,46,2304,4;C9,II,52.58.62.72,48,2688,4;Bbmaj9,I,58.62.69.72,46,3072,4;C9,II,52.58.62.72,48,3456,4;Bbmaj9,I,58.62.69.72,46,3840,4;C9,II,52.58.62.72,48,4224,4;Bbmaj9,I,58.62.69.72,46,4608,4;C9,II,52.58.62.72,48,4992,4;Bbmaj9,I,58.62.69.72,46,5376,4;C9,II,52.58.62.72,48,5760,4
+N I,663171422,202162701,0,4,,;II,542119591,70763869,0,4,,;vi,4537842,920926401,0,4,,;I,970555641,210052858,0,4,,;I,933996392,382739426,0,4,,;II,22351829,51540492,0,4,,;I,452995874,784234106,0,4,,;II,631273614,481046940,0,4,,;I,406653128,199212983,0,4,,;II,987879809,945130251,0,4,,;vi,269127735,944878765,0,4,,;I,853387810,983951393,0,4,,;I,698488326,944463687,0,4,,;II,961714904,944315394,0,4,,;I,218287733,552593510,0,4,,;II,205392009,291810577,0,4,,
+M dreamy
+A Bbmaj9,Bbsus2,Bbmaj7,Bbmaj9,Bbmaj9/D,Gm11,Dm11,Bbm11
+CASE dreamy lydian 16 bars|1|0.5
+G genre=progressive;moods=dreamy;key=10;scale=lydian;bars=16;colour=555710405;style=broken;preset=pluck;rate=1/16;bpm=120;master=466466019;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=43332866;progSeed=261395844
+P I,706362525,719468432,0,4,add9,;vi,802676773,13801800,0,4,tri,;ii,741846378,116922172,0,2,ext,;V,785516273,341795255,0,2,tri,;I,856592162,304653696,0,4,sev,3rd;bVII,650579944,39242015,0,4,tri,;I,501473784,996587842,0,4,six,;vi,235846394,449672150,0,8,sus,;I,706362525,719468432,0,4,add9,;vi,802676773,13801800,0,4,tri,;ii,741846378,116922172,0,2,ext,;V,785516273,341795255,0,2,tri,;I,856592162,304653696,0,4,sev,3rd;bVII,650579944,39242015,0,4,tri,;I,501473784,996587842,0,4,six,;vi,235846394,449672150,0,8,sus,
+C Bbadd9,I,58.62.65.72,46,0,4;Gm,vi,58.62.67,43,384,4;C9,II,52.58.62.72,48,768,2;F,V,57.60.65,41,960,2;Bbmaj7/D,I,58.62.65.69,38,1152,4;Ab/C,bVII,60.63.68,48,1536,4;Bb6,I,58.62.65.67,46,1920,4;Gsus2,VIsus,57.62.67,43,2304,8;Bbadd9,I,58.62.65.72,46,3072,4;Gm,vi,58.62.67,43,3456,4;C9,II,52.58.62.72,48,3840,2;F,V,57.60.65,41,4032,2;Bbmaj7/D,I,58.62.65.69,38,4224,4;Ab/C,bVII,60.63.68,48,4608,4;Bb6,I,58.62.65.67,46,4992,4;Gsus2,VIsus,57.62.67,43,5376,8
+N I,663171422,202162701,0,4,,;II,542119591,70763869,0,4,tri,;vi,4537842,920926401,0,4,,;I,970555641,210052858,0,4,add9,;I,933996392,382739426,0,4,six,;II,22351829,51540492,0,4,sev,;I,452995874,784234106,0,4,,ped;V,631273614,481046940,0,4,tri,;I,406653128,199212983,0,4,add9,;II,987879809,945130251,0,4,tri,;vi,269127735,944878765,0,4,tri,;ii,853387810,983951393,0,4,,;I,698488326,944463687,0,4,,;II,961714904,944315394,0,4,sev,;I,218287733,552593510,0,4,,;vi,205392009,291810577,0,4,,
+M happy
+A Bbadd9,Bbsus2,Bbmaj7,Bbmaj9,Bbmaj9/D,Gm9,Dm9,Bbm9
+CASE dreamy lydian 16 bars|1|1
+G genre=progressive;moods=dreamy;key=10;scale=lydian;bars=16;colour=318500000;style=motif;preset=pluck;rate=1/16;bpm=120;master=466466019;oct=3;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=43332866;progSeed=261395844
+P I,706362525,719468432,0,4,add9,;vi,802676773,13801800,0,4,tri,;ii,741846378,116922172,0,2,ext,;V,785516273,341795255,0,2,tri,;I,856592162,304653696,0,4,sev,3rd;bVII,650579944,39242015,0,4,tri,;I,501473784,996587842,0,4,six,;vi,235846394,449672150,0,8,sus,;I,706362525,719468432,0,4,add9,;vi,802676773,13801800,0,4,tri,;ii,741846378,116922172,0,2,ext,;V,785516273,341795255,0,2,tri,;I,856592162,304653696,0,4,sev,3rd;bVII,650579944,39242015,0,4,tri,;I,501473784,996587842,0,4,six,;vi,235846394,449672150,0,8,sus,
+C Bbadd9,I,58.62.65.72,46,0,4;Gm,vi,58.62.67,43,384,4;C9,II,52.58.62.72,48,768,2;F,V,57.60.65,41,960,2;Bbmaj7/D,I,58.62.65.69,38,1152,4;Ab/C,bVII,60.63.68,48,1536,4;Bb6,I,58.62.65.67,46,1920,4;Gsus2,VIsus,57.62.67,43,2304,8;Bbadd9,I,58.62.65.72,46,3072,4;Gm,vi,58.62.67,43,3456,4;C9,II,52.58.62.72,48,3840,2;F,V,57.60.65,41,4032,2;Bbmaj7/D,I,58.62.65.69,38,4224,4;Ab/C,bVII,60.63.68,48,4608,4;Bb6,I,58.62.65.67,46,4992,4;Gsus2,VIsus,57.62.67,43,5376,8
+N I,787474225,463909273,0,4,tri,3rd;iii,62027479,677648212,0,4,add9,;ii,314835231,822588791,0,2,ext,;I,837851371,710977579,0,2,tri,ped;V,281427440,320180324,0,2,add9,;vi,802618289,329950639,0,2,tri,3rd;I,146534909,93621785,0,4,sev,;V,823493167,597289017,0,12,sus,;I,787474225,463909273,0,4,tri,3rd;iii,62027479,677648212,0,4,add9,;ii,314835231,822588791,0,2,ext,;I,837851371,710977579,0,2,tri,ped;V,281427440,320180324,0,2,add9,;vi,802618289,329950639,0,2,tri,3rd;I,146534909,93621785,0,4,sev,;V,823493167,597289017,0,12,sus,
+M happy
+A Bbadd9,Bbsus2,Bbmaj7,Bbmaj9,Bbmaj7/D,Gm7,Dm7,Bbm7
+CASE dreamy lydian 16 bars|128|0
+G genre=melodic;moods=dreamy;key=7;scale=lydian;bars=16;colour=866724774;style=motif;preset=bell;rate=1/16;bpm=123;master=419217104;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=875818206;progSeed=990335637
+P I,568497585,449038755,0,4,,;II,190979460,198130409,0,4,,;vi,285379287,306762161,0,4,,;I,707197893,917203485,0,4,,;I,693456299,374476035,0,4,,;II,208876224,24964032,0,4,,;vi,883467989,455530724,0,4,,;I,562076028,729301952,0,4,,;I,941362109,245945742,0,4,,;II,389592255,362886674,0,4,,;vi,155974332,200811128,0,4,,;I,450203147,655954693,0,4,,;I,386087885,886545970,0,4,,;II,355780035,171312477,0,4,,;vi,976501488,89995940,0,4,,;I,347396052,925223500,0,4,,
+C Gmaj9,I,55.59.66.69,43,0,4;A9,II,55.59.69.73,45,384,4;Em9,vi,54.64.67.74,40,768,4;Gmaj9,I,54.57.67.71,43,1152,4;Gmaj9,I,54.57.67.71,43,1536,4;A9,II,57.61.67.71,45,1920,4;Em11,vi,54.64.67.74,40,2304,4;Gmaj9,I,54.57.67.71,43,2688,4;Gmaj9,I,54.57.67.71,43,3072,4;A9,II,57.61.67.71,45,3456,4;Em9/G,vi,54.64.67.74,43,3840,4;Gmaj9,I,54.57.67.71,43,4224,4;Gmaj9,I,54.57.67.71,43,4608,4;A9,II,57.61.67.71,45,4992,4;Em11/G,vi,54.64.67.74,43,5376,4;Gmaj9,I,54.57.67.71,43,5760,4
+N I,764531243,842056121,0,4,,;II,859712641,558812785,0,4,,;vi,503594695,425922150,0,4,,;I,511116918,20208962,0,4,,;vi,652582235,604456631,0,4,,;II,178873149,294533449,0,4,,;I,927214005,629157972,0,4,,;I,582291129,701797239,0,4,,;I,323820432,698345648,0,4,,;II,625827242,619462012,0,4,,;vi,226075112,522798249,0,4,,;I,447955911,971157845,0,4,,;vi,595529858,431285414,0,4,,;II,859380148,851686735,0,4,,;I,387905963,720753529,0,4,,;I,110247696,518651582,0,4,,
+M dreamy
+A Gmaj9,Gsus2,Gmaj7,Gmaj9,Gmaj9/B,Em11,Bm11,Gm11
+CASE dreamy lydian 16 bars|128|0.5
+G genre=melodic;moods=dreamy;key=7;scale=lydian;bars=16;colour=592612387;style=motif;preset=bell;rate=1/16;bpm=123;master=419217104;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=875818206;progSeed=990335637
+P I,568497585,449038755,0,4,,;V,190979460,198130409,0,4,,;vi,285379287,306762161,0,4,add9,;I,707197893,917203485,0,4,,ped;vi,693456299,374476035,0,4,add9,;I,208876224,24964032,0,4,,;vi,883467989,455530724,0,4,tri,;I,562076028,729301952,0,4,,;I,941362109,245945742,0,4,,;bVII,389592255,362886674,0,4,,;vi,155974332,200811128,0,4,,;I,450203147,655954693,0,4,,;I,386087885,886545970,0,4,sus,;vi,355780035,171312477,0,4,,;vi,976501488,89995940,0,4,sus,;I,347396052,925223500,0,4,,
+C Gmaj7,I,55.59.62.66,43,0,4;Dmaj7/F#,V,50.57.61.66,42,384,4;Em(add9),vi,52.55.59.66,40,768,4;Gmaj9,I,55.59.66.69,43,1152,4;Em(add9),vi,52.55.59.66,40,1536,4;Gmaj7,I,55.59.62.66,43,1920,4;Em,vi,55.59.64,40,2304,4;Gmaj7,I,55.59.62.66,43,2688,4;Gmaj9,I,55.59.66.69,43,3072,4;F7,bVII,53.60.63.69,41,3456,4;Em7,vi,52.59.62.67,40,3840,4;Gmaj7,I,54.59.62.67,43,4224,4;Gsus2,Isus,57.62.67,43,4608,4;Em7,vi,59.62.64.67,40,4992,4;Esus2,VIsus,59.64.66,40,5376,4;Gmaj7,I,55.59.62.66,43,5760,4
+N I,412360231,479778013,0,4,sus,;bVII,457146643,685603342,0,4,ext,;vi,902567046,216989556,0,8,sev,;I,601224181,501283349,0,4,tri,3rd;vi,396093492,737488595,0,2,sev,;ii,279405905,443331969,0,2,tri,;V,318577326,915606408,0,4,tri,;vi,964831412,236727675,0,4,tri,;I,412360231,479778013,0,4,sus,;bVII,457146643,685603342,0,4,ext,;vi,902567046,216989556,0,8,sev,;I,601224181,501283349,0,4,tri,3rd;vi,396093492,737488595,0,2,sev,;ii,279405905,443331969,0,2,tri,;V,318577326,915606408,0,4,tri,;vi,964831412,236727675,0,4,tri,
+M dreamy
+A Gmaj7,Gsus2,Gmaj7,Gmaj9,Gmaj7/B,Em7,Bm7,Gm7
+CASE dreamy lydian 16 bars|128|1
+G genre=melodic;moods=dreamy;key=7;scale=lydian;bars=16;colour=318500000;style=motif;preset=bell;rate=1/16;bpm=123;master=419217104;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=875818206;progSeed=990335637
+P I,285056425,731639850,0,8,tri,;vi,700661097,353425633,0,4,sev,;V,128963225,109476991,0,8,tri,;iii,425330973,672113277,0,8,add9,ped;vi,356425727,259030070,0,4,ext,ped;I,285056425,731639850,0,8,tri,;vi,700661097,353425633,0,4,sev,;V,128963225,109476991,0,8,tri,;iii,425330973,672113277,0,8,add9,ped;vi,356425727,259030070,0,4,ext,ped
+C G,I,55.59.62,43,0,8;Em7,vi,55.59.62.64,40,768,4;D,V,57.62.66,38,1152,8;Bm(add9),iii,59.62.66.73,47,1920,8;Em9,vi,55.62.66.76,40,2688,4;G,I,59.62.67,43,3072,8;Em7,vi,59.62.64.67,40,3840,4;D,V,57.62.66,38,4224,8;Bm(add9),iii,59.62.66.73,47,4992,8;Em9,vi,55.62.66.76,40,5760,4
+N I,412360231,479778013,0,4,sus,;bVII,457146643,685603342,0,4,ext,;vi,902567046,216989556,0,8,sev,;I,601224181,501283349,0,4,tri,3rd;vi,396093492,737488595,0,2,sev,;ii,279405905,443331969,0,2,tri,;V,318577326,915606408,0,4,tri,;vi,964831412,236727675,0,4,tri,;I,412360231,479778013,0,4,sus,;bVII,457146643,685603342,0,4,ext,;vi,902567046,216989556,0,8,sev,;I,601224181,501283349,0,4,tri,3rd;vi,396093492,737488595,0,2,sev,;ii,279405905,443331969,0,2,tri,;V,318577326,915606408,0,4,tri,;vi,964831412,236727675,0,4,tri,
+M happy
+A G,Gsus2,Gmaj7,G6/9,Gadd9/B,Em(add9),Bm(add9),Gm(add9)
+CASE dreamy lydian 16 bars|4242|0
+G genre=melodic;moods=dreamy;key=4;scale=lydian;bars=16;colour=791041551;style=motif;preset=keys;rate=1/16;bpm=122;master=380002219;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=74260363;progSeed=89517104
+P vi,480768504,601063865,0,4,,;II,706005509,358615950,0,4,,;I,706820665,669128007,0,4,,;I,514999803,502784098,0,4,,;I,900678835,237863050,0,4,,;iii,943507645,947217419,0,4,,;IV,393502976,682837274,0,4,,;V,495490799,229713571,0,4,,;vi,276123214,883522230,0,4,,;II,84836281,171366597,0,4,,;I,150366766,753524002,0,4,,;I,449796469,893636152,0,4,,;I,488683765,410490222,0,4,,;iii,799785679,474667975,0,4,,;IV,723397863,971602984,0,4,,;V,536286846,316215014,0,4,,
+C C#m9,vi,49.52.59.63,49,0,4;F#9,II,52.54.58.68,42,384,4;Emaj9,I,51.54.64.68,40,768,4;Emaj9,I,51.54.64.68,40,1152,4;Emaj9,I,51.54.64.68,40,1536,4;G#m11,iii,54.58.68.71,44,1920,4;A#m7b5,iv°,52.58.61.68,46,2304,4;Bmaj9,V,51.58.61.71,47,2688,4;C#m9,vi,51.61.64.71,49,3072,4;F#9,II,54.58.64.68,42,3456,4;Emaj9,I,51.54.64.68,40,3840,4;Emaj9,I,51.54.64.68,40,4224,4;Emaj9,I,51.54.64.68,40,4608,4;G#m11,iii,54.58.68.71,44,4992,4;A#m7b5,iv°,52.58.61.68,46,5376,4;Bmaj9,V,51.58.61.71,47,5760,4
+N vi,87871948,400202184,0,4,,;II,114441385,66830938,0,4,,;I,565181501,928897247,0,4,,;I,794531422,878331575,0,4,,;vi,516834934,575111850,0,4,,;II,998206093,962297632,0,4,,;I,63924238,832356840,0,4,,;I,913551681,100095136,0,4,,;vi,3665118,984238447,0,4,,;II,605321594,574848953,0,4,,;I,727425243,601553924,0,4,,;I,258653966,428124357,0,4,,;vi,508917759,806550773,0,4,,;II,540089528,350428595,0,4,,;I,137065746,729600452,0,4,,;I,175291562,20236352,0,4,,
+M dreamy
+A C#m9,C#sus2,C#m7,C#m11,C#m9/E,A#m7b5,Emaj9,Cmaj9
+CASE dreamy lydian 16 bars|99999|0
+G genre=progressive;moods=dreamy;key=5;scale=lydian;bars=16;colour=781446137;style=broken;preset=bell;rate=1/16;bpm=123;master=452170622;oct=2;reg=0;glide=0;pedal=1;gate=850000000;swing=0;groove=0;arpSeed=483819312;progSeed=368430253
+P I,662358812,365201590,0,4,,;V,468209258,374467447,0,4,,;vi,473806568,570848721,0,4,,;IV,186797263,767206803,0,4,,;I,549439400,681185751,0,4,,;II,439731449,906555256,0,4,,;vi,310801426,269173481,0,4,,;I,468433386,112531306,0,4,,;I,574493073,926008329,0,4,,;V,942329977,686298040,0,4,,;vi,804858547,382299384,0,4,,;IV,277139295,318793474,0,4,,;I,47610759,821611901,0,4,,;II,498234679,584113320,0,4,,;vi,151984541,106413140,0,4,,;I,398628202,706088820,0,4,,
+C Fmaj9,I,53.57.64.67,41,0,4;Cmaj9,V,52.59.62.72,48,384,4;Dm9,vi,52.62.65.72,38,768,4;Bm7b5/F,iv°,53.59.62.69,41,1152,4;Fmaj9,I,53.57.64.67,41,1536,4;G9/F,II,53.57.67.71,41,1920,4;Dm9,vi,52.62.65.72,38,2304,4;Fmaj9,I,52.55.65.69,41,2688,4;Fmaj9,I,52.55.65.69,41,3072,4;Cmaj9,V,52.59.62.72,48,3456,4;Dm11,vi,52.62.65.72,38,3840,4;Bm7b5/F,iv°,53.59.62.69,41,4224,4;Fmaj7,I,53.60.64.69,41,4608,4;G9/F,II,55.59.65.69,41,4992,4;Dm9,vi,52.62.65.72,38,5376,4;Fmaj9,I,52.55.65.69,41,5760,4
+N vi,68747540,139217983,0,4,,;II,348641131,8659400,0,4,,;I,433937853,833873589,0,4,,;I,776294278,630418791,0,4,,;I,628775967,115784988,0,4,,;II,507857939,768293233,0,4,,;I,689273048,346666871,0,4,,;II,840780499,916382722,0,4,,;vi,162420699,557199397,0,4,,;II,219163066,711680072,0,4,,;I,613401044,55860209,0,4,,;I,554667834,876320190,0,4,,;I,974451894,532460574,0,4,,;II,529593719,565711468,0,4,,;I,943360743,816359053,0,4,,;II,994928390,762285767,0,4,,
+M dreamy
+A Fmaj9,Fsus2,Fmaj7,Fmaj9,Fmaj9/A,Dm9,Am9,Fm9
+CASE dreamy lydian 16 bars|99999|0.5
+G genre=progressive;moods=dreamy;key=5;scale=lydian;bars=16;colour=549973068;style=motif;preset=bell;rate=1/16;bpm=123;master=452170622;oct=2;reg=0;glide=0;pedal=1;gate=850000000;swing=0;groove=0;arpSeed=483819312;progSeed=368430253
+P vi,556013205,616418398,0,4,sus,;I,916636842,558073696,0,8,add9,;V,807472133,362663475,0,4,add9,3rd;vi,871781236,772376019,0,4,ext,;ii,661563016,304873219,0,2,sev,;I,847592160,279125059,0,2,sev,;V,346800414,992803940,0,4,tri,;vi,890692987,178505000,0,4,sus,;vi,556013205,616418398,0,4,sus,;I,916636842,558073696,0,8,add9,;V,807472133,362663475,0,4,add9,3rd;vi,871781236,772376019,0,4,ext,;ii,661563016,304873219,0,2,sev,;I,847592160,279125059,0,2,sev,;V,346800414,992803940,0,4,tri,;vi,890692987,178505000,0,4,sus,
+C Dsus2,VIsus,57.62.64,38,0,4;Fadd9,I,53.57.60.67,41,384,8;Cadd9/E,V,50.52.60.67,40,1152,4;Dm11,vi,50.53.60.64,38,1536,4;G7/F,II,50.55.59.65,41,1920,2;Fmaj7,I,52.57.60.65,41,2112,2;C,V,55.60.64,48,2304,4;Dsus2,VIsus,57.62.64,38,2688,4;Dsus2,VIsus,57.62.64,38,3072,4;Fadd9,I,53.57.60.67,41,3456,8;Cadd9/E,V,50.52.60.67,40,4224,4;Dm11,vi,50.53.60.64,38,4608,4;G7/F,II,50.55.59.65,41,4992,2;Fmaj7,I,52.57.60.65,41,5184,2;C,V,55.60.64,48,5376,4;Dsus2,VIsus,57.62.64,38,5760,4
+N vi,68747540,139217983,0,4,,;II,348641131,8659400,0,4,tri,ped;I,433937853,833873589,0,4,,;I,776294278,630418791,0,4,,;I,628775967,115784988,0,4,,;II,507857939,768293233,0,4,add9,;I,689273048,346666871,0,4,,;II,840780499,916382722,0,4,,;ii,162420699,557199397,0,4,add9,;II,219163066,711680072,0,4,,;I,613401044,55860209,0,4,ext,;vi,554667834,876320190,0,4,,;I,974451894,532460574,0,4,,;II,529593719,565711468,0,4,,;I,943360743,816359053,0,4,sus,;II,994928390,762285767,0,4,,
+M happy
+A Dsus2,Dsus2,Dm7,Dm11,Dm7/F,Bm7b5,Fmaj7,Dbmaj7
+CASE dreamy lydian 16 bars|99999|1
+G genre=progressive;moods=dreamy;key=5;scale=lydian;bars=16;colour=318500000;style=motif;preset=bell;rate=1/16;bpm=123;master=452170622;oct=2;reg=0;glide=0;pedal=1;gate=850000000;swing=0;groove=0;arpSeed=483819312;progSeed=368430253
+P vi,556013205,616418398,0,4,sus,;I,916636842,558073696,0,8,add9,;V,807472133,362663475,0,4,add9,3rd;vi,871781236,772376019,0,4,ext,;ii,661563016,304873219,0,2,sev,;I,847592160,279125059,0,2,sev,;V,346800414,992803940,0,4,tri,;vi,890692987,178505000,0,4,sus,;vi,556013205,616418398,0,4,sus,;I,916636842,558073696,0,8,add9,;V,807472133,362663475,0,4,add9,3rd;vi,871781236,772376019,0,4,ext,;ii,661563016,304873219,0,2,sev,;I,847592160,279125059,0,2,sev,;V,346800414,992803940,0,4,tri,;vi,890692987,178505000,0,4,sus,
+C Dsus2,VIsus,57.62.64,38,0,4;Fadd9,I,53.57.60.67,41,384,8;Cadd9/E,V,50.52.60.67,40,1152,4;Dm11,vi,50.53.60.64,38,1536,4;G7/F,II,50.55.59.65,41,1920,2;Fmaj7,I,52.57.60.65,41,2112,2;C,V,55.60.64,48,2304,4;Dsus2,VIsus,57.62.64,38,2688,4;Dsus2,VIsus,57.62.64,38,3072,4;Fadd9,I,53.57.60.67,41,3456,8;Cadd9/E,V,50.52.60.67,40,4224,4;Dm11,vi,50.53.60.64,38,4608,4;G7/F,II,50.55.59.65,41,4992,2;Fmaj7,I,52.57.60.65,41,5184,2;C,V,55.60.64,48,5376,4;Dsus2,VIsus,57.62.64,38,5760,4
+N ii,726330372,15107230,0,8,tri,ped;I,845457199,570434156,0,4,add9,;I,300154497,877557627,0,4,sus,;vi,441213521,545000684,0,4,sev,;ii,193098740,960211551,0,4,tri,;V,694003571,902781373,0,8,sev,;ii,726330372,15107230,0,8,tri,ped;I,845457199,570434156,0,4,add9,;I,300154497,877557627,0,4,sus,;vi,441213521,545000684,0,4,sev,;ii,193098740,960211551,0,4,tri,;V,694003571,902781373,0,8,sev,
+M happy
+A Dsus2,Dsus2,Dm7,Dm11,Dsus2/E,Bdim,Fsus2,Dbsus2
+CASE phrygian dark 2 bars|1|0
+G genre=progressive;moods=dark;key=7;scale=phrygian;bars=2;colour=308281871;style=updown;preset=bell;rate=1/16;bpm=126;master=465363270;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=887618252;progSeed=986701434
+P i,648281470,850526433,0,4,,;II,239073016,950687455,0,4,,
+C Gm,i,55.58.62,43,0,4;Abadd9,II,56.60.63.70,44,384,4
+N i,2343547,663171422,0,4,,;II,202162701,542119591,0,4,,
+M sad
+A Gm,Gsus4,Gm7,Gm7,Gm/Bb,Ebsus2,Bbsus2,Gsus2
+CASE phrygian dark 2 bars|1|0.5
+G genre=progressive;moods=dark;key=7;scale=phrygian;bars=2;colour=313390936;style=motif;preset=bell;rate=1/8;bpm=126;master=465363270;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=887618252;progSeed=986701434
+P i,330779004,454765046,0,2,tri,;iv,645359795,373665050,0,2,sus,;VII,961677506,417556087,0,2,tri,;III,889334819,652958801,0,2,sus,
+C Gm,i,55.58.62,43,0,2;Csus2,IVsus,55.60.62,48,192,2;Fm,vii,56.60.65,41,384,2;Bbsus2,IIIsus,58.60.65,46,576,2
+N i,2343547,663171422,0,4,,;II,202162701,542119591,0,4,tri,
+M sad
+A Gm,Gsus4,Gm7,Gm7,Gm/Bb,Ebadd9,Bbadd9,Gadd9
+CASE phrygian dark 2 bars|1|1
+G genre=progressive;moods=dark;key=7;scale=phrygian;bars=2;colour=318500000;style=motif;preset=bell;rate=1/8;bpm=126;master=465363270;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=887618252;progSeed=986701434
+P i,330779004,454765046,0,2,tri,;iv,645359795,373665050,0,2,sus,;VII,961677506,417556087,0,2,tri,;III,889334819,652958801,0,2,sus,
+C Gm,i,55.58.62,43,0,2;Csus2,IVsus,55.60.62,48,192,2;Fm,vii,56.60.65,41,384,2;Bbsus2,IIIsus,58.60.65,46,576,2
+N i,787474225,463909273,0,4,tri,3rd;III,869441840,608772965,0,4,tri,
+M sad
+A Gm,Gsus4,Gm7,Gm7,Gm/Bb,Ebadd9,Bbadd9,Gadd9
+CASE phrygian dark 2 bars|128|0
+G genre=melodic;moods=dark;key=7;scale=phrygian;bars=2;colour=324521028;style=motif;preset=pluck;rate=1/16;bpm=128;master=464523501;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=774459685;progSeed=455791007
+P i,285829093,614295187,0,4,,;II,719665262,117067702,0,4,,
+C Gm,i,55.58.62,43,0,4;Abmaj7,II,55.60.63.68,44,384,4
+N i,918817369,764531243,0,4,,;II,842056121,859712641,0,4,,
+M sad
+A Gm,Gsus4,Gm7,Gm7,Gm/Bb,Ebadd9,Bbadd9,Gadd9
+CASE phrygian dark 2 bars|128|0.5
+G genre=melodic;moods=dark;key=7;scale=phrygian;bars=2;colour=321510514;style=motif;preset=pluck;rate=1/16;bpm=128;master=464523501;oct=3;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=774459685;progSeed=455791007
+P i,11837781,324415990,0,4,sev,ped;VI,850128749,8838317,0,2,ext,;VII,299644188,487676648,0,2,sus,
+C Gm7,i,55.58.62.65,43,0,4;Ebmaj9,VI,51.55.62.65,39,384,2;Fsus2,VIIsus,55.60.65,41,576,2
+N i,412360231,479778013,0,4,sus,;VII,685603342,952537889,0,4,tri,
+M sad
+A Gm7,Gsus4,Gm7,Gm7,Gm/Bb,Ebadd9,Bbadd9,Gadd9
+CASE phrygian dark 2 bars|128|1
+G genre=melodic;moods=dark;key=7;scale=phrygian;bars=2;colour=318500000;style=motif;preset=pluck;rate=1/16;bpm=128;master=464523501;oct=3;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=774459685;progSeed=455791007
+P i,11837781,324415990,0,4,sev,ped;VI,850128749,8838317,0,2,ext,;VII,299644188,487676648,0,2,sus,
+C Gm7,i,55.58.62.65,43,0,4;Ebmaj9,VI,51.55.62.65,39,384,2;Fsus2,VIIsus,55.60.65,41,576,2
+N i,412360231,479778013,0,4,sus,;VII,685603342,952537889,0,4,tri,
+M sad
+A Gm7,Gsus4,Gm7,Gm7,Gm/Bb,Ebadd9,Bbadd9,Gadd9
+CASE phrygian dark 2 bars|4242|0
+G genre=progressive;moods=dark;key=1;scale=phrygian;bars=2;colour=350949913;style=motif;preset=pluck;rate=1/8;bpm=125;master=482905174;oct=2;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=306222720;progSeed=861757272
+P i,427816505,934757085,0,4,,;VI,674209383,569294173,0,4,,
+C C#m,i,61.64.68,49,0,4;Amaj7/C#,VI,57.61.64.68,49,384,4
+N i,762293350,87871948,0,4,,;II,400202184,114441385,0,4,,
+M sad
+A C#m,C#sus4,C#m7,C#m7,C#m/E,Asus2,Esus2,C#sus2
+CASE phrygian dark 2 bars|99999|0
+G genre=progressive;moods=dark;key=4;scale=phrygian;bars=2;colour=355281571;style=pedal;preset=pluck;rate=1/16;bpm=126;master=463100494;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=943340087;progSeed=487450127
+P i,938515536,81595643,0,4,,;II,407167541,214093058,0,4,,
+C Em7,i,52.59.62.67,40,0,4;Fsus2,IIsus,60.65.67,41,384,4
+N i,215195612,68747540,0,4,,;II,139217983,348641131,0,4,,
+M sad
+A Em7,Esus4,Em7,Em7,Em7/G,Cmaj7,G7,Emaj7
+CASE phrygian dark 2 bars|99999|0.5
+G genre=progressive;moods=dark;key=4;scale=phrygian;bars=2;colour=336890786;style=pedal;preset=pluck;rate=1/16;bpm=126;master=463100494;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=943340087;progSeed=487450127
+P VI,125635604,76867554,0,2,tri,;i,39526082,996030033,0,2,tri,;VI,141028067,558295951,0,2,tri,;VII,550180670,322628883,0,2,six,
+C C,VI,60.64.67,48,0,2;Em,i,59.64.67,40,192,2;C,VI,60.64.67,48,384,2;Dm6,vii,59.62.65.69,38,576,2
+N i,215195612,68747540,0,4,,;II,139217983,348641131,0,4,tri,ped
+M tense
+A C,Csus2,Cmaj7,C6/9,Cadd9/E,Am(add9),Em,C#m(add9)
+CASE phrygian dark 2 bars|99999|1
+G genre=progressive;moods=dark;key=4;scale=phrygian;bars=2;colour=318500000;style=motif;preset=pluck;rate=1/16;bpm=126;master=463100494;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=943340087;progSeed=487450127
+P VI,125635604,76867554,0,2,tri,;i,39526082,996030033,0,2,tri,;VI,141028067,558295951,0,2,tri,;VII,550180670,322628883,0,2,six,
+C C,VI,60.64.67,48,0,2;Em,i,59.64.67,40,192,2;C,VI,60.64.67,48,384,2;Dm6,vii,59.62.65.69,38,576,2
+N iv,726330372,15107230,0,8,tri,ped
+M tense
+A C,Csus2,Cmaj7,C6/9,Cadd9/E,Am(add9),Em,C#m(add9)
+CASE sus chords house|1|0
+G genre=house;moods=;key=5;scale=minor;bars=4;colour=450335589;style=walk;preset=keys;rate=1/16;bpm=125;master=530981031;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=876415949;progSeed=753893327
+P iv,645463921,170340316,0,4,,;i,882256236,986760621,1,4,,;VI,443292336,310140381,0,4,,;VII,133158804,393399382,1,4,,
+C Bbm7,iv,58.61.65.68,46,0,4;Fsus2,Isus,60.65.67,41,384,4;Dbmaj7,VI,61.65.68.72,49,768,4;Ebsus2,VIIsus,58.63.65,39,1152,4
+N i,2343547,663171422,0,4,,;iv,202162701,542119591,0,4,,;i,70763869,4537842,0,4,,;VII,920926401,970555641,0,4,,
+M sad
+A Bbm7,Bbsus2,Bbm7,Bbm11,Bbm7/Db,Gm7b5,Dbmaj7,Bbmaj7
+CASE sus chords house|1|0.5
+G genre=house;moods=;key=5;scale=minor;bars=4;colour=384417795;style=motif;preset=keys;rate=1/16;bpm=125;master=530981031;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=876415949;progSeed=753893327
+P i,213984121,245508358,0,4,tri,;VI,108812449,343865243,0,2,ext,3rd;i,496272175,692132658,0,2,add9,;VII,121953883,353691456,0,4,add9,;v,711931046,268565226,0,4,sus,
+C Fm,i,53.56.60,41,0,4;Dbmaj9/F,VI,49.53.60.63,41,384,2;Fm(add9),i,53.56.60.67,41,576,2;Ebadd9,VII,53.63.67.70,39,768,4;Csus4,Vsus,60.65.67,48,1152,4
+N i,2343547,663171422,0,4,,;iv,202162701,542119591,0,4,tri,;i,70763869,4537842,0,4,,;VII,920926401,970555641,0,4,add9,
+M dreamy
+A Fm,Fsus2,Fm7,Fm11,Fm(add9)/Ab,Dbadd9,Abadd9,Fadd9
+CASE sus chords house|1|1
+G genre=house;moods=;key=5;scale=minor;bars=4;colour=318500000;style=motif;preset=keys;rate=1/16;bpm=125;master=530981031;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=876415949;progSeed=753893327
+P i,213984121,245508358,0,4,tri,;VI,108812449,343865243,0,2,ext,3rd;i,496272175,692132658,0,2,add9,;VII,121953883,353691456,0,4,add9,;v,711931046,268565226,0,4,sus,
+C Fm,i,53.56.60,41,0,4;Dbmaj9/F,VI,49.53.60.63,41,384,2;Fm(add9),i,53.56.60.67,41,576,2;Ebadd9,VII,53.63.67.70,39,768,4;Csus4,Vsus,60.65.67,48,1152,4
+N i,787474225,463909273,0,4,tri,3rd;III,869441840,608772965,0,4,tri,;VII,101182972,997884814,0,4,tri,;i,904332859,806432611,0,4,sev,
+M dreamy
+A Fm,Fsus2,Fm7,Fm11,Fm(add9)/Ab,Dbadd9,Abadd9,Fadd9
+CASE sus chords house|128|0
+G genre=house;moods=;key=2;scale=major;bars=4;colour=379419975;style=up;preset=pluck;rate=1/16;bpm=125;master=548581307;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=623545066;progSeed=218487245
+P I,480549902,196775499,0,4,,;vi,225727609,744327651,1,4,,;ii,448206536,771226247,0,4,,;V,497680158,757759368,1,4,,
+C Dsus2,Isus,57.62.64,38,0,4;Bsus2,VIsus,59.61.66,47,384,4;Esus2,IIsus,59.64.66,40,768,4;Asus2,Vsus,57.59.64,45,1152,4
+N I,918817369,764531243,0,4,,;V,842056121,859712641,0,4,,;IV,558812785,503594695,0,4,,;IV,425922150,511116918,0,4,,
+M happy
+A Dsus2,Dsus2,Dmaj7,D6/9,Dsus2/E,Bsus2,F#m,Dsus2
+CASE sus chords house|128|0.5
+G genre=house;moods=;key=2;scale=major;bars=4;colour=348959988;style=motif;preset=pluck;rate=1/16;bpm=125;master=548581307;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=623545066;progSeed=218487245
+P I,168158426,603647595,0,2,sus,;V,752774251,428698577,0,2,sev,3rd;vi,128079319,102387513,0,4,add9,;IV,710689028,111473030,0,8,sus,
+C Dsus2,Isus,57.62.64,38,0,2;A7/C#,V,57.61.64.67,49,192,2;Bm(add9),vi,59.62.66.73,47,384,4;Gsus2,IVsus,57.62.67,43,768,8
+N I,412360231,479778013,0,4,sus,;bVII,457146643,685603342,0,4,ext,;IV,198317787,765509434,0,8,tri,
+M dreamy
+A Dsus2,Dsus2,Dmaj7,D6/9,Dadd9/F#,Bm(add9),F#m,Dm(add9)
+CASE sus chords house|128|1
+G genre=house;moods=;key=2;scale=major;bars=4;colour=318500000;style=motif;preset=pluck;rate=1/16;bpm=125;master=548581307;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=623545066;progSeed=218487245
+P I,168158426,603647595,0,2,sus,;V,752774251,428698577,0,2,sev,3rd;vi,128079319,102387513,0,4,add9,;IV,710689028,111473030,0,8,sus,
+C Dsus2,Isus,57.62.64,38,0,2;A7/C#,V,57.61.64.67,49,192,2;Bm(add9),vi,59.62.66.73,47,384,4;Gsus2,IVsus,57.62.67,43,768,8
+N I,412360231,479778013,0,4,sus,;bVII,457146643,685603342,0,4,ext,;IV,198317787,765509434,0,8,tri,
+M dreamy
+A Dsus2,Dsus2,Dmaj7,D6/9,Dadd9/F#,Bm(add9),F#m,Dm(add9)
+CASE sus chords house|4242|0
+G genre=house;moods=;key=9;scale=major;bars=4;colour=328555911;style=broken;preset=keys;rate=1/16;bpm=123;master=497608626;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=444963501;progSeed=271123371
+P vi,184915352,908801072,0,4,,;ii,724341241,97617822,1,4,,;IV,286660610,930755482,0,4,,;V,651658694,979581381,1,4,,
+C F#m(add9),vi,54.57.61.68,42,0,4;Bsus2,IIsus,59.61.66,47,384,4;Dadd9,IV,52.62.66.69,38,768,4;Esus2,Vsus,59.64.66,40,1152,4
+N vi,762293350,87871948,0,4,,;IV,400202184,114441385,0,4,,;V,66830938,565181501,0,4,,;iii,928897247,794531422,0,4,,
+M dreamy
+A F#m(add9),F#sus2,F#m7,F#m11,F#m(add9)/A,Dadd9,Aadd9,Fadd9
+CASE sus chords house|99999|0
+G genre=house;moods=;key=0;scale=dorian;bars=2;colour=406528298;style=up;preset=keys;rate=1/16;bpm=123;master=524581155;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=462885911;progSeed=705506742
+P i,617004226,55446828,0,4,,;IV,995990481,414450085,1,4,,
+C Cm7,i,60.63.67.70,48,0,4;Fsus2,IVsus,60.65.67,41,384,4
+N i,215195612,68747540,0,4,,;IV,139217983,348641131,0,4,,
+M sad
+A Cm7,Csus2,Cm7,Cm11,Cm7/Eb,Am7b5,Ebmaj7,Cmaj7
+CASE sus chords house|99999|0.5
+G genre=house;moods=;key=0;scale=dorian;bars=2;colour=362514149;style=up;preset=keys;rate=1/16;bpm=123;master=524581155;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=462885911;progSeed=705506742
+P i,617004226,55446828,0,4,,;IV,995990481,414450085,1,4,,
+C Cm7,i,60.63.67.70,48,0,4;Fsus2,IVsus,60.65.67,41,384,4
+N i,215195612,68747540,0,4,,;IV,139217983,348641131,0,4,tri,ped
+M sad
+A Cm7,Csus2,Cm7,Cm11,Cm7/Eb,Am7b5,Ebmaj7,Cmaj7
+CASE sus chords house|99999|1
+G genre=house;moods=;key=0;scale=dorian;bars=8;colour=318500000;style=motif;preset=keys;rate=1/16;bpm=123;master=524581155;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=462885911;progSeed=705506742
+P i,893831912,688427856,0,4,sus,;VII,637241823,163798857,0,4,tri,;iv,700075354,750135041,0,4,add9,;v,466489075,951038798,0,4,sus,;iv,346492610,643381781,0,2,tri,;i,113891701,891484740,0,2,tri,3rd;v,109356468,994158828,0,4,sus,;IV,919086289,630263810,0,8,sus,
+C Csus2,Isus,60.62.67,48,0,4;Bb,VII,58.62.65,46,384,4;Fadd9,IV,55.57.65.72,41,768,4;Gsus2,Vsus,57.62.67,43,1152,4;F,IV,57.60.65,41,1536,2;Cm/Eb,i,60.63.67,39,1728,2;Gsus2,Vsus,57.62.67,43,1920,4;Fsus2,IVsus,60.65.67,41,2304,8
+N iv,726330372,15107230,0,8,tri,ped;i,845457199,570434156,0,4,add9,;iv,518903288,717973381,0,4,sus,;VII,776530854,483525460,0,8,sus,;III,301171402,564167793,0,4,sev,;VII,659474188,852260859,0,4,tri,
+M dreamy
+A Csus2,Csus2,Cm7,Cm11,Cm7/Eb,Am7b5,Ebmaj7,Cmaj7
+CASE lush jazzy neo soul|1|0
+G genre=lofi;moods=dreamy;key=5;scale=lydian;bars=4;colour=790761684;style=motif;preset=keys;rate=1/8;bpm=80;master=249106255;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=979121643;progSeed=703282069
+P I,671935446,371224076,0,4,,;II,375496343,437848948,0,4,,;vi,309228763,69322809,0,4,,;I,787274204,281422602,0,4,,
+C Fmaj9,I,53.57.64.67,41,0,4;G9,II,53.57.67.71,43,384,4;Dm9/F,vi,52.62.65.72,41,768,4;Fmaj9,I,52.55.65.69,41,1152,4
+N I,2343547,663171422,0,4,,;II,202162701,542119591,0,4,,;vi,70763869,4537842,0,4,,;I,920926401,970555641,0,4,,
+M dreamy
+A Fmaj9,Fsus2,Fmaj7,Fmaj9,Fmaj9/A,Dm9,Am9,Fm9
+CASE lush jazzy neo soul|1|0.5
+G genre=lofi;moods=dreamy;key=5;scale=lydian;bars=8;colour=554630842;style=motif;preset=keys;rate=1/8;bpm=80;master=249106255;oct=3;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=979121643;progSeed=703282069
+P I,735069616,90710294,0,8,add9,ped;V,577029418,758560678,0,4,add9,;I,421949481,56661445,0,4,sev,;iii,510138925,581544786,0,4,sus,ped;I,838172762,628132680,0,4,add9,;vi,85575691,529094969,0,4,sev,3rd;ii,187366835,113464144,0,4,add9,
+C Fadd9,I,53.57.60.67,41,0,8;Cadd9,V,50.52.60.67,48,768,4;Fmaj7,I,52.57.60.65,41,1152,4;Asus2,IIIsus,57.59.64,45,1536,4;Fadd9,I,53.57.60.67,41,1920,4;Dm7/F,vi,53.60.62.69,41,2304,4;Gadd9,II,55.59.62.69,43,2688,4
+N I,663171422,202162701,0,4,,;II,542119591,70763869,0,4,tri,;vi,4537842,920926401,0,4,,;I,970555641,210052858,0,4,add9,;I,933996392,382739426,0,4,six,;II,22351829,51540492,0,4,sev,;I,452995874,784234106,0,4,,ped;V,631273614,481046940,0,4,tri,
+M happy
+A Fadd9,Fsus2,Fmaj7,Fmaj9,Fmaj9/A,Dm9,Am9,Fm9
+CASE lush jazzy neo soul|1|1
+G genre=lofi;moods=dreamy;key=5;scale=lydian;bars=8;colour=318500000;style=motif;preset=keys;rate=1/16;bpm=80;master=249106255;oct=3;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=979121643;progSeed=703282069
+P I,735069616,90710294,0,8,add9,ped;V,577029418,758560678,0,4,add9,;I,421949481,56661445,0,4,sev,;iii,510138925,581544786,0,4,sus,ped;I,838172762,628132680,0,4,add9,;vi,85575691,529094969,0,4,sev,3rd;ii,187366835,113464144,0,4,add9,
+C Fadd9,I,53.57.60.67,41,0,8;Cadd9,V,50.52.60.67,48,768,4;Fmaj7,I,52.57.60.65,41,1152,4;Asus2,IIIsus,57.59.64,45,1536,4;Fadd9,I,53.57.60.67,41,1920,4;Dm7/F,vi,53.60.62.69,41,2304,4;Gadd9,II,55.59.62.69,43,2688,4
+N I,787474225,463909273,0,4,tri,3rd;iii,62027479,677648212,0,4,add9,;ii,314835231,822588791,0,2,ext,;I,837851371,710977579,0,2,tri,ped;V,281427440,320180324,0,2,add9,;vi,802618289,329950639,0,2,tri,3rd;I,146534909,93621785,0,4,sev,;V,823493167,597289017,0,12,sus,
+M happy
+A Fadd9,Fsus2,Fmaj7,Fmaj9,Fmaj7/A,Dm7,Am7,Fm7
+CASE lush jazzy neo soul|128|0
+G genre=lofi;moods=dreamy;key=4;scale=lydian;bars=4;colour=819784006;style=broken;preset=keys;rate=1/8;bpm=80;master=306088829;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=728512844;progSeed=424917203
+P IV,160440372,463668027,0,4,,;V,337853957,502772036,0,4,,;iii,948527954,495941126,0,4,,;vi,359481737,919666204,0,4,,
+C A#m7b5,iv°,58.61.64.68,46,0,4;Bmaj9,V,51.58.61.71,47,384,4;G#m11,iii,54.56.58.71,44,768,4;C#m9,vi,52.59.63.73,49,1152,4
+N I,918817369,764531243,0,4,,;II,842056121,859712641,0,4,,;vi,558812785,503594695,0,4,,;I,425922150,511116918,0,4,,
+M dreamy
+A A#m7b5,A#dim,A#m7b5,A#m7b5,A#m7b5/C#,F#9,C#m9,Am9
+CASE lush jazzy neo soul|128|0.5
+G genre=lofi;moods=dreamy;key=4;scale=lydian;bars=4;colour=569142003;style=motif;preset=keys;rate=1/16;bpm=80;master=306088829;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=728512844;progSeed=424917203
+P I,977960216,217501144,0,4,sus,ped;vi,413730002,61993287,0,4,tri,3rd;ii,33031535,922389452,0,8,tri,ped
+C Esus2,Isus,52.54.59,40,0,4;C#m/E,vi,52.56.61,40,384,4;F#/E,II,54.58.61,40,768,8
+N I,412360231,479778013,0,4,sus,;bVII,457146643,685603342,0,4,ext,;vi,902567046,216989556,0,8,sev,
+M happy
+A Esus2,Esus2,Emaj7,Emaj9,Emaj9/G#,C#m9,G#m9,Em9
+CASE lush jazzy neo soul|128|1
+G genre=lofi;moods=dreamy;key=4;scale=lydian;bars=4;colour=318500000;style=motif;preset=keys;rate=1/16;bpm=80;master=306088829;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=728512844;progSeed=424917203
+P I,977960216,217501144,0,4,sus,ped;vi,413730002,61993287,0,4,tri,3rd;ii,33031535,922389452,0,8,tri,ped
+C Esus2,Isus,52.54.59,40,0,4;C#m/E,vi,52.56.61,40,384,4;F#/E,II,54.58.61,40,768,8
+N I,412360231,479778013,0,4,sus,;bVII,457146643,685603342,0,4,ext,;vi,902567046,216989556,0,8,sev,
+M happy
+A Esus2,Esus2,Emaj7,Emaj9,Emaj7/G#,C#m7,G#m7,Em7
+CASE lush jazzy neo soul|4242|0
+G genre=lofi;moods=dreamy;key=9;scale=dorian;bars=8;colour=904878742;style=motif;preset=keys;rate=1/8;bpm=79;master=306152864;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=28528437;progSeed=816218589
+P i,90090372,963189513,0,4,,;IV,289236244,555367073,0,4,,;i,754995378,351169562,0,4,,;IV,673755356,680048399,0,4,,;i,862850660,484349248,0,4,,;IV,344212242,764740003,0,4,,;i,215965663,452858578,0,4,,;III,857770715,935358963,0,4,,
+C Am9,i,57.60.67.71,45,0,4;D9,IV,52.62.66.72,38,384,4;Am11,i,55.59.69.72,45,768,4;D9,IV,52.54.62.72,38,1152,4;Am11,i,55.57.60.71,45,1536,4;D9,IV,52.54.62.72,38,1920,4;Am9,i,55.57.60.71,45,2304,4;Cmaj9,III,52.59.62.72,48,2688,4
+N i,87871948,400202184,0,4,,;IV,114441385,66830938,0,4,,;VII,565181501,928897247,0,4,,;i,794531422,878331575,0,4,,;i,516834934,575111850,0,4,,;ii,998206093,962297632,0,4,,;i,63924238,832356840,0,4,,;IV,913551681,100095136,0,4,,
+M dreamy
+A Am9,Asus2,Am7,Am11,Am9/C,F#m7b5,Cmaj9,Amaj9
+CASE lush jazzy neo soul|99999|0
+G genre=lofi;moods=dreamy;key=8;scale=major;bars=4;colour=795468957;style=updown;preset=keys;rate=1/8;bpm=81;master=310306718;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=939402521;progSeed=704437983
+P IV,696793167,697557119,0,4,,;V,988570336,4578990,0,4,,;iii,435908238,430836212,0,4,,;vi,683955742,317578312,0,4,,
+C Dbmaj9,IV,49.53.60.63,49,0,4;Eb9,V,49.53.63.67,39,384,4;Cm7,iii,55.60.63.70,48,768,4;Fm9,vi,53.56.63.67,41,1152,4
+N IV,215195612,68747540,0,4,,;iii,139217983,348641131,0,4,,;ii,8659400,433937853,0,4,,;I,833873589,776294278,0,4,,
+M dreamy
+A Dbmaj9,Dbsus2,Dbmaj7,Dbmaj9,Dbmaj9/F,Bbm9,Fm9,Dbm9
+CASE lush jazzy neo soul|99999|0.5
+G genre=lofi;moods=dreamy;key=8;scale=major;bars=4;colour=556984478;style=updown;preset=keys;rate=1/8;bpm=81;master=310306718;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=939402521;progSeed=704437983
+P I,840429667,243767293,0,4,sus,;V,655436094,140889154,0,2,tri,;vi,235819492,310381250,0,2,tri,;IV,349263650,607952908,0,2,add9,;V,961006699,447291345,0,2,tri,;iii,397259549,955158919,0,4,tri,
+C Absus2,Isus,56.58.63,44,0,4;Eb/G,V,55.58.63,43,384,2;Fm,vi,56.60.65,41,576,2;Dbadd9,IV,56.61.65.75,49,768,2;Eb,V,58.63.67,39,960,2;Cm,iii,60.63.67,48,1152,4
+N IV,215195612,68747540,0,4,,;iii,139217983,348641131,0,4,tri,ped;ii,8659400,433937853,0,4,,;I,833873589,776294278,0,4,,
+M dreamy
+A Absus2,Absus2,Abmaj7,Abmaj9,Abmaj9/C,Fm9,Cm7,Abm9
+CASE lush jazzy neo soul|99999|1
+G genre=lofi;moods=dreamy;key=8;scale=major;bars=4;colour=318500000;style=motif;preset=keys;rate=1/16;bpm=81;master=310306718;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=939402521;progSeed=704437983
+P I,840429667,243767293,0,4,sus,;V,655436094,140889154,0,2,tri,;vi,235819492,310381250,0,2,tri,;IV,349263650,607952908,0,2,add9,;V,961006699,447291345,0,2,tri,;iii,397259549,955158919,0,4,tri,
+C Absus2,Isus,56.58.63,44,0,4;Eb/G,V,55.58.63,43,384,2;Fm,vi,56.60.65,41,576,2;Dbadd9,IV,56.61.65.75,49,768,2;Eb,V,58.63.67,39,960,2;Cm,iii,60.63.67,48,1152,4
+N ii,726330372,15107230,0,8,tri,ped;I,845457199,570434156,0,4,add9,;IV,518903288,717973381,0,4,sus,
+M happy
+A Absus2,Absus2,Abmaj7,Abmaj9,Abmaj7/C,Fm7,Cm7,Abm7
+CASE Euphoric Progressive in F# minor 128 BPM|1|0
+G genre=progressive;moods=euphoric;key=6;scale=minor;bars=8;colour=525588426;style=motif;preset=supersaw;rate=1/16;bpm=128;master=585256435;oct=2;reg=0;glide=0;pedal=0;gate=700000000;swing=0;groove=0;arpSeed=484921479;progSeed=33191920
+P i,937803734,21771108,0,4,,;VII,846617465,705136517,0,4,,;i,236424712,203561835,0,4,,;VI,969658396,662244919,0,4,,;i,886958104,996462457,0,4,,;VI,14035391,157623390,0,4,,;iv,315960021,897839052,0,4,,;VII,443298863,424918788,0,4,,
+C F#m9,i,54.57.64.68,42,0,4;E9,VII,50.54.64.68,40,384,4;F#m7,i,54.61.64.69,42,768,4;Dmaj9,VI,54.61.64.74,38,1152,4;F#m9,i,54.57.64.68,42,1536,4;Dadd9,VI,54.57.64.74,38,1920,4;Bm7,iv,54.59.62.69,47,2304,4;E7,VII,52.59.62.68,40,2688,4
+N i,663171422,202162701,0,4,,;i,542119591,70763869,0,4,,;VI,4537842,920926401,0,4,,;VII,970555641,210052858,0,4,,;i,933996392,382739426,0,4,,;VI,22351829,51540492,0,4,,;III,452995874,784234106,0,4,,;VII,631273614,481046940,0,4,,
+M dreamy
+A F#m9,F#sus2,F#m7,F#m11,F#m9/A,Dmaj9,Amaj9,F#maj9
+CASE Euphoric Progressive in F# minor 128 BPM|1|0.5
+G genre=progressive;moods=euphoric;key=6;scale=minor;bars=8;colour=422044213;style=motif;preset=supersaw;rate=1/16;bpm=128;master=585256435;oct=2;reg=0;glide=0;pedal=0;gate=700000000;swing=0;groove=0;arpSeed=484921479;progSeed=33191920
+P i,937803734,21771108,0,4,,;VII,846617465,705136517,0,4,,;i,236424712,203561835,0,4,add9,;VI,969658396,662244919,0,4,sus,;i,886958104,996462457,0,4,add9,;VI,14035391,157623390,0,4,ext,;i,315960021,897839052,0,4,sev,;VII,443298863,424918788,0,4,sus,3rd
+C F#m7,i,54.61.64.69,42,0,4;E7,VII,59.62.64.68,40,384,4;F#m(add9),i,54.57.61.68,42,768,4;Dsus2,VIsus,57.62.64,38,1152,4;F#m(add9),i,54.57.61.68,42,1536,4;Dmaj9,VI,52.54.62.73,38,1920,4;F#m7,i,54.61.64.69,42,2304,4;Esus2,VIIsus,54.59.64,40,2688,4
+N i,663171422,202162701,0,4,,;i,542119591,70763869,0,4,tri,;VI,4537842,920926401,0,4,,;VII,970555641,210052858,0,4,add9,;i,933996392,382739426,0,4,six,;VI,22351829,51540492,0,4,sev,;III,452995874,784234106,0,4,,ped;VII,631273614,481046940,0,4,tri,
+M sad
+A F#m7,F#sus2,F#m7,F#m11,F#m7/A,Dmaj7,Amaj7,F#maj7
+CASE Euphoric Progressive in F# minor 128 BPM|1|1
+G genre=progressive;moods=euphoric;key=6;scale=minor;bars=8;colour=318500000;style=motif;preset=supersaw;rate=1/16;bpm=128;master=585256435;oct=3;reg=0;glide=0;pedal=0;gate=700000000;swing=0;groove=0;arpSeed=484921479;progSeed=33191920
+P VI,466218295,764141834,0,2,sus,;iv,708820008,84664444,0,2,tri,3rd;i,498112298,775635839,0,4,sus,;v,784531196,50618349,0,4,sev,;VI,967599749,269410333,0,8,sus,3rd;VII,889624464,843206262,0,2,add9,;III,784129328,317516485,0,2,tri,;i,498170255,725261177,0,8,sev,
+C Dsus2,VIsus,57.62.64,38,0,2;Bm/D,iv,59.62.66,38,192,2;F#sus2,Isus,56.61.66,42,384,4;C#m7/E,v,56.59.61.64,40,768,4;Dsus2,VIsus,57.62.64,38,1152,8;Eadd9,VII,54.56.64.71,40,1920,2;A,III,57.61.64,45,2112,2;F#m7,i,57.61.64.66,42,2304,8
+N i,787474225,463909273,0,4,tri,3rd;III,869441840,608772965,0,4,tri,;VII,101182972,997884814,0,4,tri,;i,904332859,806432611,0,8,sev,;VI,190805793,65625414,0,2,tri,;VII,570218315,100469848,0,2,add9,;i,100591956,87062003,0,4,sev,;VI,424911418,325868616,0,4,tri,3rd
+M epic
+A Dsus2,Dsus2,Dmaj7,D6/9,Dsus2/E,Bsus2,F#sus2,D#sus2
+CASE Euphoric Progressive in F# minor 128 BPM|128|0
+G genre=progressive;moods=euphoric;key=6;scale=minor;bars=8;colour=575046965;style=pedal;preset=pluck;rate=1/8;bpm=128;master=629358746;oct=2;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=782744567;progSeed=419339692
+P i,697704524,208448057,0,4,,;VI,929117753,535263326,0,4,,;VII,507399560,757320821,0,4,,;v,124524378,446296084,0,4,,;i,130780131,575039064,0,4,,;VI,690312779,376451607,0,4,,;VII,928795340,45287024,0,4,,;iv,751352164,725347975,0,4,,
+C F#m9,i,54.57.64.68,42,0,4;Dmaj9/F#,VI,54.61.64.74,42,384,4;E7/F#,VII,56.59.62.64,42,768,4;C#m7/F#,v,56.59.61.64,42,1152,4;F#m7,i,57.61.64.66,42,1536,4;Dmaj9/F#,VI,54.61.64.74,42,1920,4;E9/F#,VII,54.56.64.74,42,2304,4;Bm9/F#,iv,57.59.62.73,42,2688,4
+N i,764531243,842056121,0,4,,;VI,859712641,558812785,0,4,,;VII,503594695,425922150,0,4,,;v,511116918,20208962,0,4,,;iv,652582235,604456631,0,4,,;i,178873149,294533449,0,4,,;VI,927214005,629157972,0,4,,;VII,582291129,701797239,0,4,,
+M dreamy
+A F#m9,F#sus2,F#m7,F#m11,F#m9/A,Dmaj9,Amaj9,F#maj9
+CASE Euphoric Progressive in F# minor 128 BPM|128|0.5
+G genre=progressive;moods=euphoric;key=6;scale=minor;bars=4;colour=446773483;style=motif;preset=pluck;rate=1/8;bpm=128;master=629358746;oct=2;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=782744567;progSeed=419339692
+P i,976605063,897738679,0,4,tri,;VII,328969210,897474604,0,4,sus,;VI,190132566,497353900,0,4,tri,;iv,440916404,513014571,0,4,sus,
+C F#m,i,54.57.61,42,0,4;Esus2/F#,VIIsus,54.59.64,42,384,4;D/F#,VI,54.57.62,42,768,4;Bsus2/F#,IVsus,54.59.61,42,1152,4
+N i,412360231,479778013,0,4,sus,;v,457146643,685603342,0,4,ext,;VI,198317787,765509434,0,8,tri,
+M sad
+A F#m,F#sus2,F#m7,F#m11,F#m7/A,Dmaj7,Amaj7,F#maj7
+CASE Euphoric Progressive in F# minor 128 BPM|128|1
+G genre=progressive;moods=euphoric;key=6;scale=minor;bars=4;colour=318500000;style=motif;preset=pluck;rate=1/16;bpm=128;master=629358746;oct=2;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=782744567;progSeed=419339692
+P i,976605063,897738679,0,4,tri,;VII,328969210,897474604,0,4,sus,;VI,190132566,497353900,0,4,tri,;iv,440916404,513014571,0,4,sus,
+C F#m,i,54.57.61,42,0,4;Esus2/F#,VIIsus,54.59.64,42,384,4;D/F#,VI,54.57.62,42,768,4;Bsus2/F#,IVsus,54.59.61,42,1152,4
+N i,412360231,479778013,0,4,sus,;v,457146643,685603342,0,4,ext,;VI,198317787,765509434,0,8,tri,
+M sad
+A F#m,F#sus2,F#m7,F#m11,F#m7/A,Dmaj7,Amaj7,F#maj7
+CASE Euphoric Progressive in F# minor 128 BPM|4242|0
+G genre=progressive;moods=euphoric;key=6;scale=minor;bars=4;colour=595074743;style=pedal;preset=pluck;rate=1/16;bpm=128;master=619607662;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=818933252;progSeed=886072338
+P i,426654667,803983587,0,4,,;iv,499309788,509847353,0,4,,;i,32094672,753651249,0,4,,;VII,911691341,382935943,0,4,,
+C F#m7,i,54.61.64.69,42,0,4;Bm7,iv,54.59.62.69,47,384,4;F#m7,i,54.61.64.69,42,768,4;E9,VII,50.54.64.68,40,1152,4
+N VI,762293350,87871948,0,4,,;VII,400202184,114441385,0,4,,;v,66830938,565181501,0,4,,;i,928897247,794531422,0,4,,
+M sad
+A F#m7,F#sus2,F#m7,F#m11,F#m7/A,Dmaj7,Amaj7,F#maj7
+CASE Euphoric Progressive in F# minor 128 BPM|99999|0
+G genre=progressive;moods=euphoric;key=6;scale=minor;bars=8;colour=629336360;style=pedal;preset=pluck;rate=1/8;bpm=128;master=624703637;oct=2;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=14630980;progSeed=192859905
+P iv,52304734,311636213,0,4,,;i,808395132,891555816,0,4,,;VI,12172255,538882569,0,4,,;VII,842574762,903782223,0,4,,;iv,526471231,707051377,0,4,,;i,618687314,492943622,0,4,,;VI,123560343,575438974,0,4,,;III,901138427,501283418,0,4,,
+C Bm7,iv,59.62.66.69,47,0,4;F#m9,i,54.57.64.68,42,384,4;Dmaj7/F#,VI,50.57.61.66,42,768,4;E9/F#,VII,52.56.62.66,42,1152,4;Bm9/F#,iv,50.57.61.71,42,1536,4;F#m9,i,52.54.57.68,42,1920,4;Dmaj7/F#,VI,50.57.61.66,42,2304,4;Amaj9/F#,III,49.56.59.69,42,2688,4
+N i,68747540,139217983,0,4,,;VII,348641131,8659400,0,4,,;i,433937853,833873589,0,4,,;VI,776294278,630418791,0,4,,;i,628775967,115784988,0,4,,;VI,507857939,768293233,0,4,,;iv,689273048,346666871,0,4,,;VII,840780499,916382722,0,4,,
+M dreamy
+A Bm7,Bsus2,Bm7,Bm11,Bm7/D,G#m7b5,Dmaj7,Bmaj7
+CASE Euphoric Progressive in F# minor 128 BPM|99999|0.5
+G genre=progressive;moods=euphoric;key=6;scale=minor;bars=8;colour=473918180;style=pedal;preset=pluck;rate=1/8;bpm=128;master=624703637;oct=2;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=14630980;progSeed=192859905
+P iv,52304734,311636213,0,4,tri,;v,808395132,891555816,0,4,ext,;iv,12172255,538882569,0,4,,;VII,842574762,903782223,0,4,tri,;i,526471231,707051377,0,4,tri,;i,618687314,492943622,0,4,sev,;VI,123560343,575438974,0,4,add9,;III,901138427,501283418,0,4,sus,
+C Bm,iv,59.62.66,47,0,4;C#m7/F#,v,59.61.64.68,42,384,4;Bm(add9)/F#,iv,59.62.66.73,42,768,4;E/F#,VII,59.64.68,42,1152,4;F#m,i,61.66.69,42,1536,4;F#m7,i,61.64.66.69,42,1920,4;Dadd9/F#,VI,52.62.66.69,42,2304,4;Asus2/F#,IIIsus,59.64.69,42,2688,4
+N i,68747540,139217983,0,4,,;VII,348641131,8659400,0,4,tri,ped;i,433937853,833873589,0,4,,;VI,776294278,630418791,0,4,,;i,628775967,115784988,0,4,,;VI,507857939,768293233,0,4,add9,;iv,689273048,346666871,0,4,,;VII,840780499,916382722,0,4,,
+M sad
+A Bm,Bsus2,Bm7,Bm11,Bm(add9)/D,G#dim,Dadd9,Badd9
+CASE Euphoric Progressive in F# minor 128 BPM|99999|1
+G genre=progressive;moods=euphoric;key=6;scale=minor;bars=4;colour=318500000;style=motif;preset=pluck;rate=1/16;bpm=128;master=624703637;oct=3;reg=0;glide=0;pedal=1;gate=500000000;swing=0;groove=0;arpSeed=14630980;progSeed=192859905
+P i,783907366,251994882,0,4,six,;iv,253847881,358514851,0,8,add9,ped;VI,27066917,497422307,0,4,add9,ped
+C F#m,i,54.57.61,42,0,4;Bm(add9)/F#,iv,50.54.61.71,42,384,8;Dadd9/F#,VI,52.54.62.69,42,1152,4
+N iv,726330372,15107230,0,8,tri,ped;i,845457199,570434156,0,4,add9,;iv,518903288,717973381,0,4,sus,
+M sad
+A F#m,F#sus2,F#m7,F#m11,F#m7/A,Dmaj7,Amaj7,F#maj7
+CASE chill mixolydian sunset 8 bars|1|0
+G genre=house;moods=chill;key=2;scale=mixolydian;bars=8;colour=766841857;style=walk;preset=pluck;rate=1/16;bpm=115;master=327178608;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=712512097;progSeed=735516451
+P I,671495237,592921758,0,4,,;VII,836719282,769551584,0,4,,;IV,716803871,485676447,0,4,,;IV,420381914,934094224,0,4,,;I,470101592,263562125,0,4,,;VII,840677416,246893752,0,4,,;IV,454740541,188827479,0,4,,;iii,48551114,46115445,0,4,,
+C D9,I,50.54.60.64,38,0,4;Cmaj9,VII,50.60.64.71,48,384,4;Gmaj9,IV,55.59.66.69,43,768,4;Gmaj9,IV,55.59.66.69,43,1152,4;D9/F#,I,52.62.66.72,42,1536,4;Cmaj9/E,VII,52.59.62.72,40,1920,4;Gmaj9,IV,55.59.66.69,43,2304,4;F#m7b5,iii°,54.60.64.69,42,2688,4
+N I,663171422,202162701,0,4,,;v,542119591,70763869,0,4,,;IV,4537842,920926401,0,4,,;I,970555641,210052858,0,4,,;I,933996392,382739426,0,4,,;VII,22351829,51540492,0,4,,;IV,452995874,784234106,0,4,,;I,631273614,481046940,0,4,,
+M dreamy
+A D9,Dsus2,D7,D9,D9/F#,Bm7,F#m7b5,Dm9
+CASE chill mixolydian sunset 8 bars|1|0.5
+G genre=house;moods=chill;key=2;scale=mixolydian;bars=8;colour=542670929;style=walk;preset=pluck;rate=1/16;bpm=115;master=327178608;oct=3;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=712512097;progSeed=735516451
+P vi,619764605,670201774,0,8,ext,;IV,892198259,458361816,0,4,tri,;V,8678927,51775843,0,8,sus,;vi,483886822,716410898,0,4,sus,;V,630756266,472487911,0,8,add9,
+C Bm7,vi,59.62.66.69,47,0,8;G,IV,59.62.67,43,768,4;Asus2,Vsus,59.64.69,45,1152,8;Bsus4,VIsus,59.64.66,47,1920,4;Am(add9),v,57.60.64.71,45,2304,8
+N I,663171422,202162701,0,4,,;v,542119591,70763869,0,4,tri,;IV,4537842,920926401,0,4,,;I,970555641,210052858,0,4,add9,;I,933996392,382739426,0,4,six,;VII,22351829,51540492,0,4,sev,;IV,452995874,784234106,0,4,,ped;I,631273614,481046940,0,4,tri,
+M dreamy
+A Bm7,Bsus4,Bm7,Bm7,Bm7/D,Gmaj7,D7,A#maj7
+CASE chill mixolydian sunset 8 bars|1|1
+G genre=house;moods=chill;key=2;scale=mixolydian;bars=8;colour=318500000;style=motif;preset=pluck;rate=1/16;bpm=115;master=327178608;oct=3;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=712512097;progSeed=735516451
+P vi,619764605,670201774,0,8,ext,;IV,892198259,458361816,0,4,tri,;V,8678927,51775843,0,8,sus,;vi,483886822,716410898,0,4,sus,;V,630756266,472487911,0,8,add9,
+C Bm7,vi,59.62.66.69,47,0,8;G,IV,59.62.67,43,768,4;Asus2,Vsus,59.64.69,45,1152,8;Bsus4,VIsus,59.64.66,47,1920,4;Am(add9),v,57.60.64.71,45,2304,8
+N I,787474225,463909273,0,4,tri,3rd;IV,869441840,608772965,0,4,tri,;vi,101182972,997884814,0,4,tri,;I,904332859,806432611,0,8,sev,;V,190805793,65625414,0,2,tri,;I,100469848,696410740,0,2,sus,;V,87062003,893604429,0,4,add9,;vi,325868616,146534909,0,4,tri,
+M dreamy
+A Bm7,Bsus4,Bm7,Bm7,Bm/D,Gsus2,Dsus2,A#sus2
+CASE chill mixolydian sunset 8 bars|128|0
+G genre=lofi;moods=chill;key=6;scale=mixolydian;bars=8;colour=1000000000;style=up;preset=keys;rate=1/8;bpm=74;master=156788434;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=644606374;progSeed=543606522
+P I,396572958,394213935,0,4,,;I,912578051,150784857,0,4,,;v,119410425,360087894,0,4,,;v,52683224,12138543,0,4,,;IV,292752538,713845306,0,4,,;IV,824620845,452342853,0,4,,;I,803258574,868352134,0,4,,;I,49665953,505101586,0,4,,
+C Gb9,I,54.58.64.68,42,0,4;Gb9,I,54.58.64.68,42,384,4;Dbm9,v,52.59.63.73,49,768,4;Dbm9,v,52.59.63.73,49,1152,4;B6/9,IV,56.59.63.73,47,1536,4;Bmaj9,IV,59.63.70.73,47,1920,4;Gb9,I,54.58.64.68,42,2304,4;Gb9,I,54.58.64.68,42,2688,4
+N I,764531243,842056121,0,4,,;v,859712641,558812785,0,4,,;IV,503594695,425922150,0,4,,;I,511116918,20208962,0,4,,;I,652582235,604456631,0,4,,;VII,178873149,294533449,0,4,,;IV,927214005,629157972,0,4,,;IV,582291129,701797239,0,4,,
+M dreamy
+A Gb9,Gbsus2,Gb7,Gb9,Gb9/Bb,Ebm7,Bbm7b5,Gbm11
+CASE chill mixolydian sunset 8 bars|128|0.5
+G genre=lofi;moods=chill;key=6;scale=mixolydian;bars=8;colour=659250000;style=motif;preset=keys;rate=1/8;bpm=74;master=156788434;oct=2;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=644606374;progSeed=543606522
+P I,583759982,430012807,0,4,sus,;bVI,591791478,95864045,0,4,add9,;bVII,512845657,600139300,0,4,ext,;I,506920524,848402110,0,8,add9,3rd;V,543095173,347016459,0,4,ext,;IV,390602718,203096983,0,4,tri,ped;I,610681572,98568052,0,4,add9,
+C Gbsus2,Isus,54.56.61,42,0,4;Dadd9,bVI,52.54.62.69,38,384,4;E9,VII,52.56.62.66,40,768,4;Gbadd9/Bb,I,54.58.61.68,46,1152,8;Dbm11,v,51.61.64.71,49,1920,4;B/Gb,IV,59.63.66,42,2304,4;Gbadd9,I,54.58.61.68,42,2688,4
+N I,412360231,479778013,0,4,sus,;bVII,457146643,685603342,0,4,ext,;IV,198317787,765509434,0,8,tri,;V,734836512,668112436,0,2,sus,;vi,115540827,595940630,0,2,tri,;V,835143941,953752347,0,4,sus,;I,22819248,513284193,0,4,sus,;vi,915606408,231860757,0,4,sus,
+M dreamy
+A Gbsus2,Gbsus2,Gb7,Gb9,Gb9/Bb,Ebm7,Bbm7b5,Gbm9
+CASE chill mixolydian sunset 8 bars|128|1
+G genre=lofi;moods=chill;key=6;scale=mixolydian;bars=8;colour=318500000;style=motif;preset=keys;rate=1/16;bpm=74;master=156788434;oct=3;reg=0;glide=0;pedal=0;gate=850000000;swing=0;groove=0;arpSeed=644606374;progSeed=543606522
+P I,583759982,430012807,0,4,sus,;bVI,591791478,95864045,0,4,add9,;bVII,512845657,600139300,0,4,ext,;I,506920524,848402110,0,8,add9,3rd;V,543095173,347016459,0,4,ext,;IV,390602718,203096983,0,4,tri,ped;I,610681572,98568052,0,4,add9,
+C Gbsus2,Isus,54.56.61,42,0,4;Dadd9,bVI,52.54.62.69,38,384,4;E9,VII,52.56.62.66,40,768,4;Gbadd9/Bb,I,54.58.61.68,46,1152,8;Dbm11,v,51.61.64.71,49,1920,4;B/Gb,IV,59.63.66,42,2304,4;Gbadd9,I,54.58.61.68,42,2688,4
+N I,412360231,479778013,0,4,sus,;bVII,457146643,685603342,0,4,ext,;IV,198317787,765509434,0,8,tri,;V,734836512,668112436,0,2,sus,;vi,115540827,595940630,0,2,tri,;V,835143941,953752347,0,4,sus,;I,22819248,513284193,0,4,sus,;vi,915606408,231860757,0,4,sus,
+M dreamy
+A Gbsus2,Gbsus2,Gb7,Gb9,Gbsus2/Ab,Ebm,Bbdim,Gbsus2
+CASE chill mixolydian sunset 8 bars|4242|0
+G genre=house;moods=chill;key=3;scale=mixolydian;bars=8;colour=832012458;style=walk;preset=pluck;rate=1/16;bpm=113;master=302005679;oct=2;reg=0;glide=0;pedal=0;gate=500000000;swing=0;groove=0;arpSeed=568716674;progSeed=780252392
+P vi,702229579,288665463,0,4,,;IV,420946830,820653065,0,4,,;I,416385251,302142335,0,4,,;V,648179781,113334980,0,4,,;I,668736023,92408453,0,4,,;v,478388958,527423977,0,4,,;IV,560142243,919281384,0,4,,;I,672712902,732271059,0,4,,
+C Cm7,vi,60.63.67.70,48,0,4;Abmaj9,IV,56.60.67.70,44,384,4;Eb9,I,53.63.67.73,39,768,4;Bbm11/Db,v,56.60.70.73,49,1152,4;Eb9,I,53.55.63.73,39,1536,4;Bbm9,v,56.58.61.72,46,1920,4;Abmaj9,IV,55.58.68.72,44,2304,4;Eb9,I,53.55.63.73,39,2688,4
+N I,87871948,400202184,0,4,,;VII,114441385,66830938,0,4,,;IV,565181501,928897247,0,4,,;IV,794531422,878331575,0,4,,;I,516834934,575111850,0,4,,;VII,998206093,962297632,0,4,,;IV,63924238,832356840,0,4,,;IV,913551681,100095136,0,4,,
+M dreamy
+A Cm7,Csus4,Cm7,Cm7,Cm7/Eb,Abmaj9,Eb9,Bmaj9
+CASE chill mixolydian sunset 8 bars|99999|0
+G genre=house;moods=chill;key=0;scale=mixolydian;bars=8;colour=877551303;style=walk;preset=keys;rate=1/8;bpm=116;master=303996315;oct=2;reg=0;glide=0;pedal=1;gate=850000000;swing=0;groove=0;arpSeed=471062800;progSeed=966570668
+P vi,631200776,709439590,0,4,,;IV,336110856,840985626,0,4,,;I,487005314,674852678,0,4,,;V,890126431,344304129,0,4,,;vi,239163990,298390177,0,4,,;IV,641938202,178218180,0,4,,;I,417682629,218121746,0,4,,;IV,396197055,293503857,0,4,,
+C Am7,vi,57.60.64.67,45,0,4;Fmaj9/C,IV,53.57.64.67,48,384,4;C9,I,52.58.62.72,48,768,4;Gm11/C,v,53.55.58.69,48,1152,4;Am7/C,vi,55.60.64.69,48,1536,4;Fmaj9/C,IV,52.55.65.69,48,1920,4;C9,I,52.58.62.72,48,2304,4;Fmaj9/C,IV,52.55.65.69,48,2688,4
+N I,68747540,139217983,0,4,,;VII,348641131,8659400,0,4,,;IV,433937853,833873589,0,4,,;IV,776294278,630418791,0,4,,;I,628775967,115784988,0,4,,;VII,507857939,768293233,0,4,,;IV,689273048,346666871,0,4,,;I,840780499,916382722,0,4,,
+M dreamy
+A Am7,Asus4,Am7,Am7,Am7/C,Fmaj9,C9,G#maj9
+CASE chill mixolydian sunset 8 bars|99999|0.5
+G genre=house;moods=chill;key=0;scale=mixolydian;bars=8;colour=598025652;style=motif;preset=keys;rate=1/8;bpm=116;master=303996315;oct=3;reg=0;glide=0;pedal=1;gate=850000000;swing=0;groove=0;arpSeed=471062800;progSeed=966570668
+P vi,631200776,709439590,0,4,tri,;IV,336110856,840985626,0,4,ext,;I,487005314,674852678,0,4,sus,;V,890126431,344304129,0,4,ext,;vi,239163990,298390177,0,4,,;IV,641938202,178218180,0,4,tri,;I,417682629,218121746,0,4,,;IV,396197055,293503857,0,4,sev,3rd
+C Am,vi,57.60.64,45,0,4;Fmaj9/C,IV,53.57.64.67,48,384,4;Csus2,Isus,60.62.67,48,768,4;Gm11/C,v,55.58.65.69,48,1152,4;Am7/C,vi,55.60.64.69,48,1536,4;F/C,IV,60.65.69,48,1920,4;C7,I,60.64.67.70,48,2304,4;Fmaj7/A,IV,53.60.64.69,45,2688,4
+N I,68747540,139217983,0,4,,;VII,348641131,8659400,0,4,tri,ped;IV,433937853,833873589,0,4,,;IV,776294278,630418791,0,4,,;I,628775967,115784988,0,4,,;VII,507857939,768293233,0,4,add9,;IV,689273048,346666871,0,4,,;I,840780499,916382722,0,4,,
+M dreamy
+A Am,Asus4,Am7,Am7,Am7/C,Fmaj9,C9,G#maj9
+CASE chill mixolydian sunset 8 bars|99999|1
+G genre=house;moods=chill;key=0;scale=mixolydian;bars=8;colour=318500000;style=motif;preset=keys;rate=1/8;bpm=116;master=303996315;oct=3;reg=0;glide=0;pedal=1;gate=850000000;swing=0;groove=0;arpSeed=471062800;progSeed=966570668
+P I,967743144,638265754,0,4,tri,;IV,18577195,452626864,0,4,tri,;V,977809475,505053062,0,8,sev,;vi,915320582,131055044,0,4,tri,;I,576452248,228762084,0,4,add9,;IV,382203846,110860753,0,2,sus,;vi,368884479,867042913,0,2,add9,;I,208759131,363195522,0,4,sus,
+C C,I,60.64.67,48,0,4;F/C,IV,57.60.65,48,384,4;Gm7/C,v,58.62.65.67,48,768,8;Am/C,vi,57.60.64,48,1536,4;Cadd9,I,50.60.64.67,48,1920,4;Fsus2/C,IVsus,60.65.67,48,2304,2;Am/C,vi,60.64.69,48,2496,2;Csus2,Isus,60.62.67,48,2688,4
+N ii,726330372,15107230,0,8,tri,ped;I,845457199,570434156,0,4,add9,;IV,518903288,717973381,0,4,sus,;V,776530854,483525460,0,8,sus,;vi,564167793,783423451,0,4,tri,;V,852260859,337021971,0,2,add9,;I,978125158,640392129,0,2,tri,
+M dreamy
+A C,Csus2,C7,C9,C7/E,Am7,Em7b5,Cm7

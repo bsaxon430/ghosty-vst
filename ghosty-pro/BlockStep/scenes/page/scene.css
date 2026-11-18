@@ -1,0 +1,260 @@
+/* =====================================================================================================================
+   SCENES (owner 2026-11-13). Two painted looks over the same layout: body.sc-city (GHOST CITY) and body.sc-anime
+   (SPIRIT HILLS). Only colours, textures and frames change here: no size, padding or position of any control, so every
+   button stays exactly where it was. HACKER MODE (body.hack) keeps its own rules and switches all of this off.
+   ===================================================================================================================== */
+#scn{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;display:block}
+body.hack #scn{display:none!important}
+/* three looks: the two painted scenes draw on #scn; ORIGINAL (the Ghost Money look) keeps the page's own background on #bg */
+body:not(.sc-city):not(.sc-anime) #scn,body.sc-city #bg,body.sc-anime #bg{display:none!important}
+body.scn:before{background:var(--sc-base,#05040a)}
+#scnBtn{min-width:104px}
+
+/* ------------------------------------------------------------------ GHOST CITY
+   (owner 2026-11-13: "hand drawn ... insane glow for neon ... 3-D looking, see-through".) Every panel is a sheet of
+   glass you see the street through, in a hand-bent neon tube; every button is a thick glass key, dark with a tube round
+   it or lit like a sign. The frames and keys are small paintings laid over the boxes as 9-slice pictures (the corners
+   keep their shape, the sides stretch or repeat), so nothing changes size or place. */
+@font-face{font-family:"GB Neon";font-weight:400;src:url(font:tilt-neon) format("woff2")}
+body.sc-city{--sc-base:#07051a;--ink:#eef3ff;--grey:#a9bbe0;--dim:#7a88ad;--purple:#d05bff;--violet:#8b6cff;--edge:rgba(255,47,168,.5);--line:rgba(160,200,255,.16);--nmag:#ff2fa8;--ncy:#27e4ff;
+  --p-a:url(ui:c-panel);--p-b:url(ui:c-panel2);--p-f:url(ui:c-frame);--p-bar:url(ui:c-bar);--k-off:url(ui:c-off);--k-hov:url(ui:c-hov);--k-gen:url(ui:c-gen);--k-gloss:url(ui:c-gloss);--k-rim-cy:url(ui:c-rim-cy);--k-on-cy:url(ui:c-on-cy);--k-rim-mg:url(ui:c-rim-mg);--k-on-mg:url(ui:c-on-mg);--k-rim-gn:url(ui:c-rim-gn);--k-on-gn:url(ui:c-on-gn);--k-rim-am:url(ui:c-rim-am);--k-on-am:url(ui:c-on-am);--k-rim-vi:url(ui:c-rim-vi);--k-on-vi:url(ui:c-on-vi);--k-rim-rd:url(ui:c-rim-rd);--k-on-rd:url(ui:c-on-rd);--k-rim-or:url(ui:c-rim-or);--k-on-or:url(ui:c-on-or);--k-rim-tl:url(ui:c-rim-tl);--k-on-tl:url(ui:c-on-tl);--k-rim-bl:url(ui:c-rim-bl);--k-on-bl:url(ui:c-on-bl);--k-rim-pk:url(ui:c-rim-pk);--k-on-pk:url(ui:c-on-pk);}
+/* panels */
+body.sc-city:not(.hack) .glass,
+body.sc-city:not(.noglass):not(.hack) #side,
+body.newtop.sc-city:not(.noglass):not(.hack) #topBand section.tight,body.newtop.sc-city:not(.noglass):not(.hack) #engBox,body.newtop.topswap.sc-city:not(.noglass):not(.hack) #engTop,
+body.newtop.sc-city:not(.topswap):not(.noglass):not(.hack) #engTop>.engbox{
+  background:none!important;border:1px solid transparent!important;box-shadow:none!important;
+  border-image:var(--p-a) 104 fill / 52px / 14px round!important;
+  -webkit-backdrop-filter:blur(3px) saturate(1.35) brightness(.88)!important;backdrop-filter:blur(3px) saturate(1.35) brightness(.88)!important}
+body.newtop.sc-city:not(.noglass):not(.hack) #engBox,body.newtop.sc-city:not(.topswap):not(.noglass):not(.hack) #engTop>.engbox,body.sc-city:not(.noglass):not(.hack) #side{border-image-source:var(--p-b)!important}
+body.sc-city:not(.noglass):not(.hack) .layers,body.sc-city:not(.noglass):not(.hack) .flbar{
+  background:none!important;border:1px solid transparent!important;box-shadow:none!important;border-image:var(--p-bar) 52 fill / 26px / 10px round!important;
+  -webkit-backdrop-filter:blur(3px) saturate(1.35) brightness(.88)!important;backdrop-filter:blur(3px) saturate(1.35) brightness(.88)!important}
+body.sc-city:not(.hack) .glass:before,body.sc-city:not(.hack) .glass:after{display:none!important}
+body.sc-city:not(.hack) .trk{background:none!important;-webkit-backdrop-filter:blur(2px) saturate(1.25)!important;backdrop-filter:blur(2px) saturate(1.25)!important;position:relative}
+body.sc-city:not(.hack) .trk::after{content:"";position:absolute;inset:0;border:0 solid transparent;border-image:var(--p-f) 104 / 52px / 14px round;pointer-events:none;z-index:6}
+body.sc-city:not(.hack) .sheet,body.sc-city:not(.hack) .patmenu{background:linear-gradient(180deg,rgba(20,13,48,.93),rgba(8,6,24,.96))!important}
+/* keys */
+body.sc-city:not(.hack) .btn{background:none!important;border-color:transparent!important;box-shadow:none!important;border-image:var(--k-rim-mg) 36 fill / 18px / 6px stretch!important;
+  color:#f1f5ff;text-shadow:0 0 7px rgba(140,180,255,.65),0 1px 1px rgba(0,0,14,.9)}
+body.sc-city:not(.hack) .btn:active{transform:translateY(1px);filter:brightness(1.3)}
+body.sc-city:not(.hack) .btn.ghost,body.sc-city:not(.hack) .btn.pno,body.sc-city:not(.hack) .btn.syn{border-image-source:var(--k-off)!important}
+@media (hover:hover){body.sc-city:not(.hack) .btn.ghost:hover{border-image-source:var(--k-hov)!important}}
+body.sc-city:not(.hack) .btn.danger{border-image-source:var(--k-rim-rd)!important;color:#ffd0d8}
+body.sc-city:not(.hack) .btn.lin{border-image-source:var(--k-rim-bl)!important}body.sc-city:not(.hack) .btn.wild{border-image-source:var(--k-rim-pk)!important}body.sc-city:not(.hack) .btn.chop{border-image-source:var(--k-rim-or)!important}
+body.sc-city:not(.hack) #varBtn,body.sc-city:not(.hack) .btn.brk,body.sc-city:not(.hack) .btn.brain{border-image-source:var(--k-rim-vi)!important}body.sc-city:not(.hack) #fillBtn,body.sc-city:not(.hack) .btn.song{border-image-source:var(--k-rim-am)!important}body.sc-city:not(.hack) #rollBtn{border-image-source:var(--k-rim-tl)!important}
+body.sc-city:not(.hack) .btn.on,body.sc-city:not(.hack) #trkPanel .chip.on,body.sc-city:not(.hack) .btn.pno.on,body.sc-city:not(.hack) .btn.syn.on{border-image-source:var(--k-on-cy)!important}
+body.sc-city:not(.hack) .btn.green,body.sc-city:not(.hack) .lgrp .lpow.on{border-image-source:var(--k-on-gn)!important}
+body.sc-city:not(.hack) .btn.armed,body.sc-city:not(.hack) #fillBtn.on,body.sc-city:not(.hack) .btn.song.on{border-image-source:var(--k-on-am)!important}
+body.sc-city:not(.hack) .engseg .btn.on{border-image-source:var(--k-on-mg)!important}
+body.sc-city:not(.hack) .btn.lin.on{border-image-source:var(--k-on-bl)!important}body.sc-city:not(.hack) .btn.wild.on{border-image-source:var(--k-on-pk)!important}body.sc-city:not(.hack) .btn.chop.on{border-image-source:var(--k-on-or)!important}
+body.sc-city:not(.hack) #varBtn.on{border-image-source:var(--k-on-vi)!important}body.sc-city:not(.hack) #rollBtn.on,body.sc-city:not(.hack) #rollBtn.armed{border-image-source:var(--k-on-tl)!important}
+body.sc-city:not(.hack) .btn.gen{border-image-source:var(--k-gen)!important;color:#fff;text-shadow:0 0 10px rgba(255,255,255,.7),0 1px 2px rgba(40,0,60,.8)}
+/* a lit key: dark lettering pressed into the gel (white on the deep colours) */
+body.sc-city:not(.hack) .btn.on,body.sc-city:not(.hack) .btn.green,body.sc-city:not(.hack) .btn.armed,body.sc-city:not(.hack) #trkPanel .chip.on,body.sc-city:not(.hack) .lgrp .lpow.on,body.sc-city:not(.hack) #rollBtn.on,body.sc-city:not(.hack) #fillBtn.on,body.sc-city:not(.hack) .btn.chop.on,body.sc-city:not(.hack) .btn.wild.on{color:#07101c!important;text-shadow:0 1px 0 rgba(255,255,255,.45)!important}
+body.sc-city:not(.hack) .btn.on .v,body.sc-city:not(.hack) .btn.armed .v{color:#07101c!important}
+body.sc-city:not(.hack) .engseg .btn.on,body.sc-city:not(.hack) .btn.lin.on,body.sc-city:not(.hack) #varBtn.on{color:#fff!important;text-shadow:0 0 8px rgba(255,255,255,.6),0 1px 2px rgba(30,0,40,.85)!important}
+/* the big signs are lettered in neon tube */
+body.sc-city:not(.hack) .btn.gen,body.sc-city:not(.hack) .engseg .btn,body.sc-city:not(.hack) .vstack .lgrp .btn:not(.icon),body.sc-city:not(.hack) .pat{font-family:"GB Neon",var(--disp)!important;font-weight:400!important;letter-spacing:.07em}
+body.sc-city:not(.hack) .btn.gen{font-size:15px}
+/* the drum chips: dark keys with the drum's own lamp; the chosen one is a gel lit in that drum's colour */
+body.sc-city:not(.hack) .dchip{background:none;border:1px solid transparent;border-radius:11px;border-image:var(--k-off) 36 fill / 17px / 5px stretch;color:#e9efff;text-shadow:0 0 6px rgba(140,180,255,.5)}
+body.sc-city:not(.hack) .dchip i{border-radius:50%;box-shadow:0 0 9px var(--c),0 0 3px var(--c)}
+body.sc-city:not(.hack) .dchip.on{background:var(--c);border-image-source:var(--k-gloss);box-shadow:0 0 18px var(--c),0 0 6px var(--c);color:#07101c;text-shadow:0 1px 0 rgba(255,255,255,.45)}
+/* layer switches: three little keys */
+body.sc-city:not(.hack) .layer{border:1px solid transparent;border-image:var(--k-off) 36 fill / 17px / 5px stretch;background:none;overflow:visible}
+body.sc-city:not(.hack) .layer.here{border-image-source:var(--k-rim-gn);background:none}
+body.sc-city:not(.hack) .layer .dot{border-left-color:rgba(150,180,255,.25)}
+/* small print on the glass: light, with a dark halo so it reads over the street */
+body.sc-city:not(.hack) .lab,body.sc-city:not(.hack) .englab{color:#aee4ff;text-shadow:0 0 5px #05030c,0 0 2px #05030c,0 0 12px rgba(39,228,255,.55)}
+body.sc-city:not(.hack) .brand h1{background:linear-gradient(90deg,#fff,#ffd3f0 55%,#ff5fc8);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 10px rgba(255,47,168,.8)) drop-shadow(0 0 2px rgba(255,255,255,.6))}
+body.sc-city:not(.hack) .flt.on{background:#27e4ff;border-color:#27e4ff;box-shadow:0 0 14px rgba(39,228,255,.6)}
+body.sc-city:not(.hack) input[type=range]::-webkit-slider-runnable-track{background:linear-gradient(90deg,#ff2fa8,#a855f7 50%,#27e4ff);box-shadow:0 0 12px rgba(255,47,168,.55),0 0 4px rgba(39,228,255,.6)}
+body.sc-city:not(.hack) input[type=range]::-moz-range-track{background:linear-gradient(90deg,#ff2fa8,#a855f7 50%,#27e4ff)}
+body.sc-city:not(.hack) input[type=range]::-webkit-slider-thumb{box-shadow:0 0 14px rgba(39,228,255,.9),0 0 3px #fff}
+body.sc-city:not(.hack) .vbar .dfill,body.sc-city:not(.hack) .dfill{background:linear-gradient(180deg,#ff2fa8,#27e4ff)}
+
+/* the name row: a small plate behind STOP / BAR so it reads over the scene */
+body.scn:not(.hack) .stat{padding:3px 8px;margin:-3px -8px;border-radius:9px}
+body.sc-city:not(.hack) .stat{border:0 solid transparent;border-image:var(--k-off) 36 fill / 15px / 5px stretch}
+body.sc-city:not(.hack) .stat small{color:#cfe2ff}
+body.sc-city:not(.hack) .slogan{color:#f3f6ff;text-shadow:0 0 6px #05030c,0 0 3px #05030c,0 1px 2px #05030c}
+
+/* ------------------------------------------------------------------ SPIRIT HILLS: cream paper, painted blocks, ink lines */
+body.sc-anime{--sc-base:#bfe3f2;--ink:#2b1d14;--grey:#6b5440;--dim:#8d7a64;--line:rgba(43,29,20,.24);--edge:rgba(214,69,43,.5);
+  --green:#2f8a4a;--purple:#7a4fb0;--violet:#6a52c0;--red:#c43a24;--yellow:#b8860b;--blue:#2f5fb8;--orange:#c96a1a;--glass:rgba(251,243,222,.84);
+  --paper:#fbf3de;--paper2:#f2e6c8;--inkc:#2b1d14;--wood:#8a5a3a}
+body.sc-anime:not(.hack){color:var(--ink)}
+/* panels: frosted paper panes, an ink line all round, a hard cel shadow */
+body.sc-anime:not(.hack) .glass,
+body.sc-anime:not(.noglass):not(.hack) .layers,body.sc-anime:not(.noglass):not(.hack) #side,
+body.newtop.sc-anime:not(.noglass):not(.hack) #topBand section.tight,body.newtop.sc-anime:not(.noglass):not(.hack) #engBox,body.newtop.topswap.sc-anime:not(.noglass):not(.hack) #engTop,
+body.newtop.sc-anime:not(.topswap):not(.noglass):not(.hack) #engTop>.engbox{
+  background:linear-gradient(180deg,rgba(253,247,231,.86),rgba(246,236,208,.88))!important;
+  border:1px solid #2b1d14!important;border-radius:15px 19px 16px 20px/19px 15px 20px 16px!important;
+  box-shadow:0 0 0 1.2px #2b1d14,3px 4px 0 1px rgba(43,29,20,.28),inset 0 0 0 2px rgba(255,255,255,.55),inset 0 -14px 22px rgba(190,150,90,.14)!important;
+  -webkit-backdrop-filter:blur(5px) saturate(1.1)!important;backdrop-filter:blur(5px) saturate(1.1)!important}
+body.sc-anime:not(.hack) .glass:before,body.sc-anime:not(.hack) .glass:after{display:none}
+body.sc-anime:not(.noglass):not(.hack) .flbar{background:linear-gradient(180deg,#c39562,#a87748 55%,#8f6038)!important;border:1px solid #2b1d14!important;border-radius:13px 16px 12px 17px/16px 12px 17px 13px!important;
+  box-shadow:0 0 0 1.2px #2b1d14,3px 4px 0 1px rgba(43,29,20,.28),inset 0 2px 0 rgba(255,236,200,.45),inset 0 -3px 0 rgba(60,35,15,.35)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+body.sc-anime:not(.hack) .trk{background:rgba(250,243,226,.3)!important;-webkit-backdrop-filter:blur(4px) saturate(1.05)!important;backdrop-filter:blur(4px) saturate(1.05)!important}
+body.sc-anime:not(.hack) .sheet,body.sc-anime:not(.hack) .patmenu{background:linear-gradient(180deg,#fdf7e7,#f4e9cb)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+body.sc-anime:not(.hack) .vwrap{border-right-color:rgba(43,29,20,.4)}
+/* buttons: painted wooden blocks. A hard ink edge underneath = the block's thickness; pressing a block sinks it */
+body.sc-anime:not(.hack) .btn{color:#2b1d14;border-color:#2b1d14;background:linear-gradient(180deg,#d7e6fb,#b9d0f2);box-shadow:0 2px 0 #2b1d14,inset 0 1px 0 rgba(255,255,255,.8);text-shadow:none}
+body.sc-anime:not(.hack) .btn:active{transform:translateY(2px);box-shadow:0 0 0 #2b1d14,inset 0 1px 0 rgba(255,255,255,.6)}
+body.sc-anime:not(.hack) .btn.ghost{background:linear-gradient(180deg,#fffaf0,#f3e7ca);border-color:#2b1d14;box-shadow:0 2px 0 #2b1d14,inset 0 1px 0 #fff}
+body.sc-anime:not(.hack) .btn.green{background:linear-gradient(180deg,#a9e08c,#7cc763);border-color:#2b1d14;box-shadow:0 2px 0 #2b1d14,inset 0 1px 0 rgba(255,255,255,.7)}
+body.sc-anime:not(.hack) .btn.danger{background:linear-gradient(180deg,#ffe1d6,#f6bfae);color:#a32a16;border-color:#2b1d14;box-shadow:0 2px 0 #2b1d14,inset 0 1px 0 #fff}
+body.sc-anime:not(.hack) .btn.on,body.sc-anime:not(.hack) .engseg .btn.on,body.sc-anime:not(.hack) #trkPanel .chip.on,body.sc-anime:not(.hack) #synRow .btn.on,body.sc-anime:not(.hack) .btn.syn.on{
+  background:linear-gradient(180deg,#ffe38a,#f7c94a);border-color:#2b1d14;color:#2b1d14;box-shadow:0 1px 0 #2b1d14,inset 0 2px 3px rgba(150,100,10,.3);transform:translateY(1px)}
+body.sc-anime:not(.hack) .btn.armed{color:#2b1d14;border-color:#2b1d14;box-shadow:0 2px 0 #2b1d14,0 0 0 3px #f2b632}
+body.sc-anime:not(.hack) .btn.gen{background:linear-gradient(180deg,#ee6a4c,#d6452b);border-color:#2b1d14;color:#fff7e6;box-shadow:0 3px 0 #2b1d14,inset 0 1px 0 rgba(255,220,200,.7);text-shadow:0 1px 0 rgba(90,20,8,.6)}
+body.sc-anime:not(.hack) .btn.lin{background:linear-gradient(180deg,#cfe3fb,#a9c9f1);border-color:#2b1d14;box-shadow:0 2px 0 #2b1d14,inset 0 1px 0 #fff}
+body.sc-anime:not(.hack) .btn.wild{background:linear-gradient(180deg,#fbd3e2,#f0a9c5);border-color:#2b1d14;box-shadow:0 2px 0 #2b1d14,inset 0 1px 0 #fff}
+body.sc-anime:not(.hack) .btn.chop{background:linear-gradient(180deg,#fbdcb8,#f2b77c);border-color:#2b1d14;box-shadow:0 2px 0 #2b1d14,inset 0 1px 0 #fff}
+body.sc-anime:not(.hack) #varBtn{background:linear-gradient(180deg,#e1d5fa,#c4b0ee);border-color:#2b1d14;box-shadow:0 2px 0 #2b1d14,inset 0 1px 0 #fff}
+body.sc-anime:not(.hack) #fillBtn{background:linear-gradient(180deg,#fbeab0,#f1d071);border-color:#2b1d14;box-shadow:0 2px 0 #2b1d14,inset 0 1px 0 #fff}
+body.sc-anime:not(.hack) #rollBtn{background:linear-gradient(180deg,#c5efe6,#93d8ca);border-color:#2b1d14;box-shadow:0 2px 0 #2b1d14,inset 0 1px 0 #fff}
+body.sc-anime:not(.hack) #rollBtn.armed{box-shadow:0 2px 0 #2b1d14,0 0 0 3px #2f9a94}
+body.sc-anime:not(.hack) .btn.brk,body.sc-anime:not(.hack) .btn.brain{background:linear-gradient(180deg,#d9d6fb,#b9b3f0);border-color:#2b1d14;box-shadow:0 2px 0 #2b1d14,inset 0 1px 0 #fff}
+body.sc-anime:not(.hack) .btn.song{background:linear-gradient(180deg,#fbe6a8,#f4c869);border-color:#2b1d14;box-shadow:0 2px 0 #2b1d14,inset 0 1px 0 #fff}
+body.sc-anime:not(.hack) .toprow4 .btn.pno:not(.on),body.sc-anime:not(.hack) .toprow4 .btn.syn:not(.on),body.sc-anime:not(.hack) .btn.pno,body.sc-anime:not(.hack) .btn.syn{background:linear-gradient(180deg,#fffaf0,#f3e7ca);border-color:#2b1d14;color:#2b1d14;box-shadow:0 2px 0 #2b1d14,inset 0 1px 0 #fff}
+body.sc-anime:not(.hack) .btn.pno.on,body.sc-anime:not(.hack) #pnoMode.on,body.sc-anime:not(.hack) #pnoStyles .btn.on,body.sc-anime:not(.hack) #pnoMood .btn.on{background:linear-gradient(180deg,#ffe38a,#f7c94a);color:#2b1d14;border-color:#2b1d14;box-shadow:0 1px 0 #2b1d14,inset 0 2px 3px rgba(150,100,10,.3)}
+body.sc-anime:not(.hack) .btn .v,body.sc-anime:not(.hack) .btn.wild .v,body.sc-anime:not(.hack) #varBtn .v,body.sc-anime:not(.hack) #fillBtn .v,body.sc-anime:not(.hack) #rollBtn .v{color:#5a3d2a}
+body.sc-anime:not(.hack) .lgrp{box-shadow:none}
+body.sc-anime:not(.hack) .lgrp .lpow.on{background:linear-gradient(180deg,#a9e08c,#7cc763);border-color:#2b1d14;color:#2b1d14}
+body.sc-anime:not(.hack) .lgrp .btn.on:not(.lpow){box-shadow:0 1px 0 #2b1d14,inset 0 0 0 2px rgba(214,69,43,.75)}
+body.sc-anime:not(.hack) .engpair .btn.icon,body.sc-anime:not(.hack) #trkPanel .gp .gb,body.sc-anime:not(.hack) .gpair .gb{background:#fffaf0;border:1px solid #2b1d14;color:#2b1d14;box-shadow:0 2px 0 #2b1d14}
+body.sc-anime:not(.hack) .btn.busy:after{border-color:rgba(43,29,20,.3);border-top-color:#2b1d14}
+body.sc-anime:not(.hack) #chMute.on{background:linear-gradient(180deg,#f6a493,#e2553a);color:#fff7e6}
+body.sc-anime:not(.hack) #chSolo.on{background:linear-gradient(180deg,#ffe38a,#f7c94a)}
+body.sc-anime:not(.hack) #freeBtn.on,body.sc-anime:not(.hack) #ghoBtn.on,body.sc-anime:not(.hack) .bkact .on,body.sc-anime:not(.hack) .arrdrag .btn.on{color:#2b1d14;border-color:#2b1d14}
+/* words */
+body.sc-anime:not(.hack) .lab,body.sc-anime:not(.hack) .englab,body.sc-anime:not(.hack) .tmul .lab,body.sc-anime:not(.hack) #trkPanel .tlab{color:#6b5440;text-shadow:none}
+body.sc-anime:not(.hack) .tmul b,body.sc-anime:not(.hack) .apxrow span,body.sc-anime:not(.hack) details.apx summary,body.sc-anime:not(.hack) .apxrow b,body.sc-anime:not(.hack) #flSwingV{color:#2b1d14}
+body.sc-anime:not(.hack) .pnosnd b{color:#8a5a12;text-shadow:none}
+body.sc-anime:not(.hack) #keyTag.on{color:#1f6a36;border-color:#2b1d14;text-shadow:none}
+body.sc-anime:not(.hack) .brand h1{background:none;-webkit-background-clip:border-box;background-clip:border-box;color:#fffaf0;-webkit-text-stroke:5px #2b1d14;paint-order:stroke fill;filter:drop-shadow(2px 3px 0 rgba(43,29,20,.3))}
+body.sc-anime:not(.hack) .gring{background:#fffaf0;border-color:#2b1d14;box-shadow:0 2px 0 #2b1d14}
+body.sc-anime:not(.hack) .slogan{color:#2b1d14;text-shadow:0 0 6px #fffaf0,0 0 2px #fffaf0}
+body.sc-anime:not(.hack) .stat{background:#fffaf0;box-shadow:0 0 0 1.2px #2b1d14,2px 2px 0 1px rgba(43,29,20,.28)}
+body.sc-anime:not(.hack) .stat .pill.play{color:#1f6a36;border-color:transparent;box-shadow:none}
+/* fields, sliders */
+body.sc-anime:not(.hack) input[type=text],body.sc-anime:not(.hack) input[type=password],body.sc-anime:not(.hack) input[type=number],body.sc-anime:not(.hack) input[type=search],body.sc-anime:not(.hack) select,body.sc-anime:not(.hack) textarea,body.sc-anime:not(.hack) .gsz select,body.sc-anime:not(.hack) .bkbar input,body.sc-anime:not(.hack) .bksnd select,body.sc-anime:not(.hack) .bkinp{
+  background-color:#fffdf5;border-color:#2b1d14;color:#2b1d14;box-shadow:inset 0 2px 0 rgba(43,29,20,.12)}
+body.sc-anime:not(.hack) select,body.sc-anime:not(.hack) .gsz select{background-repeat:no-repeat;background-position:right 8px center;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%232b1d14' stroke-width='2'/%3E%3C/svg%3E")}
+body.sc-anime:not(.hack) input:focus,body.sc-anime:not(.hack) select:focus{border-color:#d6452b;box-shadow:0 0 0 3px rgba(214,69,43,.25)}
+body.sc-anime:not(.hack) input[type=range]::-webkit-slider-runnable-track{background:linear-gradient(180deg,#b98a5a,#8a5a3a);box-shadow:0 0 0 1.2px #2b1d14,inset 0 1px 0 rgba(255,230,190,.5)}
+body.sc-anime:not(.hack) input[type=range]::-moz-range-track{background:linear-gradient(180deg,#b98a5a,#8a5a3a)}
+body.sc-anime:not(.hack) input[type=range]::-webkit-slider-thumb{background:#fffaf0;border:2px solid #2b1d14;box-shadow:0 2px 0 #2b1d14}
+body.sc-anime:not(.hack) input[type=range]::-moz-range-thumb{background:#fffaf0;border:2px solid #2b1d14}
+body.sc-anime:not(.hack) .mixrow input[type=range]::-webkit-slider-runnable-track{background:linear-gradient(90deg,#e9d9b4,var(--c));box-shadow:0 0 0 1.2px #2b1d14}
+body.sc-anime:not(.hack) .apxmarks i{background:#2b1d14;box-shadow:none}
+body.sc-anime:not(.hack) .apxmarks i[data-v="70"],body.sc-anime:not(.hack) .apxmarks i[data-v="85"]{background:#d6452b;box-shadow:none}
+body.sc-anime:not(.hack) .vbar{background:#e9d9b4;border-color:#2b1d14}
+body.sc-anime:not(.hack) .vbar .dfill,body.sc-anime:not(.hack) .dfill{background:linear-gradient(180deg,#e2553a,#f2b632);box-shadow:none}
+body.sc-anime:not(.hack) .vtag{background:#f7c94a;color:#2b1d14;box-shadow:0 0 0 1.2px #2b1d14,2px 2px 0 rgba(43,29,20,.3)}
+body.sc-anime:not(.hack) .rider{filter:drop-shadow(0 2px 0 rgba(43,29,20,.5))}
+/* chips, tags, tools */
+body.sc-anime:not(.hack) .dchip{background:#fffaf0;border-color:#2b1d14;color:#2b1d14;box-shadow:0 2px 0 #2b1d14}
+body.sc-anime:not(.hack) .dchip i{box-shadow:0 0 0 1px #2b1d14;filter:saturate(.7) brightness(.9)}
+body.sc-anime:not(.hack) .dchip.on{background:var(--c);border-color:#2b1d14;color:#1c120b;box-shadow:0 1px 0 #2b1d14,inset 0 2px 3px rgba(0,0,0,.18);filter:saturate(.62) brightness(.96);transform:translateY(1px)}
+body.sc-anime:not(.hack) .layer{border-color:#2b1d14;background:#fffaf0;color:#2b1d14;box-shadow:0 2px 0 #2b1d14}
+body.sc-anime:not(.hack) .layer .dot{border-left-color:rgba(43,29,20,.4)}
+body.sc-anime:not(.hack) .layer .dot::after{border-color:rgba(43,29,20,.55)}
+body.sc-anime:not(.hack) .layer.play .dot::after{background:#58b84a;border-color:#2b1d14;box-shadow:none}
+body.sc-anime:not(.hack) .layer.here{border-color:#2b1d14;background:linear-gradient(180deg,#d3f0c2,#a9e08c)}
+body.sc-anime:not(.hack) .flt{background:linear-gradient(180deg,#fffaf0,#f0e2c0);color:#2b1d14;border-color:#2b1d14;box-shadow:0 2px 0 #2b1d14}
+body.sc-anime:not(.hack) .flt span{color:#8a6a48}
+body.sc-anime:not(.hack) .flt.on{background:linear-gradient(180deg,#ffe38a,#f7c94a);border-color:#2b1d14;color:#2b1d14;box-shadow:0 1px 0 #2b1d14,inset 0 2px 3px rgba(150,100,10,.3);transform:translateY(1px)}
+body.sc-anime:not(.hack) .flt.on span{color:#5a3d2a}
+body.sc-anime:not(.hack) .flbar .vsz,body.sc-anime:not(.hack) .flbar .gsz,body.sc-anime:not(.hack) .flbar .pat,body.sc-anime:not(.hack) .flbar #flSwingV{color:#fff3d6;text-shadow:0 1px 0 rgba(60,35,15,.7)}
+body.sc-anime:not(.hack) .flbar .sep{background:rgba(43,29,20,.55)}
+body.sc-anime:not(.hack) .fltag{background:#f7c94a;color:#2b1d14}
+body.sc-anime:not(.hack) .pill{color:#2b1d14}
+/* pop-up windows and lists */
+body.sc-anime:not(.hack) .spi,body.sc-anime:not(.hack) .srow,body.sc-anime:not(.hack) .bklist2 .bksnd,body.sc-anime:not(.hack) .bkplay{background:#fffaf0;border-color:rgba(43,29,20,.5);color:#2b1d14}
+body.sc-anime:not(.hack) .spi:hover,body.sc-anime:not(.hack) .bklist2 .bksnd:hover{background:#fff3cf}
+body.sc-anime:not(.hack) .spi.on{background:var(--c);border-color:#2b1d14;filter:saturate(.62) brightness(.97);color:#1c120b}
+body.sc-anime:not(.hack) .bkbanks,body.sc-anime:not(.hack) .bkview{background:rgba(255,253,245,.7);border-color:rgba(43,29,20,.5)}
+body.sc-anime:not(.hack) .bkhead{background:#f6ecd2;border-bottom-color:rgba(43,29,20,.45)}
+body.sc-anime:not(.hack) .bkrow.sel{background:#ffe9a8;border-color:#2b1d14}
+body.sc-anime:not(.hack) .bkchk{border-color:#2b1d14;color:#fffaf0}
+body.sc-anime:not(.hack) .bkrow.on .bkchk{background:#58b84a;border-color:#2b1d14}
+body.sc-anime:not(.hack) .bkx{border-color:rgba(43,29,20,.5);color:#6b5440}
+body.sc-anime:not(.hack) .bkghost{background:#fffaf0;border-color:#2b1d14;color:#2b1d14}
+body.sc-anime:not(.hack) .linkrow{background:#e3eefb;border-color:#2f5fb8}
+body.sc-anime:not(.hack) details.apx,body.sc-anime:not(.hack) .engbox{border-color:rgba(43,29,20,.45);background:rgba(255,250,236,.6)}
+body.sc-anime:not(.hack) .engbox.engsolo{background:none;border-color:transparent}
+body.sc-anime:not(.hack) .toast,body.sc-anime:not(.hack) .apxtip{background:#fffaf0;border:1px solid #2b1d14;color:#2b1d14;box-shadow:0 0 0 1.2px #2b1d14,3px 4px 0 1px rgba(43,29,20,.28)}
+body.sc-anime:not(.hack) .apxtip b{color:#c43a24}
+body.sc-anime:not(.hack) .toast.bad{border-color:#c43a24;box-shadow:0 0 0 1.2px #c43a24,3px 4px 0 1px rgba(43,29,20,.28)}
+body.sc-anime:not(.hack) .mrgo{background:#d3f0c2;border-color:#2b1d14}
+body.sc-anime:not(.hack) .arrtag{background:rgba(43,29,20,.1);color:#2b1d14}
+body.sc-anime:not(.hack) .arrx{color:#6b5440}
+body.sc-anime:not(.hack) .sgrip{border-color:#2b1d14;background:#d3f0c2;color:#2b1d14}
+body.sc-anime:not(.hack) #sndPanel .shd input{color:#2b1d14}
+body.sc-anime:not(.hack) .selsnd b.sellink:hover,body.sc-anime:not(.hack) #acidBName.sellink:hover{background:rgba(43,29,20,.1)}
+body.sc-anime:not(.hack) button:focus-visible,body.sc-anime:not(.hack) input:focus-visible,body.sc-anime:not(.hack) select:focus-visible{outline-color:#d6452b}
+body.sc-anime.pmode:not(.hack) #trk{box-shadow:0 0 0 1.2px #2b1d14,3px 4px 0 1px rgba(43,29,20,.28),inset 0 0 0 3px rgba(242,182,50,.6)!important}
+body.sc-anime:not(.hack) .sname,body.sc-anime:not(.hack) #sndLab{filter:saturate(.8) brightness(.5)}
+body.sc-anime:not(.hack) .sph,body.sc-anime:not(.hack) .bkgrp{color:#2f8a4a}
+
+/* ------------------------------------------------------------------ SPIRIT HILLS, painted (owner 2026-11-13: "hand drawn")
+   The same idea as GHOST CITY's set: every sheet of paper, the wooden rail and every block is a small painting with a
+   hand-inked edge, laid over the box as a 9-slice picture. These rules come last so they replace the plain boxes above. */
+body.sc-anime{--q-a:url(ui:a-panel);--q-f:url(ui:a-frame);--q-wood:url(ui:a-wood);--b-off:url(ui:a-off);--b-btn:url(ui:a-btn);--b-grn:url(ui:a-grn);--b-red:url(ui:a-red);--b-gen:url(ui:a-gen);--b-lin:url(ui:a-lin);--b-wild:url(ui:a-wild);--b-chop:url(ui:a-chop);--b-var:url(ui:a-var);--b-fill:url(ui:a-fill);--b-roll:url(ui:a-roll);--b-brk:url(ui:a-brk);--b-on:url(ui:a-on);--b-gloss:url(ui:a-gloss);}
+body.sc-anime:not(.hack) .glass,
+body.sc-anime:not(.noglass):not(.hack) .layers,body.sc-anime:not(.noglass):not(.hack) #side,
+body.newtop.sc-anime:not(.noglass):not(.hack) #topBand section.tight,body.newtop.sc-anime:not(.noglass):not(.hack) #engBox,body.newtop.topswap.sc-anime:not(.noglass):not(.hack) #engTop,
+body.newtop.sc-anime:not(.topswap):not(.noglass):not(.hack) #engTop>.engbox{
+  background:none!important;border:1px solid transparent!important;box-shadow:none!important;border-image:var(--q-a) 96 fill / 48px / 12px round!important}
+body.sc-anime:not(.noglass):not(.hack) .layers{border-image:var(--b-off) 36 fill / 18px / 6px stretch!important}
+body.sc-anime:not(.noglass):not(.hack) .flbar{background:none!important;border:1px solid transparent!important;box-shadow:none!important;border-image:var(--q-wood) 52 fill / 26px / 10px stretch!important}
+body.sc-anime:not(.hack) .sheet,body.sc-anime:not(.hack) .patmenu{background:none!important}
+body.sc-anime:not(.hack) .trk{position:relative}
+body.sc-anime:not(.hack) .trk::after{content:"";position:absolute;inset:0;border:0 solid transparent;border-image:var(--q-f) 96 / 48px / 12px round;pointer-events:none;z-index:6}
+body.sc-anime:not(.hack) .btn,body.sc-anime:not(.hack) .dchip{background:none!important;border:1px solid transparent!important;box-shadow:none!important;border-image:var(--b-btn) 36 fill / 18px / 6px stretch!important;filter:none!important}
+body.sc-anime:not(.hack) .btn:active{transform:translateY(2px)}
+body.sc-anime:not(.hack) .btn.ghost,body.sc-anime:not(.hack) .btn.pno,body.sc-anime:not(.hack) .btn.syn,body.sc-anime:not(.hack) .dchip{border-image-source:var(--b-off)!important}
+body.sc-anime:not(.hack) .btn.green{border-image-source:var(--b-grn)!important}body.sc-anime:not(.hack) .btn.danger{border-image-source:var(--b-red)!important}body.sc-anime:not(.hack) .btn.gen{border-image-source:var(--b-gen)!important}
+body.sc-anime:not(.hack) .btn.lin{border-image-source:var(--b-lin)!important}body.sc-anime:not(.hack) .btn.wild{border-image-source:var(--b-wild)!important}body.sc-anime:not(.hack) .btn.chop{border-image-source:var(--b-chop)!important}
+body.sc-anime:not(.hack) #varBtn{border-image-source:var(--b-var)!important}body.sc-anime:not(.hack) #fillBtn,body.sc-anime:not(.hack) .btn.song{border-image-source:var(--b-fill)!important}body.sc-anime:not(.hack) #rollBtn{border-image-source:var(--b-roll)!important}body.sc-anime:not(.hack) .btn.brk,body.sc-anime:not(.hack) .btn.brain{border-image-source:var(--b-brk)!important}
+body.sc-anime:not(.hack) .btn.on,body.sc-anime:not(.hack) .engseg .btn.on,body.sc-anime:not(.hack) #trkPanel .chip.on,body.sc-anime:not(.hack) #synRow .btn.on,body.sc-anime:not(.hack) .btn.syn.on,body.sc-anime:not(.hack) .btn.pno.on,body.sc-anime:not(.hack) #pnoMode.on,body.sc-anime:not(.hack) #pnoStyles .btn.on,body.sc-anime:not(.hack) #pnoMood .btn.on,body.sc-anime:not(.hack) .lgrp .lpow.on,body.sc-anime:not(.hack) .btn.armed{border-image-source:var(--b-on)!important;transform:none}
+body.sc-anime:not(.hack) .dchip.on{background:var(--c)!important;border-radius:10px;border-image-source:var(--b-gloss)!important;filter:saturate(.62) brightness(.96)!important}
+body.sc-anime:not(.hack) .layer{border:1px solid transparent;border-image:var(--b-off) 36 fill / 16px / 4px stretch;background:none;overflow:visible;box-shadow:none}
+body.sc-anime:not(.hack) .layer.here{border-image-source:var(--b-grn)}
+body.sc-anime:not(.hack) .stat{border:0 solid transparent;border-image:var(--b-off) 36 fill / 15px / 5px stretch;background:none;box-shadow:none}
+
+/* ------------------------------------------------------------------ a phone (owner 2026-11-13: both the phone app and the plugin get the new look)
+   The controls no longer fit one phone screen (the top rows ran into each other and the grid was pushed off the bottom), so on a
+   phone the page now scrolls: every block keeps its place in the same order at its own height, a row that is too wide wraps
+   onto a second line, and the scene shows in a window above the name. The plugin window and desktop browsers are not touched by this. */
+@media (max-width:899px){
+  body.scn{overflow-x:hidden;overflow-y:auto;height:auto;min-height:100%}
+  body.scn #app{height:auto;min-height:100%}
+  body.scn #app>*,body.scn #side>*{flex:none}
+  body.scn .trk{height:76vh;height:min(76dvh,660px);min-height:340px}
+  body.newtop.scn #topBand section.tight .row.trow{flex-wrap:wrap!important;row-gap:7px}
+  body.newtop.scn #topRight{width:100%;min-height:262px;justify-content:flex-end}
+  body.newtop.scn #topRight header.top{flex-wrap:wrap;justify-content:center;gap:8px 14px}
+  body.newtop.scn #topRight .brand{flex:none}
+  body.newtop.scn #topRight .layers{max-width:100%}
+}
+#scnBtn{gap:0!important}#scnBtn .scp{white-space:pre}
+/* a browser window between 900 and 1060 px wide (never the plugin): the name row is short of room there, so the button
+   shows just CITY / ANIME / ORIGINAL and the name is never cut */
+@media (min-width:900px) and (max-width:1060px){
+  body.newtop.scn #topRight #scnBtn .scp{display:none}
+  body.newtop.scn #topRight #scnBtn{min-width:0!important}
+  body.newtop.scn #topRight .brand{flex:none}
+  body.newtop.scn #topRight header.top{flex:none;gap:10px}
+}
+/* wide desktop browsers (>= 1380 px; never the plugin): the name sits in the top-right column there, so SCENE drops under it */
+@media (min-width:1380px){
+  body.newtop.topswap.scn #engTop header.top{flex-wrap:wrap;justify-content:center;row-gap:6px}
+  body.newtop.topswap.scn #engTop{padding-bottom:12px!important}
+}
+body.sc-anime.noglass:not(.hack) .lab,body.sc-anime.noglass:not(.hack) .englab,body.sc-anime.noglass:not(.hack) .tmul b,body.sc-anime.noglass:not(.hack) .pat,body.sc-anime.noglass:not(.hack) .sname,body.sc-anime.noglass:not(.hack) #kitStat{text-shadow:0 0 4px #fffaf0,0 0 2px #fffaf0,0 0 7px #fffaf0;color:#2b1d14}
+body.sc-city.noglass:not(.hack) .lab,body.sc-city.noglass:not(.hack) .englab{text-shadow:0 0 5px #05030c,0 0 2px #05030c}

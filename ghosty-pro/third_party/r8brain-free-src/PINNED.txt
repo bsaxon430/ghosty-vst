@@ -1,0 +1,9 @@
+r8brain-free-src (sample-rate converter), vendored unmodified.
+Source:  https://github.com/avaneev/r8brain-free-src
+Tag:     version-6.5
+Commit:  3c930bf6825c0cfea4a813210c83b1a650c820b5 (2023-12-07)
+Licence: MIT (LICENSE, Copyright (c) 2013-2023 Aleksey Vaneev). fft4g.h: Takuya Ooura's FFT package (free for any use,
+         "Modified and used with permission granted by the license", see the file header).
+Files:   the library core only (CDSP*.h / *.inc, fft4g.h, r8bbase.*, r8bconf.h, r8butil.h). Not vendored: the DLL, bench, other/
+         and the optional PFFFT back ends (R8B_PFFFT / R8B_PFFFT_DOUBLE stay 0: the Ooura FFT is used).
+Used by: Ghost Slice (GhostSlice/SourceAudio.cpp: the working copy at the host rate, CDSPResampler24, linear phase).

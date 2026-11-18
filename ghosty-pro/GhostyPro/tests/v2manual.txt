@@ -1,0 +1,6 @@
+# name | tokens to add (CLEAN=1 / CLEAN=0 sets the CLEAN column) | rule keys to drop
+Noise Sweep Up|f_dlaw=Classic nz_lvl=1 cutoff=.36|nz_type
+Banshee Sweep||o1_w1 o1_w1a
+Choir Of Ghosts||o2_on o2_tbl o2_lvl
+Choir Saw Lead|CLEAN=1|
+Sub Bass|CLEAN=1|
