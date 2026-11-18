@@ -1,0 +1,37 @@
+Seance - GhostBlock
+
+Twelve operators on the Six Sines engine (upstream has six; the operator count and link ids are changed here).
+
+Sound engine: Six Sines by Paul Walker and contributors - https://github.com/baconpaul/six-sines
+Six Sines' source is MIT licensed with GPL-3 dependencies (JUCE, sst libraries, clap-wrapper ...), so this plugin as a
+whole is released under the GNU General Public License v3 (see "LICENSE (GPL-3).txt").
+The full source of this build: https://github.com/bsaxon430/ghosty-vst
+
+Uses: JUCE, CLAP, clap-wrapper, sst-basic-blocks, sst-voicemanager, sst-filters, sst-plugininfra, sst-cpputils,
+sst-clap-helpers, libsamplerate, simde, fmt, pffft, MTS-ESP client.
+
+Carried in the code from Poltergeist 2 and switched off in this build (no page for them yet):
+SPECTRAL (the effects after the synth) uses the real signal processing code of two open source projects:
+- Spectral Corruptor by Dirty Octopus - https://github.com/Dirty-Octopus/spectral-corruptor-plugin
+  (v0.2.6, commit 81d39c709f01ff609d4ce6435f3205f2e32f9b3a), Mozilla Public License 2.0. Its effects, FFT engine and
+  parameters, unmodified. Not its interface, presets, licensing or update code. Seance is not made, endorsed or
+  supported by Dirty Octopus.
+- WarpCore by ManasWolrd - https://github.com/ManasWolrd/WarpCore (v0.0.12, commit
+  d1330606340a1b19515c7b155876fab3d79b430a), GNU General Public License v3. Its spectral inversion, unmodified.
+SUB (the sub-bass under the synth) uses the real signal processing code of two more open source projects:
+- Bombaz by M.I. Hollemans - https://github.com/hollance/bombaz (commit 434d8b6eaf228338b0b2d2f56ad470c1f8929ddd),
+  GNU General Public License v3 or later. Its window-function oscillator, unmodified; its glide and controls, adapted.
+- Subhoofer by Ardura - https://github.com/ardura/Subhoofer (v2.2.3, commit 19ea26b500fe0f3fc0516bde02b565af80501ae6),
+  GNU General Public License v3 or later. Its harmonic algorithms (A Bass 3, A Bass 2, 8 Harmonic Stack, Duro Console,
+  TanH Transfer), ported from Rust to C++ and checked against the original.
+Seance is not made, endorsed or supported by either author.
+The licence texts, the exact files and where to get the source: "THIRD-PARTY-LICENSES.txt".
+
+Editor: drawn by code, part of this project.
+Typefaces: Pirata One by Rodrigo Fuenzalida and Nicolas Massi, and Manrope by Mikhail Sharanda - both SIL Open Font
+License 1.1 (resources/ghostblock/seance/fonts/PirataOne-OFL.txt, resources/fonts/Manrope/OFL.txt).
+
+SHADE (the Wavetable species): Vital's oscillator - https://github.com/mtytel/vital, GPL-3, Matt Tytel. Its code is
+used unchanged (libs/vital-synthesis). The wavetables are made by this project; none of Vital's presets or wavetables
+are included. Vital is a trademark of its author; Seance is not made or endorsed by him.
+THROAT (the filters on each spirit): sst-filters by the Surge Synth Team - https://github.com/surge-synthesizer/sst-filters, GPL-3.

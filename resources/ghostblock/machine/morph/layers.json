@@ -1,0 +1,1588 @@
+{
+ "about": "Poltergeist 2 ghost-machine, page \"morph\". Simple path: draw background.png (the whole static picture, world included) and the sprites over it. Parallax path: draw common world layers, then \"layers\" here in z order (back.png, the sprites that stand behind the hull, machine.png, ...). All x/y/w/h are canvas px (1040x744); PNG pixels are 2x.",
+ "page": "morph",
+ "canvas": {
+  "w": 1040,
+  "h": 744,
+  "png_scale": 2
+ },
+ "background": "background.png",
+ "layers": [
+  {
+   "z": 0,
+   "id": "back",
+   "file": "back.png",
+   "x": 102.0,
+   "y": 0.0,
+   "w": 938.0,
+   "h": 669.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "static"
+   }
+  },
+  {
+   "z": 1,
+   "id": "title-loose1",
+   "file": "../common/sprites/title-loose1.png",
+   "x": 468,
+   "y": 14,
+   "w": 36,
+   "h": 48,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 477.1,
+    "py": 20.3,
+    "amp": 4.2,
+    "period": 3.1,
+    "phase": 0.14,
+    "bias": -1.2
+   }
+  },
+  {
+   "z": 2,
+   "id": "title-loose2",
+   "file": "../common/sprites/title-loose2.png",
+   "x": 610,
+   "y": 14,
+   "w": 41,
+   "h": 51,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 637.4,
+    "py": 22.4,
+    "amp": 2.4,
+    "period": 4.3,
+    "phase": 0.71,
+    "bias": -1.2
+   }
+  },
+  {
+   "z": 3,
+   "id": "title-two",
+   "file": "../common/sprites/title-two.png",
+   "x": 706,
+   "y": 63,
+   "w": 36,
+   "h": 49,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 722,
+    "py": 68.1,
+    "amp": 3.6,
+    "period": 3.7,
+    "phase": 0.4,
+    "bias": -1.6
+   }
+  },
+  {
+   "z": 4,
+   "id": "jib-lantern",
+   "file": "../common/sprites/jib-lantern.png",
+   "x": 989,
+   "y": 80,
+   "w": 30,
+   "h": 30,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 1004,
+    "py": 84,
+    "amp": 5,
+    "period": 2.9,
+    "phase": 0.6,
+    "bias": -2
+   }
+  },
+  {
+   "z": 5,
+   "id": "anchor",
+   "file": "../common/sprites/anchor.png",
+   "x": 933,
+   "y": 665,
+   "w": 26,
+   "h": 48,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 946,
+    "py": 668,
+    "amp": 2.6,
+    "period": 5.2,
+    "phase": 0.1,
+    "bias": -2.2
+   }
+  },
+  {
+   "z": 6,
+   "id": "far-birds",
+   "file": "../common/sprites/far-birds.png",
+   "x": 16,
+   "y": 40,
+   "w": 66,
+   "h": 40,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 50,
+    "py": 640,
+    "amp": 0.8,
+    "period": 17,
+    "phase": 0
+   }
+  },
+  {
+   "z": 7,
+   "id": "morph-float",
+   "file": "sprites/morph-float.png",
+   "x": 98,
+   "y": 271,
+   "w": 10,
+   "h": 12,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 104,
+    "py": 193,
+    "amp": 1.6,
+    "period": 3.1,
+    "phase": 0.2
+   }
+  },
+  {
+   "z": 8,
+   "id": "morph-bird",
+   "file": "sprites/morph-bird.png",
+   "x": 990,
+   "y": 204,
+   "w": 16,
+   "h": 12,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 998,
+    "py": 213.8,
+    "amp": 7,
+    "period": 1.9,
+    "phase": 0.4
+   }
+  },
+  {
+   "z": 9,
+   "id": "morph-ladder",
+   "file": "sprites/morph-ladder.png",
+   "x": 814,
+   "y": 468,
+   "w": 26,
+   "h": 70,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 824,
+    "py": 470,
+    "amp": 3,
+    "period": 4.6,
+    "phase": 0.6,
+    "bias": -2
+   }
+  },
+  {
+   "z": 10,
+   "id": "machine",
+   "file": "machine.png",
+   "x": 56.0,
+   "y": 48.0,
+   "w": 982.0,
+   "h": 655.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "static"
+   }
+  },
+  {
+   "z": 11,
+   "id": "gear-jaw1",
+   "file": "../common/sprites/gear-jaw1.png",
+   "x": 487,
+   "y": 223,
+   "w": 30,
+   "h": 30,
+   "png_scale": 2,
+   "anim": {
+    "type": "rotate",
+    "cx": 502,
+    "cy": 238,
+    "period": 3.2,
+    "dir": 1,
+    "teeth": 10,
+    "crank": true,
+    "crank_r": 6.5,
+    "group": "jaw"
+   }
+  },
+  {
+   "z": 12,
+   "id": "gear-jaw2",
+   "file": "../common/sprites/gear-jaw2.png",
+   "x": 478,
+   "y": 215,
+   "w": 21,
+   "h": 21,
+   "png_scale": 2,
+   "anim": {
+    "type": "rotate",
+    "cx": 488.5,
+    "cy": 225.5,
+    "period": 1.92,
+    "dir": -1,
+    "teeth": 6,
+    "group": "jaw"
+   }
+  },
+  {
+   "z": 13,
+   "id": "gear-orbit1",
+   "file": "sprites/gear-orbit1.png",
+   "x": 473,
+   "y": 507,
+   "w": 22,
+   "h": 22,
+   "png_scale": 2,
+   "anim": {
+    "type": "rotate",
+    "cx": 484,
+    "cy": 518,
+    "period": 6,
+    "dir": 1,
+    "teeth": 9,
+    "group": "orbit",
+    "idle": 0
+   }
+  },
+  {
+   "z": 14,
+   "id": "gear-orbit2",
+   "file": "sprites/gear-orbit2.png",
+   "x": 661,
+   "y": 509,
+   "w": 20,
+   "h": 20,
+   "png_scale": 2,
+   "anim": {
+    "type": "rotate",
+    "cx": 671,
+    "cy": 519,
+    "period": 5.33,
+    "dir": -1,
+    "teeth": 8,
+    "group": "orbit",
+    "idle": 0
+   }
+  },
+  {
+   "z": 15,
+   "id": "gear-orbit3",
+   "file": "sprites/gear-orbit3.png",
+   "x": 652,
+   "y": 503,
+   "w": 16,
+   "h": 16,
+   "png_scale": 2,
+   "anim": {
+    "type": "rotate",
+    "cx": 659.6,
+    "cy": 510.6,
+    "period": 3.33,
+    "dir": 1,
+    "teeth": 5,
+    "group": "orbit",
+    "idle": 0
+   }
+  },
+  {
+   "z": 16,
+   "id": "storm-shade",
+   "type": "fill",
+   "note": "fill rgba(6,10,24, 0.34 * storm) clipped to the machine (or simply darken back.png + machine.png); the lights after it keep their brightness"
+  },
+  {
+   "z": 17,
+   "id": "win-eye",
+   "file": "../common/sprites/win-eye.png",
+   "x": 408,
+   "y": 100,
+   "w": 267,
+   "h": 170,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "breathe",
+    "min": 0.8,
+    "max": 1.0,
+    "period": 9.2
+   }
+  },
+  {
+   "z": 18,
+   "id": "win-furnace",
+   "file": "sprites/win-furnace.png",
+   "x": 461,
+   "y": 448,
+   "w": 234,
+   "h": 84,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "fire",
+    "min": 0.5,
+    "max": 1.0,
+    "period": 1.9
+   }
+  },
+  {
+   "z": 19,
+   "id": "win-lamp",
+   "file": "sprites/win-lamp.png",
+   "x": 668,
+   "y": 169,
+   "w": 29,
+   "h": 28,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "lamp",
+    "min": 0.8,
+    "max": 1.0,
+    "period": 5.9
+   }
+  },
+  {
+   "z": 20,
+   "id": "win-mouth",
+   "file": "../common/sprites/win-mouth.png",
+   "x": 519,
+   "y": 209,
+   "w": 58,
+   "h": 59,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "fire",
+    "min": 0.5,
+    "max": 1.0,
+    "period": 2.3
+   }
+  },
+  {
+   "z": 21,
+   "id": "win-v1",
+   "file": "sprites/win-v1.png",
+   "x": 184,
+   "y": 61,
+   "w": 740,
+   "h": 494,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "candle",
+    "min": 0.72,
+    "max": 1.0,
+    "period": 3.7
+   }
+  },
+  {
+   "z": 22,
+   "id": "win-v2",
+   "file": "sprites/win-v2.png",
+   "x": 147,
+   "y": 68,
+   "w": 808,
+   "h": 492,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "candle",
+    "min": 0.72,
+    "max": 1.0,
+    "period": 4.9
+   }
+  },
+  {
+   "z": 23,
+   "id": "win-v3",
+   "file": "sprites/win-v3.png",
+   "x": 137,
+   "y": 71,
+   "w": 850,
+   "h": 494,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "candle",
+    "min": 0.74,
+    "max": 1.0,
+    "period": 4.3
+   }
+  },
+  {
+   "z": 24,
+   "id": "eye-flare",
+   "file": "../common/sprites/eye-flare.png",
+   "x": 428,
+   "y": 114,
+   "w": 236,
+   "h": 130,
+   "png_scale": 2,
+   "anim": {
+    "type": "flare",
+    "source": "out",
+    "gain": 1
+   }
+  },
+  {
+   "z": 25,
+   "id": "mouth-flare",
+   "file": "../common/sprites/mouth-flare.png",
+   "x": 500,
+   "y": 186,
+   "w": 96,
+   "h": 96,
+   "png_scale": 2,
+   "anim": {
+    "type": "flare",
+    "source": "note",
+    "gain": 1
+   }
+  },
+  {
+   "z": 26,
+   "id": "belly-flare",
+   "file": "sprites/belly-flare.png",
+   "x": 448,
+   "y": 286,
+   "w": 260,
+   "h": 216,
+   "png_scale": 2,
+   "anim": {
+    "type": "flare",
+    "source": "morph",
+    "gain": 0.9
+   }
+  },
+  {
+   "z": 27,
+   "id": "cab-A",
+   "file": "sprites/cab-A.png",
+   "x": 312,
+   "y": 244,
+   "w": 127,
+   "h": 85,
+   "png_scale": 2,
+   "anim": {
+    "type": "corner",
+    "corner": 0,
+    "gain": 1,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 28,
+   "id": "cab-B",
+   "file": "sprites/cab-B.png",
+   "x": 717,
+   "y": 244,
+   "w": 139,
+   "h": 85,
+   "png_scale": 2,
+   "anim": {
+    "type": "corner",
+    "corner": 1,
+    "gain": 1,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 29,
+   "id": "cab-C",
+   "file": "sprites/cab-C.png",
+   "x": 312,
+   "y": 404,
+   "w": 127,
+   "h": 115,
+   "png_scale": 2,
+   "anim": {
+    "type": "corner",
+    "corner": 2,
+    "gain": 1,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 30,
+   "id": "cab-D",
+   "file": "sprites/cab-D.png",
+   "x": 717,
+   "y": 404,
+   "w": 139,
+   "h": 115,
+   "png_scale": 2,
+   "anim": {
+    "type": "corner",
+    "corner": 3,
+    "gain": 1,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 31,
+   "id": "title-glow",
+   "file": "../common/sprites/title-glow.png",
+   "x": 376,
+   "y": 0,
+   "w": 346,
+   "h": 108,
+   "png_scale": 2,
+   "anim": {
+    "type": "flare",
+    "source": "title",
+    "gain": 1,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 32,
+   "id": "eye-shutter",
+   "file": "../common/sprites/eye-shutter.png",
+   "x": 575,
+   "y": 123,
+   "w": 64,
+   "h": 40,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 606,
+    "py": 130,
+    "amp": 1.1,
+    "period": 6.6,
+    "phase": 0.4
+   }
+  },
+  {
+   "z": 33,
+   "id": "eye-shutter-closed",
+   "file": "../common/sprites/eye-shutter-closed.png",
+   "x": 579,
+   "y": 143,
+   "w": 58,
+   "h": 62,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "lid",
+    "min": 0,
+    "max": 1,
+    "period": 19
+   }
+  },
+  {
+   "z": 34,
+   "id": "mouth-hatch",
+   "file": "../common/sprites/mouth-hatch.png",
+   "x": 514,
+   "y": 229,
+   "w": 70,
+   "h": 42,
+   "png_scale": 2,
+   "anim": {
+    "type": "flap",
+    "hinge_y": 261,
+    "open": [
+     1,
+     0.3
+    ],
+    "pin": [
+     522,
+     242.3
+    ],
+    "source": "note"
+   }
+  },
+  {
+   "z": 35,
+   "id": "jaw-rod",
+   "file": "../common/sprites/jaw-rod.png",
+   "x": 502,
+   "y": 232,
+   "w": 26,
+   "h": 17,
+   "png_scale": 2,
+   "anim": {
+    "type": "link",
+    "a": [
+     508.5,
+     238
+    ],
+    "b": [
+     522,
+     242.3
+    ],
+    "crank": "gear-jaw1",
+    "hatch": "mouth-hatch"
+   }
+  },
+  {
+   "z": 36,
+   "id": "gantry-hang-A",
+   "file": "sprites/gantry-hang-A.png",
+   "x": 150,
+   "y": 349,
+   "w": 24,
+   "h": 30,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 162,
+    "py": 351,
+    "amp": 5,
+    "period": 2.9,
+    "phase": 0,
+    "bias": -1.5
+   }
+  },
+  {
+   "z": 37,
+   "id": "gantry-hang-B",
+   "file": "sprites/gantry-hang-B.png",
+   "x": 994,
+   "y": 349,
+   "w": 24,
+   "h": 30,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 1006,
+    "py": 351,
+    "amp": 6,
+    "period": 2.3,
+    "phase": 0.2,
+    "bias": -1.5
+   }
+  },
+  {
+   "z": 38,
+   "id": "gantry-hang-C",
+   "file": "sprites/gantry-hang-C.png",
+   "x": 150,
+   "y": 509,
+   "w": 24,
+   "h": 30,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 162,
+    "py": 511,
+    "amp": 4,
+    "period": 3.4,
+    "phase": 0.4,
+    "bias": -1.5
+   }
+  },
+  {
+   "z": 39,
+   "id": "gantry-hang-D",
+   "file": "sprites/gantry-hang-D.png",
+   "x": 994,
+   "y": 509,
+   "w": 24,
+   "h": 30,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 1006,
+    "py": 511,
+    "amp": 7,
+    "period": 2.6,
+    "phase": 0.6000000000000001,
+    "bias": -1.5
+   }
+  },
+  {
+   "z": 40,
+   "id": "morph-bell",
+   "file": "sprites/morph-bell.png",
+   "x": 934,
+   "y": 504,
+   "w": 20,
+   "h": 28,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 944,
+    "py": 506,
+    "amp": 7,
+    "period": 2.6,
+    "phase": 0.3,
+    "bias": -2
+   }
+  },
+  {
+   "z": 41,
+   "id": "hem-plate0",
+   "file": "../common/sprites/hem-plate0.png",
+   "x": 120,
+   "y": 678,
+   "w": 28,
+   "h": 41,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 134,
+    "py": 680.3,
+    "amp": 3.2,
+    "period": 5.33,
+    "phase": 0.46,
+    "bias": -2
+   }
+  },
+  {
+   "z": 42,
+   "id": "hem-chain1",
+   "file": "../common/sprites/hem-chain1.png",
+   "x": 140,
+   "y": 682,
+   "w": 22,
+   "h": 36,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 150,
+    "py": 684.5,
+    "amp": 6.7,
+    "period": 3.05,
+    "phase": 0.4,
+    "bias": -2
+   }
+  },
+  {
+   "z": 43,
+   "id": "hem-rag2",
+   "file": "../common/sprites/hem-rag2.png",
+   "x": 105,
+   "y": 679,
+   "w": 38,
+   "h": 41,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 124,
+    "py": 681.2,
+    "amp": 7.1,
+    "period": 2.74,
+    "phase": 0.11,
+    "bias": -2
+   }
+  },
+  {
+   "z": 44,
+   "id": "hem-rag3",
+   "file": "../common/sprites/hem-rag3.png",
+   "x": 881,
+   "y": 683,
+   "w": 30,
+   "h": 35,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 896,
+    "py": 685,
+    "amp": 7.3,
+    "period": 2.54,
+    "phase": 0.83,
+    "bias": -2
+   }
+  },
+  {
+   "z": 45,
+   "id": "hem-plate4",
+   "file": "../common/sprites/hem-plate4.png",
+   "x": 893,
+   "y": 686,
+   "w": 30,
+   "h": 42,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 908,
+    "py": 688.6,
+    "amp": 2.2,
+    "period": 4.76,
+    "phase": 0.83,
+    "bias": -2
+   }
+  },
+  {
+   "z": 46,
+   "id": "hem-chain5",
+   "file": "../common/sprites/hem-chain5.png",
+   "x": 874,
+   "y": 681,
+   "w": 22,
+   "h": 46,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 884,
+    "py": 683.1,
+    "amp": 4.6,
+    "period": 4.42,
+    "phase": 0.69,
+    "bias": -2
+   }
+  },
+  {
+   "z": 47,
+   "id": "hem-chain6",
+   "file": "../common/sprites/hem-chain6.png",
+   "x": 196,
+   "y": 684,
+   "w": 22,
+   "h": 44,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 206,
+    "py": 686.3,
+    "amp": 5.6,
+    "period": 3.37,
+    "phase": 0.13,
+    "bias": -2
+   }
+  },
+  {
+   "z": 48,
+   "id": "hem-rag7",
+   "file": "../common/sprites/hem-rag7.png",
+   "x": 274,
+   "y": 680,
+   "w": 36,
+   "h": 31,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 292,
+    "py": 682.2,
+    "amp": 6.2,
+    "period": 3.45,
+    "phase": 0.55,
+    "bias": -2
+   }
+  },
+  {
+   "z": 49,
+   "id": "hem-chain8",
+   "file": "../common/sprites/hem-chain8.png",
+   "x": 388,
+   "y": 677,
+   "w": 22,
+   "h": 46,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 398,
+    "py": 679.4,
+    "amp": 4.1,
+    "period": 3.81,
+    "phase": 0.95,
+    "bias": -2
+   }
+  },
+  {
+   "z": 50,
+   "id": "hem-plate9",
+   "file": "../common/sprites/hem-plate9.png",
+   "x": 497,
+   "y": 679,
+   "w": 30,
+   "h": 38,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 512,
+    "py": 681.7,
+    "amp": 2.9,
+    "period": 6.37,
+    "phase": 0.44,
+    "bias": -2
+   }
+  },
+  {
+   "z": 51,
+   "id": "hem-chain10",
+   "file": "../common/sprites/hem-chain10.png",
+   "x": 630,
+   "y": 685,
+   "w": 22,
+   "h": 40,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 640,
+    "py": 687.7,
+    "amp": 4.7,
+    "period": 3.52,
+    "phase": 0.29,
+    "bias": -2
+   }
+  },
+  {
+   "z": 52,
+   "id": "hem-rag11",
+   "file": "../common/sprites/hem-rag11.png",
+   "x": 727,
+   "y": 683,
+   "w": 30,
+   "h": 45,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 742,
+    "py": 685.8,
+    "amp": 5.4,
+    "period": 3.1,
+    "phase": 0.67,
+    "bias": -2
+   }
+  },
+  {
+   "z": 53,
+   "id": "hem-chain12",
+   "file": "../common/sprites/hem-chain12.png",
+   "x": 810,
+   "y": 680,
+   "w": 22,
+   "h": 44,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 820,
+    "py": 682.3,
+    "amp": 4.2,
+    "period": 4.4,
+    "phase": 0.46,
+    "bias": -2
+   }
+  },
+  {
+   "z": 54,
+   "id": "hem-rag13",
+   "file": "../common/sprites/hem-rag13.png",
+   "x": 157,
+   "y": 685,
+   "w": 38,
+   "h": 47,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 176,
+    "py": 687.3,
+    "amp": 7.1,
+    "period": 2.79,
+    "phase": 0.24,
+    "bias": -2
+   }
+  },
+  {
+   "z": 55,
+   "id": "hem-plate14",
+   "file": "../common/sprites/hem-plate14.png",
+   "x": 332,
+   "y": 682,
+   "w": 32,
+   "h": 38,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 348,
+    "py": 684.1,
+    "amp": 2.6,
+    "period": 5.57,
+    "phase": 0.25,
+    "bias": -2
+   }
+  },
+  {
+   "z": 56,
+   "id": "hem-rag15",
+   "file": "../common/sprites/hem-rag15.png",
+   "x": 446,
+   "y": 682,
+   "w": 32,
+   "h": 43,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 462,
+    "py": 684.7,
+    "amp": 6.1,
+    "period": 2.72,
+    "phase": 0.04,
+    "bias": -2
+   }
+  },
+  {
+   "z": 57,
+   "id": "hem-chain16",
+   "file": "../common/sprites/hem-chain16.png",
+   "x": 574,
+   "y": 683,
+   "w": 22,
+   "h": 37,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 584,
+    "py": 685,
+    "amp": 5.2,
+    "period": 4.33,
+    "phase": 0.4,
+    "bias": -2
+   }
+  },
+  {
+   "z": 58,
+   "id": "hem-plate17",
+   "file": "../common/sprites/hem-plate17.png",
+   "x": 683,
+   "y": 681,
+   "w": 34,
+   "h": 41,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 700,
+    "py": 683.1,
+    "amp": 3,
+    "period": 5.61,
+    "phase": 0.51,
+    "bias": -2
+   }
+  },
+  {
+   "z": 59,
+   "id": "hem-rag18",
+   "file": "../common/sprites/hem-rag18.png",
+   "x": 845,
+   "y": 682,
+   "w": 30,
+   "h": 44,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 860,
+    "py": 684.1,
+    "amp": 7.2,
+    "period": 3.05,
+    "phase": 0.42,
+    "bias": -2
+   }
+  },
+  {
+   "z": 60,
+   "id": "boom-pennant",
+   "file": "../common/sprites/boom-pennant.png",
+   "x": 1005,
+   "y": 63,
+   "w": 35,
+   "h": 29,
+   "png_scale": 2,
+   "anim": {
+    "type": "frames",
+    "frames": 8,
+    "period": 0.9
+   },
+   "frames": 8
+  },
+  {
+   "z": 61,
+   "id": "ui",
+   "type": "controls",
+   "note": "the moving parts, glows, hoses and live labels go here (common/ui.json + ui-layout.json)"
+  },
+  {
+   "z": 62,
+   "id": "lip",
+   "file": "../common/lip.png",
+   "x": 123.0,
+   "y": 612.0,
+   "w": 853.0,
+   "h": 23.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "static"
+   }
+  },
+  {
+   "z": 63,
+   "id": "roll",
+   "file": "../common/roll.png",
+   "x": 126.0,
+   "y": 506.0,
+   "w": 798.0,
+   "h": 190.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "static"
+   },
+   "hidden": true
+  },
+  {
+   "z": 64,
+   "id": "ghost-lit",
+   "file": "sprites/ghost-lit.png",
+   "x": 0,
+   "y": 0,
+   "w": 1040,
+   "h": 744,
+   "png_scale": 2,
+   "anim": {
+    "type": "strike",
+    "gain": 1,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 65,
+   "id": "emitters",
+   "type": "emitters",
+   "note": "draw the steam / smoke / spark particles here (see \"emitters\")"
+  }
+ ],
+ "emitters": [
+  {
+   "id": "mouth-breath",
+   "x": 545,
+   "y": 232,
+   "kind": "breath",
+   "size": 1.2,
+   "dx": -0.7,
+   "dy": -0.25,
+   "rate": 1.0,
+   "parent": "bob"
+  },
+  {
+   "id": "leak-drip",
+   "x": 418.4,
+   "y": 170.5,
+   "kind": "drip",
+   "size": 0.9,
+   "dx": 0,
+   "dy": 1,
+   "rate": 0.9,
+   "parent": "bob"
+  },
+  {
+   "id": "lantern-vent0",
+   "x": 454,
+   "y": 259,
+   "kind": "steam",
+   "size": 0.45,
+   "dx": 0.5,
+   "dy": -1.0,
+   "rate": 0.35,
+   "parent": "bob"
+  },
+  {
+   "id": "lantern-vent1",
+   "x": 702,
+   "y": 259,
+   "kind": "steam",
+   "size": 0.45,
+   "dx": 0.5,
+   "dy": -1.0,
+   "rate": 0.35,
+   "parent": "bob"
+  },
+  {
+   "id": "morph-chimney",
+   "x": 370.0,
+   "y": 169.6,
+   "kind": "smoke",
+   "size": 0.4,
+   "dx": 1.0,
+   "dy": -0.22,
+   "rate": 0.5,
+   "parent": "bob"
+  },
+  {
+   "id": "stream0",
+   "x": 812,
+   "y": 300,
+   "kind": "stream",
+   "size": 1.0,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "stream1",
+   "x": 826,
+   "y": 474,
+   "kind": "stream",
+   "size": 1.3,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "stream2",
+   "x": 920,
+   "y": 630,
+   "kind": "stream",
+   "size": 1.6,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "stream3",
+   "x": 840,
+   "y": 696,
+   "kind": "stream",
+   "size": 1.0,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "stream4",
+   "x": 610,
+   "y": 698,
+   "kind": "stream",
+   "size": 1.3,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "stream5",
+   "x": 380,
+   "y": 696,
+   "kind": "stream",
+   "size": 1.6,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "stream6",
+   "x": 160,
+   "y": 696,
+   "kind": "stream",
+   "size": 1.0,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "stream7",
+   "x": 700,
+   "y": 120,
+   "kind": "stream",
+   "size": 1.3,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  }
+ ],
+ "stories": [
+  {
+   "id": "boom-pennant",
+   "what": "a torn pennant streaming from the tip of the jib (8 frames)",
+   "at": [
+    1020,
+    76
+   ]
+  },
+  {
+   "id": "cheek-door",
+   "what": "a small door with a lamp, a round lit window and a ladder in the lee temple",
+   "at": [
+    670,
+    184
+   ]
+  },
+  {
+   "id": "leak",
+   "what": "a weeping stand-pipe on the windward temple, bound with a rag; emitter leak-drip lets one drop fall every ~2 s",
+   "at": [
+    419,
+    158
+   ]
+  },
+  {
+   "id": "anchor",
+   "what": "an anchor on a chain off the lee corner of the hem (sprite anchor)",
+   "at": [
+    946,
+    700
+   ]
+  },
+  {
+   "id": "far-birds",
+   "what": "five far-off birds keeping pace in the upper left sky (sprite far-birds drifts a few px)",
+   "at": [
+    48,
+    58
+   ]
+  },
+  {
+   "id": "shoulder-huts",
+   "what": "three crooked huts on the tall ghost's shoulders; windows flicker, one chimney smokes",
+   "at": [
+    372,
+    160
+   ]
+  },
+  {
+   "id": "bell",
+   "what": "a brass bell under the lee lower gantry, swinging (sprite morph-bell)",
+   "at": [
+    944,
+    520
+   ]
+  },
+  {
+   "id": "fisherman",
+   "what": "somebody fishing in the clouds from the end of corner A's boom; the float swings (sprite morph-float)",
+   "at": [
+    120,
+    207
+   ]
+  },
+  {
+   "id": "boom-birds",
+   "what": "two birds on corner B's boom; one bobs (sprite morph-bird)",
+   "at": [
+    998,
+    213
+   ]
+  }
+ ],
+ "hull": [
+  [
+   126,
+   690
+  ],
+  [
+   120,
+   650
+  ],
+  [
+   118,
+   604
+  ],
+  [
+   119,
+   566
+  ],
+  [
+   130,
+   548
+  ],
+  [
+   178,
+   536
+  ],
+  [
+   246,
+   520
+  ],
+  [
+   300,
+   500
+  ],
+  [
+   330,
+   474
+  ],
+  [
+   345,
+   440
+  ],
+  [
+   350,
+   380
+  ],
+  [
+   348,
+   300
+  ],
+  [
+   344,
+   240
+  ],
+  [
+   348,
+   210
+  ],
+  [
+   360,
+   193
+  ],
+  [
+   378,
+   185
+  ],
+  [
+   392,
+   197
+  ],
+  [
+   399,
+   190
+  ],
+  [
+   402,
+   172
+  ],
+  [
+   404,
+   150
+  ],
+  [
+   408,
+   122
+  ],
+  [
+   418,
+   100
+  ],
+  [
+   432,
+   84
+  ],
+  [
+   452,
+   72
+  ],
+  [
+   484,
+   62
+  ],
+  [
+   520,
+   57
+  ],
+  [
+   548,
+   56
+  ],
+  [
+   584,
+   58
+  ],
+  [
+   616,
+   64
+  ],
+  [
+   646,
+   75
+  ],
+  [
+   666,
+   88
+  ],
+  [
+   681,
+   105
+  ],
+  [
+   692,
+   128
+  ],
+  [
+   698,
+   152
+  ],
+  [
+   701,
+   170
+  ],
+  [
+   710,
+   178
+  ],
+  [
+   748,
+   180
+  ],
+  [
+   780,
+   187
+  ],
+  [
+   798,
+   202
+  ],
+  [
+   808,
+   226
+  ],
+  [
+   812,
+   300
+  ],
+  [
+   810,
+   380
+  ],
+  [
+   813,
+   440
+  ],
+  [
+   826,
+   474
+  ],
+  [
+   852,
+   500
+  ],
+  [
+   896,
+   520
+  ],
+  [
+   918,
+   538
+  ],
+  [
+   922,
+   566
+  ],
+  [
+   922,
+   604
+  ],
+  [
+   920,
+   650
+  ],
+  [
+   914,
+   690
+  ]
+ ]
+}

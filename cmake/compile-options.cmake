@@ -1,0 +1,64 @@
+
+if (APPLE)
+    enable_language(OBJC)
+    enable_language(OBJCXX)
+    set(CMAKE_OBJC_VISIBILITY_PRESET hidden)
+    set(CMAKE_OBJCXX_VISIBILITY_PRESET hidden)
+endif()
+
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "Never want shared if not specified")
+if (${BUILD_SHARED_LIBS})
+    message(WARNING "You have set BUILD_SHARED_LIBS to ON. This is an untested and unlikedly to work config")
+endif()
+
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+set(CMAKE_C_VISIBILITY_PRESET hidden)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
+
+# Compiler specific choices
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    add_compile_options(
+            # not technically rtsan but llvm mac requires it
+            $<$<BOOL:${USE_RTSAN}>:-Wno-elaborated-enum-base>
+            $<$<BOOL:${USE_RTSAN}>:-fsanitize=realtime>
+
+            $<$<BOOL:${USE_SANITIZER}>:-fsanitize=address>
+            $<$<BOOL:${USE_SANITIZER}>:-fsanitize=undefined>
+            $<$<BOOL:${USE_SANITIZER}>:-fno-sanitize-recover=undefined>
+            $<$<BOOL:${USE_SANITIZER}>:-fsanitize-address-use-after-scope>
+            # Fill stack/heap uninitialized locals with a repeating pattern so
+            # uninit reads surface deterministically on macOS/Linux rather than
+            # happening to read as zero
+            $<$<BOOL:${USE_SANITIZER}>:-ftrivial-auto-var-init=pattern>
+
+            $<$<OR:$<COMPILE_LANGUAGE:CXX>,$<COMPILE_LANGUAGE:OBJC>,$<COMPILE_LANGUAGE:OBJCXX>>:-fno-char8_t>
+    )
+
+    add_link_options(
+            $<$<BOOL:${USE_SANITIZER}>:-fsanitize=address>
+            $<$<BOOL:${USE_SANITIZER}>:-fsanitize=undefined>
+            $<$<BOOL:${USE_SANITIZER}>:-fno-sanitize-recover=undefined>
+            $<$<BOOL:${USE_RTSAN}>:-fsanitize=realtime>
+    )
+    if (NOT APPLE)
+        add_compile_options($<IF:$<STREQUAL:${CMAKE_SYSTEM_PROCESSOR},aarch64>,-march=armv8-a,-march=nehalem>)
+    endif()
+endif()
+
+
+if (WIN32)
+    add_compile_definitions(_CRT_SECURE_NO_WARNINGS=1)
+endif()
+
+if (MSVC)
+    add_compile_options(
+            # Set source and executable charsets to UTF-8
+            $<$<CXX_COMPILER_ID:MSVC>:/utf-8>
+            # Do *not* use the new, breaking char8_t UTF-8 bits in C++20.
+            $<$<COMPILE_LANGUAGE:CXX>:/Zc:char8_t->
+            # make msvc define __cplulsplus properly
+            $<$<COMPILE_LANGUAGE:CXX>:/Zc:__cplusplus>
+    )
+endif()

@@ -1,0 +1,327 @@
+{
+ "about": "Poltergeist 2 ghost-machine: the BACK ROOM (the wiring), made by scripts/ghostblock/make_backroom_art.py from the machine's own art. Design px (1040 x 744), room.png at 2x. Rows = the ghost that haunts (FROM), columns = the ghost it haunts (TO); a ghost can only haunt itself (feedback, the diagonal) or a higher number; the last column is how loud you hear each ghost. backroom.cpp draws the live parts (numbers, glows, the coloured flow in the pipes).",
+ "png_scale": 2,
+ "room": "room.png",
+ "cols": [
+  236,
+  340,
+  444,
+  548,
+  652,
+  756
+ ],
+ "out_x": 884,
+ "rows": [
+  208,
+  290,
+  372,
+  454,
+  536,
+  618
+ ],
+ "head_y": 112,
+ "left_x": 110,
+ "chamber": [
+  96,
+  90
+ ],
+ "well_r": 22,
+ "pipe": 12,
+ "cells": [
+  {
+   "from": 0,
+   "to": 0,
+   "kind": "fb",
+   "centre": [
+    236,
+    208
+   ]
+  },
+  {
+   "from": 0,
+   "to": 1,
+   "kind": "link",
+   "centre": [
+    340,
+    208
+   ]
+  },
+  {
+   "from": 0,
+   "to": 2,
+   "kind": "link",
+   "centre": [
+    444,
+    208
+   ]
+  },
+  {
+   "from": 0,
+   "to": 3,
+   "kind": "link",
+   "centre": [
+    548,
+    208
+   ]
+  },
+  {
+   "from": 0,
+   "to": 4,
+   "kind": "link",
+   "centre": [
+    652,
+    208
+   ]
+  },
+  {
+   "from": 0,
+   "to": 5,
+   "kind": "link",
+   "centre": [
+    756,
+    208
+   ]
+  },
+  {
+   "from": 0,
+   "to": -1,
+   "kind": "out",
+   "centre": [
+    884,
+    208
+   ]
+  },
+  {
+   "from": 1,
+   "to": 1,
+   "kind": "fb",
+   "centre": [
+    340,
+    290
+   ]
+  },
+  {
+   "from": 1,
+   "to": 2,
+   "kind": "link",
+   "centre": [
+    444,
+    290
+   ]
+  },
+  {
+   "from": 1,
+   "to": 3,
+   "kind": "link",
+   "centre": [
+    548,
+    290
+   ]
+  },
+  {
+   "from": 1,
+   "to": 4,
+   "kind": "link",
+   "centre": [
+    652,
+    290
+   ]
+  },
+  {
+   "from": 1,
+   "to": 5,
+   "kind": "link",
+   "centre": [
+    756,
+    290
+   ]
+  },
+  {
+   "from": 1,
+   "to": -1,
+   "kind": "out",
+   "centre": [
+    884,
+    290
+   ]
+  },
+  {
+   "from": 2,
+   "to": 2,
+   "kind": "fb",
+   "centre": [
+    444,
+    372
+   ]
+  },
+  {
+   "from": 2,
+   "to": 3,
+   "kind": "link",
+   "centre": [
+    548,
+    372
+   ]
+  },
+  {
+   "from": 2,
+   "to": 4,
+   "kind": "link",
+   "centre": [
+    652,
+    372
+   ]
+  },
+  {
+   "from": 2,
+   "to": 5,
+   "kind": "link",
+   "centre": [
+    756,
+    372
+   ]
+  },
+  {
+   "from": 2,
+   "to": -1,
+   "kind": "out",
+   "centre": [
+    884,
+    372
+   ]
+  },
+  {
+   "from": 3,
+   "to": 3,
+   "kind": "fb",
+   "centre": [
+    548,
+    454
+   ]
+  },
+  {
+   "from": 3,
+   "to": 4,
+   "kind": "link",
+   "centre": [
+    652,
+    454
+   ]
+  },
+  {
+   "from": 3,
+   "to": 5,
+   "kind": "link",
+   "centre": [
+    756,
+    454
+   ]
+  },
+  {
+   "from": 3,
+   "to": -1,
+   "kind": "out",
+   "centre": [
+    884,
+    454
+   ]
+  },
+  {
+   "from": 4,
+   "to": 4,
+   "kind": "fb",
+   "centre": [
+    652,
+    536
+   ]
+  },
+  {
+   "from": 4,
+   "to": 5,
+   "kind": "link",
+   "centre": [
+    756,
+    536
+   ]
+  },
+  {
+   "from": 4,
+   "to": -1,
+   "kind": "out",
+   "centre": [
+    884,
+    536
+   ]
+  },
+  {
+   "from": 5,
+   "to": 5,
+   "kind": "fb",
+   "centre": [
+    756,
+    618
+   ]
+  },
+  {
+   "from": 5,
+   "to": -1,
+   "kind": "out",
+   "centre": [
+    884,
+    618
+   ]
+  }
+ ],
+ "plates": {
+  "title": [
+   330,
+   10,
+   380,
+   40
+  ],
+  "exit": [
+   846,
+   14,
+   178,
+   36
+  ],
+  "out-head": [
+   826,
+   94,
+   116,
+   36
+  ],
+  "legend": [
+   50,
+   82,
+   120,
+   60
+  ],
+  "hint": [
+   110,
+   696,
+   820,
+   34
+  ]
+ },
+ "doors": [
+  [
+   456,
+   130,
+   66,
+   76
+  ],
+  [
+   580,
+   130,
+   58,
+   70
+  ],
+  [
+   526,
+   206,
+   46,
+   40
+  ]
+ ]
+}

@@ -1,0 +1,94 @@
+/*
+ * Six Sines
+ *
+ * A synth with audio rate modulation.
+ *
+ * Copyright 2024-2025, Paul Walker and Various authors, as described in the github
+ * transaction log.
+ *
+ * This source repo is released under the MIT license, but has
+ * GPL3 dependencies, as such the combined work will be
+ * released under GPL3.
+ *
+ * The source code and license are at https://github.com/baconpaul/six-sines
+ */
+
+#ifndef BACONPAUL_SIX_SINES_SYNTH_VOICE_VALUES_H
+#define BACONPAUL_SIX_SINES_SYNTH_VOICE_VALUES_H
+
+#include <array>
+#include <sst/basic-blocks/tables/EqualTuningProvider.h>
+#include <sst/basic-blocks/tables/TwoToTheXProvider.h>
+#include "sst/basic-blocks/dsp/Lag.h"
+#include "configuration.h"
+
+struct MTSClient;
+
+namespace baconpaul::six_sines
+{
+struct VoiceValues
+{
+    VoiceValues() : gated(gatedV), key(keyV) {}
+
+    const bool &gated;
+    float gatedFloat{0.f}, ungatedFloat{1.f};
+    void setGated(bool g)
+    {
+        gatedV = g;
+        gatedFloat = g ? 1.f : 0.f;
+        ungatedFloat = 1.0 - gatedFloat;
+    }
+    void setKey(int k)
+    {
+        keyV = k;
+        keytrackFrom60 = (k - 60) / 12.0;
+    }
+    const int &key;
+    float keytrackFrom60{0.f};
+    int channel{0};
+    float velocity{0}, releaseVelocity{0};
+
+    float polyAt{0};
+
+    float portaDiff{0}, dPorta{0}, portaFrac{0}, dPortaFrac{0};
+    int portaSign{0};
+
+    float mpeBendInSemis{0}, mpeBendNormalized{0}, mpeTimbre{0}, mpeTimbreBipolar{0},
+        mpePressure{0};
+
+    float noteExpressionTuningInSemis{0}, noteExpressionPanBipolar{0};
+
+    float uniRatioMul{1.0};
+    float uniPanShift{0.0};
+    int uniIndex{0};
+    int uniCount{1};
+    float uniPMScale{0.f}; // -1 to 1 for unison field
+    bool hasCenterVoice{false}, isCenterVoice{false};
+    bool phaseRandom{false}, rephaseOnRetrigger{false};
+
+    // drawn once per note-on and copied to every unison voice, so RANDOM_PHASE_UNISON
+    // LFOs land on one phase across the stack; each LFO hashes it with its own param id
+    uint32_t notePhaseSeed{0};
+
+    sst::basic_blocks::dsp::OnePoleLag<float, false> velocityLag;
+
+    // Per-voice smoothing for MPE / note-expression values. Mod-matrix sources
+    // for MPE_* point at the corresponding lag's .v (see node_support.h).
+    sst::basic_blocks::dsp::OnePoleLag<float, false> mpeBendInSemisLag;
+    sst::basic_blocks::dsp::OnePoleLag<float, false> mpeTimbreLag;
+    sst::basic_blocks::dsp::OnePoleLag<float, false> mpeTimbreBipolarLag;
+    sst::basic_blocks::dsp::OnePoleLag<float, false> mpePressureLag;
+    sst::basic_blocks::dsp::OnePoleLag<float, false> noteExpressionTuningInSemisLag;
+    sst::basic_blocks::dsp::OnePoleLag<float, false> noteExpressionPanBipolarLag;
+
+    // True for one renderBlock after attack(); see Voice::renderBlock for snap logic.
+    bool firstBlockAfterAttack{true};
+
+    std::array<float, numMacros> macroOut{};
+
+  private:
+    bool gatedV{false};
+    int keyV{0};
+};
+}; // namespace baconpaul::six_sines
+#endif // MONO_VALUES_H

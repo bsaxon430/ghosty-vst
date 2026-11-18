@@ -1,0 +1,762 @@
+{
+ "about": "Poltergeist 2 ghost-machine: the moving parts and light sprites. Sizes are in design px (1040 x 744 canvas); every PNG is 2x that. \"pivot\" is in design px inside the sprite. \"slice\" = 9-slice / 3-slice insets [left, top, right, bottom] in design px. Sprites with \"blend\": \"add\" are light: draw them additively (or just alpha-blended) with alpha = light level. No text is baked in: labels are live Poppins text (see ui-layout.json and JUCE-NOTES.md).",
+ "png_scale": 2,
+ "palette": {
+  "ink": "#17110e",
+  "enamel": "#0c1015",
+  "brass": "#b8a366",
+  "copper": "#a07a5a",
+  "amber": "#ffb23e",
+  "amber_hi": "#ffe6a0",
+  "label": "#e9dcb8",
+  "label_dim": "#a89c7c",
+  "ghosts": [
+   "#fff0cc",
+   "#84e092",
+   "#bda2ff",
+   "#86d8ff",
+   "#ffb340",
+   "#ff93a8"
+  ],
+  "corners": [
+   "#84e092",
+   "#ff93a8",
+   "#86d8ff",
+   "#ffb340"
+  ],
+  "hose_cloth": [
+   "#b7ab8c",
+   "#6d8a62",
+   "#8576a8",
+   "#5f8fa6",
+   "#a8823e",
+   "#a8686e"
+  ]
+ },
+ "assets": [
+  {
+   "name": "macro1",
+   "file": "macro1.png",
+   "w": 58,
+   "h": 58,
+   "use": "Macro wheel 1 (spoke). Rotate about the centre; 0 deg = index straight up; map the value to -135..+135 deg.",
+   "pivot": [
+    29.0,
+    29.0
+   ],
+   "angle_min": -135,
+   "angle_max": 135
+  },
+  {
+   "name": "macro2",
+   "file": "macro2.png",
+   "w": 58,
+   "h": 58,
+   "use": "Macro wheel 2 (cog). Rotate about the centre; 0 deg = index straight up; map the value to -135..+135 deg.",
+   "pivot": [
+    29.0,
+    29.0
+   ],
+   "angle_min": -135,
+   "angle_max": 135
+  },
+  {
+   "name": "macro3",
+   "file": "macro3.png",
+   "w": 58,
+   "h": 58,
+   "use": "Macro wheel 3 (ship). Rotate about the centre; 0 deg = index straight up; map the value to -135..+135 deg.",
+   "pivot": [
+    29.0,
+    29.0
+   ],
+   "angle_min": -135,
+   "angle_max": 135
+  },
+  {
+   "name": "macro4",
+   "file": "macro4.png",
+   "w": 58,
+   "h": 58,
+   "use": "Macro wheel 4 (holes). Rotate about the centre; 0 deg = index straight up; map the value to -135..+135 deg.",
+   "pivot": [
+    29.0,
+    29.0
+   ],
+   "angle_min": -135,
+   "angle_max": 135
+  },
+  {
+   "name": "macro5",
+   "file": "macro5.png",
+   "w": 58,
+   "h": 58,
+   "use": "Macro wheel 5 (ring). Rotate about the centre; 0 deg = index straight up; map the value to -135..+135 deg.",
+   "pivot": [
+    29.0,
+    29.0
+   ],
+   "angle_min": -135,
+   "angle_max": 135
+  },
+  {
+   "name": "macro6",
+   "file": "macro6.png",
+   "w": 58,
+   "h": 58,
+   "use": "Macro wheel 6 (dial). Rotate about the centre; 0 deg = index straight up; map the value to -135..+135 deg.",
+   "pivot": [
+    29.0,
+    29.0
+   ],
+   "angle_min": -135,
+   "angle_max": 135
+  },
+  {
+   "name": "tap-a",
+   "file": "tap-a.png",
+   "w": 56,
+   "h": 56,
+   "use": "Valve tap for the bench and the lower assemblies (draw it scaled to the control's rect). Rotate about the centre, -135..+135 deg.",
+   "pivot": [
+    28.0,
+    28.0
+   ],
+   "angle_min": -135,
+   "angle_max": 135
+  },
+  {
+   "name": "tap-b",
+   "file": "tap-b.png",
+   "w": 56,
+   "h": 56,
+   "use": "Valve tap for the bench and the lower assemblies (draw it scaled to the control's rect). Rotate about the centre, -135..+135 deg.",
+   "pivot": [
+    28.0,
+    28.0
+   ],
+   "angle_min": -135,
+   "angle_max": 135
+  },
+  {
+   "name": "tap-c",
+   "file": "tap-c.png",
+   "w": 56,
+   "h": 56,
+   "use": "Valve tap for the bench and the lower assemblies (draw it scaled to the control's rect). Rotate about the centre, -135..+135 deg.",
+   "pivot": [
+    28.0,
+    28.0
+   ],
+   "angle_min": -135,
+   "angle_max": 135
+  },
+  {
+   "name": "valve-s",
+   "file": "valve-s.png",
+   "w": 28,
+   "h": 28,
+   "use": "Small valve wheel: the mix valve on each chamber's pipe and the depth valve that rides on every hose. Rotate about the centre, -135..+135 deg.",
+   "pivot": [
+    14.0,
+    14.0
+   ],
+   "angle_min": -135,
+   "angle_max": 135
+  },
+  {
+   "name": "sel-knob",
+   "file": "sel-knob.png",
+   "w": 42,
+   "h": 42,
+   "use": "Pointer knob of a stepped dial (saturation, low pass, high pass, drift shape, orbit, orbit rate). Rotate about the centre to the tick of the chosen step.",
+   "pivot": [
+    21.0,
+    21.0
+   ]
+  },
+  {
+   "name": "switch-arm",
+   "file": "switch-arm.png",
+   "w": 28,
+   "h": 44,
+   "use": "Blade of a throw switch. Pivot at the hinge post (bottom); ON = upright in the jaws (0 deg), OFF = thrown over to +52 deg.",
+   "pivot": [
+    14,
+    36
+   ],
+   "angle_on": 0,
+   "angle_off": 52
+  },
+  {
+   "name": "rod-knob",
+   "file": "rod-knob.png",
+   "w": 28,
+   "h": 28,
+   "use": "Head of a pull rod / push button (SAVE, LOAD, INIT). Pressed: draw it 2 px lower and 8% smaller for 120 ms.",
+   "pivot": [
+    14.0,
+    14.0
+   ]
+  },
+  {
+   "name": "pull-lever",
+   "file": "pull-lever.png",
+   "w": 24,
+   "h": 46,
+   "use": "Pull lever of the preset picker (prev / next): hangs from its pivot at the top; pulled = swings 24 deg toward the nameplate and springs back.",
+   "pivot": [
+    12,
+    7
+   ],
+   "angle_rest": 0,
+   "angle_pull": 24
+  },
+  {
+   "name": "chain-pull",
+   "file": "chain-pull.png",
+   "w": 28,
+   "h": 100,
+   "use": "Pull-chain of the brass roll: a ring on a chain at the right end of the lower third. Pulled = 14 px lower for 250 ms.",
+   "pivot": [
+    14,
+    4
+   ],
+   "travel": [
+    0,
+    14
+   ]
+  },
+  {
+   "name": "lever-knob",
+   "file": "lever-knob.png",
+   "w": 22,
+   "h": 34,
+   "use": "Grip of a lever in a slotted pipe (orbit SIZE): centre it on the slot at the value position.",
+   "pivot": [
+    11,
+    17
+   ]
+  },
+  {
+   "name": "lens",
+   "file": "lens.png",
+   "w": 48,
+   "h": 48,
+   "use": "The blend puck: an amber lens in a brass ring (includes its soft halo). Centre it on the blend position.",
+   "pivot": [
+    24.0,
+    24.0
+   ]
+  },
+  {
+   "name": "rail",
+   "file": "rail.png",
+   "w": 242,
+   "h": 12,
+   "use": "The gantry bar the puck rides on: spans the glass, follows the puck's Y (draw it under the lens; its ends ride the two side rails).",
+   "pivot": [
+    121.0,
+    6
+   ]
+  },
+  {
+   "name": "orbit-arm",
+   "file": "orbit-arm.png",
+   "w": 64,
+   "h": 14,
+   "use": "The clockwork arm of ORBIT: pivot (the gear end) on the orbit centre, the far end on the puck; rotate it to the puck and stretch its length (scale X about the pivot).",
+   "pivot": [
+    7,
+    7
+   ],
+   "length": 53
+  },
+  {
+   "name": "lantern-A",
+   "file": "lantern-A.png",
+   "w": 48,
+   "h": 48,
+   "use": "Corner lantern A (dark: empty corner). Centre on the corner seat; can be lifted and reseated.",
+   "pivot": [
+    24.0,
+    24.0
+   ],
+   "state": "off",
+   "group": "lantern-A"
+  },
+  {
+   "name": "lantern-A-lit",
+   "file": "lantern-A-lit.png",
+   "w": 48,
+   "h": 48,
+   "use": "Corner lantern A (lit: a sound sits here). Centre on the corner seat; can be lifted and reseated.",
+   "pivot": [
+    24.0,
+    24.0
+   ],
+   "state": "lit",
+   "group": "lantern-A"
+  },
+  {
+   "name": "lantern-B",
+   "file": "lantern-B.png",
+   "w": 48,
+   "h": 48,
+   "use": "Corner lantern B (dark: empty corner). Centre on the corner seat; can be lifted and reseated.",
+   "pivot": [
+    24.0,
+    24.0
+   ],
+   "state": "off",
+   "group": "lantern-B"
+  },
+  {
+   "name": "lantern-B-lit",
+   "file": "lantern-B-lit.png",
+   "w": 48,
+   "h": 48,
+   "use": "Corner lantern B (lit: a sound sits here). Centre on the corner seat; can be lifted and reseated.",
+   "pivot": [
+    24.0,
+    24.0
+   ],
+   "state": "lit",
+   "group": "lantern-B"
+  },
+  {
+   "name": "lantern-C",
+   "file": "lantern-C.png",
+   "w": 48,
+   "h": 48,
+   "use": "Corner lantern C (dark: empty corner). Centre on the corner seat; can be lifted and reseated.",
+   "pivot": [
+    24.0,
+    24.0
+   ],
+   "state": "off",
+   "group": "lantern-C"
+  },
+  {
+   "name": "lantern-C-lit",
+   "file": "lantern-C-lit.png",
+   "w": 48,
+   "h": 48,
+   "use": "Corner lantern C (lit: a sound sits here). Centre on the corner seat; can be lifted and reseated.",
+   "pivot": [
+    24.0,
+    24.0
+   ],
+   "state": "lit",
+   "group": "lantern-C"
+  },
+  {
+   "name": "lantern-D",
+   "file": "lantern-D.png",
+   "w": 48,
+   "h": 48,
+   "use": "Corner lantern D (dark: empty corner). Centre on the corner seat; can be lifted and reseated.",
+   "pivot": [
+    24.0,
+    24.0
+   ],
+   "state": "off",
+   "group": "lantern-D"
+  },
+  {
+   "name": "lantern-D-lit",
+   "file": "lantern-D-lit.png",
+   "w": 48,
+   "h": 48,
+   "use": "Corner lantern D (lit: a sound sits here). Centre on the corner seat; can be lifted and reseated.",
+   "pivot": [
+    24.0,
+    24.0
+   ],
+   "state": "lit",
+   "group": "lantern-D"
+  },
+  {
+   "name": "plug",
+   "file": "plug.png",
+   "w": 26,
+   "h": 18,
+   "use": "Brass end of a patch hose. Its nose (pivot) sits in the socket; rotate it to the hose's end tangent. The hose itself is drawn live (see JUCE-NOTES).",
+   "pivot": [
+    3,
+    9
+   ]
+  },
+  {
+   "name": "sign-ghosts",
+   "file": "sign-ghosts.png",
+   "w": 82,
+   "h": 41,
+   "use": "Hanging page sign GHOSTS (unlit), with its two chains. Hangs from the rail: pivot = top centre; it swings a little when touched.",
+   "pivot": [
+    41.0,
+    0
+   ],
+   "state": "off",
+   "group": "sign-ghosts",
+   "label": [
+    4,
+    10,
+    74,
+    26.6
+   ]
+  },
+  {
+   "name": "sign-ghosts-lit",
+   "file": "sign-ghosts-lit.png",
+   "w": 82,
+   "h": 41,
+   "use": "Hanging page sign GHOSTS (selected: lit), with its two chains. Hangs from the rail: pivot = top centre; it swings a little when touched.",
+   "pivot": [
+    41.0,
+    0
+   ],
+   "state": "lit",
+   "group": "sign-ghosts",
+   "label": [
+    4,
+    10,
+    74,
+    26.6
+   ]
+  },
+  {
+   "name": "sign-main",
+   "file": "sign-main.png",
+   "w": 74,
+   "h": 41,
+   "use": "Hanging page sign MAIN (unlit), with its two chains. Hangs from the rail: pivot = top centre; it swings a little when touched.",
+   "pivot": [
+    37.0,
+    0
+   ],
+   "state": "off",
+   "group": "sign-main",
+   "label": [
+    4,
+    10,
+    66,
+    26.6
+   ]
+  },
+  {
+   "name": "sign-main-lit",
+   "file": "sign-main-lit.png",
+   "w": 74,
+   "h": 41,
+   "use": "Hanging page sign MAIN (selected: lit), with its two chains. Hangs from the rail: pivot = top centre; it swings a little when touched.",
+   "pivot": [
+    37.0,
+    0
+   ],
+   "state": "lit",
+   "group": "sign-main",
+   "label": [
+    4,
+    10,
+    66,
+    26.6
+   ]
+  },
+  {
+   "name": "sign-morph",
+   "file": "sign-morph.png",
+   "w": 82,
+   "h": 41,
+   "use": "Hanging page sign MORPH (unlit), with its two chains. Hangs from the rail: pivot = top centre; it swings a little when touched.",
+   "pivot": [
+    41.0,
+    0
+   ],
+   "state": "off",
+   "group": "sign-morph",
+   "label": [
+    4,
+    10,
+    74,
+    26.6
+   ]
+  },
+  {
+   "name": "sign-morph-lit",
+   "file": "sign-morph-lit.png",
+   "w": 82,
+   "h": 41,
+   "use": "Hanging page sign MORPH (selected: lit), with its two chains. Hangs from the rail: pivot = top centre; it swings a little when touched.",
+   "pivot": [
+    41.0,
+    0
+   ],
+   "state": "lit",
+   "group": "sign-morph",
+   "label": [
+    4,
+    10,
+    74,
+    26.6
+   ]
+  },
+  {
+   "name": "needle-big",
+   "file": "needle-big.png",
+   "w": 48,
+   "h": 48,
+   "use": "Needle of the output gauge; rotates about the centre (-120..+120 deg, 0 = straight up).",
+   "pivot": [
+    24.0,
+    24.0
+   ],
+   "angle_min": -120,
+   "angle_max": 120
+  },
+  {
+   "name": "needle-small",
+   "file": "needle-small.png",
+   "w": 22,
+   "h": 22,
+   "use": "Needle of a chamber's level gauge (-110..+110 deg).",
+   "pivot": [
+    11.0,
+    11.0
+   ],
+   "angle_min": -110,
+   "angle_max": 110
+  },
+  {
+   "name": "pin",
+   "file": "pin.png",
+   "w": 18,
+   "h": 18,
+   "use": "Pin on the envelope rail. Centre it on the breakpoint.",
+   "pivot": [
+    9.0,
+    9.0
+   ]
+  },
+  {
+   "name": "pin-hot",
+   "file": "pin-hot.png",
+   "w": 18,
+   "h": 18,
+   "use": "Pin on the envelope rail (being dragged / hovered). Centre it on the breakpoint.",
+   "pivot": [
+    9.0,
+    9.0
+   ]
+  },
+  {
+   "name": "spark",
+   "file": "spark.png",
+   "w": 26,
+   "h": 26,
+   "use": "Contact spark of a throw switch: flash it for ~90 ms at the jaws when the switch is thrown (additive).",
+   "pivot": [
+    13.0,
+    13.0
+   ],
+   "blend": "add"
+  },
+  {
+   "name": "key-white-0",
+   "file": "key-white-0.png",
+   "w": 28,
+   "h": 82,
+   "use": "White key (worn ivory), up; three variants so the row does not repeat. Draw it clipped to the key's rect from the top (the keys differ a little in length).",
+   "state": "up",
+   "group": "key-white"
+  },
+  {
+   "name": "key-white-1",
+   "file": "key-white-1.png",
+   "w": 28,
+   "h": 82,
+   "use": "White key (worn ivory), up; three variants so the row does not repeat. Draw it clipped to the key's rect from the top (the keys differ a little in length).",
+   "state": "up",
+   "group": "key-white"
+  },
+  {
+   "name": "key-white-2",
+   "file": "key-white-2.png",
+   "w": 28,
+   "h": 82,
+   "use": "White key (worn ivory), up; three variants so the row does not repeat. Draw it clipped to the key's rect from the top (the keys differ a little in length).",
+   "state": "up",
+   "group": "key-white"
+  },
+  {
+   "name": "key-white-down",
+   "file": "key-white-down.png",
+   "w": 28,
+   "h": 82,
+   "use": "White key, held (shadowed at the top, warmed by the lamp).",
+   "state": "down",
+   "group": "key-white"
+  },
+  {
+   "name": "key-black",
+   "file": "key-black.png",
+   "w": 16,
+   "h": 46,
+   "use": "Black key (blued iron), up.",
+   "state": "up",
+   "group": "key-black"
+  },
+  {
+   "name": "key-black-down",
+   "file": "key-black-down.png",
+   "w": 16,
+   "h": 46,
+   "use": "Black key (blued iron), down.",
+   "state": "down",
+   "group": "key-black"
+  },
+  {
+   "name": "peg",
+   "file": "peg.png",
+   "w": 30,
+   "h": 12,
+   "use": "A note on the brass roll: a lit slot. 3-slice it along its length (ends fixed) so one sprite covers notes of any length.",
+   "slice": [
+    7,
+    0,
+    7,
+    0
+   ]
+  },
+  {
+   "name": "playhead",
+   "file": "playhead.png",
+   "w": 16,
+   "h": 172,
+   "use": "The travelling playhead lamp of the roll: a little brass carriage on the header rail and a line of light down the rows. Its x follows the step.",
+   "pivot": [
+    8,
+    20
+   ]
+  },
+  {
+   "name": "glow-round",
+   "file": "glow-round.png",
+   "w": 72,
+   "h": 72,
+   "use": "Ring of amber light round a wheel, tap or dial well (scale to ~1.5x the control's diameter). Additive; alpha = light level.",
+   "pivot": [
+    36.0,
+    36.0
+   ],
+   "blend": "add"
+  },
+  {
+   "name": "glow-socket",
+   "file": "glow-socket.png",
+   "w": 44,
+   "h": 44,
+   "use": "Light in a hose socket: legal targets burn while a hose is dragged; a connected socket glows with the signal. Additive.",
+   "pivot": [
+    22.0,
+    22.0
+   ],
+   "blend": "add"
+  },
+  {
+   "name": "glow-plate",
+   "file": "glow-plate.png",
+   "w": 60,
+   "h": 30,
+   "use": "Backlight of a label plate / glass readout: 9-slice it over the plate. Additive; alpha = light level (idle 0.15, hover 0.45, touched 1.0 fading over 600 ms).",
+   "slice": [
+    12,
+    12,
+    12,
+    12
+   ],
+   "blend": "add"
+  },
+  {
+   "name": "glow-slot",
+   "file": "glow-slot.png",
+   "w": 60,
+   "h": 22,
+   "use": "Fire seen through the slot of a slotted pipe (3-slice along its length). Additive.",
+   "slice": [
+    12,
+    0,
+    12,
+    0
+   ],
+   "blend": "add"
+  },
+  {
+   "name": "ledger-back",
+   "file": "ledger-back.png",
+   "w": 452,
+   "h": 596,
+   "use": "The preset ledger: an oiled board hung on two chains from a brass roller, with a head plate, a gutter for the folder tabs and thirteen rails of hooks. Its top-left corner sits sprite_origin left of / above the ledger rect. It unrolls from the roller (clip from the top, 320 ms).",
+   "origin": [
+    14,
+    80
+   ]
+  },
+  {
+   "name": "ledger-slat0",
+   "file": "ledger-slat0.png",
+   "w": 296,
+   "h": 32,
+   "use": "A sound on the ledger: a brass slat hung on two hooks (three variants so the rows do not repeat). Its name is live text."
+  },
+  {
+   "name": "ledger-slat1",
+   "file": "ledger-slat1.png",
+   "w": 296,
+   "h": 32,
+   "use": "A sound on the ledger: a brass slat hung on two hooks (three variants so the rows do not repeat). Its name is live text."
+  },
+  {
+   "name": "ledger-slat2",
+   "file": "ledger-slat2.png",
+   "w": 296,
+   "h": 32,
+   "use": "A sound on the ledger: a brass slat hung on two hooks (three variants so the rows do not repeat). Its name is live text."
+  },
+  {
+   "name": "ledger-slat-lit",
+   "file": "ledger-slat-lit.png",
+   "w": 296,
+   "h": 32,
+   "use": "The slat of the sound that is loaded now: polished and lit (add an amber halo)."
+  },
+  {
+   "name": "ledger-foot",
+   "file": "ledger-foot.png",
+   "w": 212,
+   "h": 32,
+   "use": "The foot slat (INIT / EMPTY): verdigris copper."
+  },
+  {
+   "name": "ledger-arrow",
+   "file": "ledger-arrow.png",
+   "w": 40,
+   "h": 32,
+   "use": "Page arrow of the ledger (previous page; mirror it for the next page)."
+  },
+  {
+   "name": "ledger-tab",
+   "file": "ledger-tab.png",
+   "w": 116,
+   "h": 32,
+   "use": "Folder tab of the ledger (blued iron). Its name is live text."
+  },
+  {
+   "name": "ledger-tab-lit",
+   "file": "ledger-tab-lit.png",
+   "w": 116,
+   "h": 32,
+   "use": "Folder tab of the ledger (the open folder: lit brass). Its name is live text."
+  }
+ ]
+}

@@ -1,0 +1,1624 @@
+{
+ "about": "Poltergeist 2 ghost-machine, page \"main\". Simple path: draw background.png (the whole static picture, world included) and the sprites over it. Parallax path: draw common world layers, then \"layers\" here in z order (back.png, the sprites that stand behind the hull, machine.png, ...). All x/y/w/h are canvas px (1040x744); PNG pixels are 2x.",
+ "page": "main",
+ "canvas": {
+  "w": 1040,
+  "h": 744,
+  "png_scale": 2
+ },
+ "background": "background.png",
+ "layers": [
+  {
+   "z": 0,
+   "id": "back",
+   "file": "back.png",
+   "x": 73.0,
+   "y": 0.0,
+   "w": 953.0,
+   "h": 669.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "static"
+   }
+  },
+  {
+   "z": 1,
+   "id": "title-loose1",
+   "file": "../common/sprites/title-loose1.png",
+   "x": 468,
+   "y": 14,
+   "w": 36,
+   "h": 48,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 477.1,
+    "py": 20.3,
+    "amp": 4.2,
+    "period": 3.1,
+    "phase": 0.14,
+    "bias": -1.2
+   }
+  },
+  {
+   "z": 2,
+   "id": "title-loose2",
+   "file": "../common/sprites/title-loose2.png",
+   "x": 610,
+   "y": 14,
+   "w": 41,
+   "h": 51,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 637.4,
+    "py": 22.4,
+    "amp": 2.4,
+    "period": 4.3,
+    "phase": 0.71,
+    "bias": -1.2
+   }
+  },
+  {
+   "z": 3,
+   "id": "title-two",
+   "file": "../common/sprites/title-two.png",
+   "x": 706,
+   "y": 63,
+   "w": 36,
+   "h": 49,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 722,
+    "py": 68.1,
+    "amp": 3.6,
+    "period": 3.7,
+    "phase": 0.4,
+    "bias": -1.6
+   }
+  },
+  {
+   "z": 4,
+   "id": "jib-lantern",
+   "file": "../common/sprites/jib-lantern.png",
+   "x": 989,
+   "y": 80,
+   "w": 30,
+   "h": 30,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 1004,
+    "py": 84,
+    "amp": 5,
+    "period": 2.9,
+    "phase": 0.6,
+    "bias": -2
+   }
+  },
+  {
+   "z": 5,
+   "id": "anchor",
+   "file": "../common/sprites/anchor.png",
+   "x": 933,
+   "y": 665,
+   "w": 26,
+   "h": 48,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 946,
+    "py": 668,
+    "amp": 2.6,
+    "period": 5.2,
+    "phase": 0.1,
+    "bias": -2.2
+   }
+  },
+  {
+   "z": 6,
+   "id": "far-birds",
+   "file": "../common/sprites/far-birds.png",
+   "x": 16,
+   "y": 40,
+   "w": 66,
+   "h": 40,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 50,
+    "py": 640,
+    "amp": 0.8,
+    "period": 17,
+    "phase": 0
+   }
+  },
+  {
+   "z": 7,
+   "id": "windmill-sails",
+   "file": "sprites/windmill-sails.png",
+   "x": 14,
+   "y": 18,
+   "w": 172,
+   "h": 172,
+   "png_scale": 2,
+   "anim": {
+    "type": "rotate",
+    "cx": 100,
+    "cy": 104,
+    "period": 14,
+    "dir": 1,
+    "group": "windmill",
+    "param": "dr-rate"
+   }
+  },
+  {
+   "z": 8,
+   "id": "cat-tail",
+   "file": "sprites/cat-tail.png",
+   "x": 241,
+   "y": 193,
+   "w": 21,
+   "h": 17,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 247.5,
+    "py": 198.3,
+    "amp": 9,
+    "period": 3.4,
+    "phase": 0.2
+   }
+  },
+  {
+   "z": 9,
+   "id": "machine",
+   "file": "machine.png",
+   "x": 47.0,
+   "y": 48.0,
+   "w": 946.0,
+   "h": 655.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "static"
+   }
+  },
+  {
+   "z": 10,
+   "id": "gear-jaw1",
+   "file": "sprites/gear-jaw1.png",
+   "x": 487,
+   "y": 223,
+   "w": 30,
+   "h": 30,
+   "png_scale": 2,
+   "anim": {
+    "type": "rotate",
+    "cx": 502,
+    "cy": 238,
+    "period": 3.2,
+    "dir": 1,
+    "teeth": 10,
+    "crank": true,
+    "crank_r": 6.5,
+    "group": "jaw"
+   }
+  },
+  {
+   "z": 11,
+   "id": "gear-jaw2",
+   "file": "../common/sprites/gear-jaw2.png",
+   "x": 478,
+   "y": 215,
+   "w": 21,
+   "h": 21,
+   "png_scale": 2,
+   "anim": {
+    "type": "rotate",
+    "cx": 488.5,
+    "cy": 225.5,
+    "period": 1.92,
+    "dir": -1,
+    "teeth": 6,
+    "group": "jaw"
+   }
+  },
+  {
+   "z": 12,
+   "id": "gear-yard1",
+   "file": "sprites/gear-yard1.png",
+   "x": 700,
+   "y": 508,
+   "w": 32,
+   "h": 32,
+   "png_scale": 2,
+   "anim": {
+    "type": "rotate",
+    "cx": 716,
+    "cy": 524,
+    "period": 5.6,
+    "dir": 1,
+    "teeth": 13,
+    "group": "yard"
+   }
+  },
+  {
+   "z": 13,
+   "id": "gear-yard2",
+   "file": "sprites/gear-yard2.png",
+   "x": 725,
+   "y": 505,
+   "w": 24,
+   "h": 24,
+   "png_scale": 2,
+   "anim": {
+    "type": "rotate",
+    "cx": 736.6,
+    "cy": 516.6,
+    "period": 3.45,
+    "dir": -1,
+    "teeth": 8,
+    "group": "yard"
+   }
+  },
+  {
+   "z": 14,
+   "id": "gear-yard3",
+   "file": "sprites/gear-yard3.png",
+   "x": 688,
+   "y": 502,
+   "w": 21,
+   "h": 21,
+   "png_scale": 2,
+   "anim": {
+    "type": "rotate",
+    "cx": 698.4,
+    "cy": 512.6,
+    "period": 3,
+    "dir": -1,
+    "teeth": 7,
+    "group": "yard"
+   }
+  },
+  {
+   "z": 15,
+   "id": "storm-shade",
+   "type": "fill",
+   "note": "fill rgba(6,10,24, 0.34 * storm) clipped to the machine (or simply darken back.png + machine.png); the lights after it keep their brightness"
+  },
+  {
+   "z": 16,
+   "id": "win-eye",
+   "file": "../common/sprites/win-eye.png",
+   "x": 408,
+   "y": 100,
+   "w": 267,
+   "h": 170,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "breathe",
+    "min": 0.8,
+    "max": 1.0,
+    "period": 9.2
+   }
+  },
+  {
+   "z": 17,
+   "id": "win-furnace",
+   "file": "sprites/win-furnace.png",
+   "x": 574,
+   "y": 431,
+   "w": 48,
+   "h": 48,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "fire",
+    "min": 0.5,
+    "max": 1.0,
+    "period": 1.9
+   }
+  },
+  {
+   "z": 18,
+   "id": "win-lamp",
+   "file": "sprites/win-lamp.png",
+   "x": 511,
+   "y": 47,
+   "w": 350,
+   "h": 434,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "lamp",
+    "min": 0.8,
+    "max": 1.0,
+    "period": 5.9
+   }
+  },
+  {
+   "z": 19,
+   "id": "win-mouth",
+   "file": "../common/sprites/win-mouth.png",
+   "x": 519,
+   "y": 209,
+   "w": 58,
+   "h": 59,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "fire",
+    "min": 0.5,
+    "max": 1.0,
+    "period": 2.3
+   }
+  },
+  {
+   "z": 20,
+   "id": "win-v1",
+   "file": "sprites/win-v1.png",
+   "x": 84,
+   "y": 61,
+   "w": 840,
+   "h": 241,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "candle",
+    "min": 0.72,
+    "max": 1.0,
+    "period": 3.7
+   }
+  },
+  {
+   "z": 21,
+   "id": "win-v2",
+   "file": "sprites/win-v2.png",
+   "x": 84,
+   "y": 68,
+   "w": 872,
+   "h": 191,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "candle",
+    "min": 0.72,
+    "max": 1.0,
+    "period": 4.9
+   }
+  },
+  {
+   "z": 22,
+   "id": "win-v3",
+   "file": "sprites/win-v3.png",
+   "x": 185,
+   "y": 71,
+   "w": 802,
+   "h": 231,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "candle",
+    "min": 0.74,
+    "max": 1.0,
+    "period": 4.3
+   }
+  },
+  {
+   "z": 23,
+   "id": "eye-flare",
+   "file": "../common/sprites/eye-flare.png",
+   "x": 428,
+   "y": 114,
+   "w": 236,
+   "h": 130,
+   "png_scale": 2,
+   "anim": {
+    "type": "flare",
+    "source": "out",
+    "gain": 1
+   }
+  },
+  {
+   "z": 24,
+   "id": "mouth-flare",
+   "file": "../common/sprites/mouth-flare.png",
+   "x": 500,
+   "y": 186,
+   "w": 96,
+   "h": 96,
+   "png_scale": 2,
+   "anim": {
+    "type": "flare",
+    "source": "note",
+    "gain": 1
+   }
+  },
+  {
+   "z": 25,
+   "id": "lighthouse-flare",
+   "file": "sprites/lighthouse-flare.png",
+   "x": 796,
+   "y": 12,
+   "w": 100,
+   "h": 100,
+   "png_scale": 2,
+   "anim": {
+    "type": "flare",
+    "source": "out",
+    "gain": 1
+   }
+  },
+  {
+   "z": 26,
+   "id": "lighthouse-beam",
+   "file": "sprites/lighthouse-beam.png",
+   "x": 592,
+   "y": 26,
+   "w": 448,
+   "h": 72,
+   "png_scale": 2,
+   "anim": {
+    "type": "beam",
+    "cx": 846,
+    "cy": 62,
+    "period": 7,
+    "source": "out",
+    "blend": "add"
+   }
+  },
+  {
+   "z": 27,
+   "id": "title-glow",
+   "file": "../common/sprites/title-glow.png",
+   "x": 376,
+   "y": 0,
+   "w": 346,
+   "h": 108,
+   "png_scale": 2,
+   "anim": {
+    "type": "flare",
+    "source": "title",
+    "gain": 1,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 28,
+   "id": "eye-shutter",
+   "file": "../common/sprites/eye-shutter.png",
+   "x": 575,
+   "y": 123,
+   "w": 64,
+   "h": 40,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 606,
+    "py": 130,
+    "amp": 1.1,
+    "period": 6.6,
+    "phase": 0.4
+   }
+  },
+  {
+   "z": 29,
+   "id": "eye-shutter-closed",
+   "file": "../common/sprites/eye-shutter-closed.png",
+   "x": 579,
+   "y": 143,
+   "w": 58,
+   "h": 62,
+   "png_scale": 2,
+   "anim": {
+    "type": "flicker",
+    "style": "lid",
+    "min": 0,
+    "max": 1,
+    "period": 19
+   }
+  },
+  {
+   "z": 30,
+   "id": "mouth-hatch",
+   "file": "sprites/mouth-hatch.png",
+   "x": 514,
+   "y": 229,
+   "w": 70,
+   "h": 42,
+   "png_scale": 2,
+   "anim": {
+    "type": "flap",
+    "hinge_y": 261,
+    "open": [
+     1,
+     0.3
+    ],
+    "pin": [
+     522,
+     242.3
+    ],
+    "source": "note"
+   }
+  },
+  {
+   "z": 31,
+   "id": "jaw-rod",
+   "file": "sprites/jaw-rod.png",
+   "x": 502,
+   "y": 232,
+   "w": 26,
+   "h": 17,
+   "png_scale": 2,
+   "anim": {
+    "type": "link",
+    "a": [
+     508.5,
+     238
+    ],
+    "b": [
+     522,
+     242.3
+    ],
+    "crank": "gear-jaw1",
+    "hatch": "mouth-hatch"
+   }
+  },
+  {
+   "z": 32,
+   "id": "drift-pendulum",
+   "file": "sprites/drift-pendulum.png",
+   "x": 317,
+   "y": 258,
+   "w": 74,
+   "h": 62,
+   "png_scale": 2,
+   "anim": {
+    "type": "pendulum",
+    "px": 354,
+    "py": 262,
+    "amp": 24,
+    "period": 2.4,
+    "rate": "dr-rate",
+    "amount": "dr-amount"
+   }
+  },
+  {
+   "z": 33,
+   "id": "pd-weight",
+   "file": "sprites/pd-weight.png",
+   "x": 380,
+   "y": 340,
+   "w": 24,
+   "h": 98,
+   "png_scale": 2,
+   "anim": {
+    "type": "drop",
+    "travel": 40,
+    "source": "note",
+    "param": "pd-amount",
+    "decay": "pd-decay"
+   }
+  },
+  {
+   "z": 34,
+   "id": "tone-bellows",
+   "file": "sprites/tone-bellows.png",
+   "x": 69,
+   "y": 424,
+   "w": 54,
+   "h": 72,
+   "png_scale": 2,
+   "anim": {
+    "type": "bellows",
+    "anchor_y": 492,
+    "squeeze": [
+     1,
+     0.72
+    ],
+    "period": 2.6,
+    "source": "note",
+    "param": "tone-drive"
+   }
+  },
+  {
+   "z": 35,
+   "id": "hem-plate0",
+   "file": "../common/sprites/hem-plate0.png",
+   "x": 120,
+   "y": 678,
+   "w": 28,
+   "h": 41,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 134,
+    "py": 680.3,
+    "amp": 3.2,
+    "period": 5.33,
+    "phase": 0.46,
+    "bias": -2
+   }
+  },
+  {
+   "z": 36,
+   "id": "hem-chain1",
+   "file": "../common/sprites/hem-chain1.png",
+   "x": 140,
+   "y": 682,
+   "w": 22,
+   "h": 36,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 150,
+    "py": 684.5,
+    "amp": 6.7,
+    "period": 3.05,
+    "phase": 0.4,
+    "bias": -2
+   }
+  },
+  {
+   "z": 37,
+   "id": "hem-rag2",
+   "file": "../common/sprites/hem-rag2.png",
+   "x": 105,
+   "y": 679,
+   "w": 38,
+   "h": 41,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 124,
+    "py": 681.2,
+    "amp": 7.1,
+    "period": 2.74,
+    "phase": 0.11,
+    "bias": -2
+   }
+  },
+  {
+   "z": 38,
+   "id": "hem-rag3",
+   "file": "../common/sprites/hem-rag3.png",
+   "x": 881,
+   "y": 683,
+   "w": 30,
+   "h": 35,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 896,
+    "py": 685,
+    "amp": 7.3,
+    "period": 2.54,
+    "phase": 0.83,
+    "bias": -2
+   }
+  },
+  {
+   "z": 39,
+   "id": "hem-plate4",
+   "file": "../common/sprites/hem-plate4.png",
+   "x": 893,
+   "y": 686,
+   "w": 30,
+   "h": 42,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 908,
+    "py": 688.6,
+    "amp": 2.2,
+    "period": 4.76,
+    "phase": 0.83,
+    "bias": -2
+   }
+  },
+  {
+   "z": 40,
+   "id": "hem-chain5",
+   "file": "../common/sprites/hem-chain5.png",
+   "x": 874,
+   "y": 681,
+   "w": 22,
+   "h": 46,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 884,
+    "py": 683.1,
+    "amp": 4.6,
+    "period": 4.42,
+    "phase": 0.69,
+    "bias": -2
+   }
+  },
+  {
+   "z": 41,
+   "id": "hem-chain6",
+   "file": "../common/sprites/hem-chain6.png",
+   "x": 196,
+   "y": 684,
+   "w": 22,
+   "h": 44,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 206,
+    "py": 686.3,
+    "amp": 5.6,
+    "period": 3.37,
+    "phase": 0.13,
+    "bias": -2
+   }
+  },
+  {
+   "z": 42,
+   "id": "hem-rag7",
+   "file": "../common/sprites/hem-rag7.png",
+   "x": 274,
+   "y": 680,
+   "w": 36,
+   "h": 31,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 292,
+    "py": 682.2,
+    "amp": 6.2,
+    "period": 3.45,
+    "phase": 0.55,
+    "bias": -2
+   }
+  },
+  {
+   "z": 43,
+   "id": "hem-chain8",
+   "file": "../common/sprites/hem-chain8.png",
+   "x": 388,
+   "y": 677,
+   "w": 22,
+   "h": 46,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 398,
+    "py": 679.4,
+    "amp": 4.1,
+    "period": 3.81,
+    "phase": 0.95,
+    "bias": -2
+   }
+  },
+  {
+   "z": 44,
+   "id": "hem-plate9",
+   "file": "../common/sprites/hem-plate9.png",
+   "x": 497,
+   "y": 679,
+   "w": 30,
+   "h": 38,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 512,
+    "py": 681.7,
+    "amp": 2.9,
+    "period": 6.37,
+    "phase": 0.44,
+    "bias": -2
+   }
+  },
+  {
+   "z": 45,
+   "id": "hem-chain10",
+   "file": "../common/sprites/hem-chain10.png",
+   "x": 630,
+   "y": 685,
+   "w": 22,
+   "h": 40,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 640,
+    "py": 687.7,
+    "amp": 4.7,
+    "period": 3.52,
+    "phase": 0.29,
+    "bias": -2
+   }
+  },
+  {
+   "z": 46,
+   "id": "hem-rag11",
+   "file": "../common/sprites/hem-rag11.png",
+   "x": 727,
+   "y": 683,
+   "w": 30,
+   "h": 45,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 742,
+    "py": 685.8,
+    "amp": 5.4,
+    "period": 3.1,
+    "phase": 0.67,
+    "bias": -2
+   }
+  },
+  {
+   "z": 47,
+   "id": "hem-chain12",
+   "file": "../common/sprites/hem-chain12.png",
+   "x": 810,
+   "y": 680,
+   "w": 22,
+   "h": 44,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 820,
+    "py": 682.3,
+    "amp": 4.2,
+    "period": 4.4,
+    "phase": 0.46,
+    "bias": -2
+   }
+  },
+  {
+   "z": 48,
+   "id": "hem-rag13",
+   "file": "../common/sprites/hem-rag13.png",
+   "x": 157,
+   "y": 685,
+   "w": 38,
+   "h": 47,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 176,
+    "py": 687.3,
+    "amp": 7.1,
+    "period": 2.79,
+    "phase": 0.24,
+    "bias": -2
+   }
+  },
+  {
+   "z": 49,
+   "id": "hem-plate14",
+   "file": "../common/sprites/hem-plate14.png",
+   "x": 332,
+   "y": 682,
+   "w": 32,
+   "h": 38,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 348,
+    "py": 684.1,
+    "amp": 2.6,
+    "period": 5.57,
+    "phase": 0.25,
+    "bias": -2
+   }
+  },
+  {
+   "z": 50,
+   "id": "hem-rag15",
+   "file": "../common/sprites/hem-rag15.png",
+   "x": 446,
+   "y": 682,
+   "w": 32,
+   "h": 43,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 462,
+    "py": 684.7,
+    "amp": 6.1,
+    "period": 2.72,
+    "phase": 0.04,
+    "bias": -2
+   }
+  },
+  {
+   "z": 51,
+   "id": "hem-chain16",
+   "file": "../common/sprites/hem-chain16.png",
+   "x": 574,
+   "y": 683,
+   "w": 22,
+   "h": 37,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 584,
+    "py": 685,
+    "amp": 5.2,
+    "period": 4.33,
+    "phase": 0.4,
+    "bias": -2
+   }
+  },
+  {
+   "z": 52,
+   "id": "hem-plate17",
+   "file": "../common/sprites/hem-plate17.png",
+   "x": 683,
+   "y": 681,
+   "w": 34,
+   "h": 41,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 700,
+    "py": 683.1,
+    "amp": 3,
+    "period": 5.61,
+    "phase": 0.51,
+    "bias": -2
+   }
+  },
+  {
+   "z": 53,
+   "id": "hem-rag18",
+   "file": "../common/sprites/hem-rag18.png",
+   "x": 845,
+   "y": 682,
+   "w": 30,
+   "h": 44,
+   "png_scale": 2,
+   "anim": {
+    "type": "sway",
+    "px": 860,
+    "py": 684.1,
+    "amp": 7.2,
+    "period": 3.05,
+    "phase": 0.42,
+    "bias": -2
+   }
+  },
+  {
+   "z": 54,
+   "id": "boom-pennant",
+   "file": "../common/sprites/boom-pennant.png",
+   "x": 1005,
+   "y": 63,
+   "w": 35,
+   "h": 29,
+   "png_scale": 2,
+   "anim": {
+    "type": "frames",
+    "frames": 8,
+    "period": 0.9
+   },
+   "frames": 8
+  },
+  {
+   "z": 55,
+   "id": "town-laundry",
+   "file": "sprites/town-laundry.png",
+   "x": 180,
+   "y": 196,
+   "w": 17,
+   "h": 23,
+   "png_scale": 2,
+   "anim": {
+    "type": "frames",
+    "frames": 4,
+    "period": 1.1
+   },
+   "frames": 4
+  },
+  {
+   "z": 56,
+   "id": "ui",
+   "type": "controls",
+   "note": "the moving parts, glows, hoses and live labels go here (common/ui.json + ui-layout.json)"
+  },
+  {
+   "z": 57,
+   "id": "lip",
+   "file": "../common/lip.png",
+   "x": 123.0,
+   "y": 612.0,
+   "w": 853.0,
+   "h": 23.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "static"
+   }
+  },
+  {
+   "z": 58,
+   "id": "roll",
+   "file": "../common/roll.png",
+   "x": 126.0,
+   "y": 506.0,
+   "w": 798.0,
+   "h": 190.0,
+   "png_scale": 2,
+   "anim": {
+    "type": "static"
+   },
+   "hidden": true
+  },
+  {
+   "z": 59,
+   "id": "ghost-lit",
+   "file": "sprites/ghost-lit.png",
+   "x": 0,
+   "y": 0,
+   "w": 1040,
+   "h": 744,
+   "png_scale": 2,
+   "anim": {
+    "type": "strike",
+    "gain": 1,
+    "blend": "add"
+   }
+  },
+  {
+   "z": 60,
+   "id": "emitters",
+   "type": "emitters",
+   "note": "draw the steam / smoke / spark particles here (see \"emitters\")"
+  }
+ ],
+ "emitters": [
+  {
+   "id": "mouth-breath",
+   "x": 545,
+   "y": 232,
+   "kind": "breath",
+   "size": 1.2,
+   "dx": -0.7,
+   "dy": -0.25,
+   "rate": 1.0,
+   "parent": "bob"
+  },
+  {
+   "id": "leak-drip",
+   "x": 418.4,
+   "y": 170.5,
+   "kind": "drip",
+   "size": 0.9,
+   "dx": 0,
+   "dy": 1,
+   "rate": 0.9,
+   "parent": "bob"
+  },
+  {
+   "id": "town-chimney-ta",
+   "x": 178.5,
+   "y": 185.3,
+   "kind": "smoke",
+   "size": 0.4,
+   "dx": 1.0,
+   "dy": -0.22,
+   "rate": 0.4,
+   "parent": "bob"
+  },
+  {
+   "id": "town-chimney-tc",
+   "x": 228.9,
+   "y": 185.9,
+   "kind": "smoke",
+   "size": 0.4,
+   "dx": 1.0,
+   "dy": -0.22,
+   "rate": 0.4,
+   "parent": "bob"
+  },
+  {
+   "id": "town-chimney-td",
+   "x": 265.0,
+   "y": 176.1,
+   "kind": "smoke",
+   "size": 0.4,
+   "dx": 1.0,
+   "dy": -0.22,
+   "rate": 0.4,
+   "parent": "bob"
+  },
+  {
+   "id": "town-chimney-tf",
+   "x": 736.5,
+   "y": 198.1,
+   "kind": "smoke",
+   "size": 0.4,
+   "dx": 1.0,
+   "dy": -0.22,
+   "rate": 0.4,
+   "parent": "bob"
+  },
+  {
+   "id": "town-chimney-th",
+   "x": 886.1,
+   "y": 201.1,
+   "kind": "smoke",
+   "size": 0.4,
+   "dx": 1.0,
+   "dy": -0.22,
+   "rate": 0.4,
+   "parent": "bob"
+  },
+  {
+   "id": "voice-stack1",
+   "x": 326.8,
+   "y": 92,
+   "kind": "smoke",
+   "size": 1.2,
+   "dx": 0.55,
+   "dy": -1.0,
+   "rate": 0.8,
+   "parent": "bob",
+   "voice": 0
+  },
+  {
+   "id": "voice-stack2",
+   "x": 357.9,
+   "y": 60,
+   "kind": "black",
+   "size": 1.7,
+   "dx": 0.55,
+   "dy": -1.0,
+   "rate": 1.0,
+   "parent": "bob",
+   "voice": 1
+  },
+  {
+   "id": "voice-stack3",
+   "x": 377.1,
+   "y": 108,
+   "kind": "smoke",
+   "size": 1.0,
+   "dx": 0.55,
+   "dy": -1.0,
+   "rate": 0.7,
+   "parent": "bob",
+   "voice": 2
+  },
+  {
+   "id": "boiler-relief",
+   "x": 626,
+   "y": 407,
+   "kind": "steam",
+   "size": 0.9,
+   "dx": 0.3,
+   "dy": -1.0,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "stream0",
+   "x": 984,
+   "y": 330,
+   "kind": "stream",
+   "size": 1.0,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "stream1",
+   "x": 978,
+   "y": 470,
+   "kind": "stream",
+   "size": 1.3,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "stream2",
+   "x": 920,
+   "y": 630,
+   "kind": "stream",
+   "size": 1.6,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "stream3",
+   "x": 840,
+   "y": 696,
+   "kind": "stream",
+   "size": 1.0,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "stream4",
+   "x": 610,
+   "y": 698,
+   "kind": "stream",
+   "size": 1.3,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "stream5",
+   "x": 380,
+   "y": 696,
+   "kind": "stream",
+   "size": 1.6,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "stream6",
+   "x": 160,
+   "y": 696,
+   "kind": "stream",
+   "size": 1.0,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  },
+  {
+   "id": "stream7",
+   "x": 700,
+   "y": 120,
+   "kind": "stream",
+   "size": 1.3,
+   "dx": 1.0,
+   "dy": -0.08,
+   "rate": 0.7,
+   "parent": "bob"
+  }
+ ],
+ "stories": [
+  {
+   "id": "boom-pennant",
+   "what": "a torn pennant streaming from the tip of the jib (8 frames)",
+   "at": [
+    1020,
+    76
+   ]
+  },
+  {
+   "id": "cheek-door",
+   "what": "a small door with a lamp, a round lit window and a ladder in the lee temple",
+   "at": [
+    670,
+    184
+   ]
+  },
+  {
+   "id": "leak",
+   "what": "a weeping stand-pipe on the windward temple, bound with a rag; emitter leak-drip lets one drop fall every ~2 s",
+   "at": [
+    419,
+    158
+   ]
+  },
+  {
+   "id": "anchor",
+   "what": "an anchor on a chain off the lee corner of the hem (sprite anchor)",
+   "at": [
+    946,
+    700
+   ]
+  },
+  {
+   "id": "far-birds",
+   "what": "five far-off birds keeping pace in the upper left sky (sprite far-birds drifts a few px)",
+   "at": [
+    48,
+    58
+   ]
+  },
+  {
+   "id": "windmill",
+   "what": "the big ragged windmill: four lattice sails, patched and torn (sprite windmill-sails); it turns at the DRIFT rate and faster in a storm; lit windows, a gallery",
+   "at": [
+    100,
+    104
+   ]
+  },
+  {
+   "id": "lighthouse",
+   "what": "the lighthouse on the lee shoulder: its lamp follows the output level (sprite lighthouse-flare), its beam sweeps (sprite lighthouse-beam, scale x = cos of the turn)",
+   "at": [
+    846,
+    62
+   ]
+  },
+  {
+   "id": "town",
+   "what": "nine crooked houses on the deck either side of the head: windows flicker (groups v1-v3), three chimneys smoke",
+   "at": [
+    230,
+    190
+   ]
+  },
+  {
+   "id": "town-laundry",
+   "what": "a wash line between two houses (4 frames)",
+   "at": [
+    184,
+    190
+   ]
+  },
+  {
+   "id": "cat",
+   "what": "a cat on a lean-to roof; its tail sways (sprite cat-tail)",
+   "at": [
+    244,
+    194
+   ]
+  },
+  {
+   "id": "voice-stacks",
+   "what": "three stacks beside the head: they smoke in proportion to the voices sounding (emitters voice-stack1..3)",
+   "at": [
+    354,
+    100
+   ]
+  },
+  {
+   "id": "boiler",
+   "what": "the yard boiler: a lit fire door (flicker group furnace), a sight glass, a gauge, a safety valve that steams (emitter boiler-relief), a coal cart, a lamp post, a three-gear train",
+   "at": [
+    620,
+    450
+   ]
+  }
+ ],
+ "hull": [
+  [
+   126,
+   690
+  ],
+  [
+   120,
+   650
+  ],
+  [
+   118,
+   604
+  ],
+  [
+   120,
+   566
+  ],
+  [
+   104,
+   548
+  ],
+  [
+   82,
+   524
+  ],
+  [
+   64,
+   480
+  ],
+  [
+   56,
+   420
+  ],
+  [
+   54,
+   350
+  ],
+  [
+   58,
+   300
+  ],
+  [
+   66,
+   272
+  ],
+  [
+   84,
+   254
+  ],
+  [
+   110,
+   245
+  ],
+  [
+   150,
+   240
+  ],
+  [
+   210,
+   238
+  ],
+  [
+   280,
+   238
+  ],
+  [
+   340,
+   240
+  ],
+  [
+   370,
+   244
+  ],
+  [
+   384,
+   252
+  ],
+  [
+   392,
+   260
+  ],
+  [
+   399,
+   253
+  ],
+  [
+   401,
+   232
+  ],
+  [
+   402,
+   200
+  ],
+  [
+   402,
+   172
+  ],
+  [
+   404,
+   150
+  ],
+  [
+   408,
+   122
+  ],
+  [
+   418,
+   100
+  ],
+  [
+   432,
+   84
+  ],
+  [
+   452,
+   72
+  ],
+  [
+   484,
+   62
+  ],
+  [
+   520,
+   57
+  ],
+  [
+   548,
+   56
+  ],
+  [
+   584,
+   58
+  ],
+  [
+   616,
+   64
+  ],
+  [
+   646,
+   75
+  ],
+  [
+   666,
+   88
+  ],
+  [
+   681,
+   105
+  ],
+  [
+   692,
+   128
+  ],
+  [
+   698,
+   152
+  ],
+  [
+   701,
+   170
+  ],
+  [
+   701,
+   200
+  ],
+  [
+   702,
+   232
+  ],
+  [
+   710,
+   241
+  ],
+  [
+   760,
+   240
+  ],
+  [
+   830,
+   239
+  ],
+  [
+   890,
+   240
+  ],
+  [
+   928,
+   245
+  ],
+  [
+   952,
+   254
+  ],
+  [
+   970,
+   270
+  ],
+  [
+   980,
+   296
+  ],
+  [
+   986,
+   350
+  ],
+  [
+   984,
+   420
+  ],
+  [
+   976,
+   480
+  ],
+  [
+   958,
+   524
+  ],
+  [
+   936,
+   548
+  ],
+  [
+   922,
+   566
+  ],
+  [
+   922,
+   604
+  ],
+  [
+   920,
+   650
+  ],
+  [
+   914,
+   690
+  ]
+ ]
+}

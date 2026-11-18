@@ -1,0 +1,2088 @@
+/*
+ * Six Sines
+ *
+ * A synth with audio rate modulation.
+ *
+ * Copyright 2024-2025, Paul Walker and Various authors, as described in the github
+ * transaction log.
+ *
+ * This source repo is released under the MIT license, but has
+ * GPL3 dependencies, as such the combined work will be
+ * released under GPL3.
+ *
+ * The source code and license are at https://github.com/baconpaul/six-sines
+ */
+
+#include <algorithm>
+#include <cctype>
+#include <filesystem>
+#include <fstream>
+#include <vector>
+
+#include "dsp/wavetable_io.h"
+
+#include "source-sub-panel.h"
+#include "presets/preset-manager.h"
+#include "source-panel.h"
+#include "matrix-panel.h"
+#include "self-sub-panel.h"
+#include <sst/jucegui/layouts/ListLayout.h>
+#include "patch-data-bindings.h"
+#include "ui-constants.h"
+#include "dsp/sintable.h" // for drawing
+#include "dsp/remap_functions.h"
+#include "dsp/resonant_window.h"
+#include "dsp/noise_helper.h"
+
+namespace baconpaul::six_sines::ui
+{
+SourceSubPanel::SourceSubPanel(SixSinesEditor &e) : HasEditor(e) { setSelectedIndex(0); };
+SourceSubPanel::~SourceSubPanel() {}
+
+/*
+ * What an operator's waveform actually is, for the painters.
+ *
+ * The engine resolves this with a template parameter because it is the inner loop; up here a
+ * branch costs nothing. Having one reader is the point: every painter that draws the waveform
+ * has to know USER_TABLE exists, and three of them quietly did not - the phase remap and
+ * resonant sweep plots drew a sine over a loaded table, and the noise plot drew silence.
+ */
+// The formats the loader accepts, matched without regard to case.
+inline bool isLoadableWavetable(const fs::path &p)
+{
+    auto e = p.extension().u8string();
+    std::transform(e.begin(), e.end(), e.begin(), [](unsigned char c) { return std::tolower(c); });
+    return e == ".wt" || e == ".wav";
+}
+
+struct OperatorWaveReader
+{
+    SinTable st;
+    WavetableReader wt;
+    bool usesWavetable{false};
+
+    void bind(SixSinesEditor &editor, size_t opIndex)
+    {
+        const auto &sn = editor.patchMainRef.sourceNodes[opIndex];
+        auto wfVal = (SinTable::WaveForm)std::round(sn.waveForm.value);
+        usesWavetable = (wfVal == SinTable::USER_TABLE && sn.wavetable != nullptr);
+        if (usesWavetable)
+        {
+            wt.setTable(sn.wavetable.get());
+            wt.setZeroOrderHold(static_cast<WavetableBandLimit>(
+                                    (uint32_t)std::round(sn.wavetableBandLimit.value)) ==
+                                WavetableBandLimit::DIRECT_ZOH);
+            wt.setLevel(0);
+            wt.setMorph(sn.wavetableMorph.value);
+        }
+        else
+        {
+            // a node naming a wavetable it has not got draws the sine it will sound as
+            st.setWaveForm(wfVal == SinTable::USER_TABLE ? SinTable::SIN : wfVal);
+        }
+    }
+
+    float at(uint32_t ph) const { return usesWavetable ? wt.at(ph) : st.at(ph); }
+};
+
+struct WavPainter : juce::Component
+{
+    const Param &wf, &ph;
+    SixSinesEditor &editor;
+    size_t opIndex{0};
+    mutable OperatorWaveReader reader;
+    WavPainter(const Param &w, const Param &p, SixSinesEditor &e, size_t idx)
+        : wf(w), ph(p), editor(e), opIndex(idx)
+    {
+    }
+
+    void paint(juce::Graphics &g)
+    {
+        auto labelCol = editor.style()->getColour(jcmp::base_styles::BaseLabel::styleClass,
+                                                  jcmp::base_styles::BaseLabel::labelcolor);
+        auto gridCol = labelCol.withAlpha(0.3f);
+        auto wavCol = editor.style()->getColour(jcmp::base_styles::ValueBearing::styleClass,
+                                                jcmp::base_styles::ValueBearing::value);
+        auto bg = editor.style()->getColour(jcmp::base_styles::PushButton::styleClass,
+                                            jcmp::base_styles::PushButton::fill);
+        g.fillAll(bg);
+        g.setColour(gridCol);
+        g.drawRect(getLocalBounds(), 1.f);
+
+        auto wfVal = (SinTable::WaveForm)std::round(wf.value);
+        if (wfVal == SinTable::AUDIO_IN)
+        {
+            // Draw a simple "audio in" indicator — two horizontal lines suggesting a signal
+            g.setColour(labelCol);
+            g.setFont(juce::Font(juce::FontOptions{}.withHeight(20.f)));
+            g.drawFittedText("Audio In", getLocalBounds(), juce::Justification::centred, 1);
+            return;
+        }
+        g.setColour(gridCol);
+        g.drawHorizontalLine(getHeight() / 2, 0, getWidth());
+
+        reader.bind(editor, opIndex);
+
+        uint32_t phase{0};
+        phase += (1 << 26) * ph.value;
+        int nPixels{getWidth()};
+        auto dPhase = (1 << 26) / (nPixels - 1);
+        auto p = juce::Path();
+        auto h = getHeight() - 2;
+        auto ho = 1;
+        for (int i = 0; i < nPixels; ++i)
+        {
+            auto sv = reader.at(phase) * 0.98;
+            auto x = i;
+            auto y = (1 - (sv + 1) * 0.5) * h + ho;
+            if (i == 0)
+                p.startNewSubPath(x, y);
+            else
+                p.lineTo(x, y);
+            phase += dPhase;
+        }
+        g.setColour(wavCol);
+        g.strokePath(p, juce::PathStrokeType(1.5));
+    }
+};
+
+/*
+ * PDWavPainter shows two side-by-side plots: the active phase-remap function on the left,
+ * and the current waveform read through that remap on the right. The right plot shares the
+ * look-and-feel of WavPainter; the left plot is sized small and visually separated.
+ */
+struct PDWavPainter : juce::Component
+{
+    const Param &wf, &ph, &mp, &shp, &rdp;
+    SixSinesEditor &editor;
+    size_t opIndex{0};
+    mutable OperatorWaveReader reader;
+
+    PDWavPainter(const Param &w, const Param &p, const Param &mParam, const Param &sParam,
+                 const Param &rParam, SixSinesEditor &e, size_t idx)
+        : wf(w), ph(p), mp(mParam), shp(sParam), rdp(rParam), editor(e), opIndex(idx)
+    {
+    }
+
+    // Default width devoted to the remap plot on the left. The wave plot takes the rest unless
+    // innerWaveWidth is set explicitly (>0), in which case the wave region is fixed and the remap
+    // plot fills the remainder.
+    static constexpr int remapPlotW{60};
+    static constexpr int gapW{6};
+    int innerWaveWidth{-1};
+
+    uint32_t doRemap(uint32_t inPhase) const
+    {
+        using PM = Patch::SourceNode::PhaseMapShape;
+        auto pm = static_cast<PM>(static_cast<uint32_t>(std::round(shp.value)));
+        auto mv = mp.value;
+        auto masked = inPhase & phase::phaseMask;
+        switch (pm)
+        {
+        case PM::SAW:
+            return remap::remapSaw(masked, mv);
+        case PM::SQUARE:
+            return remap::remapSquare(masked, mv);
+        case PM::PULSE:
+            return remap::remapPulse(masked, mv);
+        case PM::DOUBLE:
+            return remap::remapDoubleSine(masked, mv);
+        case PM::SIN_TO_SQUARE:
+            return remap::remapSinToSquare(masked, mv);
+        case PM::DOUBLE_SAW:
+            return remap::remapDoubleSaw(masked, mv);
+        }
+        return masked;
+    }
+
+    void paint(juce::Graphics &g) override
+    {
+        auto labelCol = editor.style()->getColour(jcmp::base_styles::BaseLabel::styleClass,
+                                                  jcmp::base_styles::BaseLabel::labelcolor);
+        auto gridCol = labelCol.withAlpha(0.3f);
+        auto wavCol = editor.style()->getColour(jcmp::base_styles::ValueBearing::styleClass,
+                                                jcmp::base_styles::ValueBearing::value);
+        auto bg = editor.style()->getColour(jcmp::base_styles::PushButton::styleClass,
+                                            jcmp::base_styles::PushButton::fill);
+        g.fillAll(bg);
+
+        // If innerWaveWidth is set, the wave region is fixed to that width (matched to the upper
+        // wave painter) and the remap plot fills whatever's left on the left.
+        int waveW = (innerWaveWidth > 0) ? innerWaveWidth : (getWidth() - remapPlotW - gapW);
+        int remapW = std::max(0, getWidth() - waveW - gapW);
+        auto remapBox = juce::Rectangle<int>(0, 0, remapW, getHeight());
+        auto waveBox = juce::Rectangle<int>(remapW + gapW, 0, waveW, getHeight());
+
+        // ===== Left: phase-remap function =====
+        g.setColour(gridCol);
+        g.drawRect(remapBox, 1);
+        // identity reference (diagonal, low-emphasis)
+        g.setColour(gridCol.withAlpha(gridCol.getFloatAlpha() * 0.6f));
+        g.drawLine(static_cast<float>(remapBox.getX()),
+                   static_cast<float>(remapBox.getBottom() - 1),
+                   static_cast<float>(remapBox.getRight() - 1),
+                   static_cast<float>(remapBox.getY() + 1), 1.f);
+
+        // remap curve y = remap(x, m)
+        {
+            auto p = juce::Path();
+            int nPx = remapBox.getWidth();
+            auto innerH = remapBox.getHeight() - 2;
+            for (int i = 0; i < nPx - 1; ++i)
+            {
+                auto inPhase =
+                    static_cast<uint32_t>(static_cast<float>(i) / (nPx - 1) * phase::phaseMaxF);
+                auto outPhase = doRemap(inPhase);
+                float yNorm = static_cast<float>(outPhase) / phase::phaseMaxF;
+                auto x = static_cast<float>(remapBox.getX() + i);
+                auto y = static_cast<float>(remapBox.getBottom() - 1) - yNorm * innerH;
+                if (i == 0)
+                    p.startNewSubPath(x, y);
+                else
+                    p.lineTo(x, y);
+            }
+            g.setColour(wavCol);
+            g.strokePath(p, juce::PathStrokeType(1.5));
+        }
+
+        // ===== Right: waveform read through the remap =====
+        g.setColour(gridCol);
+        g.drawRect(waveBox, 1);
+
+        auto wfVal = (SinTable::WaveForm)std::round(wf.value);
+        if (wfVal == SinTable::AUDIO_IN)
+        {
+            g.setColour(labelCol);
+            g.setFont(juce::Font(juce::FontOptions{}.withHeight(20.f)));
+            g.drawFittedText("Audio In", waveBox, juce::Justification::centred, 1);
+            return;
+        }
+        g.setColour(gridCol);
+        g.drawHorizontalLine(waveBox.getY() + waveBox.getHeight() / 2, waveBox.getX(),
+                             waveBox.getRight());
+
+        reader.bind(editor, opIndex);
+        uint32_t phs{0};
+        phs += (1 << 26) * ph.value;
+        auto readPhase = static_cast<uint32_t>((1 << 26) * rdp.value);
+        int nPixels = waveBox.getWidth();
+        auto dPhase = (1 << 26) / (nPixels - 1);
+        auto h = waveBox.getHeight() - 2;
+        auto ho = waveBox.getY() + 1;
+        auto p = juce::Path();
+        for (int i = 0; i < nPixels; ++i)
+        {
+            auto sv = reader.at(doRemap(phs) + readPhase) * 0.98;
+            auto x = waveBox.getX() + i;
+            auto y = (1 - (sv + 1) * 0.5) * h + ho;
+            if (i == 0)
+                p.startNewSubPath(x, y);
+            else
+                p.lineTo(x, y);
+            phs += dPhase;
+        }
+        g.setColour(wavCol);
+        g.strokePath(p, juce::PathStrokeType(1.5));
+    }
+};
+
+/*
+ * ResSweepPlotter shows the resonant-sweep output as the product of a window function
+ * and an inner sine that runs at k(m) times the fundamental. Three overlaid traces:
+ *   - faint underlying inner waveform (no window applied)
+ *   - dotted upper-envelope window
+ *   - the windowed product
+ * Two fundamental cycles are drawn so non-integer k factors and their hard restart
+ * at the wrap are visible.
+ */
+struct ResSweepPlotter : juce::Component
+{
+    const Param &wf, &ph, &mp, &winShape, &freqDepth;
+    SixSinesEditor &editor;
+    // the sweep window is always a static waveform; only the operator's own waveform can be
+    // a wavetable
+    SinTable stWindow;
+    size_t opIndex{0};
+    mutable OperatorWaveReader reader;
+
+    static constexpr int numCycles{2};
+
+    ResSweepPlotter(const Param &w, const Param &p, const Param &mParam, const Param &winSh,
+                    const Param &fDep, SixSinesEditor &e, size_t idx)
+        : wf(w), ph(p), mp(mParam), winShape(winSh), freqDepth(fDep), editor(e), opIndex(idx)
+    {
+    }
+
+    float kScaleVal() const
+    {
+        using RFD = Patch::SourceNode::ResonantSweepFrequencyDepth;
+        auto rfd = static_cast<RFD>(static_cast<uint32_t>(std::round(freqDepth.value)));
+        switch (rfd)
+        {
+        case RFD::TWO:
+            return 2.0f;
+        case RFD::FOUR:
+            return 4.0f;
+        case RFD::TEN:
+            return 10.0f;
+        }
+        return 4.0f;
+    }
+
+    void syncWindowTable()
+    {
+        using RW = Patch::SourceNode::ResonantSweepWindow;
+        auto rw = static_cast<RW>(static_cast<uint32_t>(std::round(winShape.value)));
+        switch (rw)
+        {
+        case RW::BLACKMAN_HARRIS:
+            stWindow.setWaveForm(SinTable::BLACKMAN_HARRIS_WINDOW);
+            break;
+        case RW::TUKEY:
+            stWindow.setWaveForm(SinTable::TUKEY_WINDOW);
+            break;
+        default:
+            stWindow.setWaveForm(SinTable::HANN_WINDOW);
+            break;
+        }
+    }
+
+    float windowAt(Patch::SourceNode::ResonantSweepWindow rw, uint32_t wph) const
+    {
+        using RW = Patch::SourceNode::ResonantSweepWindow;
+        switch (rw)
+        {
+        case RW::SAW:
+            return resonant_window::windowSaw(wph);
+        case RW::TRIANGLE:
+            return resonant_window::windowTriangle(wph);
+        case RW::TRAPEZOID:
+            return resonant_window::windowTrapezoid(wph);
+        case RW::FULLTRAP:
+            return resonant_window::windowFullTrapezoid(wph);
+        case RW::HANN:
+        case RW::BLACKMAN_HARRIS:
+        case RW::TUKEY:
+            return stWindow.at(wph);
+        }
+        return resonant_window::windowSaw(wph);
+    }
+
+    void paint(juce::Graphics &g) override
+    {
+        auto labelCol = editor.style()->getColour(jcmp::base_styles::BaseLabel::styleClass,
+                                                  jcmp::base_styles::BaseLabel::labelcolor);
+        auto gridCol = labelCol.withAlpha(0.3f);
+        auto wavCol = editor.style()->getColour(jcmp::base_styles::ValueBearing::styleClass,
+                                                jcmp::base_styles::ValueBearing::value);
+        auto bg = editor.style()->getColour(jcmp::base_styles::PushButton::styleClass,
+                                            jcmp::base_styles::PushButton::fill);
+        g.fillAll(bg);
+        g.setColour(gridCol);
+        g.drawRect(getLocalBounds(), 1.f);
+
+        auto wfVal = (SinTable::WaveForm)std::round(wf.value);
+        if (wfVal == SinTable::AUDIO_IN)
+        {
+            g.setColour(labelCol);
+            g.setFont(juce::Font(juce::FontOptions{}.withHeight(20.f)));
+            g.drawFittedText("Audio In", getLocalBounds(), juce::Justification::centred, 1);
+            return;
+        }
+
+        // centre line + axis tick marks: 10px every quarter cycle, 20px at full cycles.
+        g.setColour(gridCol);
+        const int midY = getHeight() / 2;
+        g.drawHorizontalLine(midY, 0, getWidth());
+        const int totalQuarters = numCycles * 4;
+        for (int q = 1; q < totalQuarters; ++q)
+        {
+            int x = static_cast<int>(static_cast<float>(q) / totalQuarters * getWidth());
+            int halfTick = (q % 4 == 0) ? 10 : 5; // 20px / 10px total
+            g.drawVerticalLine(x, midY - halfTick, midY + halfTick);
+        }
+
+        reader.bind(editor, opIndex);
+        syncWindowTable();
+        using RW = Patch::SourceNode::ResonantSweepWindow;
+        const auto rw = static_cast<RW>(static_cast<uint32_t>(std::round(winShape.value)));
+        const float kFactor = kScaleVal() * mp.value + 1.0f;
+
+        const uint32_t phStart = static_cast<uint32_t>((1u << 26) * ph.value) & phase::phaseMask;
+
+        const int nPixels = getWidth();
+        const float h = static_cast<float>(getHeight() - 2);
+        const float ho = 1.f;
+        auto toY = [h, ho](float v) { return (1.f - (v + 1.f) * 0.5f) * h + ho; };
+
+        juce::Path pInner, pWindow, pProduct;
+
+        for (int i = 0; i < nPixels; ++i)
+        {
+            float t =
+                static_cast<float>(i) / std::max(1, nPixels - 1) * static_cast<float>(numCycles);
+            float wphNorm = t - std::floor(t);
+            uint32_t wph =
+                (static_cast<uint32_t>(wphNorm * phase::phaseMaxF) + phStart) & phase::phaseMask;
+
+            float window = windowAt(rw, wph);
+            uint32_t kmph = static_cast<uint32_t>(static_cast<float>(wph) * kFactor);
+            float inner = reader.at(kmph);
+            float product = window * inner;
+
+            float x = static_cast<float>(i);
+            float yInner = toY(inner * 0.98f);
+            float yWindow = toY(window * 0.98f);
+            float yProduct = toY(product * 0.98f);
+
+            if (i == 0)
+            {
+                pInner.startNewSubPath(x, yInner);
+                pWindow.startNewSubPath(x, yWindow);
+                pProduct.startNewSubPath(x, yProduct);
+            }
+            else
+            {
+                pInner.lineTo(x, yInner);
+                pWindow.lineTo(x, yWindow);
+                pProduct.lineTo(x, yProduct);
+            }
+        }
+
+        // 1) underlying inner waveform — faint solid line
+        g.setColour(wavCol.withAlpha(0.2f));
+        g.strokePath(pInner, juce::PathStrokeType(1.0f));
+
+        // 2) window — dotted upper envelope
+        {
+            juce::Path dashed;
+            const float dashLengths[] = {3.f, 3.f};
+            juce::PathStrokeType(1.0f).createDashedStroke(dashed, pWindow, dashLengths, 2);
+            g.setColour(wavCol.withAlpha(0.3f));
+            g.fillPath(dashed);
+        }
+
+        // 3) windowed product — full-strength
+        g.setColour(wavCol);
+        g.strokePath(pProduct, juce::PathStrokeType(1.5f));
+    }
+};
+
+/*
+ * NoisePainter shows the result of applying the active NoiseMode to the current
+ * waveform with a fixed-seed pink noise source so the picture is reproducible. We
+ * draw the underlying waveform faintly behind, the noise sequence dotted, and the
+ * combined result on top.
+ */
+struct NoisePainter : juce::Component
+{
+    const Param &wf, &ph, &mp, &np, &noiseMode, &noiseType, &lfsrMode;
+    SixSinesEditor &editor;
+    size_t opIndex{0};
+    mutable OperatorWaveReader reader;
+
+    static constexpr int numCycles{1};
+    static constexpr uint32_t fixedSeed{0xDEC0DE42u};
+
+    // Tilt filter inside NoiseHelper needs a dbToLinear table; build one once
+    // for the painter rather than dragging the engine's MonoValues into the UI.
+    static const sst::basic_blocks::tables::DbToLinearProvider &paintDbProv()
+    {
+        static const auto p = []
+        {
+            sst::basic_blocks::tables::DbToLinearProvider t;
+            t.init();
+            return t;
+        }();
+        return p;
+    }
+
+    NoisePainter(const Param &w, const Param &p, const Param &mParam, const Param &nParam,
+                 const Param &nMode, const Param &nType, const Param &lMode, SixSinesEditor &e,
+                 size_t idx)
+        : wf(w), ph(p), mp(mParam), np(nParam), noiseMode(nMode), noiseType(nType), lfsrMode(lMode),
+          editor(e), opIndex(idx)
+    {
+    }
+
+    void paint(juce::Graphics &g) override
+    {
+        auto labelCol = editor.style()->getColour(jcmp::base_styles::BaseLabel::styleClass,
+                                                  jcmp::base_styles::BaseLabel::labelcolor);
+        auto gridCol = labelCol.withAlpha(0.3f);
+        auto wavCol = editor.style()->getColour(jcmp::base_styles::ValueBearing::styleClass,
+                                                jcmp::base_styles::ValueBearing::value);
+        auto bg = editor.style()->getColour(jcmp::base_styles::PushButton::styleClass,
+                                            jcmp::base_styles::PushButton::fill);
+        g.fillAll(bg);
+        g.setColour(gridCol);
+        g.drawRect(getLocalBounds(), 1.f);
+
+        auto wfVal = (SinTable::WaveForm)std::round(wf.value);
+        if (wfVal == SinTable::AUDIO_IN)
+        {
+            g.setColour(labelCol);
+            g.setFont(juce::Font(juce::FontOptions{}.withHeight(20.f)));
+            g.drawFittedText("Audio In", getLocalBounds(), juce::Justification::centred, 1);
+            return;
+        }
+
+        const int midY = getHeight() / 2;
+        g.setColour(gridCol);
+        g.drawHorizontalLine(midY, 0, getWidth());
+        const int totalQuarters = numCycles * 4;
+        for (int q = 1; q < totalQuarters; ++q)
+        {
+            int x = static_cast<int>(static_cast<float>(q) / totalQuarters * getWidth());
+            int halfTick = (q % 4 == 0) ? 10 : 5;
+            g.drawVerticalLine(x, midY - halfTick, midY + halfTick);
+        }
+
+        reader.bind(editor, opIndex);
+
+        using NM = Patch::SourceNode::NoiseMode;
+        using NT = Patch::SourceNode::NoiseType;
+        using LM = Patch::SourceNode::LFSRMode;
+        const auto nm = static_cast<NM>(static_cast<uint32_t>(std::round(noiseMode.value)));
+        const auto nt = static_cast<NT>(static_cast<uint32_t>(std::round(noiseType.value)));
+        const auto lm = static_cast<LM>(static_cast<uint32_t>(std::round(lfsrMode.value)));
+        const float m = mp.value;
+        const float nVal = np.value;
+
+        const uint32_t phStart = static_cast<uint32_t>((1u << 26) * ph.value) & phase::phaseMask;
+        const int nPixels = getWidth();
+        const float h = static_cast<float>(getHeight() - 2);
+        const float ho = 1.f;
+        auto toY = [h, ho](float v) { return (1.f - (v + 1.f) * 0.5f) * h + ho; };
+
+        // Fixed-seed noise helper, refilled into a 16-sample stack buffer as we walk.
+        sst::basic_blocks::dsp::RNG paintRng(fixedSeed);
+        NoiseHelper helper(paintRng, paintDbProv());
+        helper.warmup();
+        float noiseBuf alignas(16)[16]{};
+        // Burn the pink generator's startup transient so the picture matches
+        // the steady-state look of the engine output.
+        for (int i = 0; i < 64; ++i)
+            helper.pinkNoise.generate16(noiseBuf);
+        int noisePos{16};
+
+        juce::Path pOut;
+        for (int i = 0; i < nPixels; ++i)
+        {
+            float t =
+                static_cast<float>(i) / std::max(1, nPixels - 1) * static_cast<float>(numCycles);
+            float wphNorm = t - std::floor(t);
+            uint32_t wph =
+                (static_cast<uint32_t>(wphNorm * phase::phaseMaxF) + phStart) & phase::phaseMask;
+
+            if (noisePos >= 16)
+            {
+                helper.fill16(noiseBuf, nt, nVal, 220.f, lm, 0.f);
+                noisePos = 0;
+            }
+            float n = noiseBuf[noisePos++];
+            float base = reader.at(wph);
+            float out;
+            uint32_t modPh = wph;
+
+            switch (nm)
+            {
+            case NM::ADD_TO_PHASE:
+                modPh = (wph + static_cast<int32_t>(m * n * phase::phaseMaxF *
+                                                    Patch::SourceNode::noisePhaseScale)) &
+                        phase::phaseMask;
+                out = reader.at(modPh);
+                break;
+            case NM::ADD_TO_SIGNAL:
+                out = base + m * n;
+                break;
+            case NM::MUL_BY_SIGNAL:
+                out = base * (1.f + m * n);
+                break;
+            case NM::MUL_BY_UNI_SIGNAL:
+            {
+                auto u = (base + 1.f) * 0.5f;
+                out = u * (1.f + m * n) * 2.f - 1.f;
+                break;
+            }
+            case NM::MIX_WITH_SIGNAL:
+                out = (1.f - m) * base + m * n;
+                break;
+            }
+
+            float x = static_cast<float>(i);
+            float yOut = toY(out * 0.98f);
+
+            if (i == 0)
+                pOut.startNewSubPath(x, yOut);
+            else
+                pOut.lineTo(x, yOut);
+        }
+
+        g.setColour(wavCol);
+        g.strokePath(pOut, juce::PathStrokeType(1.5f));
+    }
+};
+
+void SourceSubPanel::setSelectedIndex(size_t idx)
+{
+    index = idx;
+    repaint();
+
+    removeAllChildren();
+
+    auto &sn = editor.patchMainRef.sourceNodes[idx];
+    setupDAHDSR(editor, sn);
+    setupLFO(editor, sn);
+    setupModulation(editor, sn);
+
+    isTargetAvailable = [w = juce::Component::SafePointer(this)](Patch::SourceNode::TargetID tid)
+    {
+        if (!w)
+            return true;
+        using EM = Patch::SourceNode::ExtendedMode;
+        using TID = Patch::SourceNode::TargetID;
+        auto em = static_cast<EM>(static_cast<int>(
+            std::round(w->editor.patchMainRef.sourceNodes[w->index].extendedModeMode.value)));
+        if (tid == TID::EXTEND_M)
+            return em == EM::PHASE_REMAP || em == EM::RESONANT_SWEEP || em == EM::NOISE;
+        if (tid == TID::EXTEND_N)
+            return em == EM::NOISE;
+        return true;
+    };
+
+    auto travidx{400};
+    auto traverse = [&travidx](auto &c)
+    { sst::jucegui::component_adapters::setTraversalId(c.get(), travidx++); };
+
+    createComponent(editor, *this, sn.envToRatio, envToRatio, envToRatioD);
+    createComponent(editor, *this, sn.envToRatioFine, envToRatioFine, envToRatioFineD);
+    envToRatioL = std::make_unique<jcmp::Label>();
+    envToRatioL->setText("Coarse");
+    envToRatioFineL = std::make_unique<jcmp::Label>();
+    envToRatioFineL->setText("Fine");
+    addAndMakeVisible(*envToRatioL);
+    addAndMakeVisible(*envToRatio);
+    addAndMakeVisible(*envToRatioFine);
+    addAndMakeVisible(*envToRatioFineL);
+    traverse(envToRatio);
+    traverse(envToRatioFine);
+
+    createComponent(editor, *this, sn.lfoToRatio, lfoToRatio, lfoToRatioD);
+    createComponent(editor, *this, sn.lfoToRatioFine, lfoToRatioFine, lfoToRatioFineD);
+    lfoToRatioL = std::make_unique<jcmp::Label>();
+    lfoToRatioL->setText("Coarse");
+    lfoToRatioFineL = std::make_unique<jcmp::Label>();
+    lfoToRatioFineL->setText("Fine");
+    addAndMakeVisible(*lfoToRatioL);
+    addAndMakeVisible(*lfoToRatio);
+    addAndMakeVisible(*lfoToRatioFine);
+    addAndMakeVisible(*lfoToRatioFineL);
+    traverse(lfoToRatio);
+    traverse(lfoToRatioFine);
+
+    modTitle = std::make_unique<jcmp::RuledLabel>();
+    modTitle->setText(std::string() + "Env" + u8"\U00002192");
+    addAndMakeVisible(*modTitle);
+
+    lfoModTitle = std::make_unique<jcmp::RuledLabel>();
+    lfoModTitle->setText(std::string() + "LFO" + u8"\U00002192");
+    addAndMakeVisible(*lfoModTitle);
+
+    wavTitle = std::make_unique<jcmp::RuledLabel>();
+    wavTitle->setText("Wave");
+    addAndMakeVisible(*wavTitle);
+
+    wavPainter = std::make_unique<WavPainter>(sn.waveForm, sn.startingPhase, editor, idx);
+    addAndMakeVisible(*wavPainter);
+
+    wtPlaybackButton =
+        std::make_unique<jcmp::GlyphButton>(jcmp::GlyphPainter::GlyphType::POLYPHONY);
+    wtPlaybackButton->setOnCallback(
+        [w = juce::Component::SafePointer(this)]()
+        {
+            if (!w)
+                return;
+            auto m = w->buildPlaybackMenu();
+            m.showMenuAsync(juce::PopupMenu::Options().withParentComponent(&w->editor));
+        });
+    addChildComponent(*wtPlaybackButton);
+
+    wtJogPrev = std::make_unique<jcmp::GlyphButton>(jcmp::GlyphPainter::GlyphType::JOG_LEFT);
+    wtJogPrev->setOnCallback(
+        [w = juce::Component::SafePointer(this)]()
+        {
+            if (w)
+                w->jogWavetableFile(-1);
+        });
+    addChildComponent(*wtJogPrev);
+
+    wtJogNext = std::make_unique<jcmp::GlyphButton>(jcmp::GlyphPainter::GlyphType::JOG_RIGHT);
+    wtJogNext->setOnCallback(
+        [w = juce::Component::SafePointer(this)]()
+        {
+            if (w)
+                w->jogWavetableFile(1);
+        });
+    addChildComponent(*wtJogNext);
+
+    createComponent(editor, *this, sn.waveForm, wavButton, wavButtonD);
+    wavButtonD->includeAudioIn = (idx == 0);
+    wavButtonD->sourceNode = &sn;
+    addAndMakeVisible(*wavButton);
+    // Switching to or from a wavetable adds or removes the morph row, so the column has to be
+    // laid out again - setEnabledState only changes visibility, and resized() is what reads it.
+    auto waveFormChanged = [w = juce::Component::SafePointer(this)]()
+    {
+        if (!w)
+            return;
+        w->wavPainter->repaint();
+        if (w->pdWavPainter)
+            w->pdWavPainter->repaint();
+        if (w->resSweepPainter)
+            w->resSweepPainter->repaint();
+        if (w->noisePainter)
+            w->noisePainter->repaint();
+        w->wavButton->repaint();
+        w->setEnabledState();
+        w->resized();
+    };
+    wavButtonD->onGuiSetValue = waveFormChanged;
+    editor.componentRefreshByID[sn.waveForm.meta.id] = waveFormChanged;
+    wavButton->onPopupMenu = [w = juce::Component::SafePointer(this)]()
+    {
+        if (w)
+            w->showWaveformPopup();
+    };
+    traverse(wavButton);
+
+    createComponent(editor, *this, sn.startingPhase, startingPhase, startingPhaseD);
+    addAndMakeVisible(*startingPhase);
+    traverse(startingPhase);
+    startingPhaseD->onGuiSetValue = [w = juce::Component::SafePointer(this)]()
+    {
+        if (!w)
+            return;
+        w->wavPainter->repaint();
+        if (w->pdWavPainter)
+            w->pdWavPainter->repaint();
+        if (w->resSweepPainter)
+            w->resSweepPainter->repaint();
+        if (w->noisePainter)
+            w->noisePainter->repaint();
+    };
+
+    startingPhaseL = std::make_unique<jcmp::Label>();
+    startingPhaseL->setText(std::string() + u8"\U000003C6");
+    addAndMakeVisible(*startingPhaseL);
+
+    keyTrackTitle = std::make_unique<jcmp::RuledLabel>();
+    keyTrackTitle->setText("Pitch");
+    addAndMakeVisible(*keyTrackTitle);
+
+    createComponent(editor, *this, sn.keyTrack, keyTrack, keyTrackD);
+    keyTrack->setLabel("Key Track");
+    addAndMakeVisible(*keyTrack);
+    traverse(keyTrack);
+
+    createComponent(editor, *this, sn.keyTrackValueIsLow, keyTrackLow, keyTrackLowD);
+    keyTrackLow->setLabel("Lo");
+    addAndMakeVisible(*keyTrackLow);
+    traverse(keyTrackLow);
+
+    createComponent(editor, *this, sn.keyTrackValue, keyTrackValue, keyTrackValueD);
+    addAndMakeVisible(*keyTrackValue);
+    traverse(keyTrackValue);
+
+    createRescaledComponent(editor, *this, sn.keyTrackLowFrequencyValue, keyTrackLowValue,
+                            keyTrackLowValueD);
+    addChildComponent(*keyTrackLowValue);
+
+    createRescaledComponent(editor, *this, sn.absoluteOffset, absoluteOffset, absoluteOffsetD);
+    addAndMakeVisible(*absoluteOffset);
+    traverse(absoluteOffset);
+    absoluteOffsetL = std::make_unique<jcmp::Label>();
+    absoluteOffsetL->setText("Abs");
+    addAndMakeVisible(*absoluteOffsetL);
+
+    auto op = [w = juce::Component::SafePointer(this)]()
+    {
+        if (w)
+            w->setEnabledState();
+    };
+
+    keyTrackD->onGuiSetValue = op;
+    keyTrackLowD->onGuiSetValue = op;
+    editor.componentRefreshByID[sn.keyTrack.meta.id] = op;
+
+    createComponent(editor, *this, sn.octTranspose, tsposeButton, tsposeButtonD);
+    addAndMakeVisible(*tsposeButton);
+    traverse(tsposeButton);
+
+    tsposeButtonL = std::make_unique<jcmp::Label>();
+    tsposeButtonL->setText("Oct");
+    addAndMakeVisible(*tsposeButtonL);
+
+    unisonBehaviorB = std::make_unique<jcmp::MenuButton>();
+    unisonBehaviorB->setLabelAndTitle("Unison", "Unison");
+    unisonBehaviorB->setOnCallback(
+        [w = juce::Component::SafePointer(this)]()
+        {
+            if (w)
+                w->showUnisonFeaturesMenu();
+        });
+    addAndMakeVisible(*unisonBehaviorB);
+    traverse(unisonBehaviorB);
+
+    extModeRuleLeft = std::make_unique<jcmp::LineSegment>();
+    extModeRuleRight = std::make_unique<jcmp::LineSegment>();
+    addAndMakeVisible(*extModeRuleLeft);
+    addAndMakeVisible(*extModeRuleRight);
+
+    extModeLabel = std::make_unique<jcmp::Label>();
+    extModeLabel->setText("Extended Mode");
+    addAndMakeVisible(*extModeLabel);
+
+    createComponent(editor, *this, sn.extendedModeMode, extModeButton, extModeButtonD);
+    addAndMakeVisible(*extModeButton);
+    traverse(extModeButton);
+    auto extModeRefresh = [w = juce::Component::SafePointer(this)]()
+    {
+        if (!w)
+            return;
+        w->setExtendedModeVisibility();
+        w->resized();
+        w->repaint();
+    };
+    extModeButtonD->onGuiSetValue = extModeRefresh;
+    // Also fire on programmatic param changes (e.g. clipboard paste of a full source node)
+    editor.componentRefreshByID[sn.extendedModeMode.meta.id] = extModeRefresh;
+
+    comingSoonLabel = std::make_unique<jcmp::Label>();
+    comingSoonLabel->setText("Coming Soon");
+    addChildComponent(*comingSoonLabel);
+
+    createComponent(editor, *this, sn.phaseMapModeShape, phaseMapShape, phaseMapShapeD);
+    addChildComponent(*phaseMapShape);
+    traverse(phaseMapShape);
+
+    createComponent(editor, *this, sn.wavetableMorph, morph, morphD);
+    addChildComponent(*morph);
+    traverse(morph);
+    morphL = std::make_unique<jcmp::Label>();
+    morphL->setText("morph");
+    addChildComponent(*morphL);
+
+    createRescaledComponent(editor, *this, sn.envToWavetableMorph, envToMorph, envToMorphD);
+    addChildComponent(*envToMorph);
+    traverse(envToMorph);
+    envToMorphL = std::make_unique<jcmp::Label>();
+    envToMorphL->setText("env");
+    addChildComponent(*envToMorphL);
+
+    createRescaledComponent(editor, *this, sn.lfoToWavetableMorph, lfoToMorph, lfoToMorphD);
+    addChildComponent(*lfoToMorph);
+    traverse(lfoToMorph);
+    lfoToMorphL = std::make_unique<jcmp::Label>();
+    lfoToMorphL->setText("lfo");
+    addChildComponent(*lfoToMorphL);
+
+    createComponent(editor, *this, sn.extendedModeM, extM, extMD);
+    addChildComponent(*extM);
+    traverse(extM);
+    extML = std::make_unique<jcmp::Label>();
+    extML->setText("M");
+    addChildComponent(*extML);
+
+    createRescaledComponent(editor, *this, sn.envToExtendedModeM, envToExtM, envToExtMD);
+    addChildComponent(*envToExtM);
+    traverse(envToExtM);
+    envToExtML = std::make_unique<jcmp::Label>();
+    envToExtML->setText(std::string() + "Env" + u8"\U00002192" + "M");
+    addChildComponent(*envToExtML);
+
+    createRescaledComponent(editor, *this, sn.lfoToExtendedModeM, lfoToExtM, lfoToExtMD);
+    addChildComponent(*lfoToExtM);
+    traverse(lfoToExtM);
+    lfoToExtML = std::make_unique<jcmp::Label>();
+    lfoToExtML->setText(std::string() + "LFO" + u8"\U00002192" + "M");
+    addChildComponent(*lfoToExtML);
+
+    createComponent(editor, *this, sn.extendedModeN, extN, extND);
+    addChildComponent(*extN);
+    traverse(extN);
+    extNL = std::make_unique<jcmp::Label>();
+    extNL->setText("N");
+    addChildComponent(*extNL);
+
+    createRescaledComponent(editor, *this, sn.envToExtendedModeN, envToExtN, envToExtND);
+    addChildComponent(*envToExtN);
+    traverse(envToExtN);
+    envToExtNL = std::make_unique<jcmp::Label>();
+    envToExtNL->setText(std::string() + "Env" + u8"\U00002192" + "N");
+    addChildComponent(*envToExtNL);
+
+    createRescaledComponent(editor, *this, sn.lfoToExtendedModeN, lfoToExtN, lfoToExtND);
+    addChildComponent(*lfoToExtN);
+    traverse(lfoToExtN);
+    lfoToExtNL = std::make_unique<jcmp::Label>();
+    lfoToExtNL->setText(std::string() + "LFO" + u8"\U00002192" + "N");
+    addChildComponent(*lfoToExtNL);
+
+    createComponent(editor, *this, sn.phaseMapReadPhase, phaseMapReadPhase, phaseMapReadPhaseD);
+    addChildComponent(*phaseMapReadPhase);
+    traverse(phaseMapReadPhase);
+    phaseMapReadPhaseL = std::make_unique<jcmp::Label>();
+    phaseMapReadPhaseL->setText(std::string() + u8"\U000003B8" + " off");
+    addChildComponent(*phaseMapReadPhaseL);
+
+    auto jumpReadPhase = [w = juce::Component::SafePointer(this)](float v)
+    {
+        if (!w)
+            return;
+        auto id = w->phaseMapReadPhaseD->pid;
+        w->editor.mainToAudio.push({Synth::MainToAudioMsg::Action::BEGIN_EDIT, id});
+        w->phaseMapReadPhaseD->setValueFromGUI(v);
+        w->editor.mainToAudio.push({Synth::MainToAudioMsg::Action::END_EDIT, id});
+        w->phaseMapReadPhase->repaint();
+    };
+    readPhaseZero = std::make_unique<jcmp::TextPushButton>();
+    readPhaseZero->setLabel("0");
+    readPhaseZero->setOnCallback([jumpReadPhase]() { jumpReadPhase(0.f); });
+    addChildComponent(*readPhaseZero);
+    traverse(readPhaseZero);
+
+    readPhaseQuarter = std::make_unique<jcmp::TextPushButton>();
+    readPhaseQuarter->setLabel(std::string() + u8"\U000003C0" + "/4");
+    readPhaseQuarter->setOnCallback([jumpReadPhase]() { jumpReadPhase(0.25f); });
+    addChildComponent(*readPhaseQuarter);
+    traverse(readPhaseQuarter);
+
+    readPhaseHalf = std::make_unique<jcmp::TextPushButton>();
+    readPhaseHalf->setLabel(std::string() + u8"\U000003C0" + "/2");
+    readPhaseHalf->setOnCallback([jumpReadPhase]() { jumpReadPhase(0.5f); });
+    addChildComponent(*readPhaseHalf);
+    traverse(readPhaseHalf);
+
+    pdWavPainter =
+        std::make_unique<PDWavPainter>(sn.waveForm, sn.startingPhase, sn.extendedModeM,
+                                       sn.phaseMapModeShape, sn.phaseMapReadPhase, editor, idx);
+    addChildComponent(*pdWavPainter);
+
+    createComponent(editor, *this, sn.resonantSweepWindowShape, resonantWindowShape,
+                    resonantWindowShapeD);
+    addChildComponent(*resonantWindowShape);
+    traverse(resonantWindowShape);
+
+    createComponent(editor, *this, sn.resonantSweepFrequencyDepth, resonantSweepDepth,
+                    resonantSweepDepthD);
+    addChildComponent(*resonantSweepDepth);
+    traverse(resonantSweepDepth);
+    resonantSweepDepthL = std::make_unique<jcmp::Label>();
+    resonantSweepDepthL->setText("Depth");
+    addChildComponent(*resonantSweepDepthL);
+
+    resSweepPainter = std::make_unique<ResSweepPlotter>(
+        sn.waveForm, sn.startingPhase, sn.extendedModeM, sn.resonantSweepWindowShape,
+        sn.resonantSweepFrequencyDepth, editor, idx);
+    addChildComponent(*resSweepPainter);
+
+    createComponent(editor, *this, sn.noiseMode, noiseMode, noiseModeD);
+    addChildComponent(*noiseMode);
+    traverse(noiseMode);
+    noiseModeL = std::make_unique<jcmp::Label>();
+    noiseModeL->setText("Mode");
+    addChildComponent(*noiseModeL);
+
+    createComponent(editor, *this, sn.noiseType, noiseType, noiseTypeD);
+    addChildComponent(*noiseType);
+    traverse(noiseType);
+    noiseTypeL = std::make_unique<jcmp::Label>();
+    noiseTypeL->setText("Type");
+    addChildComponent(*noiseTypeL);
+
+    createComponent(editor, *this, sn.lfsrMode, lfsrMode, lfsrModeD);
+    addChildComponent(*lfsrMode);
+    traverse(lfsrMode);
+    lfsrModeL = std::make_unique<jcmp::Label>();
+    lfsrModeL->setText("LFSR");
+    addChildComponent(*lfsrModeL);
+
+    noisePainter = std::make_unique<NoisePainter>(sn.waveForm, sn.startingPhase, sn.extendedModeM,
+                                                  sn.extendedModeN, sn.noiseMode, sn.noiseType,
+                                                  sn.lfsrMode, editor, idx);
+    addChildComponent(*noisePainter);
+
+    // Live-repaint extended-mode painters when any of their inputs change.
+    auto repaintExt = [w = juce::Component::SafePointer(this)]()
+    {
+        if (!w)
+            return;
+        if (w->pdWavPainter)
+            w->pdWavPainter->repaint();
+        if (w->resSweepPainter)
+            w->resSweepPainter->repaint();
+        if (w->noisePainter)
+            w->noisePainter->repaint();
+    };
+    extMD->onGuiSetValue = repaintExt;
+    phaseMapShapeD->onGuiSetValue = repaintExt;
+    resonantWindowShapeD->onGuiSetValue = repaintExt;
+    resonantSweepDepthD->onGuiSetValue = repaintExt;
+    noiseModeD->onGuiSetValue = repaintExt;
+    extND->onGuiSetValue = repaintExt;
+    phaseMapReadPhaseD->onGuiSetValue = repaintExt;
+    auto noiseTypeChanged = [w = juce::Component::SafePointer(this)]()
+    {
+        if (!w)
+            return;
+        w->setExtendedModeVisibility();
+        w->setEnabledState();
+        w->resized();
+        if (w->noisePainter)
+            w->noisePainter->repaint();
+    };
+    noiseTypeD->onGuiSetValue = noiseTypeChanged;
+    lfsrModeD->onGuiSetValue = repaintExt;
+    // the wavetable's own controls change these plots too, now that they read it
+    morphD->onGuiSetValue = [w = juce::Component::SafePointer(this)]()
+    {
+        if (!w)
+            return;
+        w->wavPainter->repaint();
+        if (w->pdWavPainter)
+            w->pdWavPainter->repaint();
+        if (w->resSweepPainter)
+            w->resSweepPainter->repaint();
+        if (w->noisePainter)
+            w->noisePainter->repaint();
+    };
+    editor.componentRefreshByID[sn.wavetableMorph.meta.id] = morphD->onGuiSetValue;
+
+    editor.componentRefreshByID[sn.extendedModeM.meta.id] = repaintExt;
+    editor.componentRefreshByID[sn.extendedModeN.meta.id] = repaintExt;
+    editor.componentRefreshByID[sn.phaseMapModeShape.meta.id] = repaintExt;
+    editor.componentRefreshByID[sn.phaseMapReadPhase.meta.id] = repaintExt;
+    editor.componentRefreshByID[sn.resonantSweepWindowShape.meta.id] = repaintExt;
+    editor.componentRefreshByID[sn.resonantSweepFrequencyDepth.meta.id] = repaintExt;
+    editor.componentRefreshByID[sn.noiseMode.meta.id] = repaintExt;
+    editor.componentRefreshByID[sn.noiseType.meta.id] = noiseTypeChanged;
+    editor.componentRefreshByID[sn.lfsrMode.meta.id] = repaintExt;
+
+    setExtendedModeVisibility();
+
+    setEnabledState();
+
+    resized();
+}
+
+void SourceSubPanel::resized()
+{
+    auto p = getLocalBounds().reduced(uicMargin, 0);
+    auto pn = layoutDAHDSRAt(p.getX(), p.getY());
+    pn = pn.translated(uicMargin, 0);
+    auto r = layoutLFOAt(pn.getX(), p.getY());
+
+    auto depx = p.getX();
+    auto depy = std::min(pn.getBottom(), r.getBottom()) + uicMargin;
+
+    namespace jlo = sst::jucegui::layouts;
+
+    // Top level: [Env] | [LFO] | [Pitch] | [Wave]
+    auto lo = jlo::HList().at(depx, depy).withAutoGap(uicMargin * 2);
+
+    // Env depth column: title + coarse knob + fine knob stacked
+    auto envCol = jlo::VList().withWidth(uicSubPanelColumnWidth).withAutoGap(uicMargin);
+    envCol.add(titleLabelGaplessLayout(modTitle));
+    envCol.add(labelKnobLayout(envToRatio, envToRatioL).centerInParent());
+    envCol.add(labelKnobLayout(envToRatioFine, envToRatioFineL).centerInParent());
+    lo.add(envCol);
+
+    // LFO depth column: title + coarse knob + fine knob stacked
+    auto lfoCol = jlo::VList().withWidth(uicSubPanelColumnWidth).withAutoGap(uicMargin);
+    lfoCol.add(titleLabelGaplessLayout(lfoModTitle));
+    lfoCol.add(labelKnobLayout(lfoToRatio, lfoToRatioL).centerInParent());
+    lfoCol.add(labelKnobLayout(lfoToRatioFine, lfoToRatioFineL).centerInParent());
+    lo.add(lfoCol);
+
+    // Pitch column — a bit wider, 3 vertical rows
+    constexpr int pitchColW{(int)(uicSubPanelColumnWidth * 1.2)};
+    constexpr int pitchRowH{uicLabelHeight};
+    auto pitchCol = jlo::VList().withWidth(pitchColW).withAutoGap(uicMargin);
+    pitchCol.add(titleLabelGaplessLayout(keyTrackTitle));
+
+    // Row 1: [Octave label] [tspose jog]
+    auto pRow1 = jlo::HList().withHeight(pitchRowH).withAutoGap(uicMargin);
+    pRow1.add(jlo::Component(*tsposeButtonL).withWidth(20));
+    pRow1.add(jlo::Component(*tsposeButton).expandToFill());
+    pitchCol.add(pRow1);
+
+    // Row 2: full-width KeyTrak toggle
+    pitchCol.add(jlo::Component(*keyTrack).withHeight(pitchRowH));
+
+    // Row 3: [Lo toggle] [keytrack value slider]
+    auto pRow3 = jlo::HList().withHeight(pitchRowH);
+    pRow3.add(jlo::Component(*keyTrackLow).withWidth(21));
+    pRow3.addGap(1);
+    pRow3.add(jlo::Component(*keyTrackValue).insetBy(0, 2).expandToFill());
+    pitchCol.add(pRow3);
+
+    // Row 4: [abs label] [absolute offset slider]
+    auto pRow4 = jlo::HList().withHeight(pitchRowH);
+    pRow4.add(jlo::Component(*absoluteOffsetL).withWidth(22));
+    pRow4.add(jlo::Component(*absoluteOffset).insetBy(0, 2).expandToFill());
+    pitchCol.add(pRow4);
+
+    // Row 5: full-width Unison button
+    pitchCol.add(jlo::Component(*unisonBehaviorB).withHeight(pitchRowH));
+
+    lo.add(pitchCol);
+
+    // Wave column — fills the remaining horizontal space
+    int waveColW = p.getRight() - depx - 3 * uicSubPanelColumnWidth - 9 * uicMargin;
+    auto waveCol = jlo::VList().withWidth(waveColW).withAutoGap(uicMargin);
+    waveCol.add(titleLabelGaplessLayout(wavTitle));
+    // Painter fills the remaining height so it lines up with the Env/LFO column bottoms
+    constexpr int depthColTotal{uicTitleLabelInnerBox + uicMargin + uicLabeledKnobHeight +
+                                uicMargin + uicLabeledKnobHeight};
+    constexpr int waveUsedAbove{uicTitleLabelInnerBox + uicMargin + uicLabelHeight + uicMargin +
+                                uicLabelHeight + uicMargin};
+    constexpr int painterH{depthColTotal - waveUsedAbove + uicMargin};
+    /*
+     * In wavetable mode the plot and the selector give up width rather than height, and morph
+     * and its two depths stack down the side as small knobs. painterH itself stays constant
+     * because the extended-mode layouts below derive from it.
+     */
+    const bool showMorph = morph->isVisible();
+    if (showMorph)
+    {
+        /*
+         * Env and LFO depths sit beside the plot; morph gets a full width slider under it.
+         * The plot gives up the slider's height and the knob column's width, so the column
+         * still ends where the Env and LFO columns do.
+         *
+         * A Knob sizes itself from its width, so each cell is squared off explicitly -
+         * otherwise a tall narrow cell draws a knob far bigger than the space it was given.
+         */
+        constexpr int plotH{painterH - uicLabelHeight - uicMargin};
+        constexpr int cellH{(plotH) / 2};
+        constexpr int knobBox{cellH - uicLabelHeight < 26 ? cellH - uicLabelHeight : 26};
+        constexpr int knobColW{knobBox + uicMargin};
+
+        auto body = jlo::HList().withHeight(plotH).withAutoGap(uicMargin);
+        body.add(jlo::Component(*wavPainter).withWidth(waveColW - knobColW - uicMargin));
+
+        auto knobCol = jlo::VList().withWidth(knobColW).withAutoGap(uicMargin);
+        auto knobCell = [&](auto &k, auto &l)
+        {
+            auto cell = jlo::VList().withHeight(cellH);
+            cell.add(jlo::Component(*k).withHeight(knobBox).withWidth(knobBox).centerInParent());
+            cell.add(jlo::Component(*l).withHeight(uicLabelHeight));
+            return cell;
+        };
+        knobCol.add(knobCell(envToMorph, envToMorphL));
+        knobCol.add(knobCell(lfoToMorph, lfoToMorphL));
+        body.add(knobCol);
+
+        waveCol.add(body);
+        waveCol.add(sideLabelSlider(morphL, morph, 40));
+        waveCol.add(jlo::Component(*wavButton).withHeight(uicLabelHeight));
+    }
+    else
+    {
+        waveCol.add(jlo::Component(*wavPainter).withHeight(painterH));
+        waveCol.add(jlo::Component(*wavButton).withHeight(uicLabelHeight));
+    }
+    waveCol.add(sideLabelSlider(startingPhaseL, startingPhase));
+    lo.add(waveCol);
+
+    lo.doLayout();
+
+    // The keytrack low can sub in for the keytrack
+    keyTrackLowValue->setBounds(keyTrackValue->getBounds());
+
+    /*
+     * The two overlays sit inside the plot's corners rather than in the layout, because they
+     * belong to the picture: playback options top left, the arrows that step through the
+     * folder top right.
+     */
+    {
+        constexpr int gs{12};
+        auto pb = wavPainter->getBounds().reduced(3);
+        wtPlaybackButton->setBounds(pb.getX(), pb.getY(), gs, gs);
+        wtJogNext->setBounds(pb.getRight() - gs, pb.getY(), gs, gs);
+        wtJogPrev->setBounds(pb.getRight() - 2 * gs - 2, pb.getY(), gs, gs);
+    }
+
+    // Extended Mode row — spans full width below the 4-column block
+    auto extRowY = depy + depthColTotal + uicMargin * 2;
+    auto extRow = jlo::HList().at(depx, extRowY).withWidth(p.getWidth()).withHeight(uicLabelHeight);
+    extRow.add(jlo::Component(*extModeRuleLeft).expandToFill());
+    extRow.addGap(uicMargin);
+    extRow.add(jlo::Component(*extModeLabel).withWidth(90));
+    extRow.add(jlo::Component(*extModeButton).withWidth(130));
+    extRow.addGap(uicMargin);
+    extRow.add(jlo::Component(*extModeRuleRight).expandToFill());
+    extRow.doLayout();
+
+    // LineSegment needs endpoints set explicitly after its bounds are placed
+    auto setRule = [](auto &seg)
+    {
+        auto b = seg->getBounds();
+        seg->setEndpointsAndBounds(b.getX(), b.getCentreY(), b.getRight(), b.getCentreY());
+    };
+    setRule(extModeRuleLeft);
+    setRule(extModeRuleRight);
+
+    // Extended-mode body row — sits between the Extended Mode row and the modulation footer.
+    // For PHASE_REMAP we use a two-row block so the PD wave painter can span both rows
+    // beside a 2x2 control grid. Other modes still use a single-row block.
+    auto bodyY = extRowY + uicLabelHeight + uicMargin * 2;
+
+    using EM = Patch::SourceNode::ExtendedMode;
+    auto em = static_cast<EM>(static_cast<int>(std::round(extModeButtonD->getValue())));
+    if (em == EM::PHASE_REMAP)
+    {
+        // Layout:
+        //   [ multi ] [ pd wav painter spans                      ]
+        //   [ multi ] [ M ] [ Env->M ] [ LFO->M ]
+        // Multi switch occupies a single column on the left and spans the full body height.
+        // The right side has the PD painter on top (matching the upper painter height) and a
+        // row of three knob cells below.
+        constexpr int pdPainterHeight = painterH - 15;
+        constexpr int cellW = uicKnobSize;
+        constexpr int row2H = uicLabeledKnobHeight;
+        constexpr int bodyH = pdPainterHeight + uicMargin + row2H;
+        auto bodyRect = juce::Rectangle<int>(depx, bodyY, p.getWidth(), bodyH);
+
+        auto knobCell = [](auto &k, auto &l)
+        {
+            auto cell = jlo::VList().withWidth(cellW);
+            cell.add(labelKnobLayout(k, l).centerInParent());
+            return cell;
+        };
+
+        auto bodyLo = jlo::HList()
+                          .at(bodyRect.getX(), bodyRect.getY())
+                          .withWidth(bodyRect.getWidth())
+                          .withHeight(bodyRect.getHeight())
+                          .withAutoGap(uicMargin * 2);
+
+        // Left: multiswitch spans the full body height
+        auto leftCol = jlo::VList().withWidth(2 * cellW);
+        leftCol.add(jlo::Component(*phaseMapShape).withHeight(bodyH));
+        bodyLo.add(leftCol);
+
+        // Right: PD painter on top, knob row beneath
+        auto rightCol = jlo::VList().withAutoGap(uicMargin);
+        // PD painter inner-wave width is fixed to waveColW (matches the upper painter); any
+        // horizontal compression comes off the remap plot, not the wave.
+        if (auto *pd = dynamic_cast<PDWavPainter *>(pdWavPainter.get()))
+            pd->innerWaveWidth = waveColW;
+        rightCol.add(jlo::Component(*pdWavPainter).withHeight(pdPainterHeight));
+
+        auto knobRow = jlo::HList().withHeight(row2H).withAutoGap(uicMargin);
+        knobRow.add(knobCell(extM, extML));
+        knobRow.add(knobCell(envToExtM, envToExtML));
+        knobRow.add(knobCell(lfoToExtM, lfoToExtML));
+        // read-phase block fills the tail of the row, top-aligned with the knobs:
+        // label and jump buttons over a full-width slider
+        knobRow.addGap(uicMargin);
+        auto thetaCol =
+            jlo::VList().withHeight(uicLabelHeight * 2 + uicMargin).withAutoGap(uicMargin);
+        auto thetaButtons = jlo::HList().withHeight(uicLabelHeight);
+        thetaButtons.add(jlo::Component(*phaseMapReadPhaseL).withWidth(34));
+        thetaButtons.add(jlo::Component(*readPhaseZero).expandToFill());
+        thetaButtons.addGap(2);
+        thetaButtons.add(jlo::Component(*readPhaseQuarter).expandToFill());
+        thetaButtons.addGap(2);
+        thetaButtons.add(jlo::Component(*readPhaseHalf).expandToFill());
+        thetaCol.add(thetaButtons);
+        thetaCol.add(jlo::Component(*phaseMapReadPhase).insetBy(0, 2).withHeight(uicLabelHeight));
+        knobRow.add(thetaCol.expandToFill());
+        rightCol.addGap(uicMargin);
+        rightCol.add(knobRow);
+
+        bodyLo.add(rightCol.expandToFill());
+        bodyLo.doLayout();
+    }
+    else if (em == EM::RESONANT_SWEEP)
+    {
+        // Layout mirrors PHASE_REMAP:
+        //   [ window-multi ] [ res-sweep plotter spans                              ]
+        //   [ window-multi ] [ depth ] [ M ] [ Env->M ] [ LFO->M ]
+        constexpr int plotHeight = painterH - 15;
+        constexpr int cellW = uicKnobSize;
+        constexpr int row2H = uicLabeledKnobHeight;
+        constexpr int bodyH = plotHeight + uicMargin + row2H;
+        auto bodyRect = juce::Rectangle<int>(depx, bodyY, p.getWidth(), bodyH);
+
+        auto knobCell = [](auto &k, auto &l)
+        {
+            auto cell = jlo::VList().withWidth(cellW);
+            cell.add(labelKnobLayout(k, l).centerInParent());
+            return cell;
+        };
+
+        auto bodyLo = jlo::HList()
+                          .at(bodyRect.getX(), bodyRect.getY())
+                          .withWidth(bodyRect.getWidth())
+                          .withHeight(bodyRect.getHeight())
+                          .withAutoGap(uicMargin * 2);
+
+        // Left: multiswitch spans full body height
+        auto leftCol = jlo::VList().withWidth(2 * cellW);
+        leftCol.add(jlo::Component(*resonantWindowShape).withHeight(bodyH));
+        bodyLo.add(leftCol);
+
+        // Right: plotter on top, then depth + 3 knobs
+        auto rightCol = jlo::VList().withAutoGap(uicMargin);
+        rightCol.add(jlo::Component(*resSweepPainter).withHeight(plotHeight));
+
+        constexpr int depthColW = (cellW * 3) / 2;
+        auto depthInner = jlo::VList().withAutoGap(uicLabelGap);
+        depthInner.add(jlo::Component(*resonantSweepDepthL).withHeight(uicLabelHeight));
+        depthInner.add(jlo::Component(*resonantSweepDepth).withHeight(uicLabelHeight));
+        auto depthCol = jlo::VList().withWidth(depthColW);
+        depthCol.add(depthInner.centerInParent());
+
+        auto knobRow = jlo::HList().withHeight(row2H).withAutoGap(uicMargin);
+        knobRow.add(depthCol);
+        knobRow.add(knobCell(extM, extML));
+        knobRow.add(knobCell(envToExtM, envToExtML));
+        knobRow.add(knobCell(lfoToExtM, lfoToExtML));
+        rightCol.addGap(uicMargin);
+        rightCol.add(knobRow);
+
+        bodyLo.add(rightCol.expandToFill());
+        bodyLo.doLayout();
+    }
+    else if (em == EM::NOISE)
+    {
+        // Layout:
+        //   [ Mode : [ jog ] ]  [ noise painter spans       ]
+        //   [ Type : [ jog ] ]  [ noise painter spans       ]
+        //   [ M ] [ Env->M ] [ LFO->M ] [ N ] [ Env->N ] [ LFO->N ]
+        constexpr int cellW = uicKnobSize;
+        constexpr int row2H = uicLabeledKnobHeight;
+        constexpr int plotHeight = painterH - 15;
+        constexpr int bodyH = plotHeight + uicMargin + row2H;
+        constexpr int leftColW = (cellW * 8) / 2;
+        constexpr int leftLabelW = 44;
+        auto bodyRect = juce::Rectangle<int>(depx, bodyY, p.getWidth(), bodyH);
+
+        auto knobCell = [](auto &k, auto &l)
+        {
+            auto cell = jlo::VList().withWidth(cellW);
+            cell.add(labelKnobLayout(k, l).centerInParent());
+            return cell;
+        };
+
+        // Top section: left controls column + plot
+        auto topLo = jlo::HList()
+                         .at(bodyRect.getX(), bodyRect.getY())
+                         .withWidth(bodyRect.getWidth())
+                         .withHeight(plotHeight)
+                         .withAutoGap(uicMargin * 2);
+
+        auto labelJogRow = [](auto &lab, auto &jog)
+        {
+            auto row = jlo::HList().withHeight(uicLabelHeight).withAutoGap(uicMargin);
+            row.add(jlo::Component(lab).withWidth(leftLabelW));
+            row.add(jlo::Component(jog).expandToFill());
+            return row;
+        };
+
+        auto leftStack = jlo::VList().withAutoGap(uicMargin);
+        leftStack.add(labelJogRow(*noiseModeL, *noiseMode));
+        leftStack.add(labelJogRow(*noiseTypeL, *noiseType));
+        leftStack.add(labelJogRow(*lfsrModeL, *lfsrMode));
+        auto leftCol = jlo::VList().withWidth(leftColW);
+        leftCol.add(leftStack.centerInParent());
+        topLo.add(leftCol);
+
+        topLo.add(jlo::Component(*noisePainter).withHeight(plotHeight).expandToFill());
+        topLo.doLayout();
+
+        // Knob row: M / Env->M / LFO->M / N / Env->N / LFO->N across the body width.
+        auto knobLo = jlo::HList()
+                          .at(bodyRect.getX(), bodyRect.getY() + plotHeight + uicMargin * 2)
+                          .withWidth(bodyRect.getWidth())
+                          .withHeight(row2H)
+                          .withAutoGap(uicMargin);
+        knobLo.add(knobCell(extM, extML).centerInParent().expandToFill());
+        knobLo.add(knobCell(envToExtM, envToExtML).centerInParent().expandToFill());
+        knobLo.add(knobCell(lfoToExtM, lfoToExtML).centerInParent().expandToFill());
+        knobLo.add(knobCell(extN, extNL).centerInParent().expandToFill());
+        knobLo.add(knobCell(envToExtN, envToExtNL).centerInParent().expandToFill());
+        knobLo.add(knobCell(lfoToExtN, lfoToExtNL).centerInParent().expandToFill());
+        knobLo.doLayout();
+    }
+
+    layoutModulation(p);
+}
+
+void SourceSubPanel::setExtendedModeVisibility()
+{
+    using EM = Patch::SourceNode::ExtendedMode;
+    auto em = static_cast<EM>(static_cast<int>(std::round(extModeButtonD->getValue())));
+
+    auto isPhaseRemap = (em == EM::PHASE_REMAP);
+    auto isResonantSweep = (em == EM::RESONANT_SWEEP);
+    auto isNoise = (em == EM::NOISE);
+    auto showsM = isPhaseRemap || isResonantSweep || isNoise;
+
+    comingSoonLabel->setVisible(false);
+    phaseMapShape->setVisible(isPhaseRemap);
+    phaseMapReadPhase->setVisible(isPhaseRemap);
+    phaseMapReadPhaseL->setVisible(isPhaseRemap);
+    readPhaseZero->setVisible(isPhaseRemap);
+    readPhaseQuarter->setVisible(isPhaseRemap);
+    readPhaseHalf->setVisible(isPhaseRemap);
+    extM->setVisible(showsM);
+    extML->setVisible(showsM);
+    envToExtM->setVisible(showsM);
+    envToExtML->setVisible(showsM);
+    lfoToExtM->setVisible(showsM);
+    lfoToExtML->setVisible(showsM);
+    extN->setVisible(isNoise);
+    extNL->setVisible(isNoise);
+    envToExtN->setVisible(isNoise);
+    envToExtNL->setVisible(isNoise);
+    lfoToExtN->setVisible(isNoise);
+    lfoToExtNL->setVisible(isNoise);
+    if (pdWavPainter)
+        pdWavPainter->setVisible(isPhaseRemap);
+    resonantWindowShape->setVisible(isResonantSweep);
+    resonantSweepDepth->setVisible(isResonantSweep);
+    resonantSweepDepthL->setVisible(isResonantSweep);
+    if (resSweepPainter)
+        resSweepPainter->setVisible(isResonantSweep);
+    if (noiseMode)
+        noiseMode->setVisible(isNoise);
+    if (noiseModeL)
+        noiseModeL->setVisible(isNoise);
+    if (noiseType)
+        noiseType->setVisible(isNoise);
+    if (noiseTypeL)
+        noiseTypeL->setVisible(isNoise);
+    if (noisePainter)
+        noisePainter->setVisible(isNoise);
+
+    using NT = Patch::SourceNode::NoiseType;
+    auto &sn = editor.patchMainRef.sourceNodes[index];
+    auto nt = static_cast<NT>(static_cast<int>(std::round(sn.noiseType.value)));
+    auto showLfsr = isNoise && (nt == NT::CHIP_LFSR);
+    if (lfsrMode)
+        lfsrMode->setVisible(showLfsr);
+    if (lfsrModeL)
+        lfsrModeL->setVisible(showLfsr);
+}
+
+bool SourceSubPanel::hasWavetable() const
+{
+    const auto &sn = editor.patchMainRef.sourceNodes[index];
+    return (int)std::round(sn.waveForm.value) == SinTable::USER_TABLE && sn.wavetable != nullptr;
+}
+
+void SourceSubPanel::setEnabledState()
+{
+    auto &sn = editor.patchMainRef.sourceNodes[index];
+    auto isAudioIn = ((int)std::round(sn.waveForm.value) == SinTable::AUDIO_IN);
+
+    // Morph only means something with more than one frame, so hide rather than disable it for a
+    // single cycle table - a control that cannot do anything is worse than no control.
+    // the playback button follows the operator being on a wavetable at all, so the options are
+    // reachable for the built in table too
+    auto onWavetable = (int)std::round(sn.waveForm.value) == SinTable::USER_TABLE;
+    wtPlaybackButton->setVisible(onWavetable);
+    // the arrows need a folder to walk, which only a table loaded from a file has
+    auto canJogFile = onWavetable && sn.wavetableBlobIndex >= 0 &&
+                      sn.wavetableBlobIndex < (int)editor.patchMainRef.wavetableBlobs.size() &&
+                      !editor.patchMainRef.wavetableBlobs[sn.wavetableBlobIndex].sourcePath.empty();
+    wtJogPrev->setVisible(canJogFile);
+    wtJogNext->setVisible(canJogFile);
+
+    auto showMorph = hasWavetable() && sn.wavetable->nFrames > 1;
+    morph->setVisible(showMorph);
+    morphL->setVisible(showMorph);
+    envToMorph->setVisible(showMorph);
+    envToMorphL->setVisible(showMorph);
+    lfoToMorph->setVisible(showMorph);
+    lfoToMorphL->setVisible(showMorph);
+
+    auto ekt = sn.keyTrack.value < 0.5;
+    auto ktl = sn.keyTrackValueIsLow > 0.5;
+    keyTrackValue->setEnabled(ekt && !ktl && !isAudioIn);
+    keyTrackValue->setVisible(!ktl);
+
+    keyTrackLowValue->setEnabled(ekt && ktl && !isAudioIn);
+    keyTrackLowValue->setVisible(ktl);
+
+    keyTrackLow->setEnabled(ekt && !isAudioIn);
+    tsposeButton->setEnabled(!ekt && !isAudioIn);
+
+    // When AUDIO_IN: env/LFO depth knobs and ratio sliders are inactive
+    envToRatio->setEnabled(!isAudioIn);
+    envToRatioFine->setEnabled(!isAudioIn);
+    lfoToRatio->setEnabled(!isAudioIn);
+    lfoToRatioFine->setEnabled(!isAudioIn);
+    startingPhase->setEnabled(!isAudioIn);
+
+    // DAHDSR envelope controls
+    for (int i = 0; i < DAHDSRComponents::nels; ++i)
+        slider[i]->setEnabled(!isAudioIn);
+    for (int i = 0; i < DAHDSRComponents::nShape; ++i)
+        shapes[i]->setEnabled(!isAudioIn);
+    triggerButton->setEnabled(!isAudioIn);
+
+    // LFO controls
+    lfoSetEnabledState(!isAudioIn);
+
+    // Modulation slots
+    for (int i = 0; i < numModsPer; ++i)
+    {
+        depthSlider[i]->setEnabled(!isAudioIn);
+        sourceMenu[i]->setEnabled(!isAudioIn);
+        targetMenu[i]->setEnabled(!isAudioIn);
+    }
+
+    // Extended-mode controls (disabled wholesale on AUDIO_IN)
+    extModeButton->setEnabled(!isAudioIn);
+    phaseMapShape->setEnabled(!isAudioIn);
+    phaseMapReadPhase->setEnabled(!isAudioIn);
+    readPhaseZero->setEnabled(!isAudioIn);
+    readPhaseQuarter->setEnabled(!isAudioIn);
+    readPhaseHalf->setEnabled(!isAudioIn);
+    resonantWindowShape->setEnabled(!isAudioIn);
+    resonantSweepDepth->setEnabled(!isAudioIn);
+    extM->setEnabled(!isAudioIn);
+    envToExtM->setEnabled(!isAudioIn);
+    lfoToExtM->setEnabled(!isAudioIn);
+    if (noiseMode)
+        noiseMode->setEnabled(!isAudioIn);
+    if (noiseType)
+        noiseType->setEnabled(!isAudioIn);
+    if (lfsrMode)
+        lfsrMode->setEnabled(!isAudioIn);
+
+    using NT = Patch::SourceNode::NoiseType;
+    auto nt = static_cast<NT>(static_cast<int>(std::round(sn.noiseType.value)));
+    auto nKnobsActive = !isAudioIn && (nt == NT::TILT || nt == NT::CHIP_LFSR);
+    extN->setEnabled(nKnobsActive);
+    envToExtN->setEnabled(nKnobsActive);
+    lfoToExtN->setEnabled(nKnobsActive);
+
+    // Notify source/matrix panels to grey out ratio knob and feedback knob
+    editor.sourcePanel->updateOpEnabledState(index);
+    editor.matrixPanel->updateSelfKnobState(index);
+
+    // If op1's feedback sub-panel is currently open, update its enabled state too
+    if (index == 0 && editor.selfSubPanel->isVisible())
+        editor.selfSubPanel->setEnabledState();
+
+    unisonBehaviorB->setEnabled(editor.patchMainRef.output.unisonCount > 1);
+    repaint();
+    editor.repaint();
+}
+
+/*
+ * Playback options, shared by the waveform menu and the button on the display. Mode
+ * rebuilds the table rather than reinterpreting it, so it is a property of the table; the
+ * reconcile on the next idle picks it up.
+ */
+juce::PopupMenu SourceSubPanel::buildPlaybackMenu()
+{
+    auto &sn = editor.patchMainRef.sourceNodes[index];
+    auto curMode = (int)std::round(sn.wavetableBandLimit.value);
+    auto blid = sn.wavetableBandLimit.meta.id;
+    juce::PopupMenu modes;
+    for (auto m : {WavetableBandLimit::BAND_LIMITED, WavetableBandLimit::BAND_LIMITED_TAPERED,
+                   WavetableBandLimit::DIRECT, WavetableBandLimit::DIRECT_ZOH})
+    {
+        auto v = (int)m;
+        auto nm = sn.wavetableBandLimit.meta.valueToString(v);
+        modes.addItem(nm.has_value() ? *nm : "?", true, curMode == v,
+                      [v, blid, w = juce::Component::SafePointer(this)]()
+                      {
+                          if (!w)
+                              return;
+                          w->editor.setAndSendParamValue(blid, (float)v);
+                          w->editor.reconcileWavetables();
+                          w->wavPainter->repaint();
+                          w->setEnabledState();
+                          w->resized();
+                      });
+    }
+    // Direct has one level by construction, so the chain toggle means nothing for it
+    auto isDirect = curMode == (int)WavetableBandLimit::DIRECT ||
+                    curMode == (int)WavetableBandLimit::DIRECT_ZOH;
+    auto mipId = sn.wavetableMipChain.meta.id;
+    auto mipsOn = sn.wavetableMipChain.value > 0.5f;
+    modes.addSeparator();
+    modes.addItem("Mip Chain", !isDirect, mipsOn && !isDirect,
+                  [mipId, mipsOn, w = juce::Component::SafePointer(this)]()
+                  {
+                      if (!w)
+                          return;
+                      w->editor.setAndSendParamValue(mipId, mipsOn ? 0.f : 1.f);
+                      w->editor.reconcileWavetables();
+                      w->wavPainter->repaint();
+                  });
+
+    return modes;
+}
+
+/*
+ * Every loadable file under a folder as a menu, nested folders first and no deeper than three.
+ * A folder we cannot read or that holds nothing yields an empty menu, which is how the callers
+ * decide not to show it at all.
+ */
+static juce::PopupMenu wavetableFolderMenu(SourceSubPanel *self, const fs::path &dir, int depth = 0)
+{
+    juce::PopupMenu into;
+    if (depth > 3)
+        return into;
+
+    std::vector<fs::path> subdirs, files;
+    try
+    {
+        for (const auto &de : fs::directory_iterator(dir))
+        {
+            if (de.is_directory())
+                subdirs.push_back(de.path());
+            else if (de.is_regular_file() && isLoadableWavetable(de.path()))
+                files.push_back(de.path());
+        }
+    }
+    catch (const fs::filesystem_error &)
+    {
+        return into;
+    }
+    std::sort(subdirs.begin(), subdirs.end());
+    std::sort(files.begin(), files.end());
+
+    for (const auto &d : subdirs)
+    {
+        auto sub = wavetableFolderMenu(self, d, depth + 1);
+        if (sub.getNumItems() > 0)
+            into.addSubMenu(juce::String(d.filename().u8string()), sub);
+    }
+    for (const auto &f : files)
+        into.addItem(juce::String(f.stem().u8string()), true, false,
+                     [f, w = juce::Component::SafePointer(self)]()
+                     {
+                         if (w)
+                             w->loadWavetableFile(f);
+                     });
+    return into;
+}
+
+void SourceSubPanel::showWaveformPopup()
+{
+    auto &sn = editor.patchMainRef.sourceNodes[index];
+    auto wfid = sn.waveForm.meta.id;
+    auto currentVal = (int)std::round(sn.waveForm.value);
+
+    auto p = juce::PopupMenu();
+    p.addSectionHeader("Op " + std::to_string(index + 1) + " Waveform");
+    p.addSeparator();
+
+    auto addEntry = [&](const WaveformMenuEntry &entry)
+    {
+        if (entry.isSeparator)
+        {
+            p.addSeparator();
+        }
+        else
+        {
+            auto val = entry.waveformValue;
+            p.addItem(entry.label, true, currentVal == val,
+                      [val, wfid, w = juce::Component::SafePointer(this)]()
+                      {
+                          if (!w)
+                              return;
+                          w->editor.setAndSendParamValue(wfid, val);
+                          w->wavButtonD->onGuiSetValue();
+                      });
+        }
+    };
+
+    for (int i = 0; i < waveformMenuBaseCount; ++i)
+        addEntry(waveformMenuBase[i]);
+
+    if (wavButtonD->includeAudioIn)
+        for (int i = 0; i < waveformMenuAudioInCount; ++i)
+            addEntry(waveformMenuAudioIn[i]);
+
+    // USER_TABLE is deliberately not in waveformMenuBase and not in the jog order: you reach it
+    // by loading a file, not by scrolling onto a mode with nothing in it.
+    p.addSeparator();
+    p.addSectionHeader("Wavetable");
+    if (sn.wavetableBlobIndex >= 0 &&
+        sn.wavetableBlobIndex < (int)editor.patchMainRef.wavetableBlobs.size())
+    {
+        // Selectable, not a label. This is the only route back to a loaded table once the
+        // operator has been switched to something else, so making it informational stranded
+        // the table: the jog could reach it but the menu that lists every other waveform
+        // could not.
+        auto nm = editor.patchMainRef.wavetableBlobs[sn.wavetableBlobIndex].name;
+        if (nm.empty())
+            nm = "(unnamed)";
+        if (sn.wavetable)
+            nm += "  -  " + std::to_string(sn.wavetable->nFrames) +
+                  (sn.wavetable->nFrames == 1 ? " frame" : " frames");
+        p.addItem(nm, true, currentVal == SinTable::USER_TABLE,
+                  [wfid, w = juce::Component::SafePointer(this)]()
+                  {
+                      if (!w)
+                          return;
+                      w->editor.setAndSendParamValue(wfid, (float)SinTable::USER_TABLE);
+                      w->wavButtonD->onGuiSetValue();
+                  });
+    }
+    else
+    {
+        // nothing loaded: selecting this gives the built in table
+        p.addItem("Wavetable (Sine to Saw)", true, currentVal == SinTable::USER_TABLE,
+                  [wfid, w = juce::Component::SafePointer(this)]()
+                  {
+                      if (!w)
+                          return;
+                      w->editor.setAndSendParamValue(wfid, (float)SinTable::USER_TABLE);
+                      w->wavButtonD->onGuiSetValue();
+                  });
+    }
+    if (!editor.wavetableError[index].empty())
+    {
+        p.addItem("Failed: " + editor.wavetableError[index], false, false, []() {});
+    }
+    p.addItem("Load Wavetable...", true, false,
+              [w = juce::Component::SafePointer(this)]()
+              {
+                  if (w)
+                      w->showWavetableLoadDialog();
+              });
+    p.addItem("Clear Wavetable", sn.wavetableBlobIndex >= 0, false,
+              [w = juce::Component::SafePointer(this)]()
+              {
+                  if (w)
+                      w->clearWavetable();
+              });
+
+    auto modes = buildPlaybackMenu();
+
+    // Enabled whenever there is a table for it to affect, which now includes the built in one
+    // - gating on a loaded blob asked the wrong question once a table could come from nowhere.
+    p.addSubMenu("Playback", modes,
+                 currentVal == SinTable::USER_TABLE || sn.wavetableBlobIndex >= 0);
+
+    // The user's own folder reads the same way an installed library does, and likewise only
+    // appears when there is something in it.
+    juce::PopupMenu userMenu;
+    if (editor.presetManager && !editor.presetManager->userWavetablesPath.empty())
+        userMenu = wavetableFolderMenu(this, editor.presetManager->userWavetablesPath);
+
+    // Each installed synth gets its own top level entry rather than being buried a level
+    // deeper, since these are the lists people actually browse.
+    auto factory = buildVendorFactoryMenus(this);
+    if (userMenu.getNumItems() > 0 || !factory.empty())
+        p.addSeparator();
+    if (userMenu.getNumItems() > 0)
+        p.addSubMenu("User Wavetables", userMenu);
+    for (auto &[vendor, menu] : factory)
+        p.addSubMenu(vendor, menu);
+
+    p.showMenuAsync(juce::PopupMenu::Options().withParentComponent(&editor),
+                    makeMenuAccessibleButtonCB(wavButton.get()));
+}
+
+/*
+ * Load a wavetable into this operator. Everything here is main thread: read the file, add the
+ * bytes to patchMain (deduped, so loading the same file into a second operator costs nothing),
+ * point the node at the blob, and switch the waveform. reconcileWavetables then builds and
+ * hands the table to the audio thread.
+ *
+ * The waveform goes through setAndSendParamValue like any other parameter edit, so the host
+ * and the audio thread learn about it the normal way; only the blob is out of band.
+ */
+void SourceSubPanel::showWavetableLoadDialog()
+{
+    /*
+     * Wherever you opened one last, else the Wavetables folder the preset manager resolved
+     * beside Patches - which handles the vendor and legacy layouts and the platform
+     * differences, none of which a hand built Documents path gets right.
+     *
+     * The last directory is a user default rather than a member here, so browsing somewhere
+     * else once survives closing the editor.
+     */
+    std::error_code ec;
+    fs::path startPath;
+    if (editor.defaultsProvider)
+    {
+        auto stored = editor.defaultsProvider->getUserDefaultValue(Defaults::lastWavetableDirectory,
+                                                                   std::string{});
+        if (!stored.empty())
+        {
+            auto last = fs::u8path(stored);
+            if (fs::is_directory(last, ec))
+                startPath = last;
+        }
+    }
+    if (startPath.empty() && editor.presetManager)
+    {
+        const auto &wt = editor.presetManager->userWavetablesPath;
+        startPath = fs::is_directory(wt, ec) ? wt : editor.presetManager->userPath;
+    }
+    // becomes a juce::File only to hand to the chooser
+    auto start = startPath.empty() ? juce::File() : juce::File(juce::String(startPath.u8string()));
+
+    editor.fileChooser = std::make_unique<juce::FileChooser>("Load Wavetable", start, "*.wt;*.wav");
+    editor.fileChooser->launchAsync(
+        juce::FileBrowserComponent::canSelectFiles | juce::FileBrowserComponent::openMode,
+        [w = juce::Component::SafePointer(this)](const juce::FileChooser &fc)
+        {
+            if (!w)
+                return;
+            auto picked = fc.getResult();
+            if (picked == juce::File{})
+                return;
+            // the chooser is the only place a juce::File is allowed; leave it here
+            auto asPath = fs::u8path(picked.getFullPathName().toStdString());
+            if (w->editor.defaultsProvider)
+                w->editor.defaultsProvider->updateUserDefaultValue(Defaults::lastWavetableDirectory,
+                                                                   asPath.parent_path().u8string());
+            w->loadWavetableFile(asPath);
+        });
+}
+
+void SourceSubPanel::loadWavetableFile(const fs::path &f)
+{
+    std::vector<uint8_t> data;
+    {
+        std::ifstream in(f, std::ios::binary);
+        if (!in)
+            return;
+        data.assign(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
+    }
+    if (data.empty())
+        return;
+
+    auto &sn = editor.patchMainRef.sourceNodes[index];
+    auto idx = editor.patchMainRef.addWavetableBlob(data, f.stem().u8string(), f);
+    if (idx < 0)
+        return;
+    sn.wavetableBlobIndex = idx;
+
+    editor.setAndSendParamValue(sn.waveForm.meta.id, (float)SinTable::USER_TABLE);
+
+    /*
+     * Build before laying out. setEnabledState decides whether the morph controls exist from
+     * whether the node has a table, and resized() reads that decision - so the table has to be
+     * there first, and the two have to run in that order. Laying out first meant the controls
+     * were shown but positioned as though they were not, which looked like the panel simply
+     * ignoring them until something else forced a rebuild.
+     */
+    editor.reconcileWavetables();
+
+    if (!editor.wavetableError[index].empty())
+    {
+        // the operator has fallen back to a sine; the menu carries the reason
+        sn.wavetableBlobIndex = -1;
+    }
+
+    wavButtonD->onGuiSetValue();
+    wavButton->repaint();
+    setEnabledState();
+    resized();
+    repaint();
+}
+
+/*
+ * Surge's factory wavetables, when a Surge install is on this machine. Built fresh each time
+ * the menu opens rather than cached at startup, so installing Surge does not require a
+ * restart, and so a slow or disconnected volume costs one menu open rather than every one.
+ */
+std::vector<std::pair<std::string, juce::PopupMenu>>
+SourceSubPanel::buildVendorFactoryMenus(SourceSubPanel *self)
+{
+    auto libs = factoryWavetableLibraries();
+
+    /*
+     * A vendor with a single library does not need a level of menu that only ever says
+     * "Tables", so its contents come straight up. Surge has two and keeps them apart.
+     */
+    auto libsFor = [&libs](const std::string &vendor)
+    {
+        return std::count_if(libs.begin(), libs.end(),
+                             [&vendor](const auto &l) { return l.vendor == vendor; });
+    };
+
+    // grouped by vendor, keeping the order discovery returned
+    std::vector<std::pair<std::string, juce::PopupMenu>> byVendor;
+    for (const auto &lib : libs)
+    {
+        auto sub = wavetableFolderMenu(self, lib.path);
+        if (sub.getNumItems() == 0)
+            continue;
+
+        auto it = std::find_if(byVendor.begin(), byVendor.end(),
+                               [&](const auto &v) { return v.first == lib.vendor; });
+        if (it == byVendor.end())
+        {
+            byVendor.push_back({lib.vendor, juce::PopupMenu{}});
+            it = byVendor.end() - 1;
+        }
+
+        if (libsFor(lib.vendor) > 1)
+            it->second.addSubMenu(lib.label, sub);
+        else
+            it->second = std::move(sub);
+    }
+    return byVendor;
+}
+
+/*
+ * Step to the next or previous loadable file in the folder the current table came from. Best
+ * effort by design: a patch can be opened on a machine where that folder is gone, and the
+ * table still plays because its bytes travel with the patch - so this simply does nothing
+ * rather than complaining.
+ */
+void SourceSubPanel::jogWavetableFile(int dir)
+{
+    const auto &sn = editor.patchMainRef.sourceNodes[index];
+    if (sn.wavetableBlobIndex < 0 ||
+        sn.wavetableBlobIndex >= (int)editor.patchMainRef.wavetableBlobs.size())
+        return;
+
+    const auto &here = editor.patchMainRef.wavetableBlobs[sn.wavetableBlobIndex].sourcePath;
+    if (here.empty())
+        return;
+
+    std::vector<fs::path> siblings;
+    try
+    {
+        auto folder = here.parent_path();
+        if (!fs::is_directory(folder))
+            return;
+        for (const auto &de : fs::directory_iterator(folder))
+            if (de.is_regular_file() && isLoadableWavetable(de.path()))
+                siblings.push_back(de.path());
+    }
+    catch (const fs::filesystem_error &)
+    {
+        return;
+    }
+    if (siblings.size() < 2)
+        return;
+    std::sort(siblings.begin(), siblings.end());
+
+    auto at = std::find(siblings.begin(), siblings.end(), here);
+    // the file we are on may have been renamed out from under us; start from the top
+    auto i = (at == siblings.end()) ? 0 : (int)std::distance(siblings.begin(), at);
+    auto n = (int)siblings.size();
+    loadWavetableFile(siblings[((i + dir) % n + n) % n]);
+}
+
+void SourceSubPanel::clearWavetable()
+{
+    auto &sn = editor.patchMainRef.sourceNodes[index];
+    sn.wavetableBlobIndex = -1;
+    editor.wavetableError[index].clear();
+    // back to a plain sine; reconcile then retires the table once the voices let go
+    editor.setAndSendParamValue(sn.waveForm.meta.id, (float)SinTable::SIN);
+    editor.reconcileWavetables();
+    wavButtonD->onGuiSetValue();
+    setEnabledState();
+    resized();
+    repaint();
+}
+
+void SourceSubPanel::showUnisonFeaturesMenu()
+{
+    if (editor.patchMainRef.output.unisonCount < 1.5)
+        return;
+
+    auto p = juce::PopupMenu();
+    auto canCenter = (int)(editor.patchMainRef.output.unisonCount.value) % 2;
+    auto upart = (int)editor.patchMainRef.sourceNodes[index].unisonParticipation.value;
+    auto upid = editor.patchMainRef.sourceNodes[index].unisonParticipation.meta.id;
+    p.addSectionHeader("Op " + std::to_string(index + 1) + " Unison Behavior");
+    p.addSeparator();
+    p.addItem("Participates in Tuning", true, (upart & 1),
+              [upid, upart, w = juce::Component::SafePointer(this)]()
+              {
+                  if (!w)
+                      return;
+
+                  auto onoff = upart & 1;
+                  auto nv = (upart & (~1)) | (onoff ? 0 : 1);
+                  w->editor.setAndSendParamValue(upid, nv);
+              });
+    p.addItem("Participates in Pan", true, (upart & 2),
+              [upid, upart, w = juce::Component::SafePointer(this)]()
+              {
+                  if (!w)
+                      return;
+
+                  auto onoff = upart & 2;
+                  auto nv = (upart & (~2)) | (onoff ? 0 : 2);
+                  w->editor.setAndSendParamValue(upid, nv);
+              });
+    p.addSeparator();
+    auto u2m = (int)editor.patchMainRef.sourceNodes[index].unisonToMain.value;
+    auto u2mid = editor.patchMainRef.sourceNodes[index].unisonToMain.meta.id;
+
+    p.addItem("All Voices to Main", true, u2m == 0,
+              [w = juce::Component::SafePointer(this), u2mid]()
+              {
+                  if (w)
+                      w->editor.setAndSendParamValue(u2mid, 0);
+              });
+    p.addItem("Center Voice Only to Main", canCenter, u2m == 1,
+              [w = juce::Component::SafePointer(this), u2mid]()
+              {
+                  if (w)
+                      w->editor.setAndSendParamValue(u2mid, 1);
+              });
+    p.addItem("Side Voices Only to Main", canCenter, u2m == 2,
+              [w = juce::Component::SafePointer(this), u2mid]()
+              {
+                  if (w)
+                      w->editor.setAndSendParamValue(u2mid, 2);
+              });
+    p.addItem("No Voices to Main", true, u2m == 3,
+              [w = juce::Component::SafePointer(this), u2mid]()
+              {
+                  if (w)
+                      w->editor.setAndSendParamValue(u2mid, 3);
+              });
+    p.addSeparator();
+    auto u2o = (int)editor.patchMainRef.sourceNodes[index].unisonToOpOut.value;
+    auto u2oid = editor.patchMainRef.sourceNodes[index].unisonToOpOut.meta.id;
+    p.addItem("All Voices to Op " + std::to_string(index + 1) + "Out", true, u2o == 0,
+              [w = juce::Component::SafePointer(this), u2oid]()
+              {
+                  if (w)
+                      w->editor.setAndSendParamValue(u2oid, 0);
+              });
+    p.addItem("Center Voice Only to Op " + std::to_string(index + 1) + " Out", canCenter, u2o == 1,
+              [w = juce::Component::SafePointer(this), u2oid]()
+              {
+                  if (w)
+                      w->editor.setAndSendParamValue(u2oid, 1);
+              });
+    p.addItem("Side Voices Only to Op " + std::to_string(index + 1) + " Out", canCenter, u2o == 2,
+              [w = juce::Component::SafePointer(this), u2oid]()
+              {
+                  if (w)
+                      w->editor.setAndSendParamValue(u2oid, 2);
+              });
+
+    p.showMenuAsync(juce::PopupMenu::Options().withParentComponent(&editor),
+                    makeMenuAccessibleButtonCB(unisonBehaviorB.get()));
+}
+
+IMPLEMENTS_CLIPBOARD_SUPPORT(SourceSubPanel, sourceNodes[index], Clipboard::SOURCE_FULLNODE)
+
+} // namespace baconpaul::six_sines::ui

@@ -1,0 +1,7 @@
+SEANCE for Mac
+
+Double-click "Install Seance.command" (or copy by hand):
+  Plugins/Seance.vst3  -> ~/Library/Audio/Plug-Ins/VST3/
+  Plugins/Seance.clap  -> ~/Library/Audio/Plug-Ins/CLAP/
+Then rescan plugins in FL Studio (Options > Manage plugins > Find more plugins).
+Your saved sounds live in Documents/GhostBlock/Seance/Patches.

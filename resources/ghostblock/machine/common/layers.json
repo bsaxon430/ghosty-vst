@@ -1,0 +1,317 @@
+{
+ "about": "Poltergeist 2 ghost-machine: what every page shares. All x/y/w/h are in the 1040x744 design canvas; PNG pixels are png_scale times that. Draw \"world\" back to front, then the page (assets/<page>/layers.json), then \"front\".",
+ "canvas": {
+  "w": 1040,
+  "h": 744
+ },
+ "suggested_fps": 30,
+ "idle_activity": 0.15,
+ "bob": {
+  "pivot": [
+   520,
+   390
+  ],
+  "period": 9.2,
+  "rotate_deg": 0.22,
+  "dip_px": 3.0,
+  "roll_period": 23.0,
+  "roll_deg": 0.12,
+  "sway_px": 1.8,
+  "sway_period": 14.6
+ },
+ "world": [
+  {
+   "id": "sky",
+   "file": "world/sky.png",
+   "x": 0,
+   "y": 0,
+   "w": 1040,
+   "h": 744,
+   "png_scale": 2,
+   "anim": {
+    "type": "static"
+   },
+   "note": "opaque: gradient + the big static clouds + far ranges"
+  },
+  {
+   "id": "deck-far",
+   "file": "world/deck-far.png",
+   "x": 0,
+   "y": 0,
+   "w": 2080,
+   "h": 744,
+   "png_scale": 1,
+   "anim": {
+    "type": "deck",
+    "speed_px_per_s": 4.0,
+    "wrap_px": 2080,
+    "still_offset": 300
+   }
+  },
+  {
+   "id": "deck-mid",
+   "file": "world/deck-mid.png",
+   "x": 0,
+   "y": 0,
+   "w": 2080,
+   "h": 744,
+   "png_scale": 1,
+   "anim": {
+    "type": "deck",
+    "speed_px_per_s": 10.0,
+    "wrap_px": 2080,
+    "still_offset": 900
+   }
+  },
+  {
+   "id": "rays",
+   "file": "world/rays.png",
+   "x": 0,
+   "y": 0,
+   "w": 1040,
+   "h": 744,
+   "png_scale": 1,
+   "anim": {
+    "type": "pulse",
+    "min": 0.6,
+    "max": 1.0,
+    "period": 9.5,
+    "blend": "screen",
+    "storm_gain": -0.8
+   }
+  },
+  {
+   "id": "deck-near",
+   "file": "world/deck-near.png",
+   "x": 0,
+   "y": 0,
+   "w": 2080,
+   "h": 744,
+   "png_scale": 1,
+   "anim": {
+    "type": "deck",
+    "speed_px_per_s": 22.0,
+    "wrap_px": 2080,
+    "still_offset": 1500
+   }
+  },
+  {
+   "id": "storm-dark",
+   "type": "fill",
+   "note": "fill rgba(8,12,26, 0.72 * storm) over the sky and the decks (everything drawn so far); the flash and the bolts come after it, so lightning is never dimmed"
+  },
+  {
+   "id": "flash",
+   "file": "world/flash.png",
+   "x": 0,
+   "y": 0,
+   "w": 1040,
+   "h": 744,
+   "png_scale": 1,
+   "anim": {
+    "type": "strike",
+    "gain": 0.9,
+    "blend": "add"
+   },
+   "note": "cold light inside the clouds: only during a lightning sequence"
+  },
+  {
+   "id": "bolt0",
+   "file": "world/bolt0.png",
+   "x": 0,
+   "y": 0,
+   "w": 320,
+   "h": 560,
+   "png_scale": 2,
+   "anim": {
+    "type": "bolt"
+   }
+  },
+  {
+   "id": "bolt1",
+   "file": "world/bolt1.png",
+   "x": 690,
+   "y": 0,
+   "w": 350,
+   "h": 590,
+   "png_scale": 2,
+   "anim": {
+    "type": "bolt"
+   }
+  },
+  {
+   "id": "bolt2",
+   "file": "world/bolt2.png",
+   "x": 790,
+   "y": 0,
+   "w": 250,
+   "h": 660,
+   "png_scale": 2,
+   "anim": {
+    "type": "bolt"
+   }
+  },
+  {
+   "id": "bolt3",
+   "file": "world/bolt3.png",
+   "x": 530,
+   "y": 0,
+   "w": 400,
+   "h": 450,
+   "png_scale": 2,
+   "anim": {
+    "type": "bolt"
+   }
+  },
+  {
+   "id": "bolt4",
+   "file": "world/bolt4.png",
+   "x": 0,
+   "y": 0,
+   "w": 340,
+   "h": 680,
+   "png_scale": 2,
+   "anim": {
+    "type": "bolt"
+   }
+  },
+  {
+   "id": "land",
+   "file": "world/land.png",
+   "x": 0,
+   "y": 0,
+   "w": 1040,
+   "h": 744,
+   "png_scale": 2,
+   "anim": {
+    "type": "static"
+   },
+   "storm_dim": 0.5,
+   "note": "hills and the meadow at rest; in a storm multiply its brightness by (1 - storm_dim * storm)"
+  },
+  {
+   "id": "grass",
+   "files": [
+    "world/grass-0.png",
+    "world/grass-1.png",
+    "world/grass-2.png",
+    "world/grass-3.png"
+   ],
+   "x": 0,
+   "y": 596,
+   "w": 1040,
+   "h": 148,
+   "png_scale": 2,
+   "storm_dim": 0.5,
+   "anim": {
+    "type": "crossfade-loop",
+    "frames": 4,
+    "period": 3.6,
+    "storm_speed": 1.8,
+    "note": "the near meadow in four wind phases a quarter-wave apart: draw frame k and frame k+1 with alpha (1 - f) and f, f = fractional phase; the wave runs through the grass"
+   }
+  }
+ ],
+ "front": [
+  {
+   "id": "rain",
+   "file": "world/rain.png",
+   "tile": [
+    520,
+    520
+   ],
+   "png_scale": 1,
+   "anim": {
+    "type": "rain",
+    "fall_px_per_s": [
+     -170,
+     560
+    ],
+    "alpha": "0.85 * clamp((storm - 0.22) / 0.6)"
+   },
+   "note": "a tile: scroll it down the slant over the whole canvas"
+  },
+  {
+   "id": "bank",
+   "file": "world/bank.png",
+   "anim": {
+    "type": "wipe",
+    "duration_ms": 900
+   },
+   "note": "the cloud that crosses the picture while the page changes (the page transition); it is never shown at any other time, so nothing veils the controls"
+  }
+ ],
+ "themes": {
+  "note": "the plugin's three looks as three lights on the same painting: a colour grade over everything except the label text",
+  "STORM": {
+   "plugin": "BLACK",
+   "grade": null
+  },
+  "DUSK": {
+   "plugin": "PURPLE",
+   "grade": [
+    {
+     "blend": "multiply",
+     "colour": "#ffc2cf",
+     "alpha": 1.0
+    },
+    {
+     "blend": "screen",
+     "colour": "#3a1466",
+     "alpha": 0.22
+    }
+   ]
+  },
+  "CLEAR": {
+   "plugin": "LIGHT",
+   "grade": [
+    {
+     "blend": "screen",
+     "colour": "#fff2c8",
+     "alpha": 0.14
+    }
+   ],
+   "decks_alpha": 0.55
+  }
+ },
+ "storm": {
+  "max_strikes_per_1_5s": 1,
+  "brightness_cap": 0.7,
+  "sequence_ms": [
+   [
+    0,
+    0
+   ],
+   [
+    19,
+    1
+   ],
+   [
+    81,
+    0.12
+   ],
+   [
+    149,
+    0.8
+   ],
+   [
+    223,
+    0.45
+   ],
+   [
+    620,
+    0
+   ]
+  ],
+  "note": "visual only. flash + one random bolt + the page's ghost-lit sprite follow the sequence; the fills darken with storm"
+ },
+ "ui": "ui.json (the control sprite kit) + ../../ui-layout.json",
+ "puffs": [
+  "sprites/puff0.png",
+  "sprites/puff1.png",
+  "sprites/puff2.png",
+  "sprites/puff3.png",
+  "sprites/puff4.png",
+  "sprites/puff5.png"
+ ]
+}

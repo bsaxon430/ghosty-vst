@@ -1,0 +1,102 @@
+{
+ "about": "Poltergeist 2 ghost-machine: the SPYGLASS (spectrum + scope window) and the window size grip, painted by src/spyglass.py. Same conventions as ui.json (design px, PNGs at 2x, pivot in design px, slice = [left, top, right, bottom]).",
+ "png_scale": 2,
+ "spyglass_at": [
+  988,
+  92
+ ],
+ "spyglass_hit": [
+  997,
+  94,
+  41,
+  36
+ ],
+ "grip_at": [
+  1006,
+  696,
+  34,
+  34
+ ],
+ "assets": [
+  {
+   "name": "spyglass",
+   "file": "spyglass.png",
+   "w": 52,
+   "h": 42,
+   "use": "The SPYGLASS on the jib: a brass telescope clamped to the OUT gauge's pipe. Draw at the control's rect; the lit sprite over it with alpha = light level.",
+   "lens": [
+    47.2,
+    8.5
+   ]
+  },
+  {
+   "name": "spyglass-lit",
+   "file": "spyglass-lit.png",
+   "w": 52,
+   "h": 42,
+   "use": "The SPYGLASS lit: the lens glows amber (hover, press, and while its window is open)."
+  },
+  {
+   "name": "size-grip",
+   "file": "size-grip.png",
+   "w": 34,
+   "h": 34,
+   "use": "Brass corner grip: drag it to make the plugin window bigger or smaller (right-click: sizes)."
+  },
+  {
+   "name": "size-grip-lit",
+   "file": "size-grip-lit.png",
+   "w": 34,
+   "h": 34,
+   "use": "Brass corner grip, lit (hover / dragging)."
+  },
+  {
+   "name": "spy-frame",
+   "file": "spy-frame.png",
+   "w": 400,
+   "h": 300,
+   "use": "The SPYGLASS window: riveted iron frame with brass trim. 9-slice; the analyzer sits in the inner rect; the lee-bottom gusset is the resize grip.",
+   "slice": [
+    18,
+    34,
+    18,
+    18
+   ]
+  },
+  {
+   "name": "spy-title",
+   "file": "spy-title.png",
+   "w": 140,
+   "h": 22,
+   "use": "Title plate of the SPYGLASS window (3-slice along its length); its name is live text.",
+   "slice": [
+    12,
+    0,
+    12,
+    0
+   ]
+  },
+  {
+   "name": "spy-close",
+   "file": "spy-close.png",
+   "w": 24,
+   "h": 24,
+   "use": "Close cap of the SPYGLASS window.",
+   "pivot": [
+    12,
+    12
+   ]
+  },
+  {
+   "name": "spy-close-lit",
+   "file": "spy-close-lit.png",
+   "w": 24,
+   "h": 24,
+   "use": "Close cap, lit (hover / press).",
+   "pivot": [
+    12,
+    12
+   ]
+  }
+ ]
+}

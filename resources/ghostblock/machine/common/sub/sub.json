@@ -1,0 +1,500 @@
+{
+ "about": "Poltergeist 2 ghost-machine: the SUB sign and the SUB panel (the sub-bass layer, src/ghostblock/sub), made by scripts/ghostblock/make_sub_art.py from the machine's own art. Same conventions as ui.json (design px, PNGs at 2x). \"panel\" = where the board hangs; \"controls\" = its parts, in canvas coordinates (they exist only while the panel is open). The sign itself is in ui-layout.json (pages.common: sub-sign).",
+ "png_scale": 2,
+ "panel": [
+  556,
+  250,
+  404,
+  254
+ ],
+ "assets": [
+  {
+   "name": "sub-panel",
+   "file": "sub-panel.png",
+   "w": 404,
+   "h": 254,
+   "pivot": [
+    0,
+    0
+   ],
+   "use": "The SUB panel: an oiled board under a brass roller with two rows of six wells and plates (cut from the MAIN page), a title bar and a rail of eight preset plates."
+  },
+  {
+   "name": "sign-sub",
+   "file": "sign-sub.png",
+   "w": 52,
+   "h": 32,
+   "pivot": [
+    26.0,
+    0
+   ],
+   "use": "Hanging sign SUB (unlit), on two short chains under the VOICES plate."
+  },
+  {
+   "name": "sign-sub-lit",
+   "file": "sign-sub-lit.png",
+   "w": 52,
+   "h": 32,
+   "pivot": [
+    26.0,
+    0
+   ],
+   "use": "Hanging sign SUB, lit: SUB is on."
+  }
+ ],
+ "controls": [
+  {
+   "type": "switch",
+   "rect": [
+    576,
+    300,
+    44,
+    46
+   ],
+   "label": [
+    567,
+    350,
+    62,
+    24
+   ],
+   "sprite": "switch-arm",
+   "id": "sub-on",
+   "glow": "glow-round",
+   "label_glow": "glow-plate"
+  },
+  {
+   "type": "wheel",
+   "rect": [
+    642,
+    304,
+    40,
+    40
+   ],
+   "centre": [
+    662,
+    324
+   ],
+   "label": [
+    631,
+    350,
+    62,
+    24
+   ],
+   "sprite": "tap-b",
+   "id": "sub-level",
+   "glow": "glow-round",
+   "label_glow": "glow-plate"
+  },
+  {
+   "type": "selector",
+   "rect": [
+    708,
+    306,
+    36,
+    36
+   ],
+   "centre": [
+    726,
+    324
+   ],
+   "label": [
+    695,
+    348,
+    62,
+    24
+   ],
+   "sprite": "sel-knob",
+   "id": "sub-octave",
+   "glow": "glow-round",
+   "label_glow": "glow-plate"
+  },
+  {
+   "type": "wheel",
+   "rect": [
+    770,
+    304,
+    40,
+    40
+   ],
+   "centre": [
+    790,
+    324
+   ],
+   "label": [
+    759,
+    350,
+    62,
+    24
+   ],
+   "sprite": "tap-a",
+   "id": "sub-tune",
+   "glow": "glow-round",
+   "label_glow": "glow-plate"
+  },
+  {
+   "type": "wheel",
+   "rect": [
+    834,
+    304,
+    40,
+    40
+   ],
+   "centre": [
+    854,
+    324
+   ],
+   "label": [
+    823,
+    348,
+    62,
+    24
+   ],
+   "sprite": "tap-b",
+   "id": "sub-glide",
+   "glow": "glow-round",
+   "label_glow": "glow-plate"
+  },
+  {
+   "type": "switch",
+   "rect": [
+    896,
+    300,
+    44,
+    46
+   ],
+   "label": [
+    887,
+    350,
+    62,
+    24
+   ],
+   "sprite": "switch-arm",
+   "id": "sub-phase",
+   "glow": "glow-round",
+   "label_glow": "glow-plate"
+  },
+  {
+   "type": "wheel",
+   "rect": [
+    578,
+    386,
+    40,
+    40
+   ],
+   "centre": [
+    598,
+    406
+   ],
+   "label": [
+    567,
+    432,
+    62,
+    24
+   ],
+   "sprite": "tap-b",
+   "id": "sub-width",
+   "glow": "glow-round",
+   "label_glow": "glow-plate"
+  },
+  {
+   "type": "wheel",
+   "rect": [
+    642,
+    386,
+    40,
+    40
+   ],
+   "centre": [
+    662,
+    406
+   ],
+   "label": [
+    631,
+    430,
+    62,
+    24
+   ],
+   "sprite": "tap-c",
+   "id": "sub-drive",
+   "glow": "glow-round",
+   "label_glow": "glow-plate"
+  },
+  {
+   "type": "selector",
+   "rect": [
+    708,
+    388,
+    36,
+    36
+   ],
+   "centre": [
+    726,
+    406
+   ],
+   "label": [
+    695,
+    430,
+    62,
+    24
+   ],
+   "sprite": "sel-knob",
+   "id": "sub-mode",
+   "glow": "glow-round",
+   "label_glow": "glow-plate"
+  },
+  {
+   "type": "wheel",
+   "rect": [
+    770,
+    386,
+    40,
+    40
+   ],
+   "centre": [
+    790,
+    406
+   ],
+   "label": [
+    759,
+    430,
+    62,
+    24
+   ],
+   "sprite": "tap-b",
+   "id": "sub-harmonics",
+   "glow": "glow-round",
+   "label_glow": "glow-plate"
+  },
+  {
+   "type": "wheel",
+   "rect": [
+    834,
+    386,
+    40,
+    40
+   ],
+   "centre": [
+    854,
+    406
+   ],
+   "label": [
+    823,
+    430,
+    62,
+    24
+   ],
+   "sprite": "tap-c",
+   "id": "sub-blend",
+   "glow": "glow-round",
+   "label_glow": "glow-plate"
+  },
+  {
+   "type": "wheel",
+   "rect": [
+    898,
+    386,
+    40,
+    40
+   ],
+   "centre": [
+    918,
+    406
+   ],
+   "label": [
+    887,
+    430,
+    62,
+    24
+   ],
+   "sprite": "tap-a",
+   "id": "sub-room",
+   "glow": "glow-round",
+   "label_glow": "glow-plate"
+  },
+  {
+   "id": "sub-preset1",
+   "type": "plunger",
+   "name": "PURE",
+   "rect": [
+    567,
+    468,
+    46,
+    22
+   ],
+   "hit": [
+    566,
+    462,
+    48,
+    34
+   ],
+   "index": 0
+  },
+  {
+   "id": "sub-preset2",
+   "type": "plunger",
+   "name": "DEEP",
+   "rect": [
+    615,
+    468,
+    46,
+    22
+   ],
+   "hit": [
+    614,
+    462,
+    48,
+    34
+   ],
+   "index": 1
+  },
+  {
+   "id": "sub-preset3",
+   "type": "plunger",
+   "name": "808",
+   "rect": [
+    663,
+    468,
+    46,
+    22
+   ],
+   "hit": [
+    662,
+    462,
+    48,
+    34
+   ],
+   "index": 2
+  },
+  {
+   "id": "sub-preset4",
+   "type": "plunger",
+   "name": "ANALOG",
+   "rect": [
+    711,
+    468,
+    46,
+    22
+   ],
+   "hit": [
+    710,
+    462,
+    48,
+    34
+   ],
+   "index": 3
+  },
+  {
+   "id": "sub-preset5",
+   "type": "plunger",
+   "name": "REESE BODY",
+   "rect": [
+    759,
+    468,
+    46,
+    22
+   ],
+   "hit": [
+    758,
+    462,
+    48,
+    34
+   ],
+   "index": 4
+  },
+  {
+   "id": "sub-preset6",
+   "type": "plunger",
+   "name": "SPEAKER",
+   "rect": [
+    807,
+    468,
+    46,
+    22
+   ],
+   "hit": [
+    806,
+    462,
+    48,
+    34
+   ],
+   "index": 5
+  },
+  {
+   "id": "sub-preset7",
+   "type": "plunger",
+   "name": "RUMBLE",
+   "rect": [
+    855,
+    468,
+    46,
+    22
+   ],
+   "hit": [
+    854,
+    462,
+    48,
+    34
+   ],
+   "index": 6
+  },
+  {
+   "id": "sub-preset8",
+   "type": "plunger",
+   "name": "MONSTER",
+   "rect": [
+    903,
+    468,
+    46,
+    22
+   ],
+   "hit": [
+    902,
+    462,
+    48,
+    34
+   ],
+   "index": 7
+  },
+  {
+   "id": "sub-title",
+   "type": "plate",
+   "name": "SUB BASS",
+   "rect": [
+    570,
+    273,
+    142,
+    16
+   ],
+   "text": "fixed"
+  },
+  {
+   "id": "sub-readout",
+   "type": "plate",
+   "name": "",
+   "rect": [
+    726,
+    273,
+    182,
+    16
+   ],
+   "text": "state"
+  },
+  {
+   "id": "sub-close",
+   "type": "plunger",
+   "name": "X",
+   "rect": [
+    920,
+    270,
+    30,
+    22
+   ],
+   "hit": [
+    918,
+    264,
+    34,
+    34
+   ]
+  }
+ ]
+}

@@ -1,0 +1,73 @@
+# And finally the test suite
+add_executable(six-sines-test
+		test_main.cpp
+
+		structure.cpp
+		factory_patches.cpp
+		output_stage_dsp.cpp
+		mpe_smoothing.cpp
+		patch_sync.cpp
+		preset_jog.cpp
+		lfo_unison_random.cpp
+		phase_map_read_phase.cpp
+		sintable.cpp
+		oscillator_spectrum.cpp
+		wavetable_build.cpp
+		wavetable_io.cpp
+		wavetable_store.cpp
+		wavetable_stream.cpp
+		wavetable_dsp.cpp
+		output_bus_clear.cpp
+		dead_work_skips.cpp
+		preset_discovery.cpp
+		engine_rate_modes.cpp
+		main_envelope.cpp
+		envelope_retrigger.cpp
+		engine_block_size.cpp
+		clap_block_continuity.cpp
+)
+
+target_link_libraries(six-sines-test
+		fmt
+		six-sines-impl
+		catch2
+		six-sines-patches
+
+        )
+
+if (WIN32)
+	if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+		target_link_libraries(six-sines-test DbgHelp.lib)
+	endif()
+endif()
+
+
+# Performance benchmark target. Built only when explicitly requested
+# (cmake --build … --target six-sines-perf). Not in any default aggregate,
+# so day-to-day builds are untouched.
+#
+# Run a Release build for meaningful numbers:
+#   cmake -B cmake-build-perf -DCMAKE_BUILD_TYPE=Release -GNinja
+#   cmake --build cmake-build-perf --target six-sines-perf
+#   ./cmake-build-perf/tests/six-sines-perf
+#
+# Filter scenarios with Catch2 tags, e.g. "[scn:8v_dense]" or "[bench][plugin]".
+add_executable(six-sines-perf
+		perf_main.cpp
+		perf_scenarios.cpp
+)
+
+target_link_libraries(six-sines-perf
+		fmt
+		six-sines-impl
+		catch2
+		six-sines-patches
+)
+
+if (WIN32)
+	if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+		target_link_libraries(six-sines-perf DbgHelp.lib)
+	endif()
+endif()
+
+
