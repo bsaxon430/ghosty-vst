@@ -807,7 +807,7 @@ void Editor::showCredits (bool on)
 juce::String Editor::creditsText()
 {
     return juce::String::fromUTF8 (
-        "GHOST VOICE " GHOSTVOICE_VERSION "  -  free and open source, by GhostBlock\n"
+        "GHOST VOICE v1 beta  -  free and open source, by GhostBlock\n"
         "Licence: GNU Affero General Public License v3.0 only. The full source of this build ships in Licenses/Ghost Voice source.zip,\n"
         "and the licence texts in the Licenses folder next to the plug-in.\n\n"
         "THE OPEN-SOURCE PARTS, THEIR AUTHORS AND LICENCES\n\n"
@@ -919,7 +919,7 @@ void Editor::paint (juce::Graphics& g)
     if (pageIndex == chop) return;   // CHOP paints the rest itself (it has the whole window under the header)
     // left list footer + bottom strip
     g.setColour (P.dim); g.setFont (gfont (11.5f, false));
-    g.drawText (juce::String ("v") + GHOSTVOICE_VERSION + "  FREE  -  AGPL-3.0", juce::Rectangle<float> (22, (float) getHeight() - 104, 200, 18), juce::Justification::centredLeft);
+    g.drawText (juce::String ("v1 beta") + "  FREE  -  AGPL-3.0", juce::Rectangle<float> (22, (float) getHeight() - 104, 200, 18), juce::Justification::centredLeft);
     g.setColour (col::edge (P)); g.fillRect (210, 73, 1, getHeight() - 73 - 72);
     auto strip = getLocalBounds().removeFromBottom (72).toFloat();
     g.setColour (P.panel.withAlpha (0.92f)); g.fillRect (strip); g.setColour (col::edge (P)); g.fillRect (strip.removeFromTop (1));
