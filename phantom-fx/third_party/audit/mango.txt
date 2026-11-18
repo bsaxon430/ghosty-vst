@@ -1,0 +1,73 @@
+repo: https://github.com/odoare/Mango.git
+branch: main
+commit: d0004db50c37e76e50c06d25ce31f19ed63d3895
+commit date: 2026-10-20T19:07:28+02:00
+licence files:
+./LICENSE
+./LICENSE.LGPL
+./LICENSE.LGPL.GPL
+./LICENSE.md
+
+--- top level
+CMakeLists.txt
+LICENSE
+LICENSE.LGPL
+LICENSE.LGPL.GPL
+LICENSE.md
+README.md
+Source
+Tests
+cmake
+doc
+
+--- tree (depth 2, dirs)
+.
+./Source
+./Source/Assets
+./Source/Components
+./Source/Dsp
+./Tests
+./cmake
+./doc
+
+--- Source
+.
+./Assets
+./Assets/Mango.png
+./Assets/PanDist.xml
+./Assets/PlayMidi.xml
+./Assets/PlayMidi2.xml
+./Assets/PlayMidi3.xml
+./Assets/PlayMidi4.xml
+./Assets/Splash.png
+./Assets/Waveguide.xml
+./Assets/Waveguide2.xml
+./Assets/logo686.png
+./Components
+./Components/BlockGraphics.h
+./Components/BlockTextPanel.h
+./Components/BlockVisual.h
+./Components/BusBar.h
+./Components/ConfigPanel.h
+./Components/EffectPanel.h
+./Components/LaneRackComponent.h
+./Components/MeterStrip.h
+./Components/PresetOverlay.h
+./Dsp
+./Dsp/DurationWeights.h
+./Dsp/EffectBase.h
+./Dsp/EffectTypes.h
+./Dsp/Effects
+./Dsp/HeldNotes.h
+./Dsp/MangoEngine.cpp
+./Dsp/MangoEngine.h
+./Dsp/OverrideParser.h
+./ParamIDs.h
+./PluginEditor.cpp
+./PluginEditor.h
+./PluginProcessor.cpp
+./PluginProcessor.h
+./Theme.h
+
+--- submodules
+(none)

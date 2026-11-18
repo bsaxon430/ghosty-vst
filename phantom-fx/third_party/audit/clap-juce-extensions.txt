@@ -1,0 +1,71 @@
+repo: https://github.com/free-audio/clap-juce-extensions.git
+branch: main
+commit: 6bde108329ff9fc24404b79b8b397261a75cf6a8
+commit date: 2026-11-06T16:24:40-05:00
+licence files:
+./LICENSE.md
+
+--- top level
+CMakeLists.txt
+LICENSE.md
+README.md
+clap-libs
+cmake
+docs
+examples
+include
+src
+
+--- tree (depth 2, dirs)
+.
+./clap-libs
+./clap-libs/clap
+./clap-libs/clap-helpers
+./cmake
+./cmake/macos_bundle
+./docs
+./examples
+./examples/GainPlugin
+./examples/HostSpecificExtensionsPlugin
+./examples/NoteNamesPlugin
+./examples/cmake
+./include
+./include/clap-juce-extensions
+./src
+./src/extensions
+./src/wrapper
+
+--- .
+.
+./.clang-format
+./CMakeLists.txt
+./LICENSE.md
+./README.md
+./clap-libs
+./clap-libs/clap
+./clap-libs/clap-helpers
+./cmake
+./cmake/ClapTargetHelpers.cmake
+./cmake/JucerClap.cmake
+./cmake/macos_bundle
+./docs
+./docs/HowToParameterModulation.md
+./examples
+./examples/CMakeLists.txt
+./examples/GainPlugin
+./examples/HostSpecificExtensionsPlugin
+./examples/NoteNamesPlugin
+./examples/cmake
+./include
+./include/clap-juce-extensions
+./src
+./src/extensions
+./src/wrapper
+
+--- submodules
+[submodule "clap-libs/clap"]
+	path = clap-libs/clap
+	url = https://github.com/free-audio/clap.git
+[submodule "clap-libs/clap-helpers"]
+	path = clap-libs/clap-helpers
+	url = https://github.com/free-audio/clap-helpers.git

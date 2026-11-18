@@ -1,0 +1,227 @@
+{
+ "look": "dawn",
+ "folder": "_shared",
+ "stage_units": [
+  280,
+  300
+ ],
+ "px_per_su": 1.97143,
+ "note": "px = the @2x picture. su = stage units (280 x 300). anchor = the point of the picture that the scene places. mask = white + alpha, tinted by code. sizes / rots = steps the cache should hold (scale factors / number of angles round the circle).",
+ "files": [
+  {
+   "file": "glow-soft@2x.png",
+   "zip": "visual/_shared/glow-soft@2x.png",
+   "su": [
+    80,
+    80
+   ],
+   "px": [
+    158,
+    158
+   ],
+   "cell": [
+    158,
+    158
+   ],
+   "anchor_su": [
+    40,
+    40
+   ],
+   "anchor_px": [
+    79,
+    79
+   ],
+   "frames": 1,
+   "kind": "mask",
+   "sizes": [
+    0.5,
+    0.75,
+    1,
+    1.5,
+    2,
+    2.6,
+    3.4,
+    4.4
+   ],
+   "note": "soft round light, tinted; sizes are the cache steps"
+  },
+  {
+   "file": "glow-floor@2x.png",
+   "zip": "visual/_shared/glow-floor@2x.png",
+   "su": [
+    120,
+    36
+   ],
+   "px": [
+    237,
+    71
+   ],
+   "cell": [
+    237,
+    71
+   ],
+   "anchor_su": [
+    60,
+    18
+   ],
+   "anchor_px": [
+    119,
+    36
+   ],
+   "frames": 1,
+   "kind": "mask",
+   "sizes": [
+    0.6,
+    1,
+    1.5,
+    2.1
+   ],
+   "note": "light pool on the floor"
+  },
+  {
+   "file": "glint@2x.png",
+   "zip": "visual/_shared/glint@2x.png",
+   "su": [
+    20,
+    20
+   ],
+   "px": [
+    39,
+    39
+   ],
+   "cell": [
+    39,
+    39
+   ],
+   "anchor_su": [
+    10,
+    10
+   ],
+   "anchor_px": [
+    20,
+    20
+   ],
+   "frames": 1,
+   "kind": "mask",
+   "sizes": [
+    0.5,
+    0.8,
+    1.25
+   ],
+   "note": "four-point star glint"
+  },
+  {
+   "file": "puff@2x.png",
+   "zip": "visual/_shared/puff@2x.png",
+   "su": [
+    24,
+    24
+   ],
+   "px": [
+    235,
+    47
+   ],
+   "cell": [
+    47,
+    47
+   ],
+   "anchor_su": [
+    12,
+    12
+   ],
+   "anchor_px": [
+    24,
+    24
+   ],
+   "frames": 5,
+   "kind": "mask",
+   "sizes": [
+    0.7,
+    1,
+    1.5
+   ],
+   "note": "dust / steam puff, 5 held frames"
+  },
+  {
+   "file": "tex-bristle@2x.png",
+   "zip": "visual/_shared/tex-bristle@2x.png",
+   "su": [
+    120,
+    120
+   ],
+   "px": [
+    237,
+    237
+   ],
+   "cell": [
+    237,
+    237
+   ],
+   "anchor_su": [
+    60,
+    60
+   ],
+   "anchor_px": [
+    119,
+    119
+   ],
+   "frames": 1,
+   "kind": "colour",
+   "note": "gouache bristle tile (two of them, laid like bricks: rows alternate and shift by 60 su) inside a form through one clip"
+  },
+  {
+   "file": "tex-bristle-b@2x.png",
+   "zip": "visual/_shared/tex-bristle-b@2x.png",
+   "su": [
+    120,
+    120
+   ],
+   "px": [
+    237,
+    237
+   ],
+   "cell": [
+    237,
+    237
+   ],
+   "anchor_su": [
+    60,
+    60
+   ],
+   "anchor_px": [
+    119,
+    119
+   ],
+   "frames": 1,
+   "kind": "colour",
+   "note": "gouache bristle tile (two of them, laid like bricks: rows alternate and shift by 60 su) inside a form through one clip"
+  },
+  {
+   "file": "backdrop@2x.jpg",
+   "zip": "visual/_shared/backdrop@2x.jpg",
+   "su": [
+    280,
+    300
+   ],
+   "px": [
+    552,
+    591
+   ],
+   "cell": [
+    552,
+    591
+   ],
+   "anchor_su": [
+    0,
+    0
+   ],
+   "anchor_px": [
+    0,
+    0
+   ],
+   "frames": 1,
+   "kind": "colour",
+   "note": "the glade (opaque)"
+  }
+ ]
+}

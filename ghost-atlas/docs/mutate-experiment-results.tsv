@@ -1,0 +1,321 @@
+start	kind	layers	attempts	main_holds	checks_failed	peak_db	loudness_db	low_share	mono_loss_db	ring_db	tune_cents	register_spread_db	others_add_db	seams	main_masked	pitch_pulled_cents	failures
+FM-Piano 2	alone	1	0	1	0	-11.9	-23.9	0.154	0.02	16.1	-0.2	3.2	0.0	0.00	0.000	0.0	
+FM-Piano 2	mutate	3	1	1	0	-12.5	-23.9	0.129	0.89	6.4	1.1	3.0	2.4	0.03	0.003	1.3	
+FM-Piano 2	blind	3	1	1	0	-9.1	-23.9	0.154	0.02	14.7	-0.2	2.2	0.3	0.00	0.000	0.0	
+FM-Piano 2	blind	3	1	1	0	-11.0	-23.9	0.157	0.02	14.4	-0.0	3.9	0.1	0.00	0.000	0.2	
+FM-Piano 2	blind	3	1	1	0	-13.4	-23.9	0.103	1.17	8.4	-0.4	3.6	4.2	0.00	0.203	0.2	
+FM-Piano 2	random	3	0	1	0	-6.5	-22.8	0.145	0.24	6.4	-0.2	6.7	1.1	0.00	0.000	0.0	
+FM-Piano 2	random	3	0	1	0	-9.4	-22.6	0.148	0.32	6.4	-0.6	2.8	1.3	0.00	0.003	0.4	
+FM-Piano 2	random	3	0	1	0	-4.5	-21.3	0.142	0.33	6.4	-0.1	5.0	2.6	0.00	0.001	0.1	
+Lately Bass	alone	1	0	0	0	-10.8	-27.4	0.130	0.04	11.4	3.3	1.2	0.0	0.36	0.000	0.0	
+Lately Bass	mutate	4	1	0	0	-15.5	-27.5	0.023	1.26	9.9	2.9	1.1	6.1	0.00	0.545	0.4	
+Lately Bass	blind	4	1	0	0	-10.9	-27.4	0.060	0.12	3.9	3.5	2.7	3.5	0.38	0.814	0.2	
+Lately Bass	blind	4	1	0	0	-9.9	-27.4	0.112	0.10	7.7	4.3	0.8	1.2	0.57	0.007	1.0	
+Lately Bass	blind	4	1	0	0	-16.5	-27.4	0.034	1.91	8.8	3.6	1.0	5.8	0.00	0.195	0.3	
+Lately Bass	random	4	0	0	2	-6.8	-18.1	0.595	0.44	6.4	-3.2	3.9	9.3	0.00	0.636	6.5	The low end is not piling up; The main sound is not buried
+Lately Bass	random	4	0	0	1	-3.7	-18.0	0.155	0.12	6.6	1.0	1.6	9.4	0.00	0.936	2.2	The main sound is not buried
+Lately Bass	random	4	0	0	2	-6.5	-18.4	0.021	3.12	6.5	1.9	1.1	9.0	0.00	0.545	1.4	The main sound is not buried; Holds up in mono
+New Age	alone	1	0	1	0	-10.0	-22.7	0.086	0.02	6.2	5.3	0.5	0.0	0.00	0.000	0.0	
+New Age	mutate	4	1	1	0	-11.8	-22.8	0.063	1.61	11.9	5.3	1.3	3.2	0.00	0.080	0.1	
+New Age	blind	4	1	1	0	-9.9	-22.7	0.097	0.56	12.0	1.5	2.3	0.8	0.00	0.003	3.9	
+New Age	blind	4	1	1	0	-11.0	-22.7	0.120	0.88	5.5	3.6	0.4	3.3	0.00	0.243	1.7	
+New Age	blind	4	1	1	0	-12.0	-22.5	0.057	0.12	8.8	5.2	1.8	2.1	0.00	0.012	0.2	
+New Age	random	4	0	1	1	-4.7	-15.7	0.057	0.46	15.3	-1.4	4.5	7.0	0.00	1.000	6.7	The main sound is not buried
+New Age	random	4	0	1	0	-3.2	-20.3	0.086	0.05	17.5	5.2	3.4	2.4	0.00	0.004	0.1	
+New Age	random	4	0	1	0	-3.7	-20.5	0.082	0.12	17.5	2.8	4.5	2.3	0.00	0.004	2.5	
+Synth Bass Lead	alone	1	0	1	0	-12.3	-21.3	0.082	0.25	8.5	-0.4	0.7	0.0	0.00	0.000	0.0	
+Synth Bass Lead	mutate	4	1	1	0	-9.4	-21.3	0.076	0.73	15.2	-0.4	2.6	1.3	0.00	0.015	0.0	
+Synth Bass Lead	blind	4	1	1	0	-9.9	-21.2	0.052	0.37	6.7	0.2	2.4	1.0	0.00	0.002	0.5	
+Synth Bass Lead	blind	4	1	1	0	-8.8	-21.2	0.066	0.53	11.3	-0.7	2.4	1.6	0.00	0.080	0.4	
+Synth Bass Lead	blind	4	1	1	0	-11.8	-21.3	0.055	0.50	13.2	-0.3	2.5	1.3	0.00	0.017	0.1	
+Synth Bass Lead	random	4	0	1	0	-4.8	-16.5	0.054	1.21	16.1	1.3	2.1	4.7	0.00	0.151	1.7	
+Synth Bass Lead	random	4	0	1	0	-4.2	-19.7	0.080	0.25	20.4	-0.4	8.1	1.6	0.00	0.002	0.0	
+Synth Bass Lead	random	4	0	1	0	-8.0	-17.1	0.052	1.79	12.7	0.9	6.5	4.1	0.00	0.152	1.2	
+Synth Brass 1	alone	1	0	1	0	-11.3	-20.6	0.109	0.02	6.0	5.2	2.7	0.0	0.00	0.000	0.0	
+Synth Brass 1	mutate	4	1	1	0	-10.1	-20.6	0.104	0.40	7.7	5.2	3.6	1.2	0.00	0.026	0.0	
+Synth Brass 1	blind	4	1	1	0	-8.3	-20.5	0.098	0.22	9.2	5.2	1.3	1.3	0.00	0.026	0.0	
+Synth Brass 1	blind	4	1	1	0	-11.1	-20.6	0.073	0.72	10.9	4.7	2.2	2.5	0.00	0.132	0.5	
+Synth Brass 1	blind	4	1	1	0	-8.6	-20.6	0.103	0.21	6.1	5.2	3.3	0.8	0.00	0.000	0.0	
+Synth Brass 1	random	4	0	1	0	-4.2	-16.9	0.080	1.38	19.0	5.5	4.9	3.7	0.00	0.196	0.3	
+Synth Brass 1	random	4	0	1	0	-1.7	-18.8	0.113	0.21	18.6	5.0	3.2	1.8	0.00	0.003	0.2	
+Synth Brass 1	random	4	0	1	1	-7.2	-16.9	0.619	0.22	19.3	5.1	4.9	3.8	0.00	0.038	0.0	The low end is not piling up
+Synth Brass 2	alone	1	0	1	0	-11.0	-24.2	0.107	0.03	15.9	0.2	0.3	0.0	0.00	0.000	0.0	
+Synth Brass 2	mutate	4	1	1	0	-15.2	-24.2	0.056	1.34	7.0	-0.3	1.0	3.9	0.00	0.309	0.5	
+Synth Brass 2	blind	4	1	1	0	-10.7	-24.8	0.059	0.68	7.1	0.2	5.5	3.4	1.00	0.081	0.1	
+Synth Brass 2	blind	4	1	1	0	-9.3	-24.2	0.081	0.38	24.9	-0.1	2.6	2.8	0.00	0.070	0.3	
+Synth Brass 2	blind	4	1	1	0	-11.4	-24.6	0.126	2.53	7.2	-0.1	3.6	4.6	0.00	0.319	0.3	
+Synth Brass 2	random	4	0	1	0	-2.9	-18.3	0.120	0.03	5.2	0.2	2.2	5.9	0.00	0.905	0.0	
+Synth Brass 2	random	4	0	1	0	-6.8	-17.7	0.165	0.30	29.3	0.5	4.2	6.5	0.00	0.503	0.2	
+Synth Brass 2	random	4	0	1	0	-6.2	-22.5	0.098	0.06	30.4	1.7	3.9	1.8	0.00	0.000	1.5	
+Synth Calliope	alone	1	0	1	0	-11.2	-19.8	0.154	0.01	8.3	0.2	2.3	0.0	0.00	0.000	0.0	
+Synth Calliope	mutate	3	1	1	0	-10.7	-19.8	0.150	0.30	6.5	0.4	2.3	0.5	0.00	0.003	0.2	
+Synth Calliope	blind	3	1	1	0	-10.7	-19.8	0.124	0.51	6.4	0.1	3.4	1.5	0.00	0.003	0.1	
+Synth Calliope	blind	3	1	1	0	-10.8	-19.8	0.131	0.12	7.9	0.6	1.8	1.2	0.00	0.002	0.3	
+Synth Calliope	blind	3	1	1	0	-10.5	-19.8	0.144	0.37	4.6	0.4	0.8	1.7	0.00	0.003	0.2	
+Synth Calliope	random	3	0	1	0	-6.7	-17.0	0.100	0.48	9.2	-0.9	2.0	2.8	0.00	0.003	1.1	
+Synth Calliope	random	3	0	1	0	-3.0	-19.0	0.154	0.02	7.7	0.2	2.2	0.8	0.00	0.000	0.1	
+Synth Calliope	random	3	0	1	0	-6.4	-16.0	0.068	0.20	4.5	0.3	1.1	3.8	0.00	0.003	0.1	
+Synth Crystal	alone	1	0	1	0	-12.4	-19.5	0.148	0.01	14.0	0.0	1.2	0.0	0.00	0.000	0.0	
+Synth Crystal	mutate	3	1	1	0	-10.5	-19.5	0.139	0.24	18.9	0.2	1.7	0.8	0.00	0.011	0.2	
+Synth Crystal	blind	3	1	1	0	-10.6	-19.5	0.145	0.01	12.2	-0.0	2.4	0.2	0.00	0.010	0.1	
+Synth Crystal	blind	3	1	1	0	-10.5	-19.5	0.166	0.03	19.6	0.1	2.7	-0.3	0.00	0.000	0.1	
+Synth Crystal	blind	3	1	1	0	-7.0	-19.5	0.130	0.06	14.0	-0.9	2.8	0.8	0.00	0.003	1.0	
+Synth Crystal	random	3	0	1	0	-4.4	-18.8	0.147	0.01	14.0	0.1	4.5	0.7	0.00	0.000	0.0	
+Synth Crystal	random	3	0	1	0	-6.3	-13.1	0.148	0.01	10.6	0.1	1.1	6.3	0.00	0.991	0.0	
+Synth Crystal	random	3	0	1	0	-4.6	-19.1	0.147	0.01	14.0	0.1	5.9	0.4	0.00	0.000	0.0	
+Synth Fifths	alone	1	0	1	0	-9.3	-20.0	0.121	1.94	5.0	-0.9	1.5	0.0	0.00	0.000	0.0	
+Synth Fifths	mutate	3	1	1	0	-7.6	-20.0	0.110	2.19	8.5	-0.9	1.5	1.0	0.00	0.022	0.0	
+Synth Fifths	blind	3	1	1	0	-10.2	-20.0	0.131	1.01	8.6	-1.0	0.9	2.4	0.00	0.592	0.2	
+Synth Fifths	blind	3	1	1	0	-8.7	-20.0	0.094	1.58	6.9	-1.0	1.6	1.0	0.00	0.000	0.1	
+Synth Fifths	blind	3	1	1	0	-9.0	-20.0	0.086	2.26	4.3	-4.3	2.4	2.1	0.00	0.237	3.4	
+Synth Fifths	random	3	0	1	0	-6.4	-19.6	0.115	1.92	5.0	-1.0	0.6	0.4	0.00	0.000	0.2	
+Synth Fifths	random	3	0	1	0	-5.0	-19.3	0.121	1.94	5.0	-1.4	1.6	0.7	0.00	0.000	0.5	
+Synth Fifths	random	3	0	1	0	-6.2	-15.9	0.105	0.67	10.2	-0.9	0.7	4.2	0.00	0.922	0.1	
+Synth Goblins	alone	1	0	1	0	-10.2	-20.3	0.010	2.96	14.3	-0.5	0.8	0.0	0.00	0.000	0.0	
+Synth Goblins	mutate	3	1	1	0	-10.2	-20.3	0.009	1.66	16.9	-0.4	1.0	0.9	0.00	0.021	0.0	
+Synth Goblins	blind	3	1	1	0	-9.2	-20.3	0.016	2.57	9.2	4.4	1.8	0.6	0.00	0.042	4.9	
+Synth Goblins	blind	3	1	1	0	-10.2	-20.3	0.008	1.69	13.1	0.0	0.2	1.0	0.00	0.000	0.5	
+Synth Goblins	blind	3	1	1	0	-10.7	-20.3	0.010	1.56	9.3	0.2	0.3	0.4	0.00	0.002	0.6	
+Synth Goblins	random	3	0	1	0	-9.8	-19.8	0.010	2.94	13.9	-0.4	2.3	0.5	0.00	0.004	0.1	
+Synth Goblins	random	3	0	1	0	-6.5	-16.6	0.005	2.64	6.6	-12.0	0.7	3.7	0.00	0.313	11.5	
+Synth Goblins	random	3	0	1	1	-5.0	-17.9	0.141	1.66	13.1	13.3	3.8	2.4	0.00	0.096	13.7	In tune
+Synth Soundtrack	alone	1	0	1	0	-9.8	-20.2	0.025	1.56	3.4	-2.6	0.4	0.0	0.00	0.000	0.0	
+Synth Soundtrack	mutate	3	1	1	0	-10.2	-20.2	0.021	1.84	8.2	-2.4	1.8	1.3	0.00	0.064	0.2	
+Synth Soundtrack	blind	3	1	1	0	-9.2	-20.2	0.025	1.85	3.1	2.9	0.9	0.8	0.00	0.000	5.5	
+Synth Soundtrack	blind	3	1	1	0	-9.8	-20.2	0.026	1.57	3.4	-2.8	0.6	0.0	0.00	0.000	0.2	
+Synth Soundtrack	blind	3	1	1	0	-9.6	-20.2	0.025	1.56	3.3	-3.9	0.5	0.0	0.00	0.000	1.4	
+Synth Soundtrack	random	3	0	1	1	-6.6	-18.1	0.111	0.88	3.4	13.7	4.9	2.1	0.00	0.303	16.3	In tune
+Synth Soundtrack	random	3	0	1	1	-4.9	-17.5	0.108	0.93	3.4	14.0	5.3	2.7	0.00	0.303	16.6	In tune
+Synth Soundtrack	random	3	0	1	1	-2.9	-17.7	0.111	0.93	3.3	13.6	4.5	2.5	0.00	0.303	16.2	In tune
+Synth Square	alone	1	0	1	0	-10.6	-19.8	0.101	0.02	8.2	-0.1	0.5	0.0	0.00	0.000	0.0	
+Synth Square	mutate	4	1	1	0	-10.2	-19.8	0.094	0.48	7.5	-0.2	1.3	1.2	0.00	0.000	0.2	
+Synth Square	blind	4	1	1	0	-8.8	-19.8	0.088	0.83	7.2	-0.5	2.0	1.4	0.00	0.018	0.4	
+Synth Square	blind	4	1	1	0	-9.6	-19.8	0.061	0.66	8.1	-0.4	0.5	1.6	0.00	0.018	0.3	
+Synth Square	blind	4	1	1	0	-9.9	-19.8	0.086	0.50	7.2	0.3	1.5	1.2	0.00	0.018	0.3	
+Synth Square	random	4	0	1	0	-4.0	-17.7	0.149	0.07	8.2	6.6	3.0	2.1	0.00	0.295	6.7	
+Synth Square	random	4	0	1	0	-3.2	-17.6	0.154	0.05	8.2	6.7	3.3	2.2	0.00	0.295	6.8	
+Synth Square	random	4	0	1	0	-5.3	-17.5	0.144	0.10	8.2	6.6	2.3	2.3	0.00	0.295	6.7	
+Synth Strings 1	alone	1	0	1	0	-10.1	-20.0	0.091	0.02	3.4	0.0	1.5	0.0	0.00	0.000	0.0	
+Synth Strings 1	mutate	4	1	1	0	-9.4	-20.0	0.085	0.32	3.8	0.0	2.2	0.8	0.00	0.000	0.0	
+Synth Strings 1	blind	4	1	1	0	-10.8	-20.0	0.086	0.19	3.5	0.0	3.0	0.6	0.00	0.000	0.0	
+Synth Strings 1	blind	4	1	1	0	-10.6	-20.0	0.074	0.80	4.4	-0.2	3.0	1.7	0.00	0.000	0.2	
+Synth Strings 1	blind	4	1	1	0	-9.6	-20.0	0.075	0.46	3.7	0.6	4.2	1.1	0.00	0.100	0.6	
+Synth Strings 1	random	4	0	1	0	-2.6	-17.3	0.119	0.08	3.4	7.0	2.2	2.7	0.00	0.371	7.0	
+Synth Strings 1	random	4	0	1	0	-4.2	-15.4	0.172	0.88	3.7	4.5	3.6	4.6	0.00	0.371	4.5	
+Synth Strings 1	random	4	0	1	0	-5.5	-15.8	0.323	0.13	5.1	8.7	4.0	4.1	0.00	0.371	8.7	
+CP80	alone	1	0	1	0	-11.8	-24.0	0.158	0.02	8.9	-2.9	2.4	0.0	0.00	0.000	0.0	
+CP80	mutate	4	1	1	0	-10.9	-24.0	0.121	0.74	6.2	-2.7	1.4	1.9	0.00	0.020	0.2	
+CP80	blind	4	1	1	0	-12.7	-24.0	0.178	0.59	13.0	-2.2	3.0	1.9	0.00	0.023	0.7	
+CP80	blind	4	1	1	0	-12.5	-24.0	0.126	0.79	13.5	-2.8	1.6	1.6	0.00	0.016	0.1	
+CP80	blind	4	1	1	0	-9.4	-23.6	0.150	0.10	8.9	-2.9	2.7	0.9	0.00	0.007	0.0	
+CP80	random	4	0	1	0	-4.0	-18.9	0.212	0.09	8.9	8.3	3.5	5.0	0.00	0.688	11.2	
+CP80	random	4	0	1	1	-3.4	-20.2	0.108	0.13	8.3	-23.3	1.9	3.8	0.00	0.316	20.4	In tune
+CP80	random	4	0	1	1	-4.4	-15.3	0.094	1.41	14.0	0.4	0.5	8.6	0.00	1.000	3.3	The main sound is not buried
+Cello Bowed	alone	1	0	1	0	-10.0	-19.0	0.000	0.01	10.8	-5.8	4.8	0.0	0.00	0.000	0.0	
+Cello Bowed	mutate	4	1	1	0	-9.1	-19.0	0.001	0.31	10.9	1.6	5.6	0.8	0.00	0.010	7.3	
+Cello Bowed	blind	4	1	1	0	-8.8	-19.0	0.000	0.42	10.5	0.6	4.7	1.0	0.00	0.002	6.4	
+Cello Bowed	blind	4	1	1	0	-9.7	-19.0	0.046	0.08	10.9	0.2	4.4	1.5	0.00	0.065	5.9	
+Cello Bowed	blind	4	1	1	0	-10.1	-19.1	0.027	0.08	10.8	-0.5	3.3	0.2	0.00	0.019	5.2	
+Cello Bowed	random	4	0	1	0	-3.9	-15.9	0.048	0.16	10.8	-0.4	2.6	3.1	0.00	0.065	5.3	
+Cello Bowed	random	4	0	1	0	-5.3	-14.6	0.053	0.58	10.2	0.3	1.9	4.4	0.00	0.237	6.0	
+Cello Bowed	random	4	0	1	1	-5.1	-16.9	0.085	0.08	10.8	13.7	0.2	2.1	0.00	0.019	19.4	In tune
+Cowsynth Baggy	alone	1	0	1	0	-16.5	-23.4	0.039	0.02	19.9	4.8	8.8	0.0	0.00	0.000	1.2	
+Cowsynth Baggy	mutate	3	1	1	0	-11.7	-23.6	0.035	0.78	18.3	8.1	5.1	1.7	0.00	0.016	3.0	
+Cowsynth Baggy	blind	3	1	1	0	-12.5	-23.5	0.034	0.39	17.6	-23.8	2.8	1.1	0.00	0.014	27.4	
+Cowsynth Baggy	blind	3	1	1	0	-14.4	-23.6	0.042	0.88	15.4	0.1	6.0	2.7	0.00	0.102	4.1	
+Cowsynth Baggy	blind	3	1	1	0	-14.5	-23.4	0.048	0.70	17.0	-2.6	5.1	2.8	0.00	0.057	8.4	
+Cowsynth Baggy	random	3	0	1	0	-7.9	-18.0	0.015	0.77	19.4	1.8	4.0	5.5	0.00	0.386	3.4	
+Cowsynth Baggy	random	3	0	1	0	-7.5	-17.7	0.030	1.69	13.3	-28.1	3.9	5.9	0.00	0.192	34.7	
+Cowsynth Baggy	random	3	0	1	1	-7.3	-16.2	0.005	0.04	11.0	2.5	2.0	7.5	0.00	0.842	1.6	The main sound is not buried
+Cowsynth Fancy Pluck	alone	1	0	0	0	-3.9	-27.2	0.000	2.36	10.6	-0.6	1.3	0.5	1.00	0.113	0.0	
+Cowsynth Fancy Pluck	mutate	3	1	0	0	-10.8	-27.3	0.000	2.01	11.2	-0.0	1.8	5.3	0.00	1.000	0.6	
+Cowsynth Fancy Pluck	blind	3	2	0	0	-4.8	-27.3	0.000	1.62	7.9	1.0	4.1	0.2	1.00	0.219	1.1	
+Cowsynth Fancy Pluck	blind	3	1	0	0	-7.8	-28.9	0.066	0.85	11.6	7.8	3.6	0.9	0.18	0.670	7.3	
+Cowsynth Fancy Pluck	blind	3	1	0	0	-7.5	-27.9	0.000	1.76	11.5	12.2	2.6	2.0	0.00	0.966	9.4	
+Cowsynth Fancy Pluck	random	3	0	0	1	-4.5	-19.2	0.012	1.76	6.3	2.4	2.8	9.1	0.00	1.000	0.5	The main sound is not buried
+Cowsynth Fancy Pluck	random	3	0	0	1	-5.1	-19.1	0.114	0.44	14.3	-1.2	3.1	8.3	0.00	0.413	0.5	The main sound is not buried
+Cowsynth Fancy Pluck	random	3	0	0	1	-2.7	-18.1	0.065	2.59	5.5	-18.6	1.0	10.3	0.00	1.000	20.0	The main sound is not buried
+Cowsynth Lonely Pluck	alone	1	0	0	0	-7.4	-28.3	0.000	0.39	7.1	-0.7	7.4	-0.3	1.00	0.001	0.1	
+Cowsynth Lonely Pluck	mutate	3	1	0	0	-13.2	-28.2	0.008	2.77	15.8	0.7	8.1	6.0	0.00	1.000	1.4	
+Cowsynth Lonely Pluck	blind	3	1	0	0	-4.1	-27.5	0.000	1.38	7.5	4.7	7.8	0.6	1.00	0.355	5.3	
+Cowsynth Lonely Pluck	blind	3	1	0	0	-7.2	-27.5	0.000	2.38	11.0	4.3	7.7	2.1	0.00	0.872	4.9	
+Cowsynth Lonely Pluck	blind	3	1	0	0	-10.5	-28.1	0.003	2.08	21.5	-1.4	6.8	2.5	0.00	1.000	0.7	
+Cowsynth Lonely Pluck	random	3	0	0	2	-7.8	-18.7	0.015	2.73	5.9	-14.9	5.1	9.4	0.00	1.000	14.4	The main sound is not buried; In tune
+Cowsynth Lonely Pluck	random	3	0	0	0	-5.0	-22.3	0.151	0.02	12.5	-0.2	4.0	5.8	0.00	0.998	0.5	
+Cowsynth Lonely Pluck	random	3	0	0	1	-7.7	-25.8	0.000	3.40	7.2	-0.1	7.5	1.8	0.00	0.416	0.6	Holds up in mono
+Cowsynth Wheezy Pluck	alone	1	0	0	0	-5.3	-27.5	0.000	0.41	12.0	3.2	7.5	0.1	1.00	0.000	0.3	
+Cowsynth Wheezy Pluck	mutate	3	1	0	0	-10.2	-27.2	0.047	2.77	13.4	4.1	7.9	4.4	0.00	1.000	2.3	
+Cowsynth Wheezy Pluck	blind	3	1	0	0	-6.1	-27.3	0.002	0.70	10.5	1.5	8.6	0.6	0.19	0.569	0.2	
+Cowsynth Wheezy Pluck	blind	3	1	0	0	-11.5	-27.2	0.047	1.22	8.4	4.0	6.8	6.2	0.00	1.000	0.7	
+Cowsynth Wheezy Pluck	blind	3	1	0	0	-10.8	-27.4	0.055	1.04	6.1	5.3	7.1	5.8	0.00	1.000	2.9	
+Cowsynth Wheezy Pluck	random	3	0	0	0	-4.9	-24.8	0.002	1.18	5.0	1.4	5.0	2.5	1.00	0.038	1.0	
+Cowsynth Wheezy Pluck	random	3	0	0	2	-5.3	-18.9	0.886	0.30	8.4	3.0	3.4	8.1	0.00	0.567	0.6	The low end is not piling up; The main sound is not buried
+Cowsynth Wheezy Pluck	random	3	0	0	0	-4.3	-22.6	0.108	0.03	15.8	0.2	5.1	4.6	0.00	0.990	0.7	
+Blackheart Master	alone	1	0	1	0	-9.7	-19.0	0.124	1.56	4.7	-0.0	1.2	-0.2	0.00	0.003	0.2	
+Blackheart Master	mutate	3	1	1	0	-9.7	-19.4	0.079	1.80	6.1	-0.2	2.0	0.4	0.00	0.118	0.2	
+Blackheart Master	blind	3	1	1	0	-10.2	-19.6	0.032	1.40	7.4	0.3	0.8	-0.1	0.00	0.066	0.1	
+Blackheart Master	blind	3	1	1	0	-9.7	-19.5	0.076	1.12	5.5	-0.1	3.7	-0.9	0.00	0.008	1.0	
+Blackheart Master	blind	3	1	1	0	-9.9	-19.6	0.090	1.36	7.2	-0.5	2.0	0.6	0.00	0.128	1.1	
+Blackheart Master	random	3	0	1	0	-7.2	-16.5	0.278	0.50	8.8	0.0	0.5	2.9	0.05	0.377	0.2	
+Blackheart Master	random	3	0	1	0	-5.7	-18.6	0.156	1.03	7.0	-0.2	2.2	0.6	0.00	0.000	1.8	
+Blackheart Master	random	3	0	1	0	-6.5	-16.4	0.168	1.57	6.0	7.1	2.4	2.4	0.00	0.134	8.0	
+Splendid Grand Piano	alone	1	0	0	0	-9.8	-27.6	0.235	2.45	7.1	6.2	1.0	0.0	0.00	0.000	0.0	
+Splendid Grand Piano	mutate	3	1	0	0	-15.2	-27.6	0.089	1.72	12.4	4.2	0.9	6.1	0.00	0.766	2.0	
+Splendid Grand Piano	blind	3	1	0	0	-14.2	-27.8	0.168	1.49	6.3	4.8	1.2	5.5	0.00	0.856	1.4	
+Splendid Grand Piano	blind	3	1	0	0	-10.4	-27.8	0.170	1.93	7.8	-7.0	2.6	1.8	0.00	0.059	0.0	
+Splendid Grand Piano	blind	3	1	0	0	-14.4	-27.6	0.140	2.55	6.9	4.2	1.1	5.3	0.00	0.968	2.0	
+Splendid Grand Piano	random	3	0	0	2	-7.1	-19.9	0.850	0.41	6.9	0.6	4.9	7.7	0.00	1.000	5.6	The low end is not piling up; The main sound is not buried
+Splendid Grand Piano	random	3	0	0	1	-7.0	-19.3	0.054	1.94	7.6	-0.2	0.6	8.3	0.00	1.000	6.4	The main sound is not buried
+Splendid Grand Piano	random	3	0	0	0	-9.7	-27.6	0.235	2.45	7.1	6.2	5.0	0.0	0.00	0.000	0.0	
+All Brass Staccato	alone	1	0	0	0	-6.4	-25.8	0.004	2.46	5.5	5.5	2.4	0.5	1.00	0.000	0.1	
+All Brass Staccato	mutate	3	2	0	0	-11.2	-26.3	0.000	1.59	10.0	-5.7	2.9	5.1	0.00	0.546	11.4	
+All Brass Staccato	blind	4	1	0	0	-8.8	-26.5	0.001	2.22	14.3	6.1	2.6	2.7	0.00	0.350	0.3	
+All Brass Staccato	blind	4	1	0	0	-12.2	-26.1	0.067	0.85	7.9	-0.2	2.9	4.9	0.00	0.536	5.8	
+All Brass Staccato	blind	4	1	0	0	-7.7	-25.8	0.002	2.19	7.8	-12.1	2.6	1.8	0.00	0.289	17.7	
+All Brass Staccato	random	3	0	0	1	-6.7	-17.6	0.000	2.45	19.3	6.8	4.4	8.3	0.00	0.357	1.3	The main sound is not buried
+All Brass Staccato	random	3	0	0	0	-1.9	-22.3	0.016	2.93	4.7	3.8	3.3	4.1	1.00	0.431	1.8	
+All Brass Staccato	random	3	0	0	1	-5.5	-19.0	0.000	2.33	13.7	5.2	3.0	7.1	0.00	0.487	0.4	The main sound is not buried
+All Brass Sustain	alone	1	0	1	0	-15.0	-24.6	0.000	2.81	20.4	0.4	1.9	0.0	0.00	0.000	0.0	
+All Brass Sustain	mutate	4	1	1	0	-13.4	-24.5	0.014	2.97	12.9	-1.9	0.7	2.4	0.00	0.088	2.3	
+All Brass Sustain	blind	4	1	1	0	-13.7	-24.5	0.004	2.73	15.4	-0.1	1.8	2.0	0.00	0.034	0.5	
+All Brass Sustain	blind	4	1	1	0	-14.5	-24.8	0.017	1.70	20.3	-7.4	1.0	2.6	0.00	0.157	7.9	
+All Brass Sustain	blind	4	1	1	0	-13.1	-24.6	0.122	2.22	11.5	0.1	1.8	4.2	0.00	0.076	0.4	
+All Brass Sustain	random	4	0	1	0	-12.0	-20.6	0.000	1.20	27.3	0.1	5.7	3.9	0.00	0.533	0.4	
+All Brass Sustain	random	4	0	1	1	-5.6	-16.9	0.002	2.44	8.7	-1.1	0.7	7.7	0.00	0.605	1.5	The main sound is not buried
+All Brass Sustain	random	4	0	1	0	-8.8	-22.0	0.031	2.81	14.3	0.1	2.3	2.6	0.00	0.034	0.4	
+Bass Trombone Solo Staccato	alone	1	0	0	0	-8.4	-28.9	0.001	2.30	10.6	13.0	1.9	-0.1	1.00	0.000	5.5	
+Bass Trombone Solo Staccato	mutate	4	1	0	0	-13.0	-29.0	0.016	2.83	17.9	-0.1	2.4	6.8	0.00	1.000	17.8	
+Bass Trombone Solo Staccato	blind	3	2	0	0	-10.0	-28.6	0.000	2.18	13.9	18.4	1.7	2.2	0.00	0.990	1.8	
+Bass Trombone Solo Staccato	blind	4	1	0	0	-11.6	-29.5	0.000	2.45	7.4	-10.8	2.3	2.9	0.00	0.980	28.8	
+Bass Trombone Solo Staccato	blind	4	1	0	1	-11.3	-27.3	0.010	2.02	16.6	-0.6	1.7	7.0	0.00	1.000	11.2	The main sound is not buried
+Bass Trombone Solo Staccato	random	4	0	0	1	-6.1	-17.4	0.115	0.13	19.4	-5.0	3.1	10.7	0.00	1.000	24.3	The main sound is not buried
+Bass Trombone Solo Staccato	random	4	0	0	1	-3.8	-20.5	0.104	2.95	7.0	-8.1	4.6	8.5	0.00	1.000	18.2	The main sound is not buried
+Bass Trombone Solo Staccato	random	4	0	0	1	-4.4	-17.2	0.013	1.29	9.7	-3.0	0.3	10.7	0.00	1.000	12.9	The main sound is not buried
+Horn Solo Staccato	alone	1	0	0	1	-5.3	-26.1	0.001	3.50	10.8	2.6	4.1	0.9	0.44	0.085	1.6	Holds up in mono
+Horn Solo Staccato	mutate	4	1	0	0	-13.4	-28.1	0.001	2.48	12.9	1.8	4.9	5.7	0.00	1.000	6.0	
+Horn Solo Staccato	blind	4	1	0	0	-9.6	-27.0	0.025	2.71	10.7	1.4	2.5	6.3	0.00	1.000	2.9	
+Horn Solo Staccato	blind	4	1	0	0	-12.3	-29.0	0.000	1.47	4.8	0.5	5.6	5.1	0.00	0.999	5.4	
+Horn Solo Staccato	blind	4	1	0	0	-7.5	-28.0	0.019	0.54	20.1	1.4	6.5	2.0	0.02	1.000	6.2	
+Horn Solo Staccato	random	4	0	0	1	-3.7	-26.4	0.086	4.15	9.8	1.0	6.7	1.3	0.35	0.297	7.6	Holds up in mono
+Horn Solo Staccato	random	4	0	0	1	-2.2	-18.6	0.000	0.02	9.5	4.2	7.5	9.7	0.00	0.842	1.3	The main sound is not buried
+Horn Solo Staccato	random	4	0	0	1	-1.6	-15.5	0.020	2.33	6.7	-8.2	4.4	11.6	0.00	1.000	13.8	The main sound is not buried
+Horn Solo Sustain	alone	1	0	1	0	-9.9	-19.4	0.003	1.75	14.0	-0.4	3.1	0.0	0.00	0.000	0.0	
+Horn Solo Sustain	mutate	3	1	1	0	-10.4	-19.4	0.005	1.96	7.5	0.9	3.4	0.6	0.00	0.002	1.2	
+Horn Solo Sustain	blind	3	1	1	0	-10.2	-19.5	0.007	1.77	9.9	1.1	3.0	-0.0	0.00	0.000	1.5	
+Horn Solo Sustain	blind	3	1	1	0	-9.9	-19.4	0.003	1.75	10.7	-0.4	3.2	0.2	0.00	0.004	0.0	
+Horn Solo Sustain	blind	3	1	1	0	-10.6	-19.4	0.003	1.62	9.2	-0.4	3.4	0.6	0.00	0.004	0.0	
+Horn Solo Sustain	random	3	0	1	0	-7.6	-18.6	0.021	1.56	7.3	-2.5	1.4	0.9	0.00	0.037	2.1	
+Horn Solo Sustain	random	3	0	1	0	-9.1	-18.6	0.003	1.75	16.2	-0.4	3.0	0.8	0.00	0.017	0.0	
+Horn Solo Sustain	random	3	0	1	0	-8.6	-18.4	0.003	1.96	13.3	-1.0	2.0	1.1	0.00	0.026	0.6	
+Large Chorus	alone	1	0	1	1	-8.2	-19.2	0.016	2.76	5.9	-14.9	3.3	0.0	0.00	0.000	0.0	In tune
+Large Chorus	mutate	4	2	1	0	-8.6	-19.2	0.028	2.52	2.8	-4.6	3.2	0.9	0.00	0.031	10.3	
+Large Chorus	blind	3	3	1	0	-8.0	-19.2	0.024	2.60	5.5	-3.2	3.0	1.4	0.00	0.112	11.7	
+Large Chorus	blind	4	2	1	0	-7.6	-19.2	0.016	2.34	17.4	-9.0	3.1	1.0	0.00	0.040	5.9	
+Large Chorus	blind	4	2	1	0	-8.4	-19.3	0.014	2.74	3.3	1.2	4.1	0.7	0.00	0.003	16.1	
+Large Chorus	random	4	0	1	0	-4.8	-15.3	0.063	1.95	10.2	8.7	2.6	3.9	0.00	0.384	23.6	
+Large Chorus	random	4	0	1	0	-6.4	-15.9	0.083	1.88	7.5	0.1	2.4	3.3	0.00	0.387	15.0	
+Large Chorus	random	4	0	1	0	-5.6	-16.4	0.026	2.40	5.6	-2.6	1.6	2.8	0.00	0.298	12.3	
+Mixed Chorus	alone	1	0	1	0	-8.7	-19.2	0.016	2.64	7.2	-9.2	3.5	0.0	0.00	0.000	0.0	
+Mixed Chorus	mutate	3	1	1	0	-8.6	-19.2	0.016	2.73	6.9	-4.8	3.6	0.7	0.00	0.003	4.4	
+Mixed Chorus	blind	3	1	1	0	-8.6	-19.2	0.013	2.37	12.5	-7.9	3.4	0.7	0.00	0.016	1.4	
+Mixed Chorus	blind	3	1	1	0	-9.1	-19.2	0.014	2.51	7.5	-9.2	3.4	0.7	0.00	0.018	0.0	
+Mixed Chorus	blind	3	1	1	0	-9.2	-19.2	0.014	2.53	6.8	-11.0	3.3	0.5	0.00	0.000	1.7	
+Mixed Chorus	random	3	0	1	0	-5.5	-16.3	0.010	2.84	14.0	-9.4	6.3	2.9	0.00	0.028	0.2	
+Mixed Chorus	random	3	0	1	0	-6.1	-17.8	0.030	1.89	7.0	-2.9	3.3	1.4	0.00	0.156	6.3	
+Mixed Chorus	random	3	0	1	0	-4.6	-18.5	0.020	2.59	7.2	-2.8	3.5	0.7	0.00	0.000	6.5	
+Grand Piano	alone	1	0	0	0	-9.3	-27.6	0.211	2.51	8.1	6.2	0.6	0.0	0.00	0.000	0.0	
+Grand Piano	mutate	3	1	0	0	-13.6	-27.6	0.103	2.67	5.1	3.6	0.4	4.9	0.00	0.789	2.5	
+Grand Piano	blind	3	1	0	0	-15.1	-27.6	0.021	0.74	5.8	6.2	1.5	6.2	0.00	0.558	0.0	
+Grand Piano	blind	4	2	0	0	-14.1	-27.6	0.117	0.93	7.2	7.4	4.5	5.2	0.00	1.000	1.2	
+Grand Piano	blind	3	1	0	0	-13.0	-27.6	0.052	1.73	5.0	4.4	1.5	5.5	0.00	0.713	1.9	
+Grand Piano	random	3	0	0	1	-8.6	-20.4	0.014	1.61	13.0	1.0	0.9	7.2	0.00	0.570	5.2	The main sound is not buried
+Grand Piano	random	3	0	0	1	-8.5	-18.3	0.012	2.66	14.4	6.2	3.5	9.4	0.00	0.397	0.1	The main sound is not buried
+Grand Piano	random	3	0	0	1	-9.3	-20.4	0.017	1.53	8.3	0.7	1.1	7.3	0.00	0.570	5.5	The main sound is not buried
+Glockenspiel	alone	1	0	0	0	-9.3	-28.3	0.000	2.36	21.0	0.0	1.9	0.0	1.00	0.000	0.0	
+Glockenspiel	mutate	3	1	0	0	-13.5	-28.3	0.000	1.60	12.5	0.3	2.1	5.3	0.00	0.903	0.0	
+Glockenspiel	blind	3	1	0	0	-9.9	-28.3	0.011	1.99	6.9	-1.3	1.1	2.5	0.00	1.000	0.0	
+Glockenspiel	blind	3	1	0	0	-9.4	-28.4	0.000	2.64	17.2	10.0	1.7	0.9	1.00	0.026	0.0	
+Glockenspiel	blind	3	1	0	0	-14.6	-28.3	0.002	1.87	10.1	0.0	1.2	5.3	0.00	1.000	0.0	
+Glockenspiel	random	3	0	0	1	-9.3	-19.6	0.066	1.11	17.1	10.8	2.0	8.7	0.00	1.000	0.0	The main sound is not buried
+Glockenspiel	random	3	0	0	1	-7.8	-20.2	0.001	0.22	7.3	-32.7	5.9	8.1	0.03	1.000	0.0	The main sound is not buried
+Glockenspiel	random	3	0	0	0	-7.7	-23.6	0.027	1.14	25.2	-4.9	3.2	4.7	0.00	0.740	0.0	
+Vibraphone	alone	1	0	0	0	-7.7	-28.6	0.002	0.34	18.6	10.4	3.1	0.0	1.00	0.000	0.0	
+Vibraphone	mutate	4	1	0	0	-14.5	-28.6	0.038	2.41	14.4	0.1	3.4	6.8	0.00	1.000	0.3	
+Vibraphone	blind	4	1	0	0	-11.7	-28.6	0.124	0.10	17.2	0.1	3.7	5.9	0.00	1.000	0.3	
+Vibraphone	blind	4	1	0	0	-13.0	-28.5	0.000	1.22	13.0	2.4	3.6	5.3	0.00	0.717	2.0	
+Vibraphone	blind	4	1	0	0	-10.6	-28.6	0.022	2.49	8.1	3.1	3.4	5.1	0.00	1.000	2.8	
+Vibraphone	random	4	0	0	1	-7.2	-16.2	0.245	0.44	12.1	-0.0	2.3	12.4	0.00	1.000	10.4	The main sound is not buried
+Vibraphone	random	4	0	0	1	-6.9	-17.5	0.010	2.03	6.7	-5.2	2.2	11.2	0.00	1.000	15.5	The main sound is not buried
+Vibraphone	random	4	0	0	1	-7.2	-17.9	0.001	1.77	11.1	-0.6	5.1	10.8	0.00	1.000	10.9	The main sound is not buried
+1st Violins Staccato	alone	1	0	0	0	-6.9	-27.2	0.000	2.55	5.6	-17.7	3.2	0.0	1.00	0.000	0.0	
+1st Violins Staccato	mutate	4	1	0	0	-13.5	-27.4	0.000	2.74	9.2	-2.2	3.4	6.5	0.00	0.675	7.5	
+1st Violins Staccato	blind	4	1	0	0	-11.6	-27.2	0.000	0.58	8.0	0.3	1.8	5.3	0.00	0.784	10.0	
+1st Violins Staccato	blind	4	1	0	0	-11.6	-27.2	0.113	1.91	6.9	-6.6	1.5	4.8	0.00	0.972	3.1	
+1st Violins Staccato	blind	4	1	0	0	-10.7	-27.2	0.000	1.90	14.7	-8.9	2.3	4.2	0.00	0.365	0.8	
+1st Violins Staccato	random	4	0	0	1	-3.2	-21.5	0.000	0.82	21.4	-11.1	2.3	5.7	0.00	0.736	6.6	No harsh ring
+1st Violins Staccato	random	4	0	0	0	-3.8	-21.5	0.000	1.13	13.0	-19.9	1.7	5.7	0.00	0.802	2.2	
+1st Violins Staccato	random	4	0	0	1	-3.7	-18.5	0.000	0.88	3.7	-2.5	1.0	8.7	0.00	1.000	15.3	The main sound is not buried
+1st Violins Sustain	alone	1	0	1	1	-7.7	-18.3	0.000	3.23	6.5	10.1	3.4	0.0	0.00	0.000	0.0	Holds up in mono
+1st Violins Sustain	mutate	4	1	1	0	-8.4	-18.3	0.000	1.67	8.0	4.9	1.8	0.9	0.00	0.007	0.0	
+1st Violins Sustain	blind	4	1	1	0	-8.2	-18.3	0.080	2.62	5.9	6.5	3.9	1.2	0.00	0.000	0.0	
+1st Violins Sustain	blind	4	1	1	0	-8.0	-18.3	0.000	1.73	6.6	6.8	2.9	0.4	0.00	0.000	0.0	
+1st Violins Sustain	blind	4	1	1	0	-8.2	-18.3	0.000	1.63	6.5	-6.6	2.3	1.6	0.00	0.000	0.0	
+1st Violins Sustain	random	4	0	1	0	-6.5	-16.8	0.003	2.52	6.5	10.9	0.9	1.5	0.00	0.158	0.7	
+1st Violins Sustain	random	4	0	1	0	-4.3	-14.9	0.000	1.95	6.5	-0.3	5.7	3.5	0.00	0.367	10.4	
+1st Violins Sustain	random	4	0	1	1	-0.9	-11.6	0.000	3.01	5.9	2.7	2.8	6.7	0.00	1.000	7.4	Holds up in mono
+1st Violins Tremolo	alone	1	0	1	0	-6.3	-17.4	0.000	2.36	5.0	-30.6	2.9	0.0	0.00	0.000	0.0	
+1st Violins Tremolo	mutate	4	1	1	0	-6.8	-17.4	0.000	2.40	6.4	-30.4	3.2	0.9	0.00	0.048	0.2	
+1st Violins Tremolo	blind	4	1	1	0	-5.9	-17.4	0.000	1.57	4.9	-11.3	1.4	1.5	0.00	0.194	19.2	
+1st Violins Tremolo	blind	4	1	1	0	-6.0	-17.4	0.000	1.99	5.0	-14.0	2.1	0.7	0.00	0.003	16.5	
+1st Violins Tremolo	blind	4	1	1	0	-7.3	-17.4	0.000	2.03	4.0	-16.5	3.0	0.7	0.00	0.003	14.1	
+1st Violins Tremolo	random	4	0	1	0	-4.1	-14.6	0.000	1.88	5.0	-31.5	1.5	2.7	0.00	0.243	0.9	
+1st Violins Tremolo	random	4	0	1	1	-4.3	-15.4	0.019	1.62	3.6	-19.3	1.5	2.0	0.00	0.107	11.3	In tune
+1st Violins Tremolo	random	4	0	1	0	-4.3	-15.0	0.000	1.52	5.0	-20.8	2.1	2.4	0.00	0.453	9.8	
+2nd Violins Harmonics	alone	1	0	1	1	-9.0	-18.3	0.000	3.27	16.0	0.5	1.0	0.0	0.00	0.000	0.0	Holds up in mono
+2nd Violins Harmonics	mutate	4	1	1	0	-8.5	-18.2	0.000	1.60	13.5	-1.6	1.4	1.0	0.00	0.025	3.1	
+2nd Violins Harmonics	blind	4	1	1	0	-9.3	-18.3	0.000	1.72	14.1	-2.2	1.7	0.8	0.00	0.003	2.5	
+2nd Violins Harmonics	blind	4	1	1	0	-8.3	-18.3	0.000	2.96	11.5	0.8	1.7	1.1	0.00	0.015	5.6	
+2nd Violins Harmonics	blind	4	1	1	0	-8.0	-18.3	0.000	1.71	14.4	-0.2	1.2	1.2	0.00	0.010	4.5	
+2nd Violins Harmonics	random	4	0	1	1	-3.9	-17.0	0.000	3.11	15.6	-0.9	2.6	1.2	0.00	0.002	1.4	Holds up in mono
+2nd Violins Harmonics	random	4	0	1	0	-4.7	-16.2	0.000	2.83	16.0	0.1	3.0	2.1	0.00	0.007	0.5	
+2nd Violins Harmonics	random	4	0	1	0	-3.7	-16.6	0.000	2.11	16.0	-0.8	3.3	1.6	0.00	0.007	1.4	
+FM Bell	alone	1	0	0	1	-9.5	-27.1	0.066	3.72	11.6	-0.3	0.8	0.0	1.00	0.000	0.0	Holds up in mono
+FM Bell	mutate	3	1	0	0	-13.9	-27.1	0.007	1.77	8.5	1.1	1.5	5.1	0.00	0.912	1.3	
+FM Bell	blind	3	1	0	0	-15.4	-27.1	0.101	0.53	11.0	-3.2	0.5	5.7	0.00	1.000	2.9	
+FM Bell	blind	3	1	0	0	-8.8	-26.9	0.033	2.40	8.4	5.6	1.7	1.8	1.00	0.303	5.9	
+FM Bell	blind	3	1	0	0	-15.6	-27.1	0.004	2.24	9.1	-2.3	0.9	6.0	0.00	0.913	1.9	
+FM Bell	random	3	0	0	1	-4.5	-18.1	0.002	1.43	6.7	-9.3	2.4	9.0	0.00	0.866	8.9	The main sound is not buried
+FM Bell	random	3	0	0	1	-3.8	-18.0	0.001	1.24	8.8	-8.2	2.1	9.1	0.00	0.913	7.9	The main sound is not buried
+FM Bell	random	3	0	0	1	-3.8	-16.5	0.001	0.56	21.7	-0.1	1.9	10.6	0.00	0.866	0.2	The main sound is not buried
+Voice Wave Aah	alone	1	0	1	0	-10.4	-21.0	0.015	1.84	18.6	0.3	1.8	0.0	0.00	0.000	0.0	
+Voice Wave Aah	mutate	3	1	1	0	-10.6	-21.0	0.019	2.21	17.2	-1.9	2.3	1.3	0.00	0.008	2.2	
+Voice Wave Aah	blind	3	1	1	0	-9.8	-21.0	0.097	1.60	18.6	0.8	3.4	1.7	0.00	0.106	0.5	
+Voice Wave Aah	blind	3	1	1	0	-10.3	-21.0	0.011	1.77	12.0	1.0	0.7	1.5	0.00	0.058	0.7	
+Voice Wave Aah	blind	3	1	1	0	-9.8	-21.0	0.035	1.53	18.8	-0.9	1.1	0.8	0.00	0.106	1.2	
+Voice Wave Aah	random	3	0	1	0	-5.4	-19.5	0.014	1.79	18.6	-0.4	2.5	1.4	0.00	0.000	0.7	
+Voice Wave Aah	random	3	0	1	0	-5.6	-16.9	0.035	2.19	15.1	1.5	0.1	4.1	0.01	0.280	1.2	
+Voice Wave Aah	random	3	0	1	0	-7.8	-19.1	0.039	2.20	18.7	-0.4	1.7	1.9	0.00	0.070	0.7	
+Voice Wave Eeh	alone	1	0	1	0	-8.4	-19.2	0.000	2.27	13.5	0.3	2.7	0.0	0.00	0.000	0.0	
+Voice Wave Eeh	mutate	3	1	1	0	-8.1	-19.2	0.009	2.38	12.4	-4.4	1.7	0.7	0.00	0.006	4.7	
+Voice Wave Eeh	blind	3	1	1	0	-8.4	-19.2	0.000	2.27	13.5	0.3	2.3	0.0	0.00	0.000	0.0	
+Voice Wave Eeh	blind	3	1	1	0	-8.8	-19.3	0.000	1.91	8.4	-0.0	4.0	1.5	0.00	0.023	0.3	
+Voice Wave Eeh	blind	3	1	1	0	-8.5	-19.2	0.000	2.27	13.5	0.1	3.3	0.2	0.00	0.000	0.2	
+Voice Wave Eeh	random	3	0	1	0	-5.6	-17.8	0.001	1.73	13.5	0.2	1.9	1.5	0.00	0.051	0.0	
+Voice Wave Eeh	random	3	0	1	1	-4.3	-15.1	0.722	0.66	13.0	-0.8	5.3	4.1	0.00	0.051	1.1	The low end is not piling up
+Voice Wave Eeh	random	3	0	1	0	-5.1	-17.6	0.001	1.79	13.6	0.2	2.5	1.6	0.00	0.051	0.1	
+Chip Lead	alone	1	0	1	0	-11.1	-19.2	0.067	0.01	3.6	0.1	1.4	0.0	0.00	0.000	0.0	
+Chip Lead	mutate	3	1	1	0	-10.3	-19.2	0.063	0.39	3.8	0.1	2.1	0.8	0.00	0.000	0.0	
+Chip Lead	blind	3	1	1	0	-9.6	-19.3	0.065	0.57	4.2	0.1	0.9	0.7	0.00	0.020	0.0	
+Chip Lead	blind	3	1	1	0	-10.5	-19.2	0.062	0.22	6.5	0.1	2.4	0.8	0.00	0.044	0.0	
+Chip Lead	blind	3	1	1	0	-7.4	-19.1	0.050	0.62	3.5	0.9	3.1	1.6	0.00	0.096	0.8	
+Chip Lead	random	3	0	1	0	-5.0	-17.4	0.046	0.08	3.6	0.8	0.3	1.8	0.00	0.272	0.7	
+Chip Lead	random	3	0	1	0	-5.0	-17.6	0.046	0.06	3.6	-0.1	1.1	1.6	0.00	0.272	0.2	
+Chip Lead	random	3	0	1	0	-3.9	-17.2	0.046	0.06	3.6	-0.1	2.8	2.0	0.00	0.272	0.2	
+Fuzz Wave	alone	1	0	1	0	-8.6	-19.9	0.017	2.19	3.4	0.1	1.8	0.0	0.00	0.000	0.0	
+Fuzz Wave	mutate	3	1	1	0	-7.4	-19.9	0.014	2.32	4.2	5.2	1.9	0.9	0.00	0.000	5.0	
+Fuzz Wave	blind	3	1	1	0	-8.6	-20.0	0.097	1.98	3.4	2.0	1.2	0.5	0.00	0.052	1.9	
+Fuzz Wave	blind	3	1	1	0	-8.5	-19.9	0.015	2.15	3.1	0.9	1.3	0.3	0.00	0.077	0.8	
+Fuzz Wave	blind	3	1	1	0	-8.6	-19.9	0.010	2.22	6.2	-0.0	3.9	2.0	0.00	0.250	0.2	
+Fuzz Wave	random	3	0	1	0	-5.7	-18.0	0.009	1.32	4.9	-0.4	4.1	1.9	0.00	0.342	0.5	
+Fuzz Wave	random	3	0	1	0	-7.5	-18.8	0.011	1.59	3.4	-0.4	3.9	1.1	0.00	0.120	0.5	
+Fuzz Wave	random	3	0	1	0	-6.1	-16.0	0.005	1.18	6.1	-0.5	2.4	3.9	0.00	0.628	0.6	

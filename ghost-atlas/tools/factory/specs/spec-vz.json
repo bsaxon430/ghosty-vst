@@ -1,0 +1,195 @@
+{
+ "synths": {
+  "vaporizer": {
+   "plugin": "/home/claude/synths/vaporizer2/cmake-build/VASTvaporizer2_artefacts/Release/VST3/VASTvaporizer2.vst3",
+   "label": "Vaporizer2 (VAST Dynamics)",
+   "settle": 3
+  }
+ },
+ "patches": [
+  {
+   "name": "VZ Fat EDM Lead",
+   "synth": "vaporizer",
+   "patch": "LD Fat EDM Lead",
+   "preset": "/home/claude/synths/vaporizer2/VASTvaporizer/Presets/LD Fat EDM Lead.vvp",
+   "kind": "lead",
+   "category": "Leads"
+  },
+  {
+   "name": "VZ Mighty Lead",
+   "synth": "vaporizer",
+   "patch": "LD Mighty Lead",
+   "preset": "/home/claude/synths/vaporizer2/VASTvaporizer/Presets/LD Mighty Lead.vvp",
+   "kind": "lead",
+   "category": "Leads"
+  },
+  {
+   "name": "VZ Future Bass Lead",
+   "synth": "vaporizer",
+   "patch": "LD Future Bass Lead",
+   "preset": "/home/claude/synths/vaporizer2/VASTvaporizer/Presets/LD Future Bass Lead.vvp",
+   "kind": "lead",
+   "category": "Leads"
+  },
+  {
+   "name": "VZ Layer Lead",
+   "synth": "vaporizer",
+   "patch": "LD Layer Lead",
+   "preset": "/home/claude/synths/vaporizer2/VASTvaporizer/Presets/LD Layer Lead.vvp",
+   "kind": "lead",
+   "category": "Leads"
+  },
+  {
+   "name": "VZ Hypersaw",
+   "synth": "vaporizer",
+   "patch": "SY Basic Hypersaw",
+   "preset": "/home/claude/synths/vaporizer2/VASTvaporizer/Presets/SY Basic Hypersaw.vvp",
+   "kind": "lead",
+   "category": "Analog Synths"
+  },
+  {
+   "name": "VZ Lord Of Synths",
+   "synth": "vaporizer",
+   "patch": "SY Lord Of Synths",
+   "preset": "/home/claude/synths/vaporizer2/VASTvaporizer/Presets/SY Lord Of Synths.vvp",
+   "kind": "lead",
+   "category": "Analog Synths"
+  },
+  {
+   "name": "VZ Juno Dream Pad",
+   "synth": "vaporizer",
+   "patch": "PD Juno Dream Pad",
+   "preset": "/home/claude/synths/vaporizer2/VASTvaporizer/Presets/PD Juno Dream Pad.vvp",
+   "kind": "pad",
+   "category": "Pads"
+  },
+  {
+   "name": "VZ Epic Pad",
+   "synth": "vaporizer",
+   "patch": "PD Epic Pad",
+   "preset": "/home/claude/synths/vaporizer2/VASTvaporizer/Presets/PD Epic Pad.vvp",
+   "kind": "pad",
+   "category": "Pads"
+  },
+  {
+   "name": "VZ Majestic Pad",
+   "synth": "vaporizer",
+   "patch": "PD Majestic",
+   "preset": "/home/claude/synths/vaporizer2/VASTvaporizer/Presets/PD Majestic.vvp",
+   "kind": "pad",
+   "category": "Pads"
+  },
+  {
+   "name": "VZ Rich Pad",
+   "synth": "vaporizer",
+   "patch": "PD Rich Pad",
+   "preset": "/home/claude/synths/vaporizer2/VASTvaporizer/Presets/PD Rich Pad.vvp",
+   "kind": "pad",
+   "category": "Pads"
+  },
+  {
+   "name": "VZ Shimmer Pad",
+   "synth": "vaporizer",
+   "patch": "PD Shimmer",
+   "preset": "/home/claude/synths/vaporizer2/VASTvaporizer/Presets/PD Shimmer.vvp",
+   "kind": "pad",
+   "category": "Pads"
+  },
+  {
+   "name": "VZ Bladerunner Pad",
+   "synth": "vaporizer",
+   "patch": "PD Bladerunner 2019",
+   "preset": "/home/claude/synths/vaporizer2/VASTvaporizer/Presets/PD Bladerunner 2019.vvp",
+   "kind": "pad",
+   "category": "Pads"
+  },
+  {
+   "name": "VZ Shores Of Eden",
+   "synth": "vaporizer",
+   "patch": "AT Shores of Eden",
+   "preset": "/home/claude/synths/vaporizer2/VASTvaporizer/Presets/AT Shores of Eden.vvp",
+   "kind": "evolve",
+   "category": "Ambient"
+  },
+  {
+   "name": "VZ Big Room Pluck",
+   "synth": "vaporizer",
+   "patch": "PL Big Room",
+   "preset": "/home/claude/synths/vaporizer2/VASTvaporizer/Presets/PL Big Room.vvp",
+   "kind": "pluck",
+   "category": "Plucks"
+  },
+  {
+   "name": "VZ Glassy Dance Pluck",
+   "synth": "vaporizer",
+   "patch": "PL Glassy Dance Pluck",
+   "preset": "/home/claude/synths/vaporizer2/VASTvaporizer/Presets/PL Glassy Dance Pluck.vvp",
+   "kind": "pluck",
+   "category": "Plucks"
+  },
+  {
+   "name": "VZ Silver Pluck",
+   "synth": "vaporizer",
+   "patch": "PL Silverpluck",
+   "preset": "/home/claude/synths/vaporizer2/VASTvaporizer/Presets/PL Silverpluck.vvp",
+   "kind": "pluck",
+   "category": "Plucks"
+  },
+  {
+   "name": "VZ Sky Plucks",
+   "synth": "vaporizer",
+   "patch": "PL Sky Plucks",
+   "preset": "/home/claude/synths/vaporizer2/VASTvaporizer/Presets/PL Sky Plucks.vvp",
+   "kind": "pluck",
+   "category": "Plucks"
+  },
+  {
+   "name": "VZ Melodic Techno Bass",
+   "synth": "vaporizer",
+   "patch": "BA Melodic Techno Bass",
+   "preset": "/home/claude/synths/vaporizer2/VASTvaporizer/Presets/BA Melodic Techno Bass.vvp",
+   "kind": "bass",
+   "category": "Analog Synths"
+  },
+  {
+   "name": "VZ Deep Detroit Bass",
+   "synth": "vaporizer",
+   "patch": "BA Deep Detroit",
+   "preset": "/home/claude/synths/vaporizer2/VASTvaporizer/Presets/BA Deep Detroit.vvp",
+   "kind": "bass",
+   "category": "Analog Synths"
+  },
+  {
+   "name": "VZ Bright House Piano",
+   "synth": "vaporizer",
+   "patch": "PN Bright House Piano",
+   "preset": "/home/claude/synths/vaporizer2/VASTvaporizer/Presets/PN Bright House Piano.vvp",
+   "kind": "keys",
+   "category": "Pianos"
+  },
+  {
+   "name": "VZ Bells",
+   "synth": "vaporizer",
+   "patch": "BL Bells 001",
+   "preset": "/home/claude/synths/vaporizer2/VASTvaporizer/Presets/BL Bells 001.vvp",
+   "kind": "bell",
+   "category": "Bells"
+  },
+  {
+   "name": "VZ Clean Brass",
+   "synth": "vaporizer",
+   "patch": "BR Clean Brass",
+   "preset": "/home/claude/synths/vaporizer2/VASTvaporizer/Presets/BR Clean Brass.vvp",
+   "kind": "lead",
+   "category": "Analog Synths"
+  },
+  {
+   "name": "VZ Happy Chords",
+   "synth": "vaporizer",
+   "patch": "CH Happy Chords",
+   "preset": "/home/claude/synths/vaporizer2/VASTvaporizer/Presets/CH Happy Chords.vvp",
+   "kind": "pluck",
+   "category": "Digital Synths"
+  }
+ ]
+}

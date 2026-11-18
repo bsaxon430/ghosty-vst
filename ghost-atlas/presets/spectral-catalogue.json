@@ -1,0 +1,1925 @@
+{
+  "about": "SPECTRAL FX: its effects and their controls as upstream names them, and where each control starts in Ghost Atlas (kept between 0 and 1). Written by: GhostAtlasTests spectral list <file>",
+  "windows": [
+    128,
+    256,
+    512,
+    1024,
+    2048,
+    4096,
+    8192,
+    16384
+  ],
+  "shapes": [
+    "Hann",
+    "Hamming",
+    "Blackman",
+    "Rectangular",
+    "Blackman-Harris",
+    "Gaussian",
+    "Flat Top",
+    "Welch",
+    "Triangle"
+  ],
+  "effects": [
+    {
+      "index": 1,
+      "name": "Bin Shuffle",
+      "folder": "DESTRUCTION",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Amount",
+          "kind": "float",
+          "min": 0.0,
+          "max": 1.0,
+          "log": false,
+          "start": 0.019999999552965,
+          "choices": []
+        },
+        {
+          "name": "Seed",
+          "kind": "whole",
+          "min": 0.0,
+          "max": 999999.0,
+          "log": false,
+          "start": 0.0,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "name": "Random Bin Death",
+      "folder": "DESTRUCTION",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Amount",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.150000005960464,
+          "choices": []
+        },
+        {
+          "name": "Seed",
+          "kind": "whole",
+          "min": 0.0,
+          "max": 999999.0,
+          "log": false,
+          "start": 0.0,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "name": "Spectral Dropout",
+      "folder": "DESTRUCTION",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Amount",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.349999994039536,
+          "choices": []
+        },
+        {
+          "name": "Density",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.5,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "name": "Spectral Pixelation",
+      "folder": "DESTRUCTION",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Amount",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.150000005960464,
+          "choices": []
+        },
+        {
+          "name": "Block Size",
+          "kind": "whole",
+          "min": 1.0,
+          "max": 64.0,
+          "log": false,
+          "start": 1.0,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "name": "Spectral JPEG",
+      "folder": "DESTRUCTION",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Amount",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.150000005960464,
+          "choices": []
+        },
+        {
+          "name": "Block Size",
+          "kind": "whole",
+          "min": 1.0,
+          "max": 64.0,
+          "log": false,
+          "start": 0.111111111938953,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "name": "Spectral Clipper",
+      "folder": "DESTRUCTION",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Threshold",
+          "kind": "float",
+          "min": -96.0,
+          "max": 0.0,
+          "log": false,
+          "start": 0.583333313465118,
+          "choices": []
+        },
+        {
+          "name": "Drive",
+          "kind": "float",
+          "min": 0.0,
+          "max": 48.0,
+          "log": false,
+          "start": 0.0,
+          "choices": []
+        },
+        {
+          "name": "Knee",
+          "kind": "float",
+          "min": 0.0,
+          "max": 24.0,
+          "log": false,
+          "start": 0.0,
+          "choices": []
+        },
+        {
+          "name": "Output",
+          "kind": "float",
+          "min": -48.0,
+          "max": 24.0,
+          "log": false,
+          "start": 0.666666686534882,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "name": "Frequency Shift",
+      "folder": "FREQUENCY",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Shift",
+          "kind": "float",
+          "min": -5000.0,
+          "max": 5000.0,
+          "log": false,
+          "start": 0.504000008106232,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "name": "Frequency Warp",
+      "folder": "FREQUENCY",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Amount",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.100000001490116,
+          "choices": []
+        },
+        {
+          "name": "Shape",
+          "kind": "float",
+          "min": -100.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.75,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "name": "Frequency Drift",
+      "folder": "FREQUENCY",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Rate",
+          "kind": "float",
+          "min": 0.009999999776483,
+          "max": 10.0,
+          "log": false,
+          "start": 0.024024024605751,
+          "choices": []
+        },
+        {
+          "name": "Depth",
+          "kind": "float",
+          "min": 0.0,
+          "max": 64.0,
+          "log": false,
+          "start": 0.03125,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "name": "Frequency Remap",
+      "folder": "FREQUENCY",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Remap",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 1.0,
+          "choices": []
+        },
+        {
+          "name": "Low To",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.0,
+          "choices": []
+        },
+        {
+          "name": "Mid From",
+          "kind": "float",
+          "min": 0.100000001490116,
+          "max": 99.900001525878906,
+          "log": false,
+          "start": 0.5,
+          "choices": []
+        },
+        {
+          "name": "Mid To",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.5,
+          "choices": []
+        },
+        {
+          "name": "High To",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 1.0,
+          "choices": []
+        },
+        {
+          "name": "Bend Low",
+          "kind": "float",
+          "min": -100.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.5,
+          "choices": []
+        },
+        {
+          "name": "Bend High",
+          "kind": "float",
+          "min": -100.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.5,
+          "choices": []
+        },
+        {
+          "name": "Out Of Range",
+          "kind": "choice",
+          "min": 0.0,
+          "max": 1.0,
+          "log": false,
+          "start": 0.0,
+          "choices": [
+            "Silence",
+            "Keep Original"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 11,
+      "name": "Spectral Mirror",
+      "folder": "FREQUENCY",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Amount",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.25,
+          "choices": []
+        },
+        {
+          "name": "Mirror Centre",
+          "kind": "float",
+          "min": 20.0,
+          "max": 10000.0,
+          "log": true,
+          "start": 0.629488289356232,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 12,
+      "name": "Bin Teleport",
+      "folder": "FREQUENCY",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Amount",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.100000001490116,
+          "choices": []
+        },
+        {
+          "name": "Seed",
+          "kind": "whole",
+          "min": 0.0,
+          "max": 999999.0,
+          "log": false,
+          "start": 0.0,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 13,
+      "name": "Phase Corruption",
+      "folder": "PHASE",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Amount",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.100000001490116,
+          "choices": []
+        },
+        {
+          "name": "Seed",
+          "kind": "whole",
+          "min": 0.0,
+          "max": 999999.0,
+          "log": false,
+          "start": 0.0,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 14,
+      "name": "Phase Noise",
+      "folder": "PHASE",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Amount",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.150000005960464,
+          "choices": []
+        },
+        {
+          "name": "Rate",
+          "kind": "float",
+          "min": 0.009999999776483,
+          "max": 64.0,
+          "log": false,
+          "start": 0.124863252043724,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 15,
+      "name": "Complex Rotation",
+      "folder": "PHASE",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Amount",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.800000011920929,
+          "choices": []
+        },
+        {
+          "name": "Random Amount",
+          "kind": "switch",
+          "min": 0.0,
+          "max": 1.0,
+          "log": false,
+          "start": 0.0,
+          "choices": []
+        },
+        {
+          "name": "Random Rate",
+          "kind": "float",
+          "min": 0.009999999776483,
+          "max": 10.0,
+          "log": false,
+          "start": 0.199199199676514,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 16,
+      "name": "Magnitude Phase Swap",
+      "folder": "PHASE",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Amount",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.150000005960464,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 17,
+      "name": "Spectral Dispersion",
+      "folder": "PHASE",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Amount",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.25,
+          "choices": []
+        },
+        {
+          "name": "Curve",
+          "kind": "float",
+          "min": 0.0,
+          "max": 200.0,
+          "log": false,
+          "start": 0.25,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 18,
+      "name": "Bin Hold",
+      "folder": "TEXTURE / TIME",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Amount",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.150000005960464,
+          "choices": []
+        },
+        {
+          "name": "Rate",
+          "kind": "float",
+          "min": 1.0,
+          "max": 128.0,
+          "log": false,
+          "start": 0.05511811003089,
+          "choices": []
+        },
+        {
+          "name": "Length",
+          "kind": "whole",
+          "min": 1.0,
+          "max": 128.0,
+          "log": false,
+          "start": 0.05511811003089,
+          "choices": []
+        },
+        {
+          "name": "Seed",
+          "kind": "whole",
+          "min": 0.0,
+          "max": 999999.0,
+          "log": false,
+          "start": 0.0,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 19,
+      "name": "Frame Hold",
+      "folder": "TEXTURE / TIME",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Amount",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.349999994039536,
+          "choices": []
+        },
+        {
+          "name": "Rate",
+          "kind": "float",
+          "min": 1.0,
+          "max": 128.0,
+          "log": false,
+          "start": 0.05511811003089,
+          "choices": []
+        },
+        {
+          "name": "Length",
+          "kind": "whole",
+          "min": 1.0,
+          "max": 128.0,
+          "log": false,
+          "start": 0.05511811003089,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 20,
+      "name": "Temporal Smear",
+      "folder": "TEXTURE / TIME",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Amount",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.699999988079071,
+          "choices": []
+        },
+        {
+          "name": "Length",
+          "kind": "whole",
+          "min": 1.0,
+          "max": 64.0,
+          "log": false,
+          "start": 0.174603179097176,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 21,
+      "name": "Time Desync",
+      "folder": "TEXTURE / TIME",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Amount",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.349999994039536,
+          "choices": []
+        },
+        {
+          "name": "Mag Delay",
+          "kind": "whole",
+          "min": 0.0,
+          "max": 63.0,
+          "log": false,
+          "start": 0.015873016789556,
+          "choices": []
+        },
+        {
+          "name": "Phase Delay",
+          "kind": "whole",
+          "min": 0.0,
+          "max": 63.0,
+          "log": false,
+          "start": 0.126984134316444,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 22,
+      "name": "Spectral Bloom",
+      "folder": "TEXTURE / TIME",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Amount",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.100000001490116,
+          "choices": []
+        },
+        {
+          "name": "Spread",
+          "kind": "float",
+          "min": 10.0,
+          "max": 3000.0,
+          "log": true,
+          "start": 0.474781453609467,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 23,
+      "name": "Spectral Filter",
+      "folder": "FILTER / UTILITY",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Type",
+          "kind": "choice",
+          "min": 0.0,
+          "max": 3.0,
+          "log": false,
+          "start": 0.0,
+          "choices": [
+            "Low Pass",
+            "High Pass",
+            "Band Pass",
+            "Notch"
+          ]
+        },
+        {
+          "name": "Frequency",
+          "kind": "float",
+          "min": 20.0,
+          "max": 20000.0,
+          "log": true,
+          "start": 0.566323339939117,
+          "choices": []
+        },
+        {
+          "name": "Slope",
+          "kind": "choice",
+          "min": 0.0,
+          "max": 3.0,
+          "log": false,
+          "start": 0.333333343267441,
+          "choices": [
+            "6 dB/oct",
+            "12 dB/oct",
+            "24 dB/oct",
+            "48 dB/oct"
+          ]
+        },
+        {
+          "name": "Q",
+          "kind": "float",
+          "min": 0.100000001490116,
+          "max": 20.0,
+          "log": false,
+          "start": 0.030502513051033,
+          "choices": []
+        },
+        {
+          "name": "Mix",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 1.0,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 24,
+      "name": "Spectral Comb",
+      "folder": "FILTER / UTILITY",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Depth",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.349999994039536,
+          "choices": []
+        },
+        {
+          "name": "Tooth Spacing",
+          "kind": "float",
+          "min": 20.0,
+          "max": 4000.0,
+          "log": true,
+          "start": 0.452576756477356,
+          "choices": []
+        },
+        {
+          "name": "Offset",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.0,
+          "choices": []
+        },
+        {
+          "name": "Tooth Width",
+          "kind": "float",
+          "min": 2.0,
+          "max": 98.0,
+          "log": false,
+          "start": 0.34375,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 25,
+      "name": "Spectral Equalizer",
+      "folder": "FILTER / UTILITY",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Band 1 Gain",
+          "kind": "float",
+          "min": -24.0,
+          "max": 24.0,
+          "log": false,
+          "start": 0.5,
+          "choices": []
+        },
+        {
+          "name": "Band 2 Gain",
+          "kind": "float",
+          "min": -24.0,
+          "max": 24.0,
+          "log": false,
+          "start": 0.5,
+          "choices": []
+        },
+        {
+          "name": "Band 3 Gain",
+          "kind": "float",
+          "min": -24.0,
+          "max": 24.0,
+          "log": false,
+          "start": 0.5,
+          "choices": []
+        },
+        {
+          "name": "Band 4 Gain",
+          "kind": "float",
+          "min": -24.0,
+          "max": 24.0,
+          "log": false,
+          "start": 0.5,
+          "choices": []
+        },
+        {
+          "name": "Band 5 Gain",
+          "kind": "float",
+          "min": -24.0,
+          "max": 24.0,
+          "log": false,
+          "start": 0.5,
+          "choices": []
+        },
+        {
+          "name": "Band 6 Gain",
+          "kind": "float",
+          "min": -24.0,
+          "max": 24.0,
+          "log": false,
+          "start": 0.5,
+          "choices": []
+        },
+        {
+          "name": "Band 7 Gain",
+          "kind": "float",
+          "min": -24.0,
+          "max": 24.0,
+          "log": false,
+          "start": 0.5,
+          "choices": []
+        },
+        {
+          "name": "Band 8 Gain",
+          "kind": "float",
+          "min": -24.0,
+          "max": 24.0,
+          "log": false,
+          "start": 0.5,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 26,
+      "name": "Spectral Contrast",
+      "folder": "HARMONICS",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Contrast",
+          "kind": "float",
+          "min": -100.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.600000023841858,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 27,
+      "name": "Harmonic Sculpt",
+      "folder": "HARMONICS",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Amount",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 1.0,
+          "choices": []
+        },
+        {
+          "name": "Auto Track",
+          "kind": "switch",
+          "min": 0.0,
+          "max": 1.0,
+          "log": false,
+          "start": 1.0,
+          "choices": []
+        },
+        {
+          "name": "Fundamental",
+          "kind": "float",
+          "min": 40.0,
+          "max": 2000.0,
+          "log": true,
+          "start": 0.435771465301514,
+          "choices": []
+        },
+        {
+          "name": "Odd Harmonics",
+          "kind": "float",
+          "min": -48.0,
+          "max": 12.0,
+          "log": false,
+          "start": 0.800000011920929,
+          "choices": []
+        },
+        {
+          "name": "Even Harmonics",
+          "kind": "float",
+          "min": -48.0,
+          "max": 12.0,
+          "log": false,
+          "start": 0.600000023841858,
+          "choices": []
+        },
+        {
+          "name": "Band Width",
+          "kind": "float",
+          "min": 5.0,
+          "max": 95.0,
+          "log": false,
+          "start": 0.277777791023254,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 28,
+      "name": "Harmonic Match",
+      "folder": "HARMONICS",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Shape",
+          "kind": "choice",
+          "min": 0.0,
+          "max": 4.0,
+          "log": false,
+          "start": 0.0,
+          "choices": [
+            "Triangle",
+            "Square",
+            "Saw",
+            "Pointy",
+            "Sweep"
+          ]
+        },
+        {
+          "name": "Mode",
+          "kind": "choice",
+          "min": 0.0,
+          "max": 1.0,
+          "log": false,
+          "start": 0.0,
+          "choices": [
+            "Scale",
+            "Resynth"
+          ]
+        },
+        {
+          "name": "Amount",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.5,
+          "choices": []
+        },
+        {
+          "name": "Colour / Sweep",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.5,
+          "choices": []
+        },
+        {
+          "name": "Auto Track",
+          "kind": "switch",
+          "min": 0.0,
+          "max": 1.0,
+          "log": false,
+          "start": 1.0,
+          "choices": []
+        },
+        {
+          "name": "Fundamental",
+          "kind": "float",
+          "min": 40.0,
+          "max": 2000.0,
+          "log": true,
+          "start": 0.435771465301514,
+          "choices": []
+        },
+        {
+          "name": "Band Width",
+          "kind": "float",
+          "min": 5.0,
+          "max": 95.0,
+          "log": false,
+          "start": 0.5,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 29,
+      "name": "Stretcher",
+      "folder": "PARTIAL",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Mode",
+          "kind": "choice",
+          "min": 0.0,
+          "max": 1.0,
+          "log": false,
+          "start": 0.0,
+          "choices": [
+            "Scale",
+            "Resynth"
+          ]
+        },
+        {
+          "name": "Shape",
+          "kind": "choice",
+          "min": 0.0,
+          "max": 3.0,
+          "log": false,
+          "start": 0.0,
+          "choices": [
+            "Sine",
+            "Triangle",
+            "Saw",
+            "Square"
+          ]
+        },
+        {
+          "name": "Anchor",
+          "kind": "choice",
+          "min": 0.0,
+          "max": 1.0,
+          "log": false,
+          "start": 0.0,
+          "choices": [
+            "Band Centre",
+            "Energy Centroid"
+          ]
+        },
+        {
+          "name": "Stretch",
+          "kind": "float",
+          "min": -48.0,
+          "max": 48.0,
+          "log": false,
+          "start": 0.53125,
+          "choices": []
+        },
+        {
+          "name": "Reference",
+          "kind": "float",
+          "min": 20.0,
+          "max": 2000.0,
+          "log": true,
+          "start": 0.370181322097778,
+          "choices": []
+        },
+        {
+          "name": "Slices",
+          "kind": "whole",
+          "min": 2.0,
+          "max": 64.0,
+          "log": false,
+          "start": 0.225806444883347,
+          "choices": []
+        },
+        {
+          "name": "Slice Crossfade",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.0,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 30,
+      "name": "Stiff String",
+      "folder": "PARTIAL",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Mode",
+          "kind": "choice",
+          "min": 0.0,
+          "max": 1.0,
+          "log": false,
+          "start": 0.0,
+          "choices": [
+            "Scale",
+            "Resynth"
+          ]
+        },
+        {
+          "name": "Shape",
+          "kind": "choice",
+          "min": 0.0,
+          "max": 3.0,
+          "log": false,
+          "start": 0.0,
+          "choices": [
+            "Sine",
+            "Triangle",
+            "Saw",
+            "Square"
+          ]
+        },
+        {
+          "name": "Anchor",
+          "kind": "choice",
+          "min": 0.0,
+          "max": 1.0,
+          "log": false,
+          "start": 0.0,
+          "choices": [
+            "Band Centre",
+            "Energy Centroid"
+          ]
+        },
+        {
+          "name": "Stiffness",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.079999998211861,
+          "choices": []
+        },
+        {
+          "name": "Reference",
+          "kind": "float",
+          "min": 20.0,
+          "max": 2000.0,
+          "log": true,
+          "start": 0.370181322097778,
+          "choices": []
+        },
+        {
+          "name": "Slices",
+          "kind": "whole",
+          "min": 2.0,
+          "max": 64.0,
+          "log": false,
+          "start": 0.225806444883347,
+          "choices": []
+        },
+        {
+          "name": "Slice Crossfade",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.0,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 31,
+      "name": "Centroid",
+      "folder": "PARTIAL",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Mode",
+          "kind": "choice",
+          "min": 0.0,
+          "max": 1.0,
+          "log": false,
+          "start": 0.0,
+          "choices": [
+            "Scale",
+            "Resynth"
+          ]
+        },
+        {
+          "name": "Shape",
+          "kind": "choice",
+          "min": 0.0,
+          "max": 3.0,
+          "log": false,
+          "start": 0.0,
+          "choices": [
+            "Sine",
+            "Triangle",
+            "Saw",
+            "Square"
+          ]
+        },
+        {
+          "name": "Anchor",
+          "kind": "choice",
+          "min": 0.0,
+          "max": 1.0,
+          "log": false,
+          "start": 0.0,
+          "choices": [
+            "Band Centre",
+            "Energy Centroid"
+          ]
+        },
+        {
+          "name": "Converge",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.03999999910593,
+          "choices": []
+        },
+        {
+          "name": "Target",
+          "kind": "float",
+          "min": 20.0,
+          "max": 20000.0,
+          "log": true,
+          "start": 0.566323339939117,
+          "choices": []
+        },
+        {
+          "name": "Slices",
+          "kind": "whole",
+          "min": 2.0,
+          "max": 64.0,
+          "log": false,
+          "start": 0.225806444883347,
+          "choices": []
+        },
+        {
+          "name": "Slice Crossfade",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.0,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 32,
+      "name": "P Grid",
+      "folder": "PARTIAL",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Mode",
+          "kind": "choice",
+          "min": 0.0,
+          "max": 1.0,
+          "log": false,
+          "start": 0.0,
+          "choices": [
+            "Scale",
+            "Resynth"
+          ]
+        },
+        {
+          "name": "Shape",
+          "kind": "choice",
+          "min": 0.0,
+          "max": 3.0,
+          "log": false,
+          "start": 0.0,
+          "choices": [
+            "Sine",
+            "Triangle",
+            "Saw",
+            "Square"
+          ]
+        },
+        {
+          "name": "Anchor",
+          "kind": "choice",
+          "min": 0.0,
+          "max": 1.0,
+          "log": false,
+          "start": 0.0,
+          "choices": [
+            "Band Centre",
+            "Energy Centroid"
+          ]
+        },
+        {
+          "name": "Quantize",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.079999998211861,
+          "choices": []
+        },
+        {
+          "name": "Grid Spacing",
+          "kind": "float",
+          "min": 0.100000001490116,
+          "max": 48.0,
+          "log": false,
+          "start": 0.248434215784073,
+          "choices": []
+        },
+        {
+          "name": "Reference",
+          "kind": "float",
+          "min": 20.0,
+          "max": 2000.0,
+          "log": true,
+          "start": 0.370181322097778,
+          "choices": []
+        },
+        {
+          "name": "Slices",
+          "kind": "whole",
+          "min": 2.0,
+          "max": 64.0,
+          "log": false,
+          "start": 0.225806444883347,
+          "choices": []
+        },
+        {
+          "name": "Slice Crossfade",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.0,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 33,
+      "name": "F Grid",
+      "folder": "PARTIAL",
+      "window": true,
+      "knobs": [
+        {
+          "name": "Mode",
+          "kind": "choice",
+          "min": 0.0,
+          "max": 1.0,
+          "log": false,
+          "start": 0.0,
+          "choices": [
+            "Scale",
+            "Resynth"
+          ]
+        },
+        {
+          "name": "Shape",
+          "kind": "choice",
+          "min": 0.0,
+          "max": 3.0,
+          "log": false,
+          "start": 0.0,
+          "choices": [
+            "Sine",
+            "Triangle",
+            "Saw",
+            "Square"
+          ]
+        },
+        {
+          "name": "Anchor",
+          "kind": "choice",
+          "min": 0.0,
+          "max": 1.0,
+          "log": false,
+          "start": 0.0,
+          "choices": [
+            "Band Centre",
+            "Energy Centroid"
+          ]
+        },
+        {
+          "name": "Quantize",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.079999998211861,
+          "choices": []
+        },
+        {
+          "name": "Grid Spacing",
+          "kind": "float",
+          "min": 1.0,
+          "max": 4000.0,
+          "log": true,
+          "start": 0.566729247570038,
+          "choices": []
+        },
+        {
+          "name": "Slices",
+          "kind": "whole",
+          "min": 2.0,
+          "max": 64.0,
+          "log": false,
+          "start": 0.225806444883347,
+          "choices": []
+        },
+        {
+          "name": "Slice Crossfade",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.0,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 34,
+      "name": "Reverb",
+      "folder": "GENERIC",
+      "window": false,
+      "knobs": [
+        {
+          "name": "Space",
+          "kind": "choice",
+          "min": 0.0,
+          "max": 2.0,
+          "log": false,
+          "start": 0.0,
+          "choices": [
+            "Plate",
+            "Hall",
+            "Room"
+          ]
+        },
+        {
+          "name": "Decay",
+          "kind": "float",
+          "min": 0.100000001490116,
+          "max": 12.0,
+          "log": false,
+          "start": 0.201680690050125,
+          "choices": []
+        },
+        {
+          "name": "Size",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.600000023841858,
+          "choices": []
+        },
+        {
+          "name": "Pre-delay",
+          "kind": "float",
+          "min": 0.0,
+          "max": 200.0,
+          "log": false,
+          "start": 0.100000001490116,
+          "choices": []
+        },
+        {
+          "name": "Damping",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.449999988079071,
+          "choices": []
+        },
+        {
+          "name": "Mix",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.25,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 35,
+      "name": "Delay",
+      "folder": "GENERIC",
+      "window": false,
+      "knobs": [
+        {
+          "name": "Mode",
+          "kind": "choice",
+          "min": 0.0,
+          "max": 2.0,
+          "log": false,
+          "start": 0.0,
+          "choices": [
+            "Normal",
+            "Tap Delay",
+            "Ping-Pong"
+          ]
+        },
+        {
+          "name": "Sync",
+          "kind": "switch",
+          "min": 0.0,
+          "max": 1.0,
+          "log": false,
+          "start": 0.0,
+          "choices": []
+        },
+        {
+          "name": "Beat",
+          "kind": "choice",
+          "min": 0.0,
+          "max": 20.0,
+          "log": false,
+          "start": 0.649999976158142,
+          "choices": [
+            "1/64 T",
+            "1/64",
+            "1/64 D",
+            "1/32 T",
+            "1/32",
+            "1/32 D",
+            "1/16 T",
+            "1/16",
+            "1/16 D",
+            "1/8 T",
+            "1/8",
+            "1/8 D",
+            "1/4 T",
+            "1/4",
+            "1/4 D",
+            "1/2 T",
+            "1/2",
+            "1/2 D",
+            "1/1 T",
+            "1/1",
+            "1/1 D"
+          ]
+        },
+        {
+          "name": "Time",
+          "kind": "float",
+          "min": 1.0,
+          "max": 2000.0,
+          "log": true,
+          "start": 0.750408589839935,
+          "choices": []
+        },
+        {
+          "name": "Feedback",
+          "kind": "float",
+          "min": 0.0,
+          "max": 95.0,
+          "log": false,
+          "start": 0.368421047925949,
+          "choices": []
+        },
+        {
+          "name": "Mix",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.300000011920929,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 36,
+      "name": "Compressor",
+      "folder": "GENERIC",
+      "window": false,
+      "knobs": [
+        {
+          "name": "Threshold",
+          "kind": "float",
+          "min": -60.0,
+          "max": 0.0,
+          "log": false,
+          "start": 0.699999988079071,
+          "choices": []
+        },
+        {
+          "name": "Ratio",
+          "kind": "float",
+          "min": 1.0,
+          "max": 20.0,
+          "log": false,
+          "start": 0.157894730567932,
+          "choices": []
+        },
+        {
+          "name": "Attack",
+          "kind": "float",
+          "min": 0.100000001490116,
+          "max": 200.0,
+          "log": true,
+          "start": 0.605871498584747,
+          "choices": []
+        },
+        {
+          "name": "Release",
+          "kind": "float",
+          "min": 10.0,
+          "max": 2000.0,
+          "log": true,
+          "start": 0.434587985277176,
+          "choices": []
+        },
+        {
+          "name": "Knee",
+          "kind": "float",
+          "min": 0.0,
+          "max": 24.0,
+          "log": false,
+          "start": 0.25,
+          "choices": []
+        },
+        {
+          "name": "Makeup",
+          "kind": "float",
+          "min": 0.0,
+          "max": 24.0,
+          "log": false,
+          "start": 0.0,
+          "choices": []
+        },
+        {
+          "name": "Mix",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 1.0,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 37,
+      "name": "Distortion",
+      "folder": "GENERIC",
+      "window": false,
+      "knobs": [
+        {
+          "name": "Shape",
+          "kind": "choice",
+          "min": 0.0,
+          "max": 3.0,
+          "log": false,
+          "start": 0.0,
+          "choices": [
+            "Tube",
+            "Overdrive",
+            "Sin Fold",
+            "Lin Fold"
+          ]
+        },
+        {
+          "name": "Drive",
+          "kind": "float",
+          "min": 0.0,
+          "max": 36.0,
+          "log": false,
+          "start": 0.16666667163372,
+          "choices": []
+        },
+        {
+          "name": "Bias",
+          "kind": "float",
+          "min": -1.0,
+          "max": 1.0,
+          "log": false,
+          "start": 0.5,
+          "choices": []
+        },
+        {
+          "name": "Tone",
+          "kind": "float",
+          "min": 200.0,
+          "max": 20000.0,
+          "log": true,
+          "start": 0.951545000076294,
+          "choices": []
+        },
+        {
+          "name": "Output",
+          "kind": "float",
+          "min": -36.0,
+          "max": 12.0,
+          "log": false,
+          "start": 0.625,
+          "choices": []
+        },
+        {
+          "name": "Mix",
+          "kind": "float",
+          "min": 0.0,
+          "max": 100.0,
+          "log": false,
+          "start": 1.0,
+          "choices": []
+        }
+      ]
+    },
+    {
+      "index": 38,
+      "name": "Utility",
+      "folder": "GENERIC",
+      "window": false,
+      "knobs": [
+        {
+          "name": "Phase Invert",
+          "kind": "choice",
+          "min": 0.0,
+          "max": 3.0,
+          "log": false,
+          "start": 0.0,
+          "choices": [
+            "None",
+            "Left",
+            "Right",
+            "Both"
+          ]
+        },
+        {
+          "name": "Channel Mode",
+          "kind": "choice",
+          "min": 0.0,
+          "max": 2.0,
+          "log": false,
+          "start": 0.0,
+          "choices": [
+            "Stereo",
+            "Left Only",
+            "Right Only"
+          ]
+        },
+        {
+          "name": "Swap L/R",
+          "kind": "switch",
+          "min": 0.0,
+          "max": 1.0,
+          "log": false,
+          "start": 0.0,
+          "choices": []
+        },
+        {
+          "name": "Width",
+          "kind": "float",
+          "min": 0.0,
+          "max": 200.0,
+          "log": false,
+          "start": 0.5,
+          "choices": []
+        },
+        {
+          "name": "Mono",
+          "kind": "switch",
+          "min": 0.0,
+          "max": 1.0,
+          "log": false,
+          "start": 0.0,
+          "choices": []
+        },
+        {
+          "name": "Gain",
+          "kind": "float",
+          "min": -48.0,
+          "max": 12.0,
+          "log": false,
+          "start": 0.800000011920929,
+          "choices": []
+        },
+        {
+          "name": "Balance",
+          "kind": "float",
+          "min": -100.0,
+          "max": 100.0,
+          "log": false,
+          "start": 0.5,
+          "choices": []
+        }
+      ]
+    }
+  ],
+  "warp": [
+    {
+      "id": "w_bands",
+      "name": "Warp",
+      "min": 1.0,
+      "max": 256.0,
+      "start": 50.0,
+      "kind": "whole",
+      "choices": []
+    },
+    {
+      "id": "w_high",
+      "name": "Freq High",
+      "min": 4000.0,
+      "max": 20010.0,
+      "start": 20010.0,
+      "kind": "float",
+      "choices": []
+    },
+    {
+      "id": "w_scale",
+      "name": "Scale",
+      "min": 0.100000001490116,
+      "max": 3.0,
+      "start": 1.0,
+      "kind": "float",
+      "choices": []
+    },
+    {
+      "id": "w_poles",
+      "name": "Poles",
+      "min": 1.0,
+      "max": 8.0,
+      "start": 2.0,
+      "kind": "whole",
+      "choices": []
+    },
+    {
+      "id": "w_pitch",
+      "name": "Pitch",
+      "min": -24.0,
+      "max": 24.0,
+      "start": 0.0,
+      "kind": "float",
+      "choices": []
+    },
+    {
+      "id": "w_affect",
+      "name": "Pitch Affect",
+      "min": 0.0,
+      "max": 1.0,
+      "start": 1.0,
+      "kind": "switch",
+      "choices": []
+    },
+    {
+      "id": "w_fill",
+      "name": "Fill Gap",
+      "min": 0.0,
+      "max": 1.0,
+      "start": 0.0,
+      "kind": "switch",
+      "choices": []
+    },
+    {
+      "id": "w_mode",
+      "name": "Freq Mode",
+      "min": 0.0,
+      "max": 3.0,
+      "start": 2.0,
+      "kind": "choice",
+      "choices": [
+        "voice: 0 + n",
+        "voice: 1 + n",
+        "music: 0 + 2n",
+        "music: 1 + 2n"
+      ]
+    },
+    {
+      "id": "w_mix",
+      "name": "Dry/Wet",
+      "min": 0.0,
+      "max": 1.0,
+      "start": 1.0,
+      "kind": "float",
+      "choices": []
+    }
+  ]
+}

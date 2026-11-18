@@ -1,0 +1,79 @@
+repo: https://github.com/tiagolr/time12.git
+branch: master
+commit: cb86fd616c10b8368119b01bcdcabc1654899031
+commit date: 2026-01-11T18:39:41+00:00
+licence files:
+./LICENSE
+
+--- top level
+CMakeLists.txt
+LICENSE
+README.md
+doc
+libs
+resources
+src
+
+--- tree (depth 2, dirs)
+.
+./doc
+./libs
+./libs/JUCE
+./resources
+./src
+./src/dsp
+./src/ui
+./src/utils
+
+--- src
+.
+./Globals.h
+./PluginEditor.cpp
+./PluginEditor.h
+./PluginProcessor.cpp
+./PluginProcessor.h
+./Presets.h
+./dsp
+./dsp/Delay.cpp
+./dsp/Delay.h
+./dsp/Filter.cpp
+./dsp/Filter.h
+./dsp/Pattern.cpp
+./dsp/Pattern.h
+./dsp/Transient.cpp
+./dsp/Transient.h
+./ui
+./ui/About.cpp
+./ui/About.h
+./ui/AudioDisplay.cpp
+./ui/AudioDisplay.h
+./ui/CustomLookAndFeel.cpp
+./ui/CustomLookAndFeel.h
+./ui/GridSelector.cpp
+./ui/GridSelector.h
+./ui/Multiselect.cpp
+./ui/Multiselect.h
+./ui/PaintTool.cpp
+./ui/PaintTool.h
+./ui/PaintToolWidget.cpp
+./ui/PaintToolWidget.h
+./ui/Rotary.cpp
+./ui/Rotary.h
+./ui/Sequencer.cpp
+./ui/Sequencer.h
+./ui/SequencerWidget.cpp
+./ui/SequencerWidget.h
+./ui/SettingsButton.cpp
+./ui/SettingsButton.h
+./ui/TextDial.cpp
+./ui/TextDial.h
+./ui/View.cpp
+./ui/View.h
+./utils
+./utils/PatternManager.cpp
+./utils/PatternManager.h
+
+--- submodules
+[submodule "libs/JUCE"]
+	path = libs/JUCE
+	url = https://github.com/juce-framework/JUCE.git

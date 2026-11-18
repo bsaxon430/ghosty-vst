@@ -1,0 +1,2779 @@
+{
+ "about": "GHOST ATLAS starter library: where every sound comes from, who made it and under what licence. Fetched by fetch_library.py; nothing here is behind a login.",
+ "libraries": [
+  {
+   "id": "fp-glasses",
+   "name": "Glasses of water",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "Simple musical instrument made with glasses of water. It was recorded on October 2019, initially as an example for a workshop in Medialab-Prado. It turned out more interesting than expected and it's now transformed into a sound bank. Recorded with an AKG Perception 120 microphone and glasses of water, carefully filled to tune into chromatic sounds with aproximate note range from A4 to G6.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/ChromaticPercussion/glass.html",
+   "version": "2019-12-27",
+   "size_mb": 11,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://freepats.zenvoid.org/ChromaticPercussion/Glass/Glass-SFZ+FLAC-20191227.7z"
+    ],
+    "sha256": [
+     "09e79458e42a435df93a554c90f61082270bb3baf5df7051f4dcaf09aaac9b9a"
+    ]
+   }
+  },
+  {
+   "id": "fp-hang-d-minor",
+   "name": "Hang tuned in D minor",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "Hang recorded on July 2017, at the Medialab-Prado auditorium, by Gonzalo <humanogonzalo@gmail.com> and Roberto <roberto@zenvoid.org>, using a Zoom H1 portable recorder mounted on a tripod. Raw recordings were cropped, edited, and processed by Roberto, using free software programs. Thanks to Mar, who kindly let us record her Hang for the FreePats project and was the performer during the recording s",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/ChromaticPercussion/hang.html",
+   "version": "2022-03-30",
+   "size_mb": 13,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/freepats/hang-D-minor/releases/download/2022-03-30/Hang-D-minor-SFZ+FLAC-20220330.7z"
+    ],
+    "sha256": [
+     "dea56a898c88b838e37f92967fe0edfe41b1bd2aa16ed9a240e3f44efb525a5c"
+    ]
+   }
+  },
+  {
+   "id": "fp-tubular-bells",
+   "name": "Tubular Bells",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "Made with samples of the Versilian Community Sample Library, a CC0 sample library created by Versilian Studios LLC . This sound bank is assembled by roberto@zenvoid.org. Samples have been edited.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/ChromaticPercussion/tubular-bells.html",
+   "version": "2024-11-30",
+   "size_mb": 13,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/freepats/tubular-bells1/releases/download/2024-11-30/TubularBells-SFZ+FLAC-20241130.7z"
+    ],
+    "sha256": [
+     "222d0cd92320525d4e3baafccfb37aa194ff71d8501b7fb878d6910abb8a25ec"
+    ]
+   }
+  },
+  {
+   "id": "fp-fm-piano-1",
+   "name": "FM Synthesized Piano #1",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "Imitation of the Yamaha DX7 electric piano, a FM sythesis instrument that was popular in the 1980s. These sound samples simulate the \"E. Piano 1\" patch of the DX7, used in many 1980s popular songs. Recorded from Hexter software synthesizer. Hexter is a free software program that accurately models the sound generation algorithm of the original instrument. For best quality and flexibility we recomme",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/ElectricPiano/synthesized-piano.html",
+   "version": "2019-09-16",
+   "size_mb": 24,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/freepats/fm-piano1/releases/download/2019-09-16/FM-Piano1-SFZ+FLAC-20190916.7z"
+    ],
+    "sha256": [
+     "fa308cead617211b29f500db2f962f34e18c9cd55a94ae9176e1d63babeab083"
+    ]
+   }
+  },
+  {
+   "id": "fp-fm-piano-2",
+   "name": "FM Synthesized Piano #2",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "Imitation of the Yamaha DX7 electric piano, a FM sythesis instrument that was popular in the 1980s. These sound samples simulate a bright variation of an electric piano patch. Recorded from Hexter software synthesizer. Hexter is a free software program that accurately models the sound generation algorithm of the original instrument. For best quality and flexibility we recommend to run Hexter synth",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/ElectricPiano/synthesized-piano.html",
+   "version": "2016-11-12",
+   "size_mb": 9,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/freepats/fm-piano2/releases/download/2016-11-12/FM-Piano2-SFZ+FLAC-20161112.7z"
+    ],
+    "sha256": [
+     "4e11a442fa9b6b5322e5dfa4eb24abdfc8713bb9a7ec33c99baab1f92967aaaa"
+    ]
+   }
+  },
+  {
+   "id": "fp-kalimba",
+   "name": "Kalimba",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "This sound bank has been created from real instrument recordings, thanks to Xavimart (Javier), a musician that maintains a collection of musical instruments from many places around the world. He granted us access to his collection and helped with the performance and recording for all day long. The kalimba was recorded on January 2019 by Xavimart, Gonzalo <humanogonzalo@gmail.com> and Roberto <robe",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/Ethnic/kalimba.html",
+   "version": "2019-05-31",
+   "size_mb": 10,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://freepats.zenvoid.org/Ethnic/Kalimba/Kalimba-SFZ-20190723.tar.xz"
+    ],
+    "sha256": [
+     "e26a7346c37849f571d28cb97ece8e1e32b8bcddf93866294d1d41fa55014782"
+    ]
+   }
+  },
+  {
+   "id": "fp-concert-harp",
+   "name": "Concert Harp",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "Concert Harp sound bank made with samples of the Versilian Community Sample Library, a CC0 sample library created by Versilian Studios LLC . Thanks to Sam Gossner, founder of Versilian Studios, for providing those samples under a free license and answering our emails. Performer: K. Smith. Location: Boston, MA. Small room. Microphones: 2x Rode NT1-A spaced pair, 2x AT Pro 37's close. Interface: Foc",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/OrchestralStrings/harp.html",
+   "version": "2020-07-02",
+   "size_mb": 9,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://freepats.zenvoid.org/OrchestralStrings/ConcertHarp/ConcertHarp-SFZ-20200702.tar.xz"
+    ],
+    "sha256": [
+     "e7dacbb92ff11bbb2eff97fe837e370341ef175e6b401309f05b623da87e3a1e"
+    ]
+   }
+  },
+  {
+   "id": "fp-drawbar-organ",
+   "name": "Drawbar organ emulation",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "Imitation of an electromechanical organ, known as a Hammond organ due to its inventor and original manufacturer. Samples and sound bank made by Roberto <roberto@zenvoid.org> for the FreePats project. Recorded from setBfree software synthesizer. setBfree is a free software program that accurately imitates the sound of electromechanical organs. For best quality and flexibility we recommend to run se",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/Organ/electric-organ.html",
+   "version": "2019-07-12",
+   "size_mb": 6,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://freepats.zenvoid.org/Organ/DrawbarOrganEmulation/DrawbarOrganEmulation-SFZ-20190712.tar.xz"
+    ],
+    "sha256": [
+     "e2da18b0a4d13be7020037e18e4a719387433357e7603d0773990e794dcf5d0f"
+    ]
+   }
+  },
+  {
+   "id": "fp-church-organ",
+   "name": "Church Organ Emulation",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "Sound bank made by roberto@zenvoid.org for the FreePats project. Recorded from Aeolus pipe organ emulator on Debian GNU/Linux operating system. Aeolus is a free software synthesizer made by Fons Adriaensen. For best quality and flexibility we recommend to run Aeolus synthesizer directly in your computer. These sound banks are provided for convenience when sample-based synthesizers are preferred an",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/Organ/pipe-organ.html",
+   "version": "2019-09-24",
+   "size_mb": 13,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://freepats.zenvoid.org/Organ/ChurchOrganEmulation/ChurchOrganEmulation-SFZ-20190924.tar.xz"
+    ],
+    "sha256": [
+     "1f0b70a2c2af14cdf051ef2d256b3bb652e7d64c0fdc8bed06642ad2af916db9"
+    ]
+   }
+  },
+  {
+   "id": "fp-upright-piano-kw",
+   "name": "Upright Piano KW",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "Created from a Kawai upright piano located in a living room. Thanks to Inma Martínez de Miguel for kindly letting us access to her home to play and record the piano, and Claudia Marín Martínez for her support the recording day. It was recorded by Gonzalo <humanogonzalo@gmail.com> and Roberto <roberto@zenvoid.org> on January 2017, using a Zoom H1 portable recorder mounted on a tripod in front of th",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html",
+   "version": "2022-02-21",
+   "size_mb": 32,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://freepats.zenvoid.org/Piano/UprightPianoKW/UprightPianoKW-SFZ+FLAC-20220221.7z"
+    ],
+    "sha256": [
+     "3a66da3b25a2fd9499d90bcf09f1aee4431825796e249361b48af59b1201e703"
+    ]
+   }
+  },
+  {
+   "id": "fp-salamander-grand",
+   "name": "Salamander Grand Piano",
+   "group": "FreePats",
+   "author": "Alexander Holm",
+   "credit": "Salamander Grand Piano Version V3+2020-06-02 Yamaha C5, recorded with two AKG c414 disposed in an AB position ~12cm above the strings, 48kHz 24bit, 16 velocity layers. Sampled in minor thirds from the lowest A. Hammer noise releases chromatically sampled in one layer. String resonance releases in minor thirds in three layers. Author: Alexander Holm, axeldenstore (at) gmail (dot) com. Creative Comm",
+   "license": "CC-BY-3.0",
+   "license_url": "https://creativecommons.org/licenses/by/3.0/",
+   "source": "https://freepats.zenvoid.org/Piano/acoustic-grand-piano.html",
+   "version": "V3+2016-12-09 (44.1 kHz 16 bit)",
+   "size_mb": 394,
+   "restrictions": "Attribution: credit \"Salamander Grand Piano by Alexander Holm\" when sharing the samples or work built from them (CC BY 3.0).",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://freepats.zenvoid.org/Piano/SalamanderGrandPiano/SalamanderGrandPianoV3+20161209_44khz16bit.tar.xz"
+    ],
+    "sha256": [
+     "58750eb1366761e187f71ddb9b932355ea894d28ec4331e74ab8acb44c819936"
+    ]
+   },
+   "skip": [
+    "*Retuned*"
+   ],
+   "rename": {
+    "Salamander Grand Piano V3": "Salamander Grand Piano"
+   }
+  },
+  {
+   "id": "fp-lately-bass",
+   "name": "Lately Bass",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "Simulation of the famous TX81Z patch, Lately Bass. Made by Yingchun Soul (迎春心情) with Dexed and sent to FreePats on June 2023. This version has been adapted for FreePats to support SFZ and SF2 formats.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/Synthesizer/synth-bass.html",
+   "version": "2024-04-09",
+   "size_mb": 1,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/freepats/lately-bass/releases/download/2024-04-09/LatelyBass-SFZ+FLAC-20240409.7z"
+    ],
+    "sha256": [
+     "3cb6d4081b39cea265011a21f05a424fc72845abfd17d7409ac16acc7122a3e0"
+    ]
+   }
+  },
+  {
+   "id": "fp-synth-bass-1",
+   "name": "Synth Bass #1",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "General MIDI instrument #39: Synth Bass 1. Recorded from ZynAddSubFX / Yoshimi software synthesizers. ZynAddSubFX and Yoshimi are free software programs capable of creating many different sounds with several synthesis engines, filters and effects.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/Synthesizer/synth-bass.html",
+   "version": "2019-07-23",
+   "size_mb": 1,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/freepats/synth-bass-1/releases/download/2019-07-23/SynthBass1-SFZ+FLAC-20190723.7z"
+    ],
+    "sha256": [
+     "b3988a78286292200d7fa8d2bbe708a80bb02b28d519f8a7d0c66df7e894f07b"
+    ]
+   }
+  },
+  {
+   "id": "fp-synth-bass-2",
+   "name": "Synth Bass #2",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "General MIDI instrument #40: Synth Bass 2. These sound samples simulate the \"BASS 1\" patch of the Yamaha DX7, a FM sythesis instrument that was used in many 1980s popular songs. Recorded from Hexter software synthesizer. Hexter is a free software program that accurately models the sound generation algorithm of the original instrument. For best quality and flexibility we recommend to run Hexter syn",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/Synthesizer/synth-bass.html",
+   "version": "2021-04-05",
+   "size_mb": 3,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/freepats/synth-bass-2/releases/download/2021-04-05/SynthBass2-SFZ+FLAC-20210405.7z"
+    ],
+    "sha256": [
+     "3a04fc728197b746d5e82a5ced27bddc57f52db5e5bb5426a07ef14771b2ee4f"
+    ]
+   }
+  },
+  {
+   "id": "fp-synth-brass-1",
+   "name": "Synth Brass #1",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "General MIDI instrument #63: Synth Brass 1. Recorded from ZynAddSubFX / Yoshimi software synthesizers. ZynAddSubFX and Yoshimi are free software programs capable of creating many different sounds with several synthesis engines, filters and effects.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/Synthesizer/synth-brass.html",
+   "version": "2021-04-26",
+   "size_mb": 3,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/freepats/synth-brass-1/releases/download/2021-04-26/SynthBrass1-SFZ+FLAC-20210426.7z"
+    ],
+    "sha256": [
+     "68f89ea24a67e0ce4db50549741cf723ff4fa8f8f8b41834e04b174e357124e1"
+    ]
+   }
+  },
+  {
+   "id": "fp-synth-brass-2",
+   "name": "Synth Brass #2",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "General MIDI instrument #63: Synth Brass 2. Samples by Strix SoundFont Team <dsoundfont123@gmail.com>, sent to the FreePats project on June 2018. This sound set emulates the 'BRASS 7' patch in the Yamaha DX7. Recorded from Dexed , a software synthesizer that emulates the sound synthesis algorithm of the DX7.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/Synthesizer/synth-brass.html",
+   "version": "2024-06-10",
+   "size_mb": 2,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/freepats/synth-brass-2/releases/download/2024-06-10/SynthBrass2-SFZ+FLAC-20240610.7z"
+    ],
+    "sha256": [
+     "abea7d1510f46001349ebec81b5a323ce12022d1f49604d0074597ba55d47878"
+    ]
+   }
+  },
+  {
+   "id": "fp-synth-goblins",
+   "name": "Synth Goblins",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "General MIDI instrument #102: Synth FX 6 (goblins). Samples by 快乐爱的小精灵 (Elf of Happy and Love) <lovebodhi@yandex.com>, sent to the FreePats project on April 2020. Made with ZynAddSubFX software synthesizer. This version is edited by roberto@zenvoid.org. Originally it was Echoes FX, but it turned into the instrument #102 (goblins), which fits very well.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/Synthesizer/synth-effects.html",
+   "version": "2020-06-12",
+   "size_mb": 10,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/freepats/synth-goblins/releases/download/2020-06-12/SynthGoblins-SFZ+FLAC-20200612.7z"
+    ],
+    "sha256": [
+     "f55a2b1a33d5646e3b641d43cb2438239556ae15d793ebc0ca9aa0a1c19b7598"
+    ]
+   }
+  },
+  {
+   "id": "fp-synth-soundtrack",
+   "name": "Synth Soundtrack",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "General MIDI instrument #98: Synth FX 2 (soundtrack). Samples by 快乐爱的小精灵 (Elf of Happy and Love) <lovebodhi@yandex.com>, sent to the FreePats project on March 2020. Made with ZynAddSubFX software synthesizer.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/Synthesizer/synth-effects.html",
+   "version": "2020-05-21",
+   "size_mb": 10,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/freepats/synth-soundtrack/releases/download/20200521/SynthSoundtrack-SFZ+FLAC-20200521.7z"
+    ],
+    "sha256": [
+     "5eee6843c3f83aab55d24476df087dc92c6d23ef23a4570d0af90371e07d18fe"
+    ]
+   }
+  },
+  {
+   "id": "fp-synth-scifi",
+   "name": "Synth Sci-Fi",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "General MIDI instrument #104: Synth FX 8 (sci-fi). Samples by 快乐爱的小精灵 (Elf of Happy and Love) <lovebodhi@yandex.com>, sent to the FreePats project on April 2020. Made with Surge software synthesizer.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/Synthesizer/synth-effects.html",
+   "version": "2020-05-17",
+   "size_mb": 13,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/freepats/synth-scifi/releases/download/2020-05-17/SynthSciFi-SFZ+FLAC-20200517.7z"
+    ],
+    "sha256": [
+     "81e2924c21eca7802b007f58b49258b9645d9ec3d42dfc48152282063b1ab76c"
+    ]
+   }
+  },
+  {
+   "id": "fp-synth-crystal",
+   "name": "Synth Crystal",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "General MIDI instrument #99: Synth FX 3 (crystal). Samples by Strix SoundFont Team <dsoundfont123@gmail.com>, sent to the FreePats project on November 2018. Recorded from Dexed software synthesizer.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/Synthesizer/synth-effects.html",
+   "version": "2019-08-12",
+   "size_mb": 2,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/freepats/synth-crystal/releases/download/2019-08-12/SynthCrystal-SFZ+FLAC-20190812.7z"
+    ],
+    "sha256": [
+     "f38a1025931bbe8cbc64d2ccfb6d1342790cc24fce0f5634115ec308a0f90b8b"
+    ]
+   }
+  },
+  {
+   "id": "fp-synth-bass-lead",
+   "name": "Synth Bass & Lead",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "General MIDI instrument #88: Synth Lead 8 (bass + lead). Samples by 快乐爱的小精灵 (Elf of Happy and Love) <lovebodhi@yandex.com>, sent to the FreePats project on April 2020. Made with Surge software synthesizer.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/Synthesizer/synth-lead.html",
+   "version": "2020-05-22",
+   "size_mb": 4,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/freepats/synth-bass-lead/releases/download/2020-05-22/SynthBassLead-SFZ+FLAC-20200522.7z"
+    ],
+    "sha256": [
+     "9fd3c113a49902d644167193f421e10fb0c4a35d20cdaa7d8d8d1aebdfd00e8d"
+    ]
+   }
+  },
+  {
+   "id": "fp-synth-fifths",
+   "name": "Synth Fifths",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "General MIDI instrument #87: Synth Lead 7 (fifths). Samples by 快乐爱的小精灵 (Elf of Happy and Love) <lovebodhi@yandex.com>, sent to the FreePats project on April 2020. Made with Surge software synthesizer.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/Synthesizer/synth-lead.html",
+   "version": "2020-05-19",
+   "size_mb": 8,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/freepats/synth-fifths/releases/download/2020-05-19/SynthFifths-SFZ+FLAC-20200519.7z"
+    ],
+    "sha256": [
+     "891660964a4450d32d54b1b96af8004b2a64627cb96598fd9e17d2152be53b10"
+    ]
+   }
+  },
+  {
+   "id": "fp-synth-square",
+   "name": "Synth Lead Square",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "General MIDI instrument #81: Synth Lead 1 (square). Made with ZynAddSubFX / Yoshimi software synthesizers.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/Synthesizer/synth-lead.html",
+   "version": "2020-05-12",
+   "size_mb": 7,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/freepats/synth-square/releases/download/2020-05-12/SynthSquare-SFZ+FLAC-20200512.7z"
+    ],
+    "sha256": [
+     "0d9fba485b3f542d3730a242f213174febc791598fd62ddad144c05d5bb8aa4c"
+    ]
+   }
+  },
+  {
+   "id": "fp-synth-calliope",
+   "name": "Synth Lead Calliope",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "General MIDI instrument #83: Synth Lead 3 (calliope). Made with a combination of Hexter and ZynAddSubFX / Yoshimi software synthesizers.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/Synthesizer/synth-lead.html",
+   "version": "2020-05-12",
+   "size_mb": 4,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/freepats/synth-calliope/releases/download/2020-05-12/SynthCalliope-SFZ+FLAC-20200512.7z"
+    ],
+    "sha256": [
+     "d2fcdee900cf0e19379180e70a1c86c670fdf406d8b4f099c601e3ace2938246"
+    ]
+   }
+  },
+  {
+   "id": "fp-synth-pad-choir",
+   "name": "Synth Pad Choir",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "General MIDI instrument #92: Synth Pad 4 (choir). Samples by 快乐爱的小精灵 (Elf of Happy and Love) <lovebodhi@yandex.com>, sent to the FreePats project on April 2020. Made with ZynAddSubFX software synthesizer.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/Synthesizer/synth-pad.html",
+   "version": "2020-05-16",
+   "size_mb": 6,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/freepats/synth-pad-choir/releases/download/2020-05-16/SynthPadChoir-SFZ+FLAC-20200516.7z"
+    ],
+    "sha256": [
+     "703ef30fad4861f85b319f8d549fbeeb0af0860929165c7066410dcbb03da0a3"
+    ]
+   }
+  },
+  {
+   "id": "fp-sweep-pad",
+   "name": "Sweep Pad",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "General MIDI instrument #96: Synth Pad 8 (sweep). It has been created with ZynAddSubFX / Yoshimi software synthesizers.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/Synthesizer/synth-pad.html",
+   "version": "2019-08-13",
+   "size_mb": 3,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/freepats/sweep-pad/releases/download/2019-08-13/SweepPad-SFZ+FLAC-20190813.7z"
+    ],
+    "sha256": [
+     "b0b3f334dd89d90507142da76f129a6e43369dda92c1a02f4fcdf7af13b05d49"
+    ]
+   }
+  },
+  {
+   "id": "fp-new-age",
+   "name": "New Age",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "General MIDI instrument #89: Synth Pad 1 (new age). It has been created with ZynAddSubFX / Yoshimi software synthesizers.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/Synthesizer/synth-pad.html",
+   "version": "2019-07-30",
+   "size_mb": 4,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/freepats/new-age/releases/download/2019-07-30/NewAge-SFZ+FLAC-20190730.7z"
+    ],
+    "sha256": [
+     "355c686eecaac4d9857a8aecf9962eee7bb6d69bd48c55608f47185da63f5d9e"
+    ]
+   }
+  },
+  {
+   "id": "fp-synth-pad-bowed",
+   "name": "Synth Pad Bowed",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "General MIDI instrument #93: Synth Pad 5 (bowed). Samples and sound bank by Strix SoundFont Team <dsoundfont123@gmail.com>. It has been created with ZynAddSubFX / Yoshimi software synthesizers and an instrument file adapted by roberto@zenvoid.org.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/Synthesizer/synth-pad.html",
+   "version": "2019-07-19",
+   "size_mb": 11,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/freepats/synth-pad-bowed/releases/download/2019-07-19/SynthPadBowed-SFZ+FLAC-20190719.7z"
+    ],
+    "sha256": [
+     "6e746986d3dbdcddd2f4ce711882fde1fa16de5a59902b3aec530302281b328c"
+    ]
+   }
+  },
+  {
+   "id": "fp-synth-strings-1",
+   "name": "Synth Strings #1",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "General MIDI instrument #51: Synth Strings 1. Made with ZynAddSubFX / Yoshimi software synthesizers.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/Synthesizer/synth-strings.html",
+   "version": "2020-05-28",
+   "size_mb": 4,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/freepats/synth-strings-1/releases/download/2020-05-28/SynthStrings1-SFZ+FLAC-20200528.7z"
+    ],
+    "sha256": [
+     "0497a60183a86daed65c273dc1e5648f297b06714108a6aa63111f9790599418"
+    ]
+   }
+  },
+  {
+   "id": "fp-synth-strings-2",
+   "name": "Synth Strings #2",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "General MIDI instrument #52: Synth Strings 2. Made with ZynAddSubFX / Yoshimi software synthesizers.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/Synthesizer/synth-strings.html",
+   "version": "2020-05-28",
+   "size_mb": 5,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/freepats/synth-strings-2/releases/download/2020-05-28/SynthStrings2-SFZ+FLAC-20200528.7z"
+    ],
+    "sha256": [
+     "ceec5966314d9ed7dbd0ba83850d5537096c8eab127422880dc8815766ded7c2"
+    ]
+   }
+  },
+  {
+   "id": "fp-recorder",
+   "name": "Wooden Recorder",
+   "group": "FreePats",
+   "author": "FreePats project and its contributors (see credit)",
+   "credit": "Samples of a wooden recorder performed and recorded by Eugene Vlaskin on March 2018 for the FreePats project. Raw samples were processed and modified by roberto@zenvoid.org. \"Venus\" wooden recorder, AKG HT40 mini microphone + AKG SR40 mini receiver, Creative Labs Sound Blaster X-Fi Surround 5.1 Pro (SB1095), Audacity software. Creative Commons CC0 1.0 Download Format Size Comments Sound bank SFZ F",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://freepats.zenvoid.org/Wind/recorder.html",
+   "version": "2020-12-05",
+   "size_mb": 9,
+   "restrictions": "none",
+   "default": false,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://freepats.zenvoid.org/Wind/Recorder1/Recorder-SFZ+FLAC-20201205.7z"
+    ]
+   }
+  },
+  {
+   "id": "karoryfer-string-cyborgs",
+   "name": "String Cyborgs",
+   "group": "Karoryfer Samples",
+   "author": "Karoryfer Samples",
+   "credit": "Processed and looped bowed strings: part violin family, part machine.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://shop.karoryfer.com/pages/free-string-cyborgs",
+   "version": "v1.001",
+   "size_mb": 61,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/sfzinstruments/karoryfer.string-cyborgs/releases/download/v1.001/Karoryfer.String_Cyborgs.v1.001.zip"
+    ],
+    "sha256": [
+     "92974bfef97c7dfc0e50abb9a262d6d39b8551efa5750b5fce5a62cb532da3e2"
+    ]
+   }
+  },
+  {
+   "id": "karoryfer-caveman-cosmonaut",
+   "name": "Caveman Cosmonaut",
+   "group": "Karoryfer Samples",
+   "author": "Karoryfer Samples",
+   "credit": "A synthesizer made from samples of a 1983 Unitra B 11 transistor organ: its own program and its thirteen presets (Supersawism, Evolving Pad, Plucky Pluck, Dramatic Bass, E-Piano, Unstable Lead and more).",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://shop.karoryfer.com/pages/free-caveman-cosmonaut",
+   "version": "v1.001-atlas3",
+   "size_mb": 93,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/sfzinstruments/karoryfer.caveman-cosmonaut/releases/download/v1.001/Karoryfer.Caveman_Cosmonaut.v1.001.zip"
+    ],
+    "sha256": [
+     "e494eb1656b9d637473a9782b68dacc33ea7edc535369965d333c4db5fb3fe21"
+    ]
+   },
+   "note": "Its programs open their filter with ARIA-only 'var' modulations, which sfizz does not play (the filter stayed shut and only the low end was heard). fetch_library.py (caveman_cosmonaut) writes the same opening in standard SFZ and makes each of its thirteen ARIA presets an SFZ program; the recordings and mappings are untouched. Each program also gets its own copy of the instrument's maps holding only the regions it can sound (about 12,000 regions for every oscillator type, unison voice and mono mode, chosen by controls a program sets once): a program loads in a tenth of the time, and sounds the same.",
+   "after": "caveman-cosmonaut",
+   "rename": {
+    "Main": "Caveman Cosmonaut"
+   },
+   "categories": [
+    [
+     "*Supersaw*",
+     "Leads"
+    ],
+    [
+     "*Lead*",
+     "Leads"
+    ],
+    [
+     "*Monosynth*",
+     "Leads"
+    ],
+    [
+     "*Bass*",
+     "Analog Synths"
+    ],
+    [
+     "*Pad*",
+     "Pads"
+    ],
+    [
+     "*Drone*",
+     "Soundscapes"
+    ],
+    [
+     "*Pluck*",
+     "Plucks"
+    ],
+    [
+     "*E-Piano*",
+     "Keys"
+    ],
+    [
+     "*SciFX*",
+     "Experimental"
+    ],
+    [
+     "*Metal Pots*",
+     "Experimental"
+    ],
+    [
+     "*DOS Game*",
+     "Digital Synths"
+    ],
+    [
+     "*",
+     "Analog Synths"
+    ]
+   ]
+  },
+  {
+   "id": "karoryfer-cowsynth",
+   "name": "Cowsynth",
+   "group": "Karoryfer Samples",
+   "author": "Karoryfer Samples",
+   "credit": "Bagpipe samples used as the oscillators of a simple synthesizer.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://shop.karoryfer.com/pages/free-cowsynth",
+   "version": "v1.001",
+   "size_mb": 13,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/sfzinstruments/karoryfer.cowsynth/releases/download/v1.001/Karoryfer.Cowsynth.v1.001.zip"
+    ],
+    "sha256": [
+     "2c80a928db69280d3f8f4d066383c9f6adc0d8ba086c6f1a1abe2c5eaa5fc239"
+    ]
+   }
+  },
+  {
+   "id": "karoryfer-272-merry-orks",
+   "name": "272 Merry Orks",
+   "group": "Karoryfer Samples",
+   "author": "Karoryfer Samples",
+   "credit": "A vocal library: an ork choir.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://shop.karoryfer.com/pages/free-272-merry-orks",
+   "version": "v1.001",
+   "size_mb": 39,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/sfzinstruments/karoryfer.272-merry-orks/releases/download/v1.001/Karoryfer.272_Merry_Orks.v1.001.zip"
+    ],
+    "sha256": [
+     "c5151c24a57fddfc3997d52df3506bbfceaf4ed897fc587ee4190ba79886c427"
+    ]
+   }
+  },
+  {
+   "id": "karoryfer-bigcat-cello",
+   "name": "Karoryfer x bigcat Cello",
+   "group": "Karoryfer Samples",
+   "author": "Karoryfer Samples",
+   "credit": "Solo cello, a collaboration of Karoryfer Lecolds and bigcat instruments.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://shop.karoryfer.com/pages/free-karoryfer-x-bigcat-cello",
+   "version": "v1.001",
+   "size_mb": 126,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/sfzinstruments/karoryfer-bigcat.cello/releases/download/v1.001/Karoryfer_Bigcat_cello.v1.001.zip"
+    ],
+    "sha256": [
+     "f340e2afc161de70b0484cda964f2e17e5b0c1e271fc18ade6a21bd0cc3c5e22"
+    ]
+   },
+   "prefix": "Cello",
+   "skip": [
+    "*mod wheel*"
+   ],
+   "categories": [
+    [
+     "*Plucked*",
+     "Plucks"
+    ],
+    [
+     "*",
+     "Strings"
+    ]
+   ],
+   "rename": {
+    "Bowed (velocity Layer)": "Cello Bowed"
+   }
+  },
+  {
+   "id": "karoryfer-scarypiano",
+   "name": "Scarypiano",
+   "group": "Karoryfer Samples",
+   "author": "Karoryfer Samples",
+   "credit": "Piano samples batch-processed through monster-voice software.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://shop.karoryfer.com/pages/free-scarypiano",
+   "version": "v1.002",
+   "size_mb": 342,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/sfzinstruments/karoryfer.scarypiano/releases/download/v1.002/Karoryfer.Scarypiano.v1.002.zip"
+    ],
+    "sha256": [
+     "559170a198932aeb41d1eb255e48b920f0479efd425e01295ad449a7d6e5c625"
+    ]
+   }
+  },
+  {
+   "id": "karoryfer-weresax",
+   "name": "Weresax",
+   "group": "Karoryfer Samples",
+   "author": "Karoryfer Samples",
+   "credit": "A saxophone that turns into an accordion and a subtractive synthesizer.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://shop.karoryfer.com/pages/free-weresax",
+   "version": "v1.003",
+   "size_mb": 195,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/sfzinstruments/karoryfer.weresax/releases/download/v1.003/Karoryfer.Weresax.v.1.003.zip"
+    ],
+    "sha256": [
+     "916dcb44b2ec8f03a3578c374dd1f1fdaa43e9e0264d921f65da2a339539d2ba"
+    ]
+   },
+   "skip": [
+    "*/Sax1.sfz"
+   ],
+   "rename": {
+    "Sax": "Weresax Alto"
+   },
+   "categories": [
+    [
+     "*/Sax.sfz",
+     "Leads"
+    ],
+    [
+     "*saxcordion*",
+     "Keys"
+    ],
+    [
+     "*sxnth*",
+     "Analog Synths"
+    ]
+   ]
+  },
+  {
+   "id": "karoryfer-meatbass",
+   "name": "Meatbass",
+   "group": "Karoryfer Samples",
+   "author": "Karoryfer Samples",
+   "credit": "A 1958 Otto Rubner double bass: arco, pizzicato and percussive.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://shop.karoryfer.com/pages/free-meatbass",
+   "version": "v1.001",
+   "size_mb": 244,
+   "restrictions": "none",
+   "default": false,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://github.com/sfzinstruments/karoryfer.meatbass/releases/download/v1.001/Karoryfer.Meatbass.v1.001.zip"
+    ]
+   }
+  },
+  {
+   "id": "sso",
+   "name": "Sonatina Symphonic Orchestra",
+   "group": "Orchestra",
+   "author": "Mattias Westlund; SFZ and maintenance by Peter Eastman",
+   "credit": "Strings, chorus, harp, celeste, woodwinds, brass and percussion.",
+   "license": "CC-Sampling-Plus-1.0",
+   "license_url": "https://creativecommons.org/licenses/sampling+/1.0/",
+   "source": "https://github.com/peastman/sso",
+   "version": "git",
+   "size_mb": 1100,
+   "restrictions": "Sampling Plus: the sounds may be used in music, including commercial music, but not in advertising; the library itself may be shared only non-commercially.",
+   "default": true,
+   "get": {
+    "type": "git",
+    "url": "https://github.com/peastman/sso.git",
+    "paths": [],
+    "commit": "32bbdb169aef636b8216029a2e056424ba7c2abb"
+   },
+   "skip": [
+    "* - Notation/*",
+    "*Legato*.sfz",
+    "*Marcato*.sfz",
+    "*(looped, decay).sfz",
+    "*Non-Vibrato.sfz",
+    "*/Percussion/All Unpitched Percussion.sfz",
+    "*/Percussion/Bass Drum & Snare.sfz",
+    "*/Percussion/Conga.sfz",
+    "*/Percussion/Cymbals & Tamtam.sfz",
+    "*/Percussion/Triangle.sfz",
+    "*/Organ/Organ All Stops.sfz",
+    "*/Organ/Organ Combinations.sfz",
+    "*/Harpsichord/Harpsichord KS.sfz",
+    "*/Samples/*",
+    "*/Samples-looped/*",
+    "*/Samples",
+    "*/Samples-looped",
+    "*/Brass - Performance/Bass Trombone Solo Sustain.sfz",
+    "*/Brass - Performance/Horn Solo Sustain.sfz",
+    "*/Brass - Performance/Tenor Trombone Solo Sustain.sfz",
+    "*/Brass - Performance/Trombones Sustain.sfz",
+    "*/Brass - Performance/Trumpet Solo Sustain.sfz",
+    "*/Brass - Performance/Trumpets Sustain.sfz",
+    "*/Brass - Performance/Tuba Sustain.sfz",
+    "*/Woodwinds - Performance/Alto Flute Solo Sustain.sfz",
+    "*/Woodwinds - Performance/Bass Clarinet Solo Sustain.sfz",
+    "*/Woodwinds - Performance/Bassoon Solo Sustain.sfz",
+    "*/Woodwinds - Performance/Bassoons Sustain.sfz",
+    "*/Woodwinds - Performance/Clarinet Solo Sustain.sfz",
+    "*/Woodwinds - Performance/Clarinets Sustain.sfz",
+    "*/Woodwinds - Performance/Contrabassoon Solo Sustain.sfz",
+    "*/Woodwinds - Performance/Cor Anglais Solo Sustain.sfz",
+    "*/Woodwinds - Performance/Flute Solo 1 Sustain.sfz",
+    "*/Woodwinds - Performance/Flutes Sustain.sfz",
+    "*/Woodwinds - Performance/Oboe Solo Sustain.sfz",
+    "*/Woodwinds - Performance/Oboes Sustain.sfz",
+    "*/Woodwinds - Performance/Piccolo Solo Sustain.sfz",
+    "*/Strings - Performance/Violin Solo 1 Sustain.sfz"
+   ],
+   "rename": {
+    "Bass Trombone Solo Sustain (looped)": "Bass Trombone Solo Sustain",
+    "Horn Solo Sustain (looped)": "Horn Solo Sustain",
+    "Tenor Trombone Solo Sustain (looped)": "Tenor Trombone Solo Sustain",
+    "Trombones Sustain (looped)": "Trombones Sustain",
+    "Trumpet Solo Sustain (looped)": "Trumpet Solo Sustain",
+    "Trumpets Sustain (looped)": "Trumpets Sustain",
+    "Tuba Sustain (looped)": "Tuba Sustain",
+    "Alto Flute Solo Sustain (looped)": "Alto Flute Solo Sustain",
+    "Bass Clarinet Solo Sustain (looped)": "Bass Clarinet Solo Sustain",
+    "Bassoon Solo Sustain (looped)": "Bassoon Solo Sustain",
+    "Bassoons Sustain (looped)": "Bassoons Sustain",
+    "Clarinet Solo Sustain (looped)": "Clarinet Solo Sustain",
+    "Clarinets Sustain (looped)": "Clarinets Sustain",
+    "Contrabassoon Solo Sustain (looped)": "Contrabassoon Solo Sustain",
+    "Cor Anglais Solo Sustain (looped)": "Cor Anglais Solo Sustain",
+    "Flute Solo 1 Sustain (looped)": "Flute Solo 1 Sustain",
+    "Flutes Sustain (looped)": "Flutes Sustain",
+    "Oboe Solo Sustain (looped)": "Oboe Solo Sustain",
+    "Oboes Sustain (looped)": "Oboes Sustain",
+    "Piccolo Solo Sustain (looped)": "Piccolo Solo Sustain",
+    "Violin Solo 1 Sustain (looped)": "Violin Solo 1 Sustain"
+   },
+   "categories": [
+    [
+     "*/Strings - */*Pizzicato*",
+     "Plucks"
+    ],
+    [
+     "*/Strings - */*",
+     "Strings"
+    ],
+    [
+     "*/Chorus - */*",
+     "Choirs"
+    ],
+    [
+     "*/Brass - */*",
+     "Cinematic"
+    ],
+    [
+     "*/Woodwinds - */*",
+     "Cinematic"
+    ],
+    [
+     "*/Percussion/Timpani*",
+     "Cinematic"
+    ],
+    [
+     "*/Percussion/Celeste*",
+     "Keys"
+    ],
+    [
+     "*/Percussion/*",
+     "Bells"
+    ],
+    [
+     "*/Organ/*",
+     "Keys"
+    ],
+    [
+     "*/Harpsichord/*",
+     "Keys"
+    ],
+    [
+     "*Concert Harp*",
+     "Plucks"
+    ],
+    [
+     "*/Grand Piano/*",
+     "Pianos"
+    ]
+   ]
+  },
+  {
+   "id": "vcsl",
+   "name": "Versilian Community Sample Library (selection)",
+   "group": "Versilian",
+   "author": "Versilian Studios LLC and contributors",
+   "credit": "Glass, bowed and struck metal, harps, psaltery, zithers, organs, kalimbas and more, recorded by the VCSL community.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://github.com/sgossner/VCSL",
+   "version": "git",
+   "size_mb": 900,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "git",
+    "url": "https://github.com/sgossner/VCSL.git",
+    "paths": [
+     "LICENSE",
+     "README.md",
+     "Idiophones/Friction Idiophones/Wine Glasses",
+     "Idiophones/Struck Idiophones/Vibraphone",
+     "Idiophones/Struck Idiophones/Glockenspiel",
+     "Idiophones/Struck Idiophones/Tubular Glockenspiel",
+     "Idiophones/Struck Idiophones/Hand Chimes",
+     "Idiophones/Struck Idiophones/Marimba",
+     "Idiophones/Struck Idiophones/Balafon",
+     "Idiophones/Struck Idiophones/Bell Tree",
+     "Idiophones/Struck Idiophones/Mark Trees",
+     "Idiophones/Struck Idiophones/Gong 1",
+     "Idiophones/Struck Idiophones/Gong 2",
+     "Idiophones/Struck Idiophones/Suspended Cymbal 1",
+     "Idiophones/Plucked Idiophones",
+     "Chordophones/Composite Chordophones/Concert Harp",
+     "Chordophones/Composite Chordophones/Folk Harp",
+     "Chordophones/Zithers/Psaltery, Bowed and Plucked",
+     "Chordophones/Zithers/Dan Tranh",
+     "Aerophones/Edge-blown Aerophones/Pipe Organ",
+     "Aerophones/Edge-blown Aerophones/Renaissance Organ",
+     "Aerophones/Edge-blown Aerophones/Ocarina, Typical",
+     "Aerophones/Lip Aerophones/Didgeridoo",
+     "Membranophones/Other Membranophones/Ocean Drum",
+     "Electrophones/TX81Z"
+    ],
+    "commit": "c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e"
+   },
+   "rename": {
+    "Ocarina, Typical Sustain": "Ocarina",
+    "Ocarina, Typical Sustain Vibrato": "Ocarina Vibrato",
+    "Concert Harp (ksharp f)": "Concert Harp (loud)",
+    "Concert Harp (ksharp mf)": "Concert Harp (soft)",
+    "Psaltery, Bowed And Plucked Long Bow": "Bowed Psaltery",
+    "Psaltery, Bowed And Plucked Pluck": "Plucked Psaltery",
+    "Psaltery, Bowed And Plucked Spiccato": "Psaltery Spiccato",
+    "Wine Glasses Fast": "Wine Glasses (quick)",
+    "Wine Glasses Slow": "Wine Glasses (slow)"
+   },
+   "categories": [
+    [
+     "Aerophones/*Organ*",
+     "Keys"
+    ],
+    [
+     "Aerophones/*Ocarina*",
+     "Cinematic"
+    ],
+    [
+     "*Didgeridoo*",
+     "Experimental"
+    ],
+    [
+     "Chordophones/Zithers/Psaltery*/LongBow*",
+     "Strings"
+    ],
+    [
+     "Chordophones/*",
+     "Plucks"
+    ],
+    [
+     "Electrophones/*",
+     "Keys"
+    ],
+    [
+     "Idiophones/Struck Idiophones/Vibraphone/Bowed*",
+     "Bells"
+    ],
+    [
+     "Idiophones/*",
+     "Bells"
+    ]
+   ],
+   "skip": [
+    "Aerophones/Edge-blown Aerophones/Pipe Organ",
+    "*/Mark Trees/Legacy",
+    "*/Suspended Cymbal 1",
+    "*/Ocean Drum"
+   ]
+  },
+  {
+   "id": "vsco2-ce",
+   "name": "VSCO 2 Community Edition (strings, brass, woodwinds, harp, tuned percussion)",
+   "group": "Versilian",
+   "author": "Versilian Studios LLC (Sam Gossner, Simon Dalzell) and contributors",
+   "credit": "Chamber string sections and soloists, harp, French horn, trumpet, tenor trombone, tuba, flute, piccolo, oboe, clarinet, bassoon, glockenspiel, marimba, xylophone and timpani.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://github.com/sgossner/VSCO-2-CE",
+   "version": "git-2",
+   "size_mb": 1500,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "git",
+    "url": "https://github.com/sgossner/VSCO-2-CE.git",
+    "paths": [
+     "LICENSE",
+     "README.md",
+     "Strings/Violin Section",
+     "Strings/Viola Section",
+     "Strings/Cello Section",
+     "Strings/Solo Violin",
+     "Strings/Harp",
+     "Brass/F Horn",
+     "Brass/Trumpet",
+     "Brass/Tenor Trombone",
+     "Brass/Tuba",
+     "Woodwinds/Flute",
+     "Woodwinds/Piccolo",
+     "Woodwinds/Oboe",
+     "Woodwinds/Clarinet",
+     "Woodwinds/Bassoon",
+     "Percussion/Glock",
+     "Percussion/Marimba",
+     "Percussion/Xylo",
+     "Percussion/Timpani"
+    ],
+    "commit": "440300901dfe9275fd84e0b7763af1f8443ae62e"
+   },
+   "rename": {
+    "Cello Section Pizzicato T": "Cello Section Pizzicato",
+    "Solo Violin Bowed Vibrato": "Solo Violin Vibrato"
+   },
+   "categories": [
+    [
+     "Brass/*",
+     "Cinematic"
+    ],
+    [
+     "Woodwinds/*",
+     "Cinematic"
+    ],
+    [
+     "Percussion/*",
+     "Bells"
+    ],
+    [
+     "Strings/*/pizz*",
+     "Plucks"
+    ],
+    [
+     "Strings/Harp*",
+     "Plucks"
+    ],
+    [
+     "Strings/*",
+     "Strings"
+    ]
+   ]
+  },
+  {
+   "id": "surge-xt-renders",
+   "name": "Ghost Atlas Synth Renders (Surge XT)",
+   "group": "Synths",
+   "author": "Surge Synth Team (Surge XT and its factory patches); rendered by the Ghost Atlas Preset Factory",
+   "credit": "Twenty Surge XT factory patches (trance saws, plucks, pads, an FM electric piano, FM bells, basses) played offline through Surge XT's own engine into multisampled instruments: notes every 3 semitones, one or two velocities, dry, held sounds looped.",
+   "license": "Surge XT output: free to use (Surge XT itself is GPL-3.0)",
+   "license_url": "https://surge-synthesizer.github.io/faq",
+   "source": "https://github.com/surge-synthesizer/surge",
+   "version": "1",
+   "size_mb": 188,
+   "restrictions": "none: the Surge team states that sounds made with Surge XT, factory patches included, may be used, given away or sold",
+   "default": true,
+   "get": {
+    "type": "manual",
+    "made_by": "ghost-atlas/tools/factory/render_instruments.py",
+    "archive": "surge-xt-renders-1.zip",
+    "sha256": "830914647b65fbc8f26e64427739d56ee0b7cc0984fd40320d61dc44fddf64c8"
+   },
+   "categories": [
+    [
+     "Trance Saw",
+     "Leads"
+    ],
+    [
+     "Classic Lead",
+     "Leads"
+    ],
+    [
+     "Octave Saw Lead",
+     "Leads"
+    ],
+    [
+     "Huge Saws",
+     "Analog Synths"
+    ],
+    [
+     "Jupiter Stack",
+     "Analog Synths"
+    ],
+    [
+     "*Pluck*",
+     "Plucks"
+    ],
+    [
+     "*Bell*",
+     "Bells"
+    ],
+    [
+     "DX Tine EP",
+     "Keys"
+    ],
+    [
+     "*Bass*",
+     "Analog Synths"
+    ],
+    [
+     "Pure Sub",
+     "Analog Synths"
+    ],
+    [
+     "Space Computer Pad",
+     "Digital Synths"
+    ],
+    [
+     "Prime Texture",
+     "Digital Synths"
+    ],
+    [
+     "*Pad*",
+     "Pads"
+    ]
+   ],
+   "note": "Made once on the Mac (it is already in the Library folder there) and not downloaded: renders.json beside the files says which Surge XT patch each instrument came from."
+  },
+  {
+   "id": "synth-renders-2",
+   "name": "Ghost Atlas Synth Renders, set 2 (OB-Xd, Dexed, Vaporizer2, Odin 2)",
+   "group": "Synths",
+   "author": "discoDSP (OB-Xd 2), Pascal Gauthier and contributors (Dexed; voices from the Synprez FM banks it ships with), VAST Dynamics (Vaporizer2), TheWaveWarden and contributors (Odin 2); rendered by the Ghost Atlas Preset Factory",
+   "credit": "73 factory patches from four synthesisers played offline into multisampled instruments: notes every 3 semitones (every 4 for pads), one or two velocities, 48 kHz 24-bit FLAC, dry (the synths' own delays, reverbs, choruses and arpeggiators off), held sounds looped with a crossfade. OB 14, DX 15, VZ 23, Odin 21. Made by tools/factory/render_plugins.py; renders.json says which patch each came from.",
+   "license": "Rendered output of GPL-3.0 synthesisers (Dexed, Vaporizer2, Odin 2) and of the freeware OB-Xd 2; factory patches by their authors",
+   "license_url": "https://github.com/surge-synthesizer/surge",
+   "source": "https://github.com/asb2m10/dexed ; https://github.com/VASTDynamics/Vaporizer2 ; https://github.com/TheWaveWarden/odin2 ; https://github.com/reales/OB-Xd",
+   "version": "1",
+   "size_mb": 1382,
+   "restrictions": "Private: for Brandon's own Ghost Atlas only, not to be shared or sold. The synths' code licences do not cover their factory patches, and OB-Xd 2's own licence text asks for personal use.",
+   "default": true,
+   "get": {
+    "type": "manual",
+    "made_by": "ghost-atlas/tools/factory/render_plugins.py"
+   },
+   "categories": [
+    [
+     "OB Big Pad",
+     "Pads"
+    ],
+    [
+     "OB 1981 Pad",
+     "Pads"
+    ],
+    [
+     "OB Blade Brass",
+     "Analog Synths"
+    ],
+    [
+     "OB Cloud Strings",
+     "Strings"
+    ],
+    [
+     "OB Open Sky",
+     "Pads"
+    ],
+    [
+     "OB Jump Brass",
+     "Analog Synths"
+    ],
+    [
+     "OB Big Lead",
+     "Leads"
+    ],
+    [
+     "OB Super 80s Lead",
+     "Leads"
+    ],
+    [
+     "OB Outrun Bass",
+     "Analog Synths"
+    ],
+    [
+     "OB House Bass",
+     "Analog Synths"
+    ],
+    [
+     "OB Heaven Pluck",
+     "Plucks"
+    ],
+    [
+     "OB Polar Pluck",
+     "Plucks"
+    ],
+    [
+     "OB Synthwave Stab",
+     "Analog Synths"
+    ],
+    [
+     "OB Rhodes",
+     "Keys"
+    ],
+    [
+     "DX Rhodos",
+     "Keys"
+    ],
+    [
+     "DX FM Rhodes",
+     "Keys"
+    ],
+    [
+     "DX E-Piano 13",
+     "Keys"
+    ],
+    [
+     "DX DL Rhodes",
+     "Keys"
+    ],
+    [
+     "DX Glass Bell",
+     "Bells"
+    ],
+    [
+     "DX Tine Chimes",
+     "Bells"
+    ],
+    [
+     "DX Lunar Bell",
+     "Bells"
+    ],
+    [
+     "DX FM Chimes",
+     "Bells"
+    ],
+    [
+     "DX FM Bass",
+     "Analog Synths"
+    ],
+    [
+     "DX Synbass 54",
+     "Analog Synths"
+    ],
+    [
+     "DX Torim Pluck",
+     "Plucks"
+    ],
+    [
+     "DX Angel Pluck",
+     "Plucks"
+    ],
+    [
+     "DX Celesta",
+     "Bells"
+    ],
+    [
+     "DX Digi Pad",
+     "Digital Synths"
+    ],
+    [
+     "DX Syn Lead 32",
+     "Leads"
+    ],
+    [
+     "VZ Fat EDM Lead",
+     "Leads"
+    ],
+    [
+     "VZ Mighty Lead",
+     "Leads"
+    ],
+    [
+     "VZ Future Bass Lead",
+     "Leads"
+    ],
+    [
+     "VZ Layer Lead",
+     "Leads"
+    ],
+    [
+     "VZ Hypersaw",
+     "Analog Synths"
+    ],
+    [
+     "VZ Lord Of Synths",
+     "Analog Synths"
+    ],
+    [
+     "VZ Juno Dream Pad",
+     "Pads"
+    ],
+    [
+     "VZ Epic Pad",
+     "Pads"
+    ],
+    [
+     "VZ Majestic Pad",
+     "Pads"
+    ],
+    [
+     "VZ Rich Pad",
+     "Pads"
+    ],
+    [
+     "VZ Shimmer Pad",
+     "Pads"
+    ],
+    [
+     "VZ Bladerunner Pad",
+     "Pads"
+    ],
+    [
+     "VZ Shores Of Eden",
+     "Ambient"
+    ],
+    [
+     "VZ Big Room Pluck",
+     "Plucks"
+    ],
+    [
+     "VZ Glassy Dance Pluck",
+     "Plucks"
+    ],
+    [
+     "VZ Silver Pluck",
+     "Plucks"
+    ],
+    [
+     "VZ Sky Plucks",
+     "Plucks"
+    ],
+    [
+     "VZ Melodic Techno Bass",
+     "Analog Synths"
+    ],
+    [
+     "VZ Deep Detroit Bass",
+     "Analog Synths"
+    ],
+    [
+     "VZ Bright House Piano",
+     "Pianos"
+    ],
+    [
+     "VZ Bells",
+     "Bells"
+    ],
+    [
+     "VZ Clean Brass",
+     "Analog Synths"
+    ],
+    [
+     "VZ Happy Chords",
+     "Digital Synths"
+    ],
+    [
+     "Odin EDM Projektor",
+     "Leads"
+    ],
+    [
+     "Odin Unison Glide Lead",
+     "Leads"
+    ],
+    [
+     "Odin Synth Brass",
+     "Analog Synths"
+    ],
+    [
+     "Odin Synthwave Pad",
+     "Pads"
+    ],
+    [
+     "Odin Warm Pad",
+     "Pads"
+    ],
+    [
+     "Odin Choir Aahs",
+     "Vocal Pads"
+    ],
+    [
+     "Odin Synth Strings",
+     "Strings"
+    ],
+    [
+     "Odin FM Sphere",
+     "Digital Synths"
+    ],
+    [
+     "Odin Moonshade",
+     "Pads"
+    ],
+    [
+     "Odin Deep Bass",
+     "Analog Synths"
+    ],
+    [
+     "Odin Growly FM Bass",
+     "Analog Synths"
+    ],
+    [
+     "Odin Analog Bass",
+     "Analog Synths"
+    ],
+    [
+     "Odin House Stab",
+     "Analog Synths"
+    ],
+    [
+     "Odin Saw Pluck",
+     "Plucks"
+    ],
+    [
+     "Odin Chord Pluck",
+     "Plucks"
+    ],
+    [
+     "Odin E-Piano",
+     "Keys"
+    ],
+    [
+     "Odin FM Piano",
+     "Keys"
+    ],
+    [
+     "Odin Glassy Bell",
+     "Bells"
+    ],
+    [
+     "Odin Ethereal Bells",
+     "Bells"
+    ],
+    [
+     "Odin Floating Dreams",
+     "Ambient"
+    ],
+    [
+     "Odin Pacific Nights",
+     "Ambient"
+    ]
+   ],
+   "note": "Made once and put on the Mac (it is already in the Library folder there), not downloaded: renders.json beside the files says which patch each instrument came from; tools/factory/specs/ holds the lists it was made from."
+  },
+  {
+   "id": "meta-open-sound",
+   "name": "Meta Open Sound (piano and guitars)",
+   "group": "Meta",
+   "author": "Meta's Creative Audio team",
+   "credit": "A full 88-key upright piano with four velocity layers, a nylon-string guitar and a steel-string guitar, each multisampled string by string.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://github.com/facebookincubator/Meta-open-sound",
+   "version": "2",
+   "size_mb": 900,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "github-release",
+    "repo": "facebookincubator/Meta-open-sound",
+    "assets": [
+     {
+      "tag": "meta-piano-v1.0.0",
+      "want": "wav",
+      "folder": "Meta Piano"
+     },
+     {
+      "tag": "meta-nylon-guitar-v1.0.0",
+      "want": "wav",
+      "folder": "Meta Nylon Guitar",
+      "fallback": {
+       "type": "git",
+       "url": "https://github.com/facebookincubator/Meta-open-sound.git",
+       "paths": [
+        "systems/instruments/meta-nylon-guitar"
+       ],
+       "commit": "514c926efecdb3c7812bf00eedf8e5c8d61dd681"
+      }
+     },
+     {
+      "tag": "meta-steel-guitar-v1.0.0",
+      "want": "wav",
+      "folder": "Meta Steel Guitar",
+      "fallback": {
+       "type": "git",
+       "url": "https://github.com/facebookincubator/Meta-open-sound.git",
+       "paths": [
+        "systems/instruments/meta-steel-guitar"
+       ],
+       "commit": "514c926efecdb3c7812bf00eedf8e5c8d61dd681"
+      }
+     }
+    ],
+    "licence_files": [
+     {
+      "name": "LICENSE",
+      "url": "https://raw.githubusercontent.com/facebookincubator/Meta-open-sound/514c926efecdb3c7812bf00eedf8e5c8d61dd681/systems/instruments/meta-piano/LICENSE"
+     }
+    ]
+   },
+   "rename": {
+    "Meta-piano": "Meta Upright Piano",
+    "Meta-nylon-guitar": "Meta Nylon Guitar",
+    "Meta-steel-guitar": "Meta Steel Guitar"
+   },
+   "categories": [
+    [
+     "*iano*",
+     "Pianos"
+    ],
+    [
+     "*uitar*",
+     "Plucks"
+    ]
+   ],
+   "note": "The 24-bit / 48 kHz WAV recordings from the repository's releases (the largest zip of each). A guitar whose release cannot be had comes from the repository's own OGG Vorbis copies instead; the piano's copies there are Opus, which the engine cannot read, so the piano is always the release. Its game and VR sound effects (CC BY 4.0) are left out."
+  },
+  {
+   "id": "stargate-sample-pack",
+   "name": "Stargate Sample Pack (textures, harmonics, noise)",
+   "group": "Stargate",
+   "author": "Stargate DAW contributors (Fugue State Audio and others)",
+   "credit": "Three long synthesiser soundscapes, guitar harmonics and dives, a struck bowl and glass, thunder, and plain white and pink noise: layers for air, texture and the front of a note.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://github.com/stargatedaw/stargate-sample-pack",
+   "version": "git",
+   "size_mb": 75,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "git",
+    "url": "https://github.com/stargatedaw/stargate-sample-pack.git",
+    "paths": [
+     "LICENSE",
+     "README.md",
+     "stargate-sample-pack/fugue-state-audio/synth-fx",
+     "stargate-sample-pack/fugue-state-audio/guitar-fx",
+     "stargate-sample-pack/fugue-state-audio/found-sounds",
+     "stargate-sample-pack/stargate/noise"
+    ],
+    "commit": "dbfd6ec52d4ed53b60bdbea5fc6adf295127c027"
+   },
+   "singles": [
+    "stargate-sample-pack/*/*/*.wav",
+    "stargate-sample-pack/*/*.wav"
+   ],
+   "rename": {
+    "Pink-stereo": "Pink Noise",
+    "White-stereo": "White Noise",
+    "Pink-plain": "Pink Noise (mono)",
+    "White-plain": "White Noise (mono)",
+    "Cyborganic": "Cyborganic Soundscape",
+    "Spookscape": "Spookscape",
+    "Whatsinthere": "What's In There",
+    "A-harm": "Guitar Harmonics A",
+    "D-harm": "Guitar Harmonics D",
+    "E-harm": "Guitar Harmonics E",
+    "A-dive 1": "Guitar Dive 1",
+    "A-dive 2": "Guitar Dive 2",
+    "Stringscrape": "String Scrape",
+    "Bowlhit": "Struck Bowl",
+    "Glass-hit": "Struck Glass",
+    "Lid-swirl": "Lid Swirl",
+    "Thunder": "Thunder",
+    "Coinshake 1": "Coin Shake 1",
+    "Coinshake 2": "Coin Shake 2"
+   },
+   "categories": [
+    [
+     "*/synth-fx/*",
+     "Soundscapes"
+    ],
+    [
+     "*/guitar-fx/*",
+     "Experimental"
+    ],
+    [
+     "*/found-sounds/*",
+     "Experimental"
+    ],
+    [
+     "*/noise/*",
+     "Soundscapes"
+    ]
+   ],
+   "note": "Only its textures, guitar effects, found sounds and noise: its drums, loops and spoken one-shots are not instruments, and its VCSL and VSCO pieces are already here in full."
+  },
+  {
+   "id": "akwf",
+   "name": "Adventure Kid Waveforms (AKWF)",
+   "group": "Waveforms",
+   "author": "Kristoffer Ekstrand (Adventure Kid)",
+   "credit": "4,300 single-cycle waveforms. Ghost Atlas makes its wave-synth instruments from a chosen few of them.",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://github.com/KristofferKarlAxelEkstrand/AKWF-FREE",
+   "version": "git",
+   "size_mb": 8,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "git",
+    "url": "https://github.com/KristofferKarlAxelEkstrand/AKWF-FREE.git",
+    "paths": [
+     "LICENSE.md",
+     "README.md",
+     "AKWF"
+    ],
+    "commit": "8de90bf94376670947369e69de0af6b9fbd19286"
+   },
+   "waves": [
+    {
+     "name": "Saw Stack",
+     "file": "AKWF/AKWF_bw_saw/AKWF_saw_0001.wav",
+     "shape": "hold",
+     "multi": 5,
+     "detune": 18,
+     "category": "Analog Synths"
+    },
+    {
+     "name": "Saw Solo",
+     "file": "AKWF/AKWF_bw_saw/AKWF_saw_0001.wav",
+     "shape": "hold",
+     "multi": 1,
+     "detune": 0,
+     "category": "Leads"
+    },
+    {
+     "name": "Bright Saw Stack",
+     "file": "AKWF/AKWF_bw_sawbright/AKWF_bsaw_0003.wav",
+     "shape": "hold",
+     "multi": 7,
+     "detune": 22,
+     "category": "Analog Synths"
+    },
+    {
+     "name": "Square Stack",
+     "file": "AKWF/AKWF_bw_squ/AKWF_squ_0001.wav",
+     "shape": "hold",
+     "multi": 3,
+     "detune": 12,
+     "category": "Analog Synths"
+    },
+    {
+     "name": "Thin Pulse",
+     "file": "AKWF/AKWF_bw_squ/AKWF_squ_0036.wav",
+     "shape": "hold",
+     "multi": 3,
+     "detune": 9,
+     "category": "Analog Synths"
+    },
+    {
+     "name": "Triangle",
+     "file": "AKWF/AKWF_bw_tri/AKWF_tri_0001.wav",
+     "shape": "hold",
+     "multi": 1,
+     "detune": 0,
+     "category": "Analog Synths"
+    },
+    {
+     "name": "Sine Sub",
+     "file": "AKWF/AKWF_bw_sin/AKWF_sin_0001.wav",
+     "shape": "hold",
+     "multi": 1,
+     "detune": 0,
+     "category": "Analog Synths"
+    },
+    {
+     "name": "Saw Pad",
+     "file": "AKWF/AKWF_bw_sawrounded/AKWF_R_asym_saw_14.wav",
+     "shape": "pad",
+     "multi": 5,
+     "detune": 14,
+     "category": "Pads"
+    },
+    {
+     "name": "Saw Pluck",
+     "file": "AKWF/AKWF_bw_saw/AKWF_saw_0001.wav",
+     "shape": "pluck",
+     "multi": 3,
+     "detune": 10,
+     "category": "Plucks"
+    },
+    {
+     "name": "Square Pluck",
+     "file": "AKWF/AKWF_bw_squ/AKWF_squ_0001.wav",
+     "shape": "pluck",
+     "multi": 1,
+     "detune": 0,
+     "category": "Plucks"
+    },
+    {
+     "name": "FM Glass",
+     "file": "AKWF/AKWF_fmsynth/AKWF_fmsynth_0001.wav",
+     "shape": "keys",
+     "multi": 1,
+     "detune": 0,
+     "category": "Digital Synths"
+    },
+    {
+     "name": "FM Bell",
+     "file": "AKWF/AKWF_fmsynth/AKWF_fmsynth_0062.wav",
+     "shape": "bell",
+     "multi": 3,
+     "detune": 4,
+     "category": "Digital Synths"
+    },
+    {
+     "name": "Voice Wave Aah",
+     "file": "AKWF/AKWF_hvoice/AKWF_hvoice_0027.wav",
+     "shape": "pad",
+     "multi": 5,
+     "detune": 10,
+     "category": "Vocal Pads"
+    },
+    {
+     "name": "Voice Wave Ooh",
+     "file": "AKWF/AKWF_hvoice/AKWF_hvoice_0053.wav",
+     "shape": "pad",
+     "multi": 5,
+     "detune": 10,
+     "category": "Vocal Pads"
+    },
+    {
+     "name": "Voice Wave Eeh",
+     "file": "AKWF/AKWF_hvoice/AKWF_hvoice_0104.wav",
+     "shape": "hold",
+     "multi": 3,
+     "detune": 8,
+     "category": "Vocal Pads"
+    },
+    {
+     "name": "Chip Lead",
+     "file": "AKWF/AKWF_oscchip/AKWF_oscchip_0080.wav",
+     "shape": "hold",
+     "multi": 1,
+     "detune": 0,
+     "category": "Leads"
+    },
+    {
+     "name": "Overtone Pad",
+     "file": "AKWF/AKWF_overtone/AKWF_overtone_0023.wav",
+     "shape": "pad",
+     "multi": 5,
+     "detune": 12,
+     "category": "Digital Synths"
+    },
+    {
+     "name": "Theremin",
+     "file": "AKWF/AKWF_theremin/AKWF_theremin_0010.wav",
+     "shape": "hold",
+     "multi": 1,
+     "detune": 0,
+     "category": "Leads"
+    },
+    {
+     "name": "Organ Wave",
+     "file": "AKWF/AKWF_eorgan/AKWF_eorgan_0078.wav",
+     "shape": "hold",
+     "multi": 3,
+     "detune": 5,
+     "category": "Keys"
+    },
+    {
+     "name": "Soft Organ Wave",
+     "file": "AKWF/AKWF_eorgan/AKWF_eorgan_0154.wav",
+     "shape": "hold",
+     "multi": 1,
+     "detune": 0,
+     "category": "Keys"
+    },
+    {
+     "name": "Bit Glass",
+     "file": "AKWF/AKWF_bitreduced/AKWF_bitreduced_0035.wav",
+     "shape": "keys",
+     "multi": 1,
+     "detune": 0,
+     "category": "Digital Synths"
+    },
+    {
+     "name": "Hand Drawn Pad",
+     "file": "AKWF/AKWF_hdrawn/AKWF_hdrawn_0013.wav",
+     "shape": "pad",
+     "multi": 5,
+     "detune": 16,
+     "category": "Digital Synths"
+    },
+    {
+     "name": "Cello Wave",
+     "file": "AKWF/AKWF_cello/AKWF_cello_0001.wav",
+     "shape": "pad",
+     "multi": 3,
+     "detune": 8,
+     "category": "Hybrid Instruments"
+    },
+    {
+     "name": "Clarinet Wave",
+     "file": "AKWF/AKWF_clarinett/AKWF_clarinett_0001.wav",
+     "shape": "hold",
+     "multi": 1,
+     "detune": 0,
+     "category": "Hybrid Instruments"
+    },
+    {
+     "name": "Grain Wave",
+     "file": "AKWF/AKWF_granular/AKWF_granular_0012.wav",
+     "shape": "pad",
+     "multi": 3,
+     "detune": 20,
+     "category": "Granular"
+    },
+    {
+     "name": "Fuzz Wave",
+     "file": "AKWF/AKWF_distorted/AKWF_distorted_0045.wav",
+     "shape": "hold",
+     "multi": 3,
+     "detune": 14,
+     "category": "Experimental"
+    }
+   ]
+  },
+  {
+   "id": "splendid-grand",
+   "name": "Splendid Grand Piano",
+   "group": "Pianos",
+   "author": "AKAI (public-domain sample CD); SFZ by SFZ Instruments",
+   "credit": "A Steinway grand, four velocity layers.",
+   "license": "Public-Domain",
+   "license_url": "https://github.com/sfzinstruments/SplendidGrandPiano",
+   "source": "https://github.com/sfzinstruments/SplendidGrandPiano",
+   "version": "git",
+   "size_mb": 77,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "git",
+    "url": "https://github.com/sfzinstruments/SplendidGrandPiano.git",
+    "paths": [],
+    "commit": "1c595d827b7fd7f0be3134aaed0f90b3662a09cf"
+   }
+  },
+  {
+   "id": "greg-sullivan-epianos",
+   "name": "Greg Sullivan E-Pianos",
+   "group": "Keys",
+   "author": "Greg Sullivan",
+   "credit": "Electric pianos.",
+   "license": "CC-BY-3.0",
+   "license_url": "https://creativecommons.org/licenses/by/3.0/",
+   "source": "https://github.com/sfzinstruments/GregSullivan.E-Pianos",
+   "version": "git",
+   "size_mb": 22,
+   "restrictions": "Attribution: credit Greg Sullivan when sharing the samples or work built from them (CC BY 3.0).",
+   "default": true,
+   "get": {
+    "type": "git",
+    "url": "https://github.com/sfzinstruments/GregSullivan.E-Pianos.git",
+    "paths": [],
+    "commit": "8c3e581acda3594b553948ff0222d4f84a698376"
+   }
+  },
+  {
+   "id": "musescore-general",
+   "name": "MuseScore General",
+   "group": "General MIDI",
+   "author": "S. Christian Collins (MuseScore General); Michael Cowgill (FluidR3Mono); Frank Wen (Fluid R3)",
+   "credit": "FluidR3 (original version) by Frank Wen Copyright (c) 2000-02. Mono conversion (FluidR3Mono) by Michael Cowgill Copyright (c) 2014-17. Adaptation for MuseScore_General.sf2 by S. Christian Collins Copyright (c) 2018-19. Temple Blocks instrument provided by Ethan Winer Copyright (c) 2002. Drumline Cymbals provided by Michael Schorsch Copyright (c) 2016. MuseScore_General.sf2 is shared under the MIT license; the acknowledgements and copyright notices above must be included in any derivative work.",
+   "license": "MIT",
+   "license_url": "https://ftp.osuosl.org/pub/musescore/soundfont/MuseScore_General/MuseScore_General_License.md",
+   "source": "https://musescore.org/en/handbook/3/soundfonts-and-sfz-files",
+   "version": "0.2 (2020-05-13)",
+   "size_mb": 260,
+   "restrictions": "MIT: the copyright and permission notice (MuseScore_General_License.md, fetched beside the SoundFont) stays with any copy or derivative.",
+   "default": true,
+   "get": {
+    "type": "archive",
+    "urls": [
+     "https://ftp.osuosl.org/pub/musescore/soundfont/MuseScore_General/MuseScore_General.sf2",
+     "https://ftp.osuosl.org/pub/musescore/soundfont/MuseScore_General/MuseScore_General_License.md",
+     "https://ftp.osuosl.org/pub/musescore/soundfont/MuseScore_General/MuseScore_General_Readme.md",
+     "https://ftp.osuosl.org/pub/musescore/soundfont/MuseScore_General/MuseScore_General_Sample_Sources.csv"
+    ],
+    "sha256": [
+     "ee51d2c4b1525e70f19a45909c4fd7a2e26d91d115fa89dbf5a6bc413d8b9bf3",
+     "5ad8d737e13c7f01f5b9674872a82a92b4ba253603e8ed14b9db12293550b4b9",
+     "e4ee85d097cda49a7926ea73e59ea8b7bb90d6ad715f82d20c6bfddf5dcfeb4c",
+     "cbec757614fa47d2ba71a2f1276bf010918261d94987cfb678352e9755e9bdd4"
+    ]
+   },
+   "note": "A General MIDI SoundFont of 309 presets. Only the ones the library had nothing like are listed: voices, guitars, basses, saxophones and a few plucked and blown instruments from further afield. Its drum kits and the instruments other libraries here already cover better are left out.",
+   "keep": [
+    "Choir Aahs",
+    "Voice Oohs",
+    "Synth Voice",
+    "Solo Vox",
+    "Space Voice",
+    "Halo Pad",
+    "Nylon String Guitar",
+    "Steel String Guitar",
+    "Jazz Guitar",
+    "Clean Guitar",
+    "Palm Muted Guitar",
+    "12-String Guitar",
+    "Ukulele",
+    "Banjo",
+    "Sitar",
+    "Koto",
+    "Shamisen",
+    "Dulcimer",
+    "Acoustic Bass",
+    "Fingered Bass",
+    "Picked Bass",
+    "Fretless Bass",
+    "Slap Bass",
+    "Soprano Sax",
+    "Alto Sax",
+    "Tenor Sax",
+    "Baritone Sax",
+    "Harmon Mute Trumpet",
+    "Pan Flute",
+    "Shakuhachi",
+    "Bottle Chiff",
+    "Whistle",
+    "Harmonica",
+    "Bagpipe",
+    "Accordion",
+    "Clavinet",
+    "Steel Drums",
+    "Tine Electric Piano",
+    "Fantasia",
+    "Warm Pad",
+    "Bowed Glass",
+    "Atmosphere",
+    "Ice Rain",
+    "Echo Drops"
+   ],
+   "categories": [
+    [
+     "Choir Aahs",
+     "Choirs"
+    ],
+    [
+     "Voice Oohs",
+     "Choirs"
+    ],
+    [
+     "Synth Voice",
+     "Vocal Pads"
+    ],
+    [
+     "Solo Vox",
+     "Vocal Pads"
+    ],
+    [
+     "Space Voice",
+     "Vocal Pads"
+    ],
+    [
+     "Halo Pad",
+     "Vocal Pads"
+    ],
+    [
+     "*Guitar",
+     "Plucks"
+    ],
+    [
+     "Ukulele",
+     "Plucks"
+    ],
+    [
+     "Banjo",
+     "Plucks"
+    ],
+    [
+     "Sitar",
+     "Plucks"
+    ],
+    [
+     "Koto",
+     "Plucks"
+    ],
+    [
+     "Shamisen",
+     "Plucks"
+    ],
+    [
+     "Dulcimer",
+     "Plucks"
+    ],
+    [
+     "* Bass",
+     "Plucks"
+    ],
+    [
+     "* Sax",
+     "Leads"
+    ],
+    [
+     "Harmon Mute Trumpet",
+     "Leads"
+    ],
+    [
+     "Whistle",
+     "Leads"
+    ],
+    [
+     "Harmonica",
+     "Leads"
+    ],
+    [
+     "Pan Flute",
+     "Cinematic"
+    ],
+    [
+     "Shakuhachi",
+     "Cinematic"
+    ],
+    [
+     "Bottle Chiff",
+     "Cinematic"
+    ],
+    [
+     "Bagpipe",
+     "Cinematic"
+    ],
+    [
+     "Accordion",
+     "Keys"
+    ],
+    [
+     "Clavinet",
+     "Keys"
+    ],
+    [
+     "Tine Electric Piano",
+     "Keys"
+    ],
+    [
+     "Steel Drums",
+     "Bells"
+    ],
+    [
+     "Fantasia",
+     "Digital Synths"
+    ],
+    [
+     "Ice Rain",
+     "Digital Synths"
+    ],
+    [
+     "Echo Drops",
+     "Digital Synths"
+    ],
+    [
+     "Warm Pad",
+     "Pads"
+    ],
+    [
+     "Bowed Glass",
+     "Pads"
+    ],
+    [
+     "Atmosphere",
+     "Hybrid Instruments"
+    ]
+   ],
+   "rename": {
+    "String Guitar": "12-String Guitar",
+    "Tine Electric Piano": "Tine Piano"
+   }
+  },
+  {
+   "id": "jrhodes3d",
+   "name": "jRhodes3d (1977 Rhodes Mark I Stage 73)",
+   "group": "Keys",
+   "author": "Jeffrey Learman",
+   "license": "CC-BY-NC-4.0 (the samples); CC0-1.0 (the SFZ files)",
+   "license_url": "https://creativecommons.org/licenses/by-nc/4.0/",
+   "source": "https://github.com/sfzinstruments/jlearman.jRhodes3d",
+   "version": "git",
+   "size_mb": 25,
+   "restrictions": "Free to play as an instrument, in any music. The samples themselves may be passed on only with credit to Jeffrey Learman and not commercially (CC BY-NC 4.0); a commercial product needs his permission.",
+   "default": true,
+   "get": {
+    "type": "git",
+    "url": "https://github.com/sfzinstruments/jlearman.jRhodes3d.git",
+    "paths": [
+     "LICENSE",
+     "README.md",
+     "jRhodes3d-mono-no-xfade.sfz",
+     "jRhodes3d-mono"
+    ],
+    "commit": "aea5b8d3e11e2f7102593789a4e0a0e41b30271a"
+   },
+   "rename": {
+    "J Rhodes 3d-mono-no-xfade": "Rhodes Mark I",
+    "jRhodes3d-mono-no-xfade": "Rhodes Mark I"
+   },
+   "categories": [
+    [
+     "*",
+     "Keys"
+    ]
+   ],
+   "skip": [
+    "jRhodes3d-mono/*.sfz"
+   ]
+  },
+  {
+   "id": "sonic-pi-ambient",
+   "name": "Sonic Pi ambient samples",
+   "group": "Textures",
+   "author": "Freesound contributors, The Black Dog and others (each one is credited in the README fetched with them); gathered for Sonic Pi by Sam Aaron",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://github.com/sonic-pi-net/sonic-pi/tree/dev/etc/samples",
+   "version": "git",
+   "size_mb": 6,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "git",
+    "url": "https://github.com/sonic-pi-net/sonic-pi.git",
+    "paths": [
+     "etc/samples/README.md",
+     "etc/samples/ambi_choir.flac",
+     "etc/samples/ambi_dark_woosh.flac",
+     "etc/samples/ambi_drone.flac",
+     "etc/samples/ambi_glass_hum.flac",
+     "etc/samples/ambi_glass_rub.flac",
+     "etc/samples/ambi_haunted_hum.flac",
+     "etc/samples/ambi_lunar_land.flac",
+     "etc/samples/ambi_piano.flac",
+     "etc/samples/ambi_sauna.flac",
+     "etc/samples/guit_em9.flac",
+     "etc/samples/guit_harmonics.flac",
+     "etc/samples/loop_drone_g_97.flac",
+     "etc/samples/misc_cineboom.flac",
+     "etc/samples/perc_bell.flac",
+     "etc/samples/tbd_pad_2.flac",
+     "etc/samples/tbd_pad_3.flac",
+     "etc/samples/tbd_voctone.flac"
+    ],
+    "commit": "19dc5b058a30b4baf815816ad5838d2c9ac0f603"
+   },
+   "note": "Single recordings (a sung chord, drones, glass, pads): each is an instrument of its own, played across four octaves.",
+   "singles": [
+    "etc/samples/*.flac"
+   ],
+   "categories": [
+    [
+     "*ambi_choir*",
+     "Vocal Textures"
+    ],
+    [
+     "*tbd_voctone*",
+     "Vocal Textures"
+    ],
+    [
+     "*tbd_pad*",
+     "Pads"
+    ],
+    [
+     "*drone*",
+     "Soundscapes"
+    ],
+    [
+     "*bell*",
+     "Bells"
+    ],
+    [
+     "*guit_*",
+     "Plucks"
+    ],
+    [
+     "*cineboom*",
+     "Cinematic"
+    ],
+    [
+     "*ambi_*",
+     "Ambient"
+    ]
+   ],
+   "rename": {
+    "Ambi Choir": "Choir Wash",
+    "Ambi Dark Woosh": "Dark Whoosh",
+    "Ambi Drone": "Low Drone",
+    "Ambi Glass Hum": "Glass Hum",
+    "Ambi Glass Rub": "Glass Rub",
+    "Ambi Haunted Hum": "Haunted Hum",
+    "Ambi Lunar Land": "Lunar Landing",
+    "Ambi Piano": "Far Piano",
+    "Ambi Sauna": "Sauna Steam",
+    "Guit Em 9": "Guitar Em9 Chord",
+    "Guit Harmonics": "Guitar Harmonics",
+    "Loop Drone G 97": "Drone in G",
+    "Misc Cineboom": "Cinema Boom",
+    "Perc Bell": "Struck Bell",
+    "Tbd Pad 2": "Black Dog Pad 1",
+    "Tbd Pad 3": "Black Dog Pad 2",
+    "Tbd Voctone": "Black Dog Voice Tone"
+   }
+  },
+  {
+   "id": "gtown-church",
+   "name": "G-Town Church Sampling Project",
+   "group": "Orchestra",
+   "author": "Tobias Marberger; SFZ version by S. Christian Collins",
+   "license": "CC-Sampling-Plus-1.0",
+   "license_url": "https://creativecommons.org/licenses/sampling+/1.0/",
+   "source": "https://github.com/sfzinstruments/GTownChurchSamplingProject",
+   "version": "git",
+   "size_mb": 200,
+   "restrictions": "Sampling Plus: the sounds may be used in music, including commercial music, but not in advertising; the library itself may be shared only non-commercially, with credit to Tobias Marberger.",
+   "default": true,
+   "get": {
+    "type": "git",
+    "url": "https://github.com/sfzinstruments/GTownChurchSamplingProject.git",
+    "paths": [
+     "README.md",
+     "G-Town Church Sampling Project/Organ.sfz",
+     "G-Town Church Sampling Project/samples/Organ",
+     "G-Town Church Sampling Project/Mandolin.sfz",
+     "G-Town Church Sampling Project/samples/Mandolin",
+     "G-Town Church Sampling Project/Fake_Glass_Harmonica.sfz",
+     "G-Town Church Sampling Project/samples/Fake_Glass_Harmonica",
+     "G-Town Church Sampling Project/Toy_Glockenspiel.sfz",
+     "G-Town Church Sampling Project/samples/Toy_Glockenspiel",
+     "G-Town Church Sampling Project/Waterbowl.sfz",
+     "G-Town Church Sampling Project/samples/Waterbowl"
+    ],
+    "commit": "6a1454ad43c24a91b1a55ae053dd8b0e148969e4"
+   },
+   "note": "Five of its instruments: the church's organ, a mandolin, a glass harmonica, a toy glockenspiel and a water bowl. Its drums and one-shot effects are left out.",
+   "rename": {
+    "Organ": "Grebbestad Church Organ",
+    "Fake Glass Harmonica": "Glass Harmonica",
+    "Waterbowl": "Water Bowl"
+   },
+   "categories": [
+    [
+     "*Organ*",
+     "Keys"
+    ],
+    [
+     "*Mandolin*",
+     "Plucks"
+    ],
+    [
+     "*",
+     "Bells"
+    ]
+   ]
+  },
+  {
+   "id": "karoryfer-emilyguitar",
+   "name": "Emilyguitar",
+   "group": "Karoryfer Samples",
+   "author": "Karoryfer Samples",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://github.com/sfzinstruments/karoryfer.emilyguitar",
+   "version": "git",
+   "size_mb": 121,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "git",
+    "url": "https://github.com/sfzinstruments/karoryfer.emilyguitar.git",
+    "paths": [],
+    "commit": "b4920dc662fd9cad6dcaccdeecffdd91c8725d8c"
+   },
+   "categories": [
+    [
+     "*",
+     "Plucks"
+    ]
+   ],
+   "skip": [
+    "emily_chords*.sfz",
+    "emily_clean.sfz",
+    "emily_three_voice.sfz"
+   ],
+   "rename": {
+    "Emily Basic": "Emily Guitar",
+    "Emily Five Voice": "Emily Guitar Five Voices"
+   }
+  },
+  {
+   "id": "dsmolken-double-bass",
+   "name": "D. Smolken's Rubner double bass",
+   "group": "Karoryfer Samples",
+   "author": "D. Smolken (Karoryfer Samples)",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://github.com/sfzinstruments/dsmolken.double-bass",
+   "version": "git",
+   "size_mb": 277,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "git",
+    "url": "https://github.com/sfzinstruments/dsmolken.double-bass.git",
+    "paths": [],
+    "commit": "c2985eb647109d2a8f30a70071e3e163339d7396"
+   },
+   "categories": [
+    [
+     "*pizz*",
+     "Plucks"
+    ],
+    [
+     "*",
+     "Strings"
+    ]
+   ],
+   "skip": [
+    "*switched*",
+    "arco/extra*",
+    "extra*",
+    "*/extra/*",
+    "*/extra"
+   ],
+   "rename": {
+    "D Smolken Rubner Bass Arco": "Rubner Double Bass Arco",
+    "D Smolken Rubner Bass Pizz": "Rubner Double Bass Pizzicato"
+   }
+  },
+  {
+   "id": "karoryfer-shinyguitar",
+   "name": "Shinyguitar",
+   "group": "Karoryfer Samples",
+   "author": "Karoryfer Samples",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://github.com/sfzinstruments/karoryfer.shinyguitar",
+   "version": "git",
+   "size_mb": 442,
+   "restrictions": "none",
+   "default": false,
+   "get": {
+    "type": "git",
+    "url": "https://github.com/sfzinstruments/karoryfer.shinyguitar.git",
+    "paths": [],
+    "commit": "57243cca85277dbcc120ce17c6178032f93c80f3"
+   },
+   "categories": [
+    [
+     "*",
+     "Plucks"
+    ]
+   ],
+   "note": "Left out of the starter set for its size. Its own programs do not find their recordings on a disk that tells capitals from small letters, so its guitars are mapped from the file names instead."
+  },
+  {
+   "id": "karoryfer-bear-sax",
+   "name": "Bear Sax",
+   "group": "Karoryfer Samples",
+   "author": "Karoryfer Samples",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://github.com/sfzinstruments/karoryfer.bear-sax",
+   "version": "git",
+   "size_mb": 141,
+   "restrictions": "none",
+   "default": true,
+   "get": {
+    "type": "git",
+    "url": "https://github.com/sfzinstruments/karoryfer.bear-sax.git",
+    "paths": [],
+    "commit": "7abb3c652525a15dfac80e1b5dfbba9964ee568f"
+   },
+   "categories": [
+    [
+     "*",
+     "Leads"
+    ]
+   ],
+   "skip": [
+    "Programs/1-*",
+    "Programs/3-*",
+    "Programs/5-*",
+    "Programs/6-*"
+   ],
+   "rename": {
+    "Solo-poly": "Bear Sax",
+    "Duo-poly": "Bear Sax Duo"
+   },
+   "note": "A baritone saxophone, alone and as a pair. Its one-voice (legato) programs, its percussion and the Bearborg, which is shaped by ARIA 'var' modulations the sfizz engine does not play, are left out."
+  },
+  {
+   "id": "karoryfer-sneakybass",
+   "name": "Sneakybass",
+   "group": "Karoryfer Samples",
+   "author": "Karoryfer Samples",
+   "license": "CC0-1.0",
+   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+   "source": "https://github.com/sfzinstruments/karoryfer.sneakybass",
+   "version": "git",
+   "size_mb": 401,
+   "restrictions": "none",
+   "default": false,
+   "get": {
+    "type": "git",
+    "url": "https://github.com/sfzinstruments/karoryfer.sneakybass.git",
+    "paths": [],
+    "commit": "cc1a67e5c913678b85eaad1a3b5cb180d3be3e2d"
+   },
+   "categories": [
+    [
+     "*",
+     "Plucks"
+    ]
+   ],
+   "note": "Left out of the starter set for its size (an electric bass; MuseScore General's basses are in).",
+   "skip": [
+    "*keyswitch*",
+    "*ghost*",
+    "*noise*"
+   ]
+  },
+  {
+   "id": "rjs-vocal-pads",
+   "name": "RJS Vocal Pads",
+   "group": "Get these yourself (free)",
+   "author": "RJS (Pianobook)",
+   "credit": "Vocal-derived pads. Pianobook downloads need a free Pianobook account, so Ghost Atlas does not fetch them: download the pack, then drop its folder on the HARBOR page (Decent Sampler packs are converted on import).",
+   "license": "Pianobook terms",
+   "license_url": "",
+   "source": "https://www.pianobook.co.uk/packs/rjs-vocal-pads/",
+   "version": "",
+   "size_mb": 0,
+   "restrictions": "Pianobook community licence: free to use in music; do not redistribute or resell the samples.",
+   "default": false,
+   "get": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "pianobook-pads-synths",
+   "name": "Pianobook pads and synths",
+   "group": "Get these yourself (free)",
+   "author": "Pianobook contributors",
+   "credit": "Analog synth multisamples, pads, vintage keys and experimental instruments. Free account needed: download what you like and drop the folders on the HARBOR page.",
+   "license": "Pianobook terms",
+   "license_url": "",
+   "source": "https://www.pianobook.co.uk/instrument/pads-synths/",
+   "version": "",
+   "size_mb": 0,
+   "restrictions": "Pianobook community licence: free to use in music; do not redistribute or resell the samples.",
+   "default": false,
+   "get": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "pianobook-choirs",
+   "name": "Pianobook choirs and vocals",
+   "group": "Get these yourself (free)",
+   "author": "Pianobook contributors",
+   "credit": "Choirs, ethereal vocals, breath textures. Free account needed: download what you like and drop the folders on the HARBOR page.",
+   "license": "Pianobook terms",
+   "license_url": "",
+   "source": "https://www.pianobook.co.uk/instrument/choirs/",
+   "version": "",
+   "size_mb": 0,
+   "restrictions": "Pianobook community licence: free to use in music; do not redistribute or resell the samples.",
+   "default": false,
+   "get": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "shld-minifreak-pads",
+   "name": "Minifreak Pads",
+   "group": "Get these yourself (free)",
+   "author": "SHLD Music",
+   "credit": "Five multisampled Arturia MiniFreak pads (SFZ). Offered free through the author's Patreon posts, which need a browser: download, then drop the folder on the HARBOR page.",
+   "license": "CC0-1.0",
+   "license_url": "",
+   "source": "https://drolez.com/blog/music/ableton-free-sound-packs.php#minifreak",
+   "version": "",
+   "size_mb": 0,
+   "restrictions": "none",
+   "default": false,
+   "get": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "shld-wavestate-pads",
+   "name": "Wavestate Pads",
+   "group": "Get these yourself (free)",
+   "author": "SHLD Music",
+   "credit": "Three multisampled Korg Wavestate pads (SFZ). Offered free through the author's Patreon posts, which need a browser: download, then drop the folder on the HARBOR page.",
+   "license": "CC0-1.0",
+   "license_url": "",
+   "source": "https://drolez.com/blog/music/ableton-free-sound-packs.php#wavestate",
+   "version": "",
+   "size_mb": 0,
+   "restrictions": "none",
+   "default": false,
+   "get": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "quetzalcoatl-library",
+   "name": "Quetzalcoatl factory library",
+   "group": "Get these yourself (free)",
+   "author": "modularsamples / publicsamples",
+   "credit": "About 720 MB of samples stored as HISE monoliths, a format only HISE reads; not importable yet, and the licence of the sounds themselves is not stated in the repository.",
+   "license": "unstated for the samples (program: GPL-3.0)",
+   "license_url": "",
+   "source": "https://github.com/publicsamples/Quetzalcoatl/releases",
+   "version": "",
+   "size_mb": 0,
+   "restrictions": "Not used until its licence is confirmed.",
+   "default": false,
+   "get": {
+    "type": "manual"
+   }
+  },
+  {
+   "id": "kbh-real-choir",
+   "name": "KBH Real and Swelling Choirs",
+   "group": "Get these yourself (free)",
+   "author": "KBH",
+   "license": "reported as CC-BY-4.0 (not confirmed here)",
+   "license_url": "",
+   "source": "https://musical-artifacts.com/artifacts/387",
+   "version": "",
+   "size_mb": 17,
+   "restrictions": "The MuseScore forum reports this SoundFont as CC BY 4.0. Its own page could not be opened from here to confirm, so it is not fetched for you: read the licence on its page, then drop the .sf2 on the Library page.",
+   "default": false,
+   "get": {
+    "type": "manual"
+   }
+  }
+ ]
+}

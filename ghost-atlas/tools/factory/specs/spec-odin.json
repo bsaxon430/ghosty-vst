@@ -1,0 +1,179 @@
+{
+ "synths": {
+  "odin": {
+   "plugin": "/home/claude/synths/odin2/build/Odin2_artefacts/Release/VST3/Odin2.vst3",
+   "label": "Odin 2 (TheWaveWarden)",
+   "settle": 1
+  }
+ },
+ "patches": [
+  {
+   "name": "Odin EDM Projektor",
+   "synth": "odin",
+   "patch": "Leads/EDM Synth Projektor",
+   "preset": "/home/claude/synths/odin2/assets/Soundbanks/Factory Presets/Leads/EDM Synth Projektor.odin",
+   "kind": "lead",
+   "category": "Leads"
+  },
+  {
+   "name": "Odin Unison Glide Lead",
+   "synth": "odin",
+   "patch": "Leads/Unison Glide Lead",
+   "preset": "/home/claude/synths/odin2/assets/Soundbanks/Factory Presets/Leads/Unison Glide Lead.odin",
+   "kind": "lead",
+   "category": "Leads"
+  },
+  {
+   "name": "Odin Synth Brass",
+   "synth": "odin",
+   "patch": "Leads/Synth Brass",
+   "preset": "/home/claude/synths/odin2/assets/Soundbanks/Factory Presets/Leads/Synth Brass.odin",
+   "kind": "lead",
+   "category": "Analog Synths"
+  },
+  {
+   "name": "Odin Synthwave Pad",
+   "synth": "odin",
+   "patch": "Pads/Synthwave Pad",
+   "preset": "/home/claude/synths/odin2/assets/Soundbanks/Factory Presets/Pads/Synthwave Pad.odin",
+   "kind": "pad",
+   "category": "Pads"
+  },
+  {
+   "name": "Odin Warm Pad",
+   "synth": "odin",
+   "patch": "Pads/Warm-Pad [Photonic]",
+   "preset": "/home/claude/synths/odin2/assets/Soundbanks/Factory Presets/Pads/Warm-Pad [Photonic].odin",
+   "kind": "pad",
+   "category": "Pads"
+  },
+  {
+   "name": "Odin Choir Aahs",
+   "synth": "odin",
+   "patch": "Pads/Choir Aahs 1 [RS]",
+   "preset": "/home/claude/synths/odin2/assets/Soundbanks/Factory Presets/Pads/Choir Aahs 1 [RS].odin",
+   "kind": "pad",
+   "category": "Vocal Pads"
+  },
+  {
+   "name": "Odin Synth Strings",
+   "synth": "odin",
+   "patch": "Pads/Synth Strings",
+   "preset": "/home/claude/synths/odin2/assets/Soundbanks/Factory Presets/Pads/Synth Strings.odin",
+   "kind": "pad",
+   "category": "Strings"
+  },
+  {
+   "name": "Odin FM Sphere",
+   "synth": "odin",
+   "patch": "Pads/FM Sphere [RS]",
+   "preset": "/home/claude/synths/odin2/assets/Soundbanks/Factory Presets/Pads/FM Sphere [RS].odin",
+   "kind": "pad",
+   "category": "Digital Synths"
+  },
+  {
+   "name": "Odin Moonshade",
+   "synth": "odin",
+   "patch": "Pads/Moonshade",
+   "preset": "/home/claude/synths/odin2/assets/Soundbanks/Factory Presets/Pads/Moonshade.odin",
+   "kind": "pad",
+   "category": "Pads"
+  },
+  {
+   "name": "Odin Deep Bass",
+   "synth": "odin",
+   "patch": "Bass/DeepBass [Photonic]",
+   "preset": "/home/claude/synths/odin2/assets/Soundbanks/Factory Presets/Bass/DeepBass [Photonic].odin",
+   "kind": "bass",
+   "category": "Analog Synths"
+  },
+  {
+   "name": "Odin Growly FM Bass",
+   "synth": "odin",
+   "patch": "Bass/Growly FM Bass [XR]",
+   "preset": "/home/claude/synths/odin2/assets/Soundbanks/Factory Presets/Bass/Growly FM Bass [XR].odin",
+   "kind": "bass",
+   "category": "Analog Synths"
+  },
+  {
+   "name": "Odin Analog Bass",
+   "synth": "odin",
+   "patch": "Bass/Analog Bass [tx]",
+   "preset": "/home/claude/synths/odin2/assets/Soundbanks/Factory Presets/Bass/Analog Bass [tx].odin",
+   "kind": "bass",
+   "category": "Analog Synths"
+  },
+  {
+   "name": "Odin House Stab",
+   "synth": "odin",
+   "patch": "Stabs/House Stab",
+   "preset": "/home/claude/synths/odin2/assets/Soundbanks/Factory Presets/Stabs/House Stab.odin",
+   "kind": "pluck",
+   "category": "Analog Synths"
+  },
+  {
+   "name": "Odin Saw Pluck",
+   "synth": "odin",
+   "patch": "Stabs/Saw Pluck [Projektor]",
+   "preset": "/home/claude/synths/odin2/assets/Soundbanks/Factory Presets/Stabs/Saw Pluck [Projektor].odin",
+   "kind": "pluck",
+   "category": "Plucks"
+  },
+  {
+   "name": "Odin Chord Pluck",
+   "synth": "odin",
+   "patch": "Stabs/Chord Pluck Projektor",
+   "preset": "/home/claude/synths/odin2/assets/Soundbanks/Factory Presets/Stabs/Chord Pluck Projektor.odin",
+   "kind": "pluck",
+   "category": "Plucks"
+  },
+  {
+   "name": "Odin E-Piano",
+   "synth": "odin",
+   "patch": "Keys/E-Piano (MW) [Photonic]",
+   "preset": "/home/claude/synths/odin2/assets/Soundbanks/Factory Presets/Keys/E-Piano (MW) [Photonic].odin",
+   "kind": "keys",
+   "category": "Keys"
+  },
+  {
+   "name": "Odin FM Piano",
+   "synth": "odin",
+   "patch": "Keys/FM Piano",
+   "preset": "/home/claude/synths/odin2/assets/Soundbanks/Factory Presets/Keys/FM Piano.odin",
+   "kind": "keys",
+   "category": "Keys"
+  },
+  {
+   "name": "Odin Glassy Bell",
+   "synth": "odin",
+   "patch": "Chimes/Synth Glassybell",
+   "preset": "/home/claude/synths/odin2/assets/Soundbanks/Factory Presets/Chimes/Synth Glassybell.odin",
+   "kind": "bell",
+   "category": "Bells"
+  },
+  {
+   "name": "Odin Ethereal Bells",
+   "synth": "odin",
+   "patch": "Chimes/Ethereal Bells",
+   "preset": "/home/claude/synths/odin2/assets/Soundbanks/Factory Presets/Chimes/Ethereal Bells.odin",
+   "kind": "bell",
+   "category": "Bells"
+  },
+  {
+   "name": "Odin Floating Dreams",
+   "synth": "odin",
+   "patch": "Atmospheres/Floating Dreams [XR]",
+   "preset": "/home/claude/synths/odin2/assets/Soundbanks/Factory Presets/Atmospheres/Floating Dreams [XR].odin",
+   "kind": "evolve",
+   "category": "Ambient"
+  },
+  {
+   "name": "Odin Pacific Nights",
+   "synth": "odin",
+   "patch": "Atmospheres/Pacific Nights",
+   "preset": "/home/claude/synths/odin2/assets/Soundbanks/Factory Presets/Atmospheres/Pacific Nights.odin",
+   "kind": "evolve",
+   "category": "Ambient"
+  }
+ ]
+}

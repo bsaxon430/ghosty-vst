@@ -1,0 +1,105 @@
+repo: https://github.com/Tracktion/pluginval.git
+branch: develop
+commit: 286684f72062250fd2494681b7ebdcb721f09e0d
+commit date: 2026-10-15T17:37:51+01:00
+licence files:
+./LICENSE
+
+--- top level
+CHANGELIST.md
+CLAUDE.md
+CMakeLists.txt
+FUNDING.md
+LICENSE
+README.md
+ROADMAP.md
+VERSION
+acceptance
+cmake
+docs
+source
+tests
+validate
+
+--- tree (depth 2, dirs)
+.
+./acceptance
+./cmake
+./docs
+./docs/images
+./source
+./source/acceptance
+./source/binarydata
+./source/native
+./source/tests
+./source/vst3validator
+./tests
+./tests/acceptance
+./tests/pluginval_as_dependency
+./tests/test_plugins
+./validate
+
+--- .
+.
+./CHANGELIST.md
+./CLAUDE.md
+./CMakeLists.txt
+./FUNDING.md
+./LICENSE
+./README.md
+./ROADMAP.md
+./VERSION
+./acceptance
+./acceptance/action.yml
+./cmake
+./cmake/CPM.cmake
+./cmake/GenerateBinaryHeader.cmake
+./docs
+./docs/Acceptance testing.md
+./docs/Adding pluginval to CI.md
+./docs/Command line options.md
+./docs/Debugging a failed validation.md
+./docs/Testing plugins with pluginval.md
+./docs/images
+./source
+./source/CommandLine.cpp
+./source/CommandLine.h
+./source/CommandLineTests.cpp
+./source/CrashHandler.cpp
+./source/CrashHandler.h
+./source/Main.cpp
+./source/MainComponent.cpp
+./source/MainComponent.h
+./source/PluginTests.cpp
+./source/PluginTests.h
+./source/PluginvalLookAndFeel.h
+./source/PluginvalSettings.h
+./source/RTCheck.h
+./source/ReportWriter.cpp
+./source/ReportWriter.h
+./source/SettingsParser.cpp
+./source/SettingsParser.h
+./source/SettingsSerializer.cpp
+./source/SettingsSerializer.h
+./source/StrictnessInfoPopup.h
+./source/TestUtilities.cpp
+./source/TestUtilities.h
+./source/Validator.cpp
+./source/Validator.h
+./source/acceptance
+./source/binarydata
+./source/native
+./source/tests
+./source/vst3validator
+./tests
+./tests/AddPluginvalTests.cmake
+./tests/acceptance
+./tests/mac_tests
+./tests/pluginval_as_dependency
+./tests/test_plugins
+./tests/windows_tests.bat
+./validate
+./validate/action.yml
+
+--- submodules
+(none)

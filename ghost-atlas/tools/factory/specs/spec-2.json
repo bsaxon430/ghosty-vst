@@ -1,0 +1,291 @@
+{
+ "synths": {
+  "obxd": {
+   "plugin": "/home/claude/synths/obxd-deb/opt/obxd/OB-Xd.so",
+   "label": "OB-Xd 2 (discoDSP)"
+  },
+  "dexed": {
+   "plugin": "/home/claude/synths/dexed/build/source/Dexed_artefacts/Release/VST3/Dexed.vst3",
+   "label": "Dexed (DX7)"
+  }
+ },
+ "patches": [
+  {
+   "name": "OB Big Pad",
+   "synth": "obxd",
+   "patch": "Pads And Strings/Big Obie Pad",
+   "preset": "/home/claude/synths/obxd-deb/opt/obxd/discoDSP/OB-Xd/Presets/Pads And Strings/Big Obie Pad.fxp",
+   "kind": "pad",
+   "category": "Pads"
+  },
+  {
+   "name": "OB 1981 Pad",
+   "synth": "obxd",
+   "patch": "Pads And Strings/Oberheim 1981",
+   "preset": "/home/claude/synths/obxd-deb/opt/obxd/discoDSP/OB-Xd/Presets/Pads And Strings/Oberheim 1981.fxp",
+   "kind": "pad",
+   "category": "Pads"
+  },
+  {
+   "name": "OB Blade Brass",
+   "synth": "obxd",
+   "patch": "Pads And Strings/Blade Runner Brass Pad ",
+   "preset": "/home/claude/synths/obxd-deb/opt/obxd/discoDSP/OB-Xd/Presets/Pads And Strings/Blade Runner Brass Pad .fxp",
+   "kind": "pad",
+   "category": "Analog Synths"
+  },
+  {
+   "name": "OB Cloud Strings",
+   "synth": "obxd",
+   "patch": "Pads And Strings/Cloud Strings",
+   "preset": "/home/claude/synths/obxd-deb/opt/obxd/discoDSP/OB-Xd/Presets/Pads And Strings/Cloud Strings.fxp",
+   "kind": "pad",
+   "category": "Strings"
+  },
+  {
+   "name": "OB Open Sky",
+   "synth": "obxd",
+   "patch": "Pads And Strings/Open Sky",
+   "preset": "/home/claude/synths/obxd-deb/opt/obxd/discoDSP/OB-Xd/Presets/Pads And Strings/Open Sky.fxp",
+   "kind": "pad",
+   "category": "Pads"
+  },
+  {
+   "name": "OB Jump Brass",
+   "synth": "obxd",
+   "patch": "Synth Poly/Jump",
+   "preset": "/home/claude/synths/obxd-deb/opt/obxd/discoDSP/OB-Xd/Presets/Synth Poly/Jump.fxp",
+   "kind": "lead",
+   "category": "Analog Synths"
+  },
+  {
+   "name": "OB Big Lead",
+   "synth": "obxd",
+   "patch": "Lead Synth/Big Lead OB-Xd",
+   "preset": "/home/claude/synths/obxd-deb/opt/obxd/discoDSP/OB-Xd/Presets/Lead Synth/Big Lead OB-Xd.fxp",
+   "kind": "lead",
+   "category": "Leads"
+  },
+  {
+   "name": "OB Super 80s Lead",
+   "synth": "obxd",
+   "patch": "Lead Synth/Super80'sLead",
+   "preset": "/home/claude/synths/obxd-deb/opt/obxd/discoDSP/OB-Xd/Presets/Lead Synth/Super80'sLead.fxp",
+   "kind": "lead",
+   "category": "Leads"
+  },
+  {
+   "name": "OB Outrun Bass",
+   "synth": "obxd",
+   "patch": "Bass/Outrun Bass",
+   "preset": "/home/claude/synths/obxd-deb/opt/obxd/discoDSP/OB-Xd/Presets/Bass/Outrun Bass.fxp",
+   "kind": "bass",
+   "category": "Analog Synths"
+  },
+  {
+   "name": "OB House Bass",
+   "synth": "obxd",
+   "patch": "Bass/House Bass 01",
+   "preset": "/home/claude/synths/obxd-deb/opt/obxd/discoDSP/OB-Xd/Presets/Bass/House Bass 01.fxp",
+   "kind": "bass",
+   "category": "Analog Synths"
+  },
+  {
+   "name": "OB Heaven Pluck",
+   "synth": "obxd",
+   "patch": "Plucked/Heaven's Pluck",
+   "preset": "/home/claude/synths/obxd-deb/opt/obxd/discoDSP/OB-Xd/Presets/Plucked/Heaven's Pluck.fxp",
+   "kind": "pluck",
+   "category": "Plucks"
+  },
+  {
+   "name": "OB Polar Pluck",
+   "synth": "obxd",
+   "patch": "Plucked/Polar Pluck",
+   "preset": "/home/claude/synths/obxd-deb/opt/obxd/discoDSP/OB-Xd/Presets/Plucked/Polar Pluck.fxp",
+   "kind": "pluck",
+   "category": "Plucks"
+  },
+  {
+   "name": "OB Synthwave Stab",
+   "synth": "obxd",
+   "patch": "Synth Poly/Synthwaver Comp",
+   "preset": "/home/claude/synths/obxd-deb/opt/obxd/discoDSP/OB-Xd/Presets/Synth Poly/Synthwaver Comp.fxp",
+   "kind": "pluck",
+   "category": "Analog Synths"
+  },
+  {
+   "name": "OB Rhodes",
+   "synth": "obxd",
+   "patch": "Keys/Obie Rhodes",
+   "preset": "/home/claude/synths/obxd-deb/opt/obxd/discoDSP/OB-Xd/Presets/Keys/Obie Rhodes.fxp",
+   "kind": "keys",
+   "category": "Keys"
+  },
+  {
+   "name": "DX Rhodos",
+   "synth": "dexed",
+   "patch": "SynprezFM_01 / rhodos",
+   "preset": {
+    "syx": "/tmp/dx/SynprezFM_01.syx",
+    "voice": 12
+   },
+   "kind": "keys",
+   "category": "Keys"
+  },
+  {
+   "name": "DX FM Rhodes",
+   "synth": "dexed",
+   "patch": "SynprezFM_02 / FmRhodes18",
+   "preset": {
+    "syx": "/tmp/dx/SynprezFM_02.syx",
+    "voice": 15
+   },
+   "kind": "keys",
+   "category": "Keys"
+  },
+  {
+   "name": "DX E-Piano 13",
+   "synth": "dexed",
+   "patch": "SynprezFM_04 / E.PNO 13.2",
+   "preset": {
+    "syx": "/tmp/dx/SynprezFM_04.syx",
+    "voice": 4
+   },
+   "kind": "keys",
+   "category": "Keys"
+  },
+  {
+   "name": "DX DL Rhodes",
+   "synth": "dexed",
+   "patch": "SynprezFM_08 / DL RHODES4",
+   "preset": {
+    "syx": "/tmp/dx/SynprezFM_08.syx",
+    "voice": 0
+   },
+   "kind": "keys",
+   "category": "Keys"
+  },
+  {
+   "name": "DX Glass Bell",
+   "synth": "dexed",
+   "patch": "SynprezFM_01 / glassbell",
+   "preset": {
+    "syx": "/tmp/dx/SynprezFM_01.syx",
+    "voice": 8
+   },
+   "kind": "bell",
+   "category": "Bells"
+  },
+  {
+   "name": "DX Tine Chimes",
+   "synth": "dexed",
+   "patch": "SynprezFM_24 / TineChimes",
+   "preset": {
+    "syx": "/tmp/dx/SynprezFM_24.syx",
+    "voice": 14
+   },
+   "kind": "bell",
+   "category": "Bells"
+  },
+  {
+   "name": "DX Lunar Bell",
+   "synth": "dexed",
+   "patch": "SynprezFM_24 / Lunar.Bell",
+   "preset": {
+    "syx": "/tmp/dx/SynprezFM_24.syx",
+    "voice": 15
+   },
+   "kind": "bell",
+   "category": "Bells"
+  },
+  {
+   "name": "DX FM Chimes",
+   "synth": "dexed",
+   "patch": "SynprezFM_19 / FM CHIMES",
+   "preset": {
+    "syx": "/tmp/dx/SynprezFM_19.syx",
+    "voice": 18
+   },
+   "kind": "bell",
+   "category": "Bells"
+  },
+  {
+   "name": "DX FM Bass",
+   "synth": "dexed",
+   "patch": "SynprezFM_03 / > FM.BASS",
+   "preset": {
+    "syx": "/tmp/dx/SynprezFM_03.syx",
+    "voice": 17
+   },
+   "kind": "bass",
+   "category": "Analog Synths"
+  },
+  {
+   "name": "DX Synbass 54",
+   "synth": "dexed",
+   "patch": "SynprezFM_13 / SYNBASS 54",
+   "preset": {
+    "syx": "/tmp/dx/SynprezFM_13.syx",
+    "voice": 13
+   },
+   "kind": "bass",
+   "category": "Analog Synths"
+  },
+  {
+   "name": "DX Torim Pluck",
+   "synth": "dexed",
+   "patch": "SynprezFM_11 / TORIM PLK2",
+   "preset": {
+    "syx": "/tmp/dx/SynprezFM_11.syx",
+    "voice": 20
+   },
+   "kind": "pluck",
+   "category": "Plucks"
+  },
+  {
+   "name": "DX Angel Pluck",
+   "synth": "dexed",
+   "patch": "SynprezFM_31 / Pluk.Angel",
+   "preset": {
+    "syx": "/tmp/dx/SynprezFM_31.syx",
+    "voice": 22
+   },
+   "kind": "pluck",
+   "category": "Plucks"
+  },
+  {
+   "name": "DX Celesta",
+   "synth": "dexed",
+   "patch": "SynprezFM_18 / Celesta",
+   "preset": {
+    "syx": "/tmp/dx/SynprezFM_18.syx",
+    "voice": 8
+   },
+   "kind": "bell",
+   "category": "Bells"
+  },
+  {
+   "name": "DX Digi Pad",
+   "synth": "dexed",
+   "patch": "SynprezFM_06 / Digi Pad",
+   "preset": {
+    "syx": "/tmp/dx/SynprezFM_06.syx",
+    "voice": 24
+   },
+   "kind": "pad",
+   "category": "Digital Synths"
+  },
+  {
+   "name": "DX Syn Lead 32",
+   "synth": "dexed",
+   "patch": "SynprezFM_07 / SYN-LEAD32",
+   "preset": {
+    "syx": "/tmp/dx/SynprezFM_07.syx",
+    "voice": 25
+   },
+   "kind": "lead",
+   "category": "Leads"
+  }
+ ]
+}

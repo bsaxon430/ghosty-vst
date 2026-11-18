@@ -1,0 +1,68 @@
+repo: https://github.com/surge-synthesizer/sst-filters.git
+branch: main
+commit: 87a171bcba52c014850848a29174a54f0adc6606
+commit date: 2026-10-13T08:54:34-04:00
+licence files:
+./LICENSE.md
+
+--- top level
+CMakeLists.txt
+LICENSE.md
+README.md
+cmake
+doxygen
+examples
+include
+include-extras
+libs
+scripts
+tests
+
+--- tree (depth 2, dirs)
+.
+./cmake
+./doxygen
+./examples
+./examples/filter_plot_tool
+./examples/filters_example_plugin
+./examples/filters_plus_plus
+./include
+./include-extras
+./include-extras/sst
+./include/sst
+./libs
+./libs/catch2
+./scripts
+./tests
+
+--- include/sst/filters
+.
+./BiquadFilter.h
+./ButterworthLPHP.h
+./CutoffWarp.h
+./CytomicSVF.h
+./CytomicSVFCascade.h
+./CytomicSVFCascadeQuadForm.h
+./CytomicSVFQuadForm.h
+./CytomicTilt.h
+./DiodeLadder.h
+./FastTiltNoiseFilter.h
+./FilterCoefficientMaker.h
+./FilterCoefficientMaker_Impl.h
+./FilterConfiguration.h
+./FilterConfigurationLabels.h
+./HalfRateFilter.h
+./K35Filter.h
+./LinkwitzRiley.h
+./OBXDFilter.h
+./QuadFilterUnit.h
+./QuadFilterUnit_Impl.h
+./ResonanceWarp.h
+./TriPoleFilter.h
+./TuningProvider.h
+./VintageLadders.h
+./detail
+./detail/CytomicSVFCascadeDetails.h
+
+--- submodules
+(none)

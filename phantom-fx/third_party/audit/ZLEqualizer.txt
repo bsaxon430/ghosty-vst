@@ -1,0 +1,195 @@
+repo: https://github.com/ZL-Audio/ZLEqualizer.git
+branch: main
+commit: 38c7a85dd1791520fcf0d6c7e9c22d73c01d2755
+commit date: 2026-11-07T22:21:22-05:00
+licence files:
+./LICENSE.md
+./licenses
+
+--- top level
+CHANGELOG.md
+CMakeLists.txt
+JUCE
+LICENSE.md
+README.md
+assets
+cmake-includes
+docs
+highway
+licenses
+modules
+nlopt
+packaging
+renovate.json
+source
+zldsp_fft
+
+--- tree (depth 2, dirs)
+.
+./JUCE
+./assets
+./assets/font
+./assets/icons
+./cmake-includes
+./docs
+./highway
+./licenses
+./modules
+./nlopt
+./packaging
+./packaging/icon.icon
+./packaging/installer.icon
+./source
+./source/chore
+./source/dsp
+./source/gui
+./source/panel
+./source/state
+./source/zlp
+./zldsp_fft
+
+--- source
+.
+./PluginEditor.cpp
+./PluginEditor.hpp
+./PluginProcessor.cpp
+./PluginProcessor.hpp
+./chore
+./chore/eq_match
+./chore/thread
+./dsp
+./dsp/analyzer
+./dsp/chore
+./dsp/compressor
+./dsp/container
+./dsp/delay
+./dsp/fft
+./dsp/filter
+./dsp/gain
+./dsp/histogram
+./dsp/interpolation
+./dsp/lock
+./dsp/loudness
+./dsp/splitter
+./dsp/vector
+./gui
+./gui/attachment
+./gui/button
+./gui/calloutbox
+./gui/colour_selector
+./gui/combobox
+./gui/dragger
+./gui/gui.hpp
+./gui/interface_definitions.hpp
+./gui/interface_definitons.cpp
+./gui/label
+./gui/resize_corner
+./gui/scrolling
+./gui/slider
+./gui/tooltip
+./panel
+./panel/background
+./panel/control_panel
+./panel/curve_panel
+./panel/helper
+./panel/main_panel.cpp
+./panel/main_panel.hpp
+./panel/multilingual
+./panel/preset_browser
+./panel/top_panel
+./panel/ui_setting_panel
+./state
+./state/dummy_processor.hpp
+./state/property.cpp
+./state/property.hpp
+./state/state.hpp
+./state/state_definitions.hpp
+./state/state_schema.hpp
+./state/ui_state.cpp
+./state/ui_state.hpp
+./zlp
+./zlp/chore_attach.cpp
+./zlp/chore_attach.hpp
+./zlp/controller.cpp
+./zlp/controller.hpp
+./zlp/filter_attach.cpp
+./zlp/filter_attach.hpp
+./zlp/filter_dynamic_attach.cpp
+./zlp/filter_dynamic_attach.hpp
+./zlp/filter_side_attach.cpp
+./zlp/filter_side_attach.hpp
+./zlp/juce_helper
+./zlp/sample_rate_helper.hpp
+./zlp/stereo_fir_processor.hpp
+./zlp/zlp.hpp
+./zlp/zlp_definitions.hpp
+
+--- source/dsp
+.
+./analyzer
+./analyzer/analyzer_base
+./analyzer/fft_analyzer
+./analyzer/mag_analyzer
+./chore
+./chore/chore.hpp
+./chore/decibels.hpp
+./chore/smoothed_value.hpp
+./compressor
+./compressor/compressor.hpp
+./compressor/follower
+./container
+./container/circular_buffer.hpp
+./container/circular_minmax_buffer.hpp
+./container/fifo
+./delay
+./delay/delay.hpp
+./delay/integer_delay.hpp
+./fft
+./fft/zldsp_fft_include.hpp
+./fft/zldsp_fft_window.hpp
+./filter
+./filter/dynamic_filter
+./filter/empty_filter
+./filter/filter_design
+./filter/fir_filter
+./filter/gain_compensation
+./filter/helpers.hpp
+./filter/ideal_filter
+./filter/iir_filter
+./gain
+./gain/gain.hpp
+./histogram
+./histogram/histogram.hpp
+./interpolation
+./interpolation/interpolation.hpp
+./interpolation/seq_makima.hpp
+./lock
+./lock/spin_lock.hpp
+./loudness
+./loudness/k_weighting_filter.hpp
+./loudness/loudness.hpp
+./loudness/lufs_matcher.hpp
+./loudness/lufs_meter.hpp
+./splitter
+./splitter/inplace_ms_splitter.hpp
+./vector
+./vector/highway_import.hpp
+./vector/vector.hpp
+./vector/vector_reduce
+./vector/vector_transform
+
+--- submodules
+[submodule "JUCE"]
+	path = JUCE
+	url = https://github.com/ZL-Audio/JUCE
+	branch = master
+[submodule "nlopt"]
+	path = nlopt
+	url = https://github.com/ZL-Audio/nlopt
+	branch = master
+[submodule "highway"]
+	path = highway
+	url = https://github.com/ZL-Audio/highway
+[submodule "zldsp_fft"]
+	path = zldsp_fft
+	url = https://github.com/ZL-Audio/zldsp_fft

@@ -1,0 +1,245 @@
+name	category	layers	result	peak_db	onset_db	chord_db	master_db	notes
+Linen Morning	Pianos	2	ok	-6.5	-17.0	-22.4	4.5	Narrowed the layers so the sound holds up in mono
+Marsh Light Grand	Pianos	1	ok	-6.3	-17.0	-24.6	2.8	
+Low Sun Upright	Pianos	1	ok	-1.9	-17.0	-24.9	1.8	
+Paper Boats	Pianos	3	ok	-5.0	-17.0	-23.8	2.7	
+Drowned Steinway	Pianos	2	ok	-7.0	-17.0	-24.4	3.1	
+Reed And Hammer	Pianos	3	ok	-6.6	-17.0	-18.8	2.9	
+Felt In The Reeds	Pianos	2	ok	-6.8	-17.0	-24.5	2.2	
+Cathedral Grand	Pianos	2	ok	-6.6	-17.0	-23.0	2.5	
+Dusk Wurli	Keys	1	ok	-5.9	-17.0	-20.8	3.1	
+Tin Roof Pianet	Keys	1	ok	-5.4	-17.0	-22.3	0.3	
+Stage Eighty	Keys	2	ok	-9.3	-17.0	-20.7	2.4	
+Glass FM	Keys	2	ok	-7.8	-17.0	-21.5	0.9	
+Chapel In The Marsh	Keys	2	ok	-8.9	-17.0	-18.2	-0.0	
+Sunday Drawbars	Keys	1	ok	-10.8	-17.0	-18.3	2.7	
+Sugar Plum	Keys	2	ok	-8.2	-17.0	-23.5	-0.5	Turned the brightest layer down to take a ring out
+Clavi Dust	Keys	1	ok	-7.1	-17.0	-23.1	1.2	
+Flute Stop	Keys	2	ok	-8.9	-17.0	-17.6	-1.0	
+Harpsichord Hours	Keys	2	ok	-5.5	-17.0	-23.9	1.7	
+Paper Organ	Keys	2	ok	-8.0	-17.0	-17.3	1.3	
+Dye Works	Analog Synths	2	ok	-8.7	-17.0	-18.2	2.9	
+Brass Furnace	Analog Synths	3	ok	-7.9	-17.0	-18.1	1.7	
+Transistor Radio	Analog Synths	1	ok	-7.1	-17.0	-17.5	2.2	
+Loom Bass	Analog Synths	3	ok	-7.4	-17.0	-20.7	1.0	
+Red Thread	Analog Synths	2	ok	-6.9	-17.0	-17.7	1.1	
+Slow Vat	Analog Synths	2	ok	-7.9	-17.0	-19.1	1.8	
+Pulse Weaver	Analog Synths	2	ok	-7.9	-17.0	-17.5	0.3	
+Triangle Loom	Analog Synths	2	ok	-8.4	-17.0	-17.4	0.3	
+Hot Iron	Analog Synths	2	ok	-6.8	-17.0	-18.9	1.5	
+Ember Lead	Leads	2	ok	-8.8	-17.0	-18.1	0.5	
+Calliope Steam	Leads	2	ok	-8.5	-17.0	-17.4	1.7	
+Fifths Of Fire	Leads	2	ok	-6.5	-17.0	-17.5	1.6	
+Weaver's Whistle	Leads	2	ok	-7.5	-17.0	-18.5	0.8	
+Scarlet Saw	Leads	2	ok	-10.6	-17.0	-18.1	0.8	
+Chip Ember	Leads	2	ok	-9.0	-17.0	-18.6	-0.6	
+Theremin Thread	Leads	2	ok	-8.5	-17.0	-17.9	0.2	
+Solo Reed	Leads	2	ok	-8.4	-17.0	-17.6	0.5	
+Crimson Harp	Plucks	2	ok	-4.2	-17.0	-22.8	3.3	
+Shuttle Pluck	Plucks	2	ok	-4.7	-17.0	-25.7	0.4	
+Pizzicato Garden	Plucks	2	ok	-4.7	-17.0	-25.6	1.9	
+Dan Tranh Rain	Plucks	2	ok	-5.0	-17.0	-22.7	4.0	
+Psaltery Thread	Plucks	2	ok	-5.4	-17.0	-23.3	5.8	
+Copper Wire	Plucks	2	ok	-2.7	-17.0	-23.6	1.5	
+Saw Tooth Loom	Plucks	2	ok	-4.8	-17.0	-25.6	1.4	
+Cello Fingers	Plucks	2	ok	-0.6	-17.0	-25.6	2.1	its attack leans 0.9 dB on the master limiter
+Harp And Glass	Plucks	3	ok	-7.4	-17.0	-22.8	3.1	
+Orchard Mass	Choirs	3	ok	-7.9	-17.0	-18.3	-2.5	
+Petal Sopranos	Choirs	2	ok	-8.1	-17.0	-18.6	0.8	
+Low Monks	Choirs	3	ok	-6.2	-17.0	-18.4	0.6	
+Vowel Garden	Choirs	2	ok	-7.9	-17.0	-18.6	-7.8	Turned the whole sound down so nothing clips
+Blossom Aahs	Choirs	2	ok	-7.9	-17.0	-18.1	-0.0	
+Flooded Hymn	Choirs	3	ok	-8.1	-17.0	-17.9	0.2	
+Orchard Children	Choirs	2	ok	-6.3	-17.0	-19.3	1.7	
+Wave Choir	Choirs	3	ok	-6.6	-17.0	-18.2	0.6	
+Drowned Choir	Vocal Pads	3	ok	-7.5	-17.0	-18.4	3.7	Narrowed the layers so the sound holds up in mono
+Breath On Water	Vocal Pads	3	ok	-7.0	-17.0	-18.1	1.4	
+Silk Voices	Vocal Pads	2	ok	-7.4	-17.0	-18.9	0.8	
+Choir Of Glass	Vocal Pads	2	ok	-8.9	-17.0	-19.5	2.4	
+Petal Drift	Vocal Pads	3	ok	-7.0	-17.0	-19.4	-1.5	
+Lullaby For The Flood	Vocal Pads	3	ok	-8.8	-17.0	-18.4	0.8	
+Reed Voices	Vocal Pads	2	ok	-7.5	-17.0	-17.8	1.8	
+Vowel Tide	Vocal Pads	2	ok	-7.5	-17.0	-18.8	-4.8	
+Thousand Lights	Bells	3	ok	-7.4	-17.0	-22.1	1.1	
+Lantern Vibes	Bells	2	ok	-6.6	-17.0	-20.7	5.5	
+Paper Lantern	Bells	2	ok	0.2	-17.0	-25.3	12.0	its attack leans 1.7 dB on the master limiter
+Temple Hang	Bells	2	ok	-7.6	-17.0	-24.5	2.5	Turned the brightest layer down to take a ring out
+Crotale Rain	Bells	3	ok	-7.1	-17.0	-25.0	2.1	
+Mbira Dusk	Bells	2	ok	-1.8	-17.0	-25.3	10.8	
+Music Box Shrine	Bells	2	ok	2.5	-18.8	-27.5	-8.0	Turned the whole sound down so nothing clips; its attack leans 4.0 dB on the master limiter
+Wine Glass Halo	Bells	3	ok	-10.2	-17.0	-18.4	2.4	
+Bronze Hour	Bells	3	ok	-7.9	-17.0	-22.4	0.9	
+Marimba Embers	Bells	3	ok	-3.6	-17.0	-23.3	2.8	
+FM Carillon	Bells	3	ok	-7.4	-17.0	-24.4	0.6	
+Glass Rain	Bells	2	ok	-2.9	-17.0	-25.5	1.7	
+Ork Sermon	Vocal Chops	1	ok (set aside: No loop seams (a seam reads 1.00); set aside: Even across the keys (low, middle and high notes lie within 22.8 dB))	-10.1	-17.0	-21.4	0.9	
+Chant Cutter	Vocal Chops	2	ok (set aside: No loop seams (a seam reads 1.00))	-7.8	-19.8	-22.4	-2.3	Its two gates play pattern 4 (until 0.1.9 they stood open and cut nothing)
+Lantern Stabs	Vocal Chops	2	ok	-6.2	-17.0	-18.2	0.4	
+Talking Choir	Vocal Chops	1	ok	-7.2	-17.0	-19.2	-8.3	Turned the whole sound down so nothing clips
+Whisper Wall	Vocal Textures	2	ok	-6.0	-17.0	-18.0	1.8	
+Breathing Paper	Vocal Textures	2	ok	-6.1	-17.0	-19.1	2.2	
+Frozen Vespers	Vocal Textures	1	ok	-7.3	-17.0	-18.8	5.3	
+Ghost Syllables	Vocal Textures	1	ok (set aside: Even across the keys (low, middle and high notes lie within 13.3 dB))	-6.9	-17.0	-18.2	2.5	
+Vowel Fog	Vocal Textures	2	ok	-8.2	-17.0	-20.1	-6.2	
+Emerald Adagio	Strings	3	ok	-6.8	-17.0	-18.4	-2.0	
+Chamber At Dusk	Strings	3	ok	-8.2	-17.0	-18.9	-0.5	
+Tremolo Storm	Strings	3	ok	-7.7	-17.0	-17.8	0.2	
+Solo Cello Letter	Strings	2	ok	-9.9	-17.0	-18.9	-0.3	
+Glass Harmonics	Strings	3	ok	-9.5	-17.0	-18.2	-1.8	
+Spiccato Clockwork	Strings	3	ok	-6.0	-17.0	-25.6	0.4	
+String Machine 77	Strings	2	ok	-8.6	-17.0	-18.2	0.4	
+Rain In The House	Strings	3	ok	-8.1	-17.0	-18.3	0.1	
+First Desk	Strings	2	ok	-8.1	-17.0	-18.4	-1.0	
+Low Strings Breathing	Strings	3	ok	-7.8	-17.0	-18.4	-0.4	
+Opera House Brass	Cinematic	3	ok	-8.5	-17.0	-18.8	-0.2	
+Noble Horns	Cinematic	3	ok	-7.7	-17.0	-18.3	-0.8	
+Curtain Rise	Cinematic	4	ok	-6.9	-17.0	-18.1	-0.4	
+Woodland Overture	Cinematic	3	ok	-8.6	-17.0	-19.2	-1.1	
+Flute In The Rain	Cinematic	3	ok	-9.1	-17.0	-19.7	-0.1	
+Low Brass Menace	Cinematic	4	ok	-8.7	-17.0	-18.6	0.0	
+Thunder Under The Stage	Cinematic	3	ok	-7.5	-17.0	-18.5	0.8	
+Oboe Lament	Cinematic	3	ok	-7.5	-17.0	-17.9	-1.5	
+Staccato Run	Cinematic	3	ok	-5.6	-17.0	-25.6	-1.7	
+Underscore	Cinematic	3	ok	-8.7	-17.0	-18.4	-0.2	
+Trumpet Voluntary	Cinematic	3	ok	-8.2	-17.0	-18.1	-0.5	
+Rings On Dark Water	Experimental	2	ok	-7.6	-17.0	-18.6	0.5	
+Scary Lullaby	Experimental	2	ok	-8.4	-17.0	-23.6	2.2	
+Didgeri Drone	Experimental	2	ok	-8.4	-17.0	-19.0	5.0	
+Bent Zither	Experimental	1	ok	-7.5	-17.0	-20.3	4.2	
+Iron Tide	Experimental	2	ok	-9.4	-17.0	-18.3	7.5	
+Bowed Metal	Experimental	3	ok	-8.4	-17.0	-20.4	6.3	
+Signal From Below	Experimental	2	ok	-7.1	-17.0	-18.4	1.8	
+Fuzz Garden	Experimental	2	ok	-6.3	-17.0	-17.7	0.6	
+Glow Plankton	Granular	2	ok	-1.8	-17.0	-22.3	7.2	
+Tide Pool Grains	Granular	2	ok	-6.2	-17.0	-18.3	2.8	
+Shattered Harp	Granular	1	ok	-5.4	-17.0	-22.4	5.9	
+Grain Of Salt	Granular	2	ok	-5.4	-17.0	-19.7	8.8	Narrowed the layers so the sound holds up in mono
+Phosphor Dust	Granular	2	ok	-7.6	-17.0	-18.2	4.3	
+Frozen Wave	Granular	1	ok	-7.2	-17.0	-17.8	6.3	
+Grain Wave Drift	Granular	2	ok	-6.0	-17.0	-18.7	2.6	
+The Quiet	Ambient	3	ok	-8.8	-17.0	-20.7	0.6	
+First Snow	Ambient	3	ok	-8.5	-17.0	-19.6	0.3	
+Orchard Sleep	Ambient	3	ok	-6.8	-17.0	-18.5	4.6	
+White Field	Ambient	2	ok	-9.4	-17.0	-20.2	1.4	
+Breath Clouds	Ambient	2	ok	-7.3	-17.0	-18.3	0.6	
+Hearth	Ambient	2	ok	-6.6	-17.0	-21.4	0.9	
+Snow Bells Far Off	Ambient	3	ok	2.5	-19.1	-25.4	11.5	its attack leans 4.0 dB on the master limiter
+Blue Hour	Ambient	2	ok	-8.8	-17.0	-18.2	1.4	
+Slow Breath Organ	Ambient	2	ok	-9.0	-17.0	-19.7	0.0	
+Wind In Bare Branches	Soundscapes	2	ok	-6.8	-17.0	-17.9	1.1	
+Goblin Market	Soundscapes	3	ok	-8.0	-17.0	-18.5	0.1	
+Under The Ice	Soundscapes	2	ok	-8.4	-17.0	-18.1	1.8	
+Sleeping Machines	Soundscapes	2	ok	-7.6	-17.0	-17.7	6.6	
+Distant Procession	Soundscapes	3	ok	-7.3	-17.0	-20.0	-2.4	
+Marimba Weather	Soundscapes	2	ok	-9.2	-17.0	-18.3	1.9	
+Sky Comes Down	Pads	3	ok	-8.0	-17.0	-18.0	0.6	
+Northern Veil	Pads	3	ok	-7.4	-17.0	-18.0	-0.6	
+Green Curtain	Pads	2	ok	-8.8	-17.0	-19.7	1.3	
+Lake Mirror	Pads	3	ok	-7.6	-17.0	-19.6	-0.4	
+Slow Light	Pads	2	ok	-8.0	-17.0	-18.1	2.4	
+Warm Front	Pads	2	ok	-8.2	-17.0	-18.3	0.5	
+Polar Night	Pads	3	ok	-8.6	-17.0	-18.3	3.0	
+Halo	Pads	3	ok	-8.5	-17.0	-18.5	1.1	
+Wide Water	Pads	3	ok	-7.5	-17.0	-18.7	0.7	
+Overtone Sky	Pads	3	ok	-6.7	-17.0	-18.3	-0.6	
+Glass FM Dawn	Digital Synths	2	ok	-8.7	-17.0	-22.5	0.1	
+Bit Lantern	Digital Synths	2	ok	-8.2	-17.0	-20.9	-0.2	
+Crystal Lattice	Digital Synths	3	ok	-8.1	-17.0	-18.8	-0.4	
+TX Morning	Digital Synths	2	ok	-8.2	-17.0	-23.0	-0.5	
+Hand Drawn Sky	Digital Synths	2	ok	-7.2	-17.0	-17.9	2.0	
+Sci-Fi Chorale	Digital Synths	2	ok	-7.7	-17.0	-17.6	2.0	
+Digital Rain	Digital Synths	2	ok	-6.2	-17.0	-21.9	0.1	
+Iron Bows	Hybrid Instruments	3	ok	-8.1	-17.0	-18.0	0.1	
+Aurora Keys	Hybrid Instruments	3	ok	-7.4	-17.0	-20.1	2.6	
+Cello Circuit	Hybrid Instruments	3	ok	-8.2	-17.0	-18.3	-1.0	
+Harp Of The North	Hybrid Instruments	3	ok	-8.8	-17.0	-20.5	3.0	
+Brass Aurora	Hybrid Instruments	3	ok	-8.3	-17.0	-17.8	0.0	
+Voice Machine	Hybrid Instruments	2	ok	-7.2	-17.0	-18.8	-8.2	Turned the whole sound down so nothing clips
+Glass Orchestra	Hybrid Instruments	3	ok	-6.9	-17.0	-18.0	1.2	
+Clarinet Circuit	Hybrid Instruments	2	ok	-8.8	-17.0	-18.1	-0.1	
+Piano From Elsewhere	Hybrid Instruments	3	ok	-6.7	-17.0	-22.2	2.3	
+Late Set	Pianos	2	ok	-5.5	-17.0	-24.7	2.2	
+Far Shore Piano	Pianos	3	ok	-6.5	-17.0	-23.2	2.5	Cut the low end of the other layers so it does not pile up under the main sound
+Seventy-Seven	Keys	1	ok	-9.0	-17.0	-20.8	0.9	
+Suitcase At Dusk	Keys	2	ok	-10.0	-17.0	-20.4	1.0	
+Clavinet Row	Keys	2	ok	-6.5	-17.0	-23.6	0.0	
+Quayside Accordion	Keys	2	ok	-8.0	-17.0	-18.5	1.2	
+Grebbestad	Keys	2	ok	-7.9	-17.0	-17.9	0.4	
+Sxnth	Analog Synths	2	ok	-8.4	-17.0	-17.8	1.8	
+Night Alto	Leads	1	ok	-7.7	-17.0	-17.6	9.5	
+Bear On The Bridge	Leads	2	ok	-6.9	-17.0	-17.8	-0.8	
+Four Reeds	Leads	4	ok	-8.2	-17.0	-17.4	-0.3	
+Harmon Blue	Leads	2	ok	-8.8	-17.0	-18.7	0.9	
+Whistler	Leads	2	ok	-9.6	-17.0	-19.0	0.4	
+Emily	Plucks	1	ok	-3.1	-17.0	-23.5	3.0	
+Steel And Nylon	Plucks	3	ok	-6.5	-17.0	-23.9	1.5	
+Twelve Strings	Plucks	2	ok	-6.3	-17.0	-24.1	1.7	
+Porch Strings	Plucks	3	ok	-1.5	-17.0	-25.5	-0.8	
+Silk Road	Plucks	4	ok	-7.4	-17.0	-23.6	0.3	
+Small Island	Plucks	3	ok	-8.0	-17.0	-25.0	0.2	
+Walking Bass	Plucks	1	ok	0.1	-17.0	-25.4	3.0	its attack leans 1.6 dB on the master limiter
+Fretless Evening	Plucks	2	ok	-6.7	-17.0	-20.7	0.9	
+Aahs In Blossom	Choirs	2	ok	-8.2	-17.0	-18.3	0.2	
+Oohs At Dusk	Choirs	3	ok	-8.4	-17.0	-18.5	0.5	
+Two Choirs	Choirs	3	ok	-7.3	-17.0	-18.5	-0.1	
+Cathedral Of Petals	Choirs	5	ok	-7.5	-17.0	-18.0	-0.1	
+Ring Of Voices	Vocal Pads	3	ok	-8.4	-17.0	-18.9	-0.1	
+Space Voices	Vocal Pads	3	ok	-8.3	-17.0	-17.9	1.4	Turned the brightest layer down to take a ring out
+Vox Humana	Vocal Pads	2	ok	-8.2	-17.0	-18.1	2.3	
+Choir Machine	Vocal Pads	3	ok	-8.0	-17.0	-18.0	0.2	
+Water Bowl	Bells	3	ok	-8.3	-17.0	-20.1	2.2	
+Toy Box	Bells	3	ok	-6.5	-17.0	-25.0	1.3	
+Steel Lanterns	Bells	3	ok	-6.3	-17.0	-25.1	-0.2	
+One Bell	Bells	3	ok	-7.2	-17.0	-23.5	1.3	
+Singing Glass	Bells	3	ok	-9.5	-17.0	-19.2	2.0	
+Breath On Glass	Vocal Textures	3	ok	-7.9	-17.0	-20.9	1.2	
+Choir Wash	Vocal Textures	2	ok	-8.0	-17.0	-21.9	1.7	
+Rubner Bows	Strings	2	ok	-8.1	-17.0	-19.4	1.2	
+Strings And Singers	Strings	3	ok	-6.0	-17.0	-18.4	-0.2	
+Pan Pipes At The Opera	Cinematic	3	ok	-9.1	-17.0	-18.2	0.5	
+Shakuhachi Rain	Cinematic	3	ok	-9.1	-17.0	-21.0	-0.9	
+Sax And Strings	Cinematic	3	ok	-7.5	-17.0	-18.9	5.5	
+Lunar Landing	Experimental	3	ok (set aside: In tune (+14.1 cents from concert pitch))	-8.2	-17.0	-21.0	1.9	
+Wet Finger	Experimental	3	ok	-8.5	-17.0	-18.4	0.9	
+Glass Weather	Ambient	3	ok	-5.3	-17.0	-18.2	1.4	
+Black Dog	Ambient	3	ok	-7.4	-17.0	-17.7	0.1	
+Low Country	Soundscapes	3	ok	-7.8	-17.0	-17.8	1.2	Narrowed the layers so the sound holds up in mono
+Fantasia	Digital Synths	2	ok	-8.9	-17.0	-20.7	2.9	
+Echo Drops	Digital Synths	2	ok	-8.8	-17.0	-18.9	2.2	
+Slow Front	Pads	4	ok	-8.0	-17.0	-18.9	0.6	
+Bowed Glass	Pads	3	ok	-8.5	-17.0	-20.6	1.8	
+Rhodes Aurora	Hybrid Instruments	4	ok	-8.8	-17.0	-19.6	0.5	
+Guitar From Elsewhere	Hybrid Instruments	4	ok	-3.6	-17.0	-20.3	2.4	
+Sax Machine	Hybrid Instruments	3	ok	-7.8	-17.0	-17.7	6.4	
+Eight Lanterns	Hybrid Instruments	8	ok	-8.2	-17.0	-20.9	-0.3	
+Held Breath	Pianos	1	ok	-6.8	-17.0	-24.2	2.1	
+Slow Descent	Keys	1	ok	-9.6	-17.0	-20.0	1.2	
+Endless Stair	Analog Synths	2	ok	-6.6	-17.0	-17.8	-0.0	
+Hymn In Fog	Choirs	2	ok	-5.6	-17.0	-18.2	3.0	
+Second Strike	Bells	2	ok	-8.7	-17.0	-23.3	0.9	
+Turned Bell	Bells	1	ok	-8.0	-17.0	-23.7	2.5	
+Unfolding	Strings	2	ok	-8.0	-17.0	-18.3	0.5	
+Corrupted Tide	Experimental	2	ok	-7.4	-17.0	-19.1	8.0	
+Wrong Rain	Granular	2	ok	-8.1	-17.0	-21.2	1.1	
+White Out	Ambient	3	ok	-8.0	-17.0	-19.3	8.1	
+Northern Mirror	Pads	2	ok	-6.0	-17.0	-18.7	5.3	
+Neon Horizon	Leads	6	ok	-6.9	-17.0	-17.9	0.7	
+Afterglow Pluck	Plucks	4	ok	-7.2	-17.0	-22.8	5.1	
+Cathedral Of Light	Pads	5	ok	-8.2	-17.0	-19.0	-0.1	
+Crystal Signal	Bells	4	ok	-7.1	-17.0	-19.1	4.1	
+Iron Floor	Analog Synths	3	ok	-12.3	-17.0	-17.5	-0.6	
+Slow Aurora	Ambient	5	ok	-7.9	-17.0	-20.1	-0.7	
+Brass And Machine	Hybrid Instruments	5	ok	-8.1	-17.0	-18.2	-0.2	
+Data Rain	Digital Synths	4	ok	-6.9	-17.0	-18.9	-0.8	
+Glass Tine House	Keys	5	ok	-8.5	-17.0	-20.7	5.2	
+Big Room Anthem	Leads	5	ok	-8.6	-17.0	-17.7	-1.6	
+Future Glow	Plucks	3	ok	-7.8	-17.0	-23.9	-0.1	
+Juno Skyline	Pads	4	ok	-7.1	-17.0	-18.8	-0.6	
+Ninety-Two Rhodes	Keys	4	ok	-7.3	-17.0	-21.5	0.0	
+Outrun Night	Analog Synths	3	ok	-3.6	-17.0	-24.9	0.7	
+Jump Start Brass	Analog Synths	4	ok	-6.6	-17.0	-18.3	0.4	
+Tine Cathedral	Bells	4	ok	-7.6	-17.0	-18.4	5.2	
+Eden Drift	Ambient	4	ok	-7.5	-17.0	-20.6	-0.2	
+Cave Rave	Leads	3	ok	-8.5	-17.0	-18.0	1.9	
+Techno Pressure	Analog Synths	3	ok	-7.8	-17.0	-18.5	0.1	
+Pulse Engine	Analog Synths	3	ok (set aside: No loop seams (a seam reads 1.00))	-3.3	-17.0	-19.1	4.1	
