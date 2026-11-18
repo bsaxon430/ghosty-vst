@@ -1,0 +1,7 @@
+Open303 DSP (Robin Schmidt, MIT, 2009), the unmodified DSPCode folder of github.com/scheffle/open303
+commit 850c98186db28829f9ff6c8254966cdb6bf334e6 (2026-10-29 clone)
+fft4g.c: Takuya Ooura FFT (free for any use incl. commercial)
+Used by Block Step (ACID page) and Ghost House for the 303 voice.
+
+GHOSTY PATCH (marked in the file): rosic_Open303.h gains gateOn / gateOff / isHeld, so the plug-in plays notes without the
+std::list noteOn uses (no allocation on the audio thread). Nothing else is changed.

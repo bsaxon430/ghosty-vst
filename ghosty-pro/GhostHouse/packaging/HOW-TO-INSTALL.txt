@@ -1,0 +1,9 @@
+Ghost House for Mac (test build)
+
+1. Double-click "Install Ghost House.command".
+   If the Mac says it can't be opened: System Settings > Privacy & Security > Open Anyway, then double-click it again.
+2. FL Studio: Options > Manage plugins > Find more plugins.
+3. Channel Rack > + > Ghost House. Press play in FL: Ghost House follows FL's tempo and transport.
+   Drag "DRAG MIDI" (top left) into the playlist or piano roll to get the pattern as a MIDI clip.
+   MIDI notes C1..A1 play the 10 drums (kick, snare, clap, hat, open hat, perc, rim, ride, sub, fx).
+   Swing from the page (SWING button) plays in FL and is baked into the dragged MIDI.

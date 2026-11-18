@@ -1,0 +1,103 @@
+name: Build Ghosty plugins (Windows + Mac)
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore: [ 'docs/**' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        shell: pwsh
+        run: |
+          cmake -B build -A x64 2>&1 | Tee-Object -FilePath cfg.log
+          if ($LASTEXITCODE -ne 0) { Get-Content cfg.log -Tail 40 | ForEach-Object { Write-Output "::error::CFG $_" }; exit 1 }
+
+      - name: Build
+        shell: pwsh
+        run: |
+          cmake --build build --config Release --parallel 2>&1 | Tee-Object -FilePath build.log
+          if ($LASTEXITCODE -ne 0) { Select-String -Path build.log -Pattern ' error ' | Select-Object -First 45 | ForEach-Object { Write-Output ("::error::" + $_.Line.Trim()) }; exit 1 }
+
+      - name: Package
+        shell: pwsh
+        run: |
+          $O = "out\Ghosty-Windows"
+          New-Item -ItemType Directory -Force -Path "$O\VST3", "$O\Standalone" | Out-Null
+          foreach ($t in @(@("GhostySynth","Ghosty"), @("GhostyBeats","Ghosty Beats"), @("GhostySpectrum","Ghosty Spectrum"), @("Poltergeist","Poltergeist"), @("MrMickens","Mr Mickens"))) {
+            Copy-Item -Recurse "build\$($t[0])_artefacts\Release\VST3\$($t[1]).vst3" "$O\VST3\"
+            Copy-Item "build\$($t[0])_artefacts\Release\Standalone\$($t[1]).exe" "$O\Standalone\"
+          }
+          Copy-Item "packaging\Install Ghosty.bat" "$O\"
+          Copy-Item "packaging\HOW-TO-INSTALL-WINDOWS.txt" "$O\HOW-TO-INSTALL.txt"
+          Compress-Archive -Path "$O\*" -DestinationPath Ghosty-Windows.zip -Force
+          Copy-Item Ghosty-Windows.zip Ghosty-VST3-Windows.zip
+
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ghosty-Windows
+          path: Ghosty-Windows.zip
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Ghosty plugins (Windows + Mac)
+          prerelease: false
+          make_latest: true
+          body_path: packaging/RELEASE-NOTES.md
+          files: |
+            Ghosty-Windows.zip
+            Ghosty-VST3-Windows.zip
+
+  mac:
+    runs-on: macos-latest
+    needs: windows
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B build -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release 2>&1 | tee cfg.log; exit ${PIPESTATUS[0]}
+
+      - name: Build
+        run: |
+          set -o pipefail
+          cmake --build build --config Release -j 4 2>&1 | tee build.log || { grep -E "error:" build.log | head -45 | sed 's/^/::error::/'; exit 1; }
+
+      - name: Package
+        run: |
+          set -e
+          O="out/Ghosty for Mac"
+          mkdir -p "$O/Plugins" "$O/Standalone"
+          for t in "GhostySynth:Ghosty" "GhostyBeats:Ghosty Beats" "GhostySpectrum:Ghosty Spectrum" "Poltergeist:Poltergeist" "MrMickens:Mr Mickens"; do
+            T="${t%%:*}"; N="${t#*:}"; R="build/${T}_artefacts/Release"
+            ditto "$R/VST3/$N.vst3" "$O/Plugins/$N.vst3"
+            ditto "$R/AU/$N.component" "$O/Plugins/$N.component"
+            ditto "$R/Standalone/$N.app" "$O/Standalone/$N.app"
+          done
+          for p in "$O"/Plugins/* "$O"/Standalone/*.app; do codesign --force --deep --sign - "$p"; done
+          cp "packaging/Install Ghosty.command" "$O/"
+          chmod +x "$O/Install Ghosty.command"
+          cp packaging/HOW-TO-INSTALL-MAC.txt "$O/HOW-TO-INSTALL.txt"
+          cd out && ditto -c -k --keepParent "Ghosty for Mac" ../Ghosty-Mac.zip
+
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ghosty-Mac
+          path: Ghosty-Mac.zip
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          files: Ghosty-Mac.zip

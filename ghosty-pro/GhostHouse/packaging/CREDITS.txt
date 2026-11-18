@@ -1,0 +1,24 @@
+GHOST HOUSE - credits and licences
+
+Made by GhostBlock. The drums are Brandon's GhostBlock kit and the house pack made for Ghost House.
+
+Code and data from other people (all free to use in a paid plug-in):
+- JUCE 8 (Raw Material Software): the plug-in framework. JUCE licence. https://juce.com
+- Open303 by Robin Schmidt: the acid synth. MIT licence. https://github.com/scheffle/open303
+- Mutable Instruments eurorack code (plaits) by Emilie Gillet: the SYNTH page's engines. MIT licence. https://github.com/pichenettes/eurorack
+- DrumBrain by Michael Ganss: the drum model behind CLASSIC. MIT licence.
+- Aicd by Michael Ganss: the acid line model. MIT licence.
+- POP909 dataset (Music X Lab): what the piano chord and melody models learned from. MIT licence. https://github.com/music-x-lab/POP909-Dataset
+- The acid GENERATE follows the idea of "Endless Acid Banger" by Vitling (David Whiting), CC BY 4.0. https://www.vitling.xyz/toys/acid-banger/
+
+The looks (GHOST CITY, SPIRIT HILLS and ORIGINAL) are GhostBlock's own paintings, made by our own drawing code. Nothing is traced or copied.
+- Typefaces inside the plug-in: Tilt Neon (GHOST CITY's neon lettering), Fredoka (the name) and Rajdhani (the labels). SIL Open Font License 1.1: Licenses/FONTS-OFL-LICENSE.txt.
+- The sign lettering painted into the pictures is set in Dela Gothic One, DotGothic16, Zen Maru Gothic, Mochiy Pop One, Potta One, Reggae One, RocknRoll One, Yusei Magic, Audiowide, Orbitron, Rajdhani and Tilt Neon (all SIL Open Font License 1.1). Those font files are not in the plug-in, only the pictures.
+
+Piano sounds:
+- GRAND: Salamander Grand Piano V2 by Alexander Holm, CC BY 3.0 (https://creativecommons.org/licenses/by/3.0/)
+- WURLITZER, CP80, PIANET: Greg Sullivan E-Pianos, CC BY 3.0
+- UPRIGHT, HONKY-TONK (Piotr Barcz), FM PIANO: FreePats, CC0. HARPSICHORD: Versilian Community Sample Library (VCSL), CC0
+  (HAUNTED, FROZEN, BACKWARDS, ON FIRE and BROKEN TAPE are these pianos run through effects.)
+
+The full licence texts are in the Licenses folder next to this file.
