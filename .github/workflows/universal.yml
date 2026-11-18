@@ -71,7 +71,7 @@ jobs:
             ditto "$b" "out/$N"
             if [ "${{ matrix.prep }}" = ghostlab ]; then   # Ghost Lab carries the CDP programs inside the bundle, with their licence and notice
               mkdir -p "out/$N/Contents/Helpers/cdp" "out/$N/Contents/Resources"; cp cdp-bin/* "out/$N/Contents/Helpers/cdp/"
-              cp ghost-lab/packaging/licenses/CDP-LGPL-2.1.txt "out/$N/Contents/Helpers/cdp/LICENSE-LGPL-2.1.txt"; cp ghost-lab/packaging/CDP-NOTICE.txt "out/$N/Contents/Helpers/cdp/NOTICE.txt"
+              mkdir -p "out/$N/Contents/Resources/cdp"; cp ghost-lab/packaging/licenses/CDP-LGPL-2.1.txt "out/$N/Contents/Resources/cdp/LICENSE-LGPL-2.1.txt"; cp ghost-lab/packaging/CDP-NOTICE.txt "out/$N/Contents/Resources/cdp/NOTICE.txt"   # text stays out of Helpers: codesign wants only code there
               cp ghost-lab/packaging/CREDITS.txt "out/$N/Contents/Resources/CREDITS.txt"; cp ghost-lab/NOTICE.md ghost-lab/LICENSE "out/$N/Contents/Resources/" 2>/dev/null || true
               for h in "out/$N/Contents/Helpers/cdp/"*; do file "$h" | grep -q Mach-O && codesign --force --sign - "$h"; done
               echo "  + $(ls "out/$N/Contents/Helpers/cdp" | wc -l | tr -d ' ') CDP programs ($(lipo -archs "out/$N/Contents/Helpers/cdp/pvoc"))" | tee -a out/BUILT.txt
