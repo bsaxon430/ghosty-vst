@@ -1,0 +1,57 @@
+GHOSTY PRO 2 by GhostBlock - free and open source under the GNU General Public License v3 (see LICENSE (GPL-3).txt).
+
+SOURCE CODE: upstream Vital: https://github.com/mtytel/vital . Our modified source code for this version (Ghosty Pro 2 with
+its changes to Vital) is available on request from GhostBlock until we publish it; the offer stands for at least three
+years from this release, as the GPL-3 asks.
+
+Ghosty Pro 2 is the Vital-based Ghosty Pro (own name and plug-in id io.ghostblock.ghostypro2); the earlier Ghosty Pro 3.x
+is a separate plug-in and is not changed by it.
+
+The sound engine is Vital's open-source source code (https://github.com/mtytel/vital, commit 636ca0ef517a4db087a6a08a6a8a5e704e21f836),
+copyright Matt Tytel, used under the GPL-3: the wavetable oscillators, filters, envelopes, LFOs, modulation, effects, the
+.vital preset format and Vital's own full editor (the main SYNTH page). Ghosty Pro is not Vital and is not made or endorsed by
+Vital Audio. Vital's own presets are not included.
+
+Built with JUCE (GPL-3), as bundled with Vital, plus nlohmann/json (MIT), moodycamel ConcurrentQueue (BSD) and KISS FFT (BSD).
+Fonts bundled with Vital's source: Lato, Montserrat, Roboto, Open Sans, Droid Sans Mono (Apache 2.0 / SIL OFL 1.1).
+The "ghosty pro" word mark is outlined from Poppins (SIL Open Font License 1.1).
+
+Ghosty Pro's own parts (GPL-3 in this build): the Ghosty Pro pages and look, MORPH / SPIRIT BOARD, GHOSTY EXTRAS (GHOST GATE,
+HAUNT), MY PRESETS, and the Ghosty Pro presets.
+
+GHOST ORBIT knobs (build 4): the knob drawing (segmented neon ring with a glow pass and bright core, accented leading
+segment, dark body with a rim, pulse halo, pointer with a tip dot) follows BoratoVHSStyle
+(https://github.com/FilipeBorato/BoratoVHSStyle, commit 721b9826, src/Controls/VHSKnobNeonRing.cpp, VHSKnobDigital.cpp,
+KnobGeometry.cpp), used under the MIT License:
+
+  MIT License
+
+  Copyright (c) 2026 Filipe Borato
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+
+The knob physics (flywheel momentum with friction, magnetic detent spring, release-velocity tracking) is Ghosty Pro's own
+code (ghosty/shared/GhostOrbit.h). Vital's knobs get it through marked UI-only edits in synth_slider.h/.cpp and its rotary
+shader (shaders.cpp); Vital's sound engine is unchanged.
+
+KEYS (build 5: ARPEGGIATOR, CHORDS, SCALE LOCK, HOLD): Ghosty Pro's own Performer code (from the earlier Ghosty Pro,
+ghosty-pro/GhostyPro/Performer.h), ported to this build in ghosty/src/GhostyKeys.h. We first looked for a maintained,
+GPL-compatible arpeggiator / chord / scale library to build on; LibreArp (GPL-3) and Arpligner are complete pattern-arp
+plugins with their own editors rather than libraries, and neither has chords or scale lock. KEYS only changes the MIDI
+notes Vital's engine receives; the sound is Vital's.

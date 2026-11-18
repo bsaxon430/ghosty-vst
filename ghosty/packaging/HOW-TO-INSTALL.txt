@@ -1,0 +1,38 @@
+GHOSTY PRO 2 (free, open source) - Mac
+
+Ghosty Pro 2 is the new Ghosty Pro on Vital's open-source engine. It installs NEXT TO your old Ghosty Pro: both stay in
+your DAW, each under its own name. The installer never touches the old Ghosty Pro.
+
+1. Quit your DAW (FL Studio, Logic, Ableton...).
+2. Double-click "Install Ghosty Pro 2.command". No password needed.
+   If the Mac says it can't be opened: System Settings > Privacy & Security > scroll down > Open Anyway, then double-click it again.
+   If you tried earlier builds of this synth (they were called "Ghosty Pro", version 1.5.5 or 4.0.x), the installer moves
+   those copies to the Trash so they don't clash. Your old Ghosty Pro (3.x) stays where it is.
+3. When it says Done!, open your DAW and rescan plug-ins. Ghosty Pro 2 is under GhostBlock (VST3 and AU), version 2.0.17.
+   FL Studio: Options > Manage plugins > Find more plugins (wait for the scan), then add Ghosty Pro 2 from the plugin list.
+   Logic / GarageBand: just reopen.
+   The Ghosty Pro 2 app (in Applications) plays on its own, without a DAW.
+
+PICKING PRESETS (2.0.11)
+Click the preset name at the top. On the left: the TYPES - BASS, LEAD, PAD, PLUCK, KEYS, FX, DRUMS, OTHER (plus MY PRESETS
+and FAVOURITES when you have some), each with how many presets it has. Click a type: one list, A-Z, of EVERY preset of that
+type from every pack and folder on this Mac, Ghosty Pro's own included. Type in the box to search everything. The < >
+arrows step through the type you are in. A preset's type comes from its own style tag, then the words in its name and
+folders; anything unclear is under OTHER.
+MENU: add a preset folder, forget the folders you added, look again, import a bank, add / remove a FAVOURITE.
+The BROWSE tab is gone (the picker does its job). Your preset files stay where they are.
+
+TEMPO 1/2x | 1x | 2x (2.0.11)
+Next to the tabs. Everything that plays in time with your song (ARP, CHORDS, MORPH motion, GHOST GATE, HAUNT and the synth's
+own synced LFOs and delays) runs at half, normal or double the song's tempo; it shows the tempo that gives (65 / 130 / 260
+when FL is at 130). Saved with the project; a new Ghosty Pro 2 starts at 1x.
+
+WINDOW AND FRESH START
+Ghosty Pro 2 opens at 1200 x 760, which fits FL Studio's plug-in window on a MacBook Pro screen; drag the corner to make it
+bigger or smaller. Every new Ghosty Pro 2 starts fresh (factory sound, SYNTH page); a saved project opens exactly as saved.
+
+ABOUT / CREDITS
+MENU > About / Credits names the open-source projects inside, their licences and the source-code links (CREDITS.txt too).
+
+Projects: songs that use your old Ghosty Pro keep using it. Songs where you tried an earlier build of this synth (when it
+was still called "Ghosty Pro" 1.5.5 / 4.0.x) don't carry over to Ghosty Pro 2: add Ghosty Pro 2 to the track again.
