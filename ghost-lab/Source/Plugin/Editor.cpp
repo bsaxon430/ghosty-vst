@@ -1641,7 +1641,7 @@ void Editor::openSaveMenu()
 // the licence, where the source is). Everywhere else the UI says ENGINE / UNDER THE HOOD.
 juce::String Editor::creditsText()
 {
-    return juce::String ("GHOST LAB ") + GHOSTLAB_VERSION + "  by GhostBlock\n"
+    return juce::String ("GHOST LAB v1 beta") + "  by GhostBlock\n"
         "Free and open-source software: GNU Affero General Public License, version 3 only (AGPL-3.0). The complete source of\n"
         "this build is in the download (Licenses/Ghost Lab source.zip). The full notices are in NOTICE.md there.\n\n"
         "THE LAB'S ENGINE\n"
