@@ -23,7 +23,7 @@ namespace {
 
 // the ONE place the open-source projects are named (GPLv3 section 5(d) "Appropriate Legal Notices"): MENU > About / Credits
 String GhostyEditor::ghostyAboutText() {
-  return "Ghosty Pro 2 by GhostBlock, version " GHOSTY_VERSION_STRING ". Free software under the GNU General Public License v3 "
+  return "Ghosty Pro 2 by GhostBlock, version 1 (beta). Free software under the GNU General Public License v3 "
          "(GPL-3), with NO WARRANTY.\n\n"
          "The sound engine and synth pages are Vital by Matt Tytel (Vital Audio), GPL-3. Upstream source code: "
          "https://github.com/mtytel/vital\n"
@@ -100,7 +100,7 @@ GhostyEditor::GhostyEditor(GhostyProcessor& p) : AudioProcessorEditor(&p), Synth
   }
   for (auto* b : { &keyArp_, &keyHold_ }) b->setTint(1);
   for (auto* b : { &keyChord_, &keyScale_ }) { b->setTint(2); b->setDropArrow(true); }
-  version_.setText("v" GHOSTY_VERSION_STRING "", dontSendNotification);
+  version_.setText("v1 beta", dontSendNotification);
   version_.setFont(LnF::font(11.5f, false));
   save_.setTint(1);
   look_.setTint(1);
