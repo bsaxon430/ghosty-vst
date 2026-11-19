@@ -656,21 +656,38 @@ public:
         setMouseCursor (h.v < 0 ? juce::MouseCursor::NormalCursor
                                 : (h.part == 0 ? juce::MouseCursor::DraggingHandCursor : juce::MouseCursor::LeftRightResizeCursor));
     }
+    bool keyPressed (const juce::KeyPress& k) override
+    {
+        if (! editMode || hiV < 0) return false;
+        if (k == juce::KeyPress::deleteKey || k == juce::KeyPress::backspaceKey)
+        {
+            const int v = hiV; const double a = hiA, b = hiB;
+            clearHighlight();
+            if (onDelete) onDelete (v, a, b);
+            return true;
+        }
+        if (k == juce::KeyPress::escapeKey) { clearHighlight(); return true; }
+        return false;
+    }
+    std::function<void (int, double, double)> onDelete;
+    bool hasSelection() const { return hiV >= 0; }
     void mouseExit (const juce::MouseEvent&) override { if (hov.v >= 0 && ! dragging) { hov = Hit(); repaint(); } }
     void mouseDown (const juce::MouseEvent& e) override
     {
         if (! editMode) { if (onClick) onClick(); return; }
         const auto h = hitTest (e.position);
         dragging = h.v >= 0; axis = 0; grabbed = h; downPos = e.position;
-        if (dragging && onDragStart) onDragStart (h.v, h.x0, h.x1);
+        grabKeyboardFocus();
+        if (! dragging) { clearHighlight(); return; }   // a click on empty paper: nothing selected
+        setHighlight (h.v, h.x0, h.x1);                  // the clicked note is selected (Delete removes it)
+        if (onDragStart) onDragStart (h.v, h.x0, h.x1);
     }
     void mouseDrag (const juce::MouseEvent& e) override { if (dragging) sendDrag (e, false); }
     void mouseUp (const juce::MouseEvent& e) override
     {
         if (! dragging) return;
         sendDrag (e, true);
-        dragging = false; hov = Hit();
-        clearHighlight();
+        dragging = false; hov = Hit();   // the note stays selected (highlighted) after the drag
     }
 
     void resample()
@@ -960,6 +977,8 @@ public:
             grabX0 = x0; grabX1 = x1;   // the ends you can see (a moved note can run off the page)
         };
         graph.onDrag = [this] (int part, double dx, double dy, bool final) { applyDrag (part, dx, dy, final); };
+        graph.setWantsKeyboardFocus (true);
+        graph.onDelete = [this] (int v, double a, double b) { deleteNote (v, a, b); };
 
         // EDIT: type in the equations and drag the notes on the graph; DONE puts the math back on the page
         editBtn.setButtonText ("EDIT");
@@ -1274,6 +1293,7 @@ public:
     bool isEditing() const { return editing; }
     size_t undoCount() const { return undo.size(); }
     void pressUndo() { undoDrag(); }
+    void pressDelete (int v, double a, double b) { deleteNote (v, a, b); }
     void pressRedo() { redoDrag(); }
     void showStrip (bool on) { forceStrip = on; stripHold = on ? 75 : 0; stripAlpha = on ? 1.0f : 0.0f; updateStripVisibility(); }
     MathView& getMath() { return math; }
@@ -1429,7 +1449,7 @@ private:
                       + (p.getErrors().size() > 1 ? "   (+" + juce::String ((int) p.getErrors().size() - 1) + " more)" : juce::String());
         }
         else okText = juce::String (p.numVoices()) + (p.numVoices() == 1 ? " voice" : " voices")
-                    + (editing ? juce::String::fromUTF8 ("   \xc2\xb7   drag a note to move it, its ends to stretch or tilt it   \xc2\xb7   DONE when finished") : juce::String::fromUTF8 ("   \xc2\xb7   EDIT to change the equations or drag notes   \xc2\xb7   GENERATE writes a new track"));
+                    + (editing ? juce::String::fromUTF8 ("   \xc2\xb7   drag a note to move it, its ends to stretch or tilt it, Delete removes it   \xc2\xb7   DONE when finished") : juce::String::fromUTF8 ("   \xc2\xb7   EDIT to change the equations or drag notes   \xc2\xb7   GENERATE writes a new track"));
         const bool showText = editing || ! p.ok();
         graph.editMode = editing;
         editBtn.setButtonText (editing ? "DONE" : "EDIT");
@@ -1441,6 +1461,7 @@ private:
         graph.repaint();
         eq.setVisible (showText);
         math.setVisible (! showText);
+        if (! showText && mathStale && viewed < (int) programs.size()) { mathStale = false; math.setProgram (programs[(size_t) viewed].get()); }
         repaint (statusArea);
     }
 
@@ -1456,6 +1477,7 @@ private:
     {
         editing = false;
         flushEdit();
+        graph.clearHighlight();
         unfocusAllComponents();
         updateStatus();
     }
@@ -1467,6 +1489,7 @@ private:
     double grabX0 = 0, grabX1 = 0;
     std::vector<std::pair<int, std::string>> undo;   // (scene, text before the drag)
     std::vector<std::pair<int, std::string>> redo;   // (scene, text an UNDO took back)
+    bool mathStale = false;
 
     void setViewedText (const std::string& t)
     {
@@ -1475,7 +1498,8 @@ private:
         {
             programs[(size_t) viewed] = gg::Program::compile (t);
             graph.setProgram (programs[(size_t) viewed].get());
-            math.setProgram (programs[(size_t) viewed].get());
+            if (math.isVisible()) math.setProgram (programs[(size_t) viewed].get());
+            else mathStale = true;   // typesetting is slow: done once the math shows again
         }
         eq.setText (t, juce::dontSendNotification);
         pendingEdit = false;
@@ -1503,6 +1527,22 @@ private:
         }
     }
 
+    // Delete on a selected note: it goes quiet (its edit line keeps the place, empty), and UNDO brings it back
+    void deleteNote (int v, double a, double b)
+    {
+        flushEdit();
+        const std::string base = proc.getScene (viewed).text;
+        const auto plan = gg::planEdit (base, v, a, b);
+        if (plan.name.empty()) return;
+        gg::NoteEdit n = plan.start;
+        n.B = n.A;   // an empty span: the note plays nowhere
+        const std::string t = gg::applyEdit (base, v, plan, n);
+        if (t == base) return;
+        setViewedText (t);
+        undo.push_back ({ viewed, base }); redo.clear();
+        if (undo.size() > 100) undo.erase (undo.begin());
+        updateStatus();
+    }
     void undoDrag()
     {
         if (undo.empty()) return;

@@ -1,3 +1,4 @@
+#include <chrono>
 // Ghost Graph checks. Run: GhostGraphTests [all|parse|fresh|sound|midi|tempo|state|speed|ui]
 #include "../GraphProcessor.h"
 #include "../GraphEditor.h"
@@ -482,6 +483,44 @@ int main (int argc, char** argv)
         check (p->getScene (0).text == afterAll, "UNDO then REDO lands on the same math");
         ge->setEditing (false);
         check (! ge->getGraph().editMode, "DONE ends editing");
+    }
+
+    if (want ("drag"))
+    {   // how long one step of a drag takes, in a fresh window (the window then redraws)
+        auto p = fresh();
+        std::unique_ptr<juce::AudioProcessorEditor> ed (p->createEditor());
+        auto* ge = dynamic_cast<GraphEditor*> (ed.get());
+        ge->setEditing (true);
+        auto& gv = ge->getGraph();
+        auto h = gv.hitTest ({ gv.xToPx (-4.0), gv.yToPx (-1.0) });
+        gv.onDragStart (h.v, h.x0, h.x1);
+        const std::string before = p->getScene (0).text;
+        const auto t0 = std::chrono::steady_clock::now();
+        for (int i = 0; i < 40; ++i) gv.onDrag (0, (i % 8 + 1) / 16.0, (i % 5 + 1) / 12.0, false);
+        gv.onDrag (0, 0.25, 1.0 / 12.0, true);
+        const double ms = std::chrono::duration<double, std::milli> (std::chrono::steady_clock::now() - t0).count() / 41.0;
+        std::printf ("  drag step: %.2f ms\n", ms);
+        check (p->getScene (0).text != before, "the timed drag moved the note");
+        check (ms < 6.0, "a drag step is quick (" + juce::String (ms, 2) + " ms)");
+        // click a note and press Delete
+        ge->pressUndo();
+        auto hd = gv.hitTest ({ gv.xToPx (-4.0), gv.yToPx (-1.0) });
+        check (hd.v == 1, "click the held note to select it");
+        {
+            const juce::Point<float> at { gv.xToPx (-4.0), gv.yToPx (-1.0) };
+            auto ev = [&] { return juce::MouseEvent (juce::Desktop::getInstance().getMainMouseSource(), at, {}, 1.0f, 0.f, 0.f, 0.f, 0.f,
+                                                     &gv, &gv, juce::Time::getCurrentTime(), at, juce::Time::getCurrentTime(), 1, false); };
+            gv.mouseDown (ev()); gv.mouseUp (ev());
+        }
+        check (gv.hasSelection(), "the clicked note stays selected");
+        check (gv.keyPressed (juce::KeyPress (juce::KeyPress::deleteKey)), "Delete is taken by the graph");
+        auto pd = gg::Program::compile (p->getScene (0).text);
+        bool gone = pd->ok();
+        for (double x : { -7.5, -4.0, 0.0, 4.0, 7.5 }) { pd->setX (x); gone = gone && ! std::isfinite (pd->voice (1)); }
+        pd->setX (-4.0);
+        check (gone && std::isfinite (pd->voice (0) + 0.0) == std::isfinite (pd->voice (0)), "Delete removes the note (the rest still reads)");
+        ge->pressUndo();
+        check (p->getScene (0).text == before, "UNDO brings the deleted note back");
     }
 
     if (want ("state"))
