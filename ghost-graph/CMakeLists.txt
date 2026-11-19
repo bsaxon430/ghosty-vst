@@ -2,7 +2,7 @@
 # Mac: VST3 + Standalone (AU when Xcode is there). No third-party code beyond JUCE.
 cmake_minimum_required(VERSION 3.24)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "")
-project(GhostGraph VERSION 1.8.0)
+project(GhostGraph VERSION 1.9.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -18,11 +18,11 @@ if(APPLE AND GHOSTGRAPH_AU)
 endif()
 
 juce_add_binary_data(GhostGraphArt HEADER_NAME BinaryData.h NAMESPACE GhostGraphArt
-  SOURCES art/paper.png art/chroma.png art/ink.png art/ti.png)
+  SOURCES art/paper.png art/chroma.png art/ink.png art/wine.png art/ti.png art/ShareTechMono-Regular.ttf)
 set_target_properties(GhostGraphArt PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 juce_add_plugin(GhostGraph
-  VERSION 1.8.0
+  VERSION 1.9.0
   COMPANY_NAME "GhostBlock"
   BUNDLE_ID "io.ghostblock.ghostgraph"
   PLUGIN_MANUFACTURER_CODE Ghbk

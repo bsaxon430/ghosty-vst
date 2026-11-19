@@ -20,6 +20,7 @@ namespace ggui
         juce::Colour dotRing, paper, coral, grid, axis, label, onText, halo;
         bool perVoice;
         juce::Colour voice[6];
+        bool lcd = false;       // TI 84: a green calculator LCD, monospaced type, dotted grid, hollow dots
     };
     inline const Theme& theme (int i)
     {
@@ -40,18 +41,25 @@ namespace ggui
               juce::Colour (0xff522829), juce::Colour (0xffffb070), juce::Colour (0x50a0604a), juce::Colour (0xffc8907a), juce::Colour (0xffe0a890),
               juce::Colour (0xff3a1a1c), juce::Colour (0x00000000), false, {} },
             // TI 84: a graphing calculator -- the graph on a light LCD in a black body, Y1..Y6 in the calculator's colours
-            { "TI 84",  juce::Colour (0xffe9eaec), juce::Colour (0xff1f4fd1), juce::Colour (0xffffffff), juce::Colour (0xff111111),
-              juce::Colour (0xff17181b), juce::Colour (0xffff5a4a), juce::Colour (0x26303848), juce::Colour (0xff202226), juce::Colour (0xff303236),
-              juce::Colour (0xff17181b), juce::Colour (0xaaffffff), true,
-              { juce::Colour (0xff1f4fd1), juce::Colour (0xffd22a2a), juce::Colour (0xff111111), juce::Colour (0xffc020b0), juce::Colour (0xff1a9a3a), juce::Colour (0xffe07a10) } },
+            // TI 84: a graphing calculator -- black ink on a green LCD in a worn dark body, all type monospaced
+            { "TI 84",  juce::Colour (0xff17210f), juce::Colour (0xff17210f), juce::Colour (0xffc2d8a4), juce::Colour (0xff17210f),
+              juce::Colour (0xffc2d8a4), juce::Colour (0xff7a1d10), juce::Colour (0x5917210f), juce::Colour (0xff17210f), juce::Colour (0xff17210f),
+              juce::Colour (0xffc2d8a4), juce::Colour (0x00000000), false, {}, true },
         };
         return t[juce::jlimit (0, 4, i)];
     }
     inline const Theme*& curTheme() { static const Theme* c = &theme (0); return c; }
     inline const Theme& th() { return *curTheme(); }
 
+    inline juce::Font lcdFont (float size)
+    {
+        static juce::Typeface::Ptr tf = juce::Typeface::createSystemTypefaceFor (GhostGraphArt::ShareTechMonoRegular_ttf,
+                                                                                 (size_t) GhostGraphArt::ShareTechMonoRegular_ttfSize);
+        return juce::Font (juce::FontOptions (tf).withHeight (size).withHorizontalScale (0.84f));
+    }
     inline juce::Font serif (float size, bool italic = false)
     {
+        if (th().lcd) return lcdFont (size * 1.08f);
         juce::FontOptions o (juce::Font::getDefaultSerifFontName(), size, italic ? juce::Font::italic : juce::Font::plain);
        #if JUCE_MAC
         o = o.withName ("Times New Roman");
@@ -384,53 +392,72 @@ namespace ggui
 
     // TI 84: a black calculator body, the graph on a light LCD behind a bezel, the equations on a dark panel,
     // and a row of the calculator's top keys along the bottom (no maker's logo: it says GHOST-84)
+    // TI 84 layout, shared by the background and the editor (fractions of the window height)
+    namespace ti { constexpr float lcdTop = 0.066f, lcdBottom = 0.862f, keysTop = 0.878f, keysBottom = 0.952f; }
+    inline juce::Rectangle<float> tiKey (int i, float w, float h)   // the six keys under the screen; the sixth is EDIT
+    {
+        const float x0 = w * 0.04f, span = w * 0.92f, gap = w * 0.012f, kw = (span - 5 * gap) / 6.f;
+        return { x0 + i * (kw + gap), h * (ti::keysTop + 0.012f), kw, h * (ti::keysBottom - ti::keysTop - 0.024f) };
+    }
+
     inline juce::Image makeTI (int w, int h)
     {
         w = juce::jmax (8, w); h = juce::jmax (8, h);
         juce::Image img (juce::Image::RGB, w, h, false);
         juce::Graphics g (img);
-        const float k = w / 1054.0f;
-        g.fillAll (juce::Colour (0xff0b0c0e));
-        auto body = juce::Rectangle<float> (0, 0, (float) w, (float) h).reduced (3.f);
-        g.setGradientFill (juce::ColourGradient (juce::Colour (0xff26282d), 0, 0, juce::Colour (0xff121316), 0, (float) h, false));
-        g.fillRoundedRectangle (body, 22 * k);
-        g.setGradientFill (juce::ColourGradient (juce::Colours::white.withAlpha (0.07f), body.getX(), 0, juce::Colours::transparentWhite, body.getX() + w * 0.35f, 0, false));
-        g.fillRoundedRectangle (body, 22 * k);   // a gloss down the left edge
-        // the screen
-        auto bezel = juce::Rectangle<float> (w * 0.045f, h * 0.052f, w * 0.91f, h * 0.505f);
-        g.setColour (juce::Colour (0xff34363b)); g.fillRoundedRectangle (bezel, 10 * k);
-        g.setColour (juce::Colour (0xff4a4c52)); g.drawRoundedRectangle (bezel, 10 * k, 1.2f);
-        auto lcd = bezel.reduced (7 * k, 5 * k);
-        g.setGradientFill (juce::ColourGradient (juce::Colour (0xfff6f7f2), 0, lcd.getY(), juce::Colour (0xffe2e4dc), 0, lcd.getBottom(), false));
-        g.fillRect (lcd);
-        // status bar
-        auto bar = lcd.removeFromTop (17 * k);
-        g.setColour (juce::Colour (0xff2b2d33)); g.fillRect (bar);
-        g.setColour (juce::Colours::white.withAlpha (0.9f));
-        g.setFont (juce::Font (juce::FontOptions (juce::Font::getDefaultSansSerifFontName(), 10.5f * k, juce::Font::bold)));
-        g.drawText ("NORMAL FLOAT AUTO REAL RADIAN MP", bar.reduced (6 * k, 0), juce::Justification::centredLeft);
-        auto bat = juce::Rectangle<float> (bar.getRight() - 26 * k, bar.getCentreY() - 4.5f * k, 18 * k, 9 * k);
-        g.drawRect (bat, 1.0f); g.fillRect (bat.reduced (2 * k).withWidth (bat.getWidth() * 0.6f));
-        g.fillRect (bat.getRight(), bat.getCentreY() - 2 * k, 2 * k, 4 * k);
-        // the name above the screen, where a calculator has its own
-        // (the Ghost Graph lettering is drawn there by the editor)
-        // the equations panel
-        auto panel = juce::Rectangle<float> (w * 0.02f, h * 0.566f, w * 0.96f, h * 0.384f);
-        g.setColour (juce::Colour (0xff1a1b1f)); g.fillRoundedRectangle (panel, 8 * k);
-        g.setColour (juce::Colour (0xff36383e)); g.drawRoundedRectangle (panel, 8 * k, 1.0f);
-        // the five top keys, with their second-function labels above
-        const char* keys[] = { "y=", "window", "zoom", "trace", "graph" };
-        const char* tops[] = { "stat plot  f1", "tblset  f2", "format  f3", "calc  f4", "table  f5" };
-        const float kw = w * 0.085f, gap = w * 0.02f, ky = h - 24 * k;
+        const float k = w / 1054.0f, fw = (float) w, fh = (float) h;
+        juce::Random rnd (84);
+        // the worn charcoal body
+        g.fillAll (juce::Colour (0xff0d0e10));
+        auto body = juce::Rectangle<float> (0, 0, fw, fh).reduced (2.f);
+        g.setGradientFill (juce::ColourGradient (juce::Colour (0xff2c2f33), 0, 0, juce::Colour (0xff17191c), 0, fh, false));
+        g.fillRoundedRectangle (body, 26 * k);
+        for (int i = 0; i < w * h / 90; ++i)   // scuffs
+        {
+            g.setColour ((rnd.nextBool() ? juce::Colours::white : juce::Colours::black).withAlpha (0.03f + 0.05f * rnd.nextFloat()));
+            g.fillRect (rnd.nextFloat() * fw, rnd.nextFloat() * fh, 1.0f + rnd.nextFloat() * 1.5f, 1.0f + rnd.nextFloat() * 1.5f);
+        }
+        g.setColour (juce::Colour (0xff5a5d62).withAlpha (0.6f)); g.drawRoundedRectangle (body, 26 * k, 1.5f);
+        // the name plate along the top (the Ghost Graph lettering is drawn on the right by the editor)
+        g.setColour (juce::Colour (0xffd8d6cf).withAlpha (0.88f));
+        g.setFont (juce::Font (juce::FontOptions (juce::Font::getDefaultSansSerifFontName(), 15.f * k, juce::Font::plain)));
+        g.drawText ("GHOSTBLOCK INSTRUMENTS", juce::Rectangle<float> (fw * 0.05f, 0, fw * 0.3f, fh * ti::lcdTop), juce::Justification::centredLeft);
+        g.setFont (juce::Font (juce::FontOptions (juce::Font::getDefaultSansSerifFontName(), 25.f * k, juce::Font::bold | juce::Font::italic)));
+        g.drawText ("GHOST-84 Plus CE", juce::Rectangle<float> (0, 0, fw, fh * ti::lcdTop), juce::Justification::centred);
+        // the dark bezel holding the screen and the key strip
+        auto bez = juce::Rectangle<float> (fw * 0.018f, fh * ti::lcdTop - 6 * k, fw * 0.964f, fh * (ti::keysBottom - ti::lcdTop) + 12 * k);
+        g.setColour (juce::Colour (0xff0b0c0d)); g.fillRoundedRectangle (bez, 18 * k);
+        g.setColour (juce::Colour (0xff3e4146)); g.drawRoundedRectangle (bez, 18 * k, 1.2f);
+        auto paintLcd = [&] (juce::Rectangle<float> r, float corner)
+        {
+            g.setGradientFill (juce::ColourGradient (juce::Colour (0xffc9ddae), 0, r.getY(), juce::Colour (0xffb7cf98), 0, r.getBottom(), false));
+            g.fillRoundedRectangle (r, corner);
+            juce::Graphics::ScopedSaveState ss (g);
+            g.reduceClipRegion (r.toNearestInt());
+            g.setColour (juce::Colour (0xff17210f).withAlpha (0.035f));   // the pixel matrix
+            const float step = juce::jmax (3.f, 3.f * k);
+            for (float y = r.getY(); y < r.getBottom(); y += step) g.fillRect (r.getX(), y, r.getWidth(), 0.8f);
+            for (float x = r.getX(); x < r.getRight(); x += step) g.fillRect (x, r.getY(), 0.8f, r.getHeight());
+            for (int i = 0; i < (int) (r.getWidth() * r.getHeight() / 60); ++i)   // grain
+            {
+                g.setColour (juce::Colour (0xff17210f).withAlpha (0.02f + 0.03f * rnd.nextFloat()));
+                g.fillRect (r.getX() + rnd.nextFloat() * r.getWidth(), r.getY() + rnd.nextFloat() * r.getHeight(), 1.2f, 1.2f);
+            }
+            g.setGradientFill (juce::ColourGradient (juce::Colours::black.withAlpha (0.16f), 0, r.getY(), juce::Colours::transparentBlack, 0, r.getY() + 14 * k, false));
+            g.fillRect (r.withHeight (14 * k));   // the screen sits a little behind the glass
+        };
+        paintLcd ({ fw * 0.026f, fh * ti::lcdTop, fw * 0.948f, fh * (ti::lcdBottom - ti::lcdTop) }, 12 * k);
+        paintLcd ({ fw * 0.026f, fh * ti::keysTop, fw * 0.948f, fh * (ti::keysBottom - ti::keysTop) }, 10 * k);
+        // the five fixed keys in the strip (the sixth, EDIT, is a real button)
+        const char* keys[] = { "Y=", "WINDOW", "ZOOM", "TRACE", "GRAPH" };
         for (int i = 0; i < 5; ++i)
         {
-            auto key = juce::Rectangle<float> (w * 0.05f + i * (kw + gap), ky, kw, 14 * k);
-            g.setColour (juce::Colour (0xff6fa8dc).withAlpha (0.9f));
-            g.setFont (juce::Font (juce::FontOptions (juce::Font::getDefaultSansSerifFontName(), 8.5f * k, juce::Font::plain)));
-            g.drawText (tops[i], key.translated (0, -11 * k), juce::Justification::centred);
-            g.setColour (juce::Colour (0xffd9dbe0)); g.fillRoundedRectangle (key, 3 * k);
-            g.setColour (juce::Colour (0xff17181b));
-            g.setFont (juce::Font (juce::FontOptions (juce::Font::getDefaultSansSerifFontName(), 9.5f * k, juce::Font::bold)));
+            auto key = tiKey (i, fw, fh);
+            g.setColour (juce::Colour (0xff17210f));
+            if (i == 0) g.fillRoundedRectangle (key, 6 * k);
+            else        g.drawRoundedRectangle (key.reduced (1.f), 6 * k, 2.2f * k);
+            g.setColour (i == 0 ? juce::Colour (0xffc2d8a4) : juce::Colour (0xff17210f));
+            g.setFont (lcdFont (key.getHeight() * 0.62f));
             g.drawText (keys[i], key, juce::Justification::centred);
         }
         return img;
@@ -508,12 +535,21 @@ namespace ggui
             const float alpha = b.isEnabled() ? 1.0f : 0.28f;
             auto r = b.getLocalBounds().toFloat().reduced (1.0f);
             const bool on = b.getToggleState();
+            if (th().lcd)
+            {
+                const float rr = juce::jmin (6.f, r.getHeight() * 0.25f);
+                g.setColour (th().amber.withAlpha (alpha));
+                if (on) g.fillRoundedRectangle (r, rr);
+                else { if (over || down) { g.setColour (th().amber.withAlpha (0.12f * alpha)); g.fillRoundedRectangle (r, rr); g.setColour (th().amber.withAlpha (alpha)); }
+                       g.drawRoundedRectangle (r.reduced (0.5f), rr, 2.0f); }
+                return;
+            }
             if (on) { g.setColour (th().amber.withAlpha (0.88f * alpha)); g.fillRoundedRectangle (r, 3.f); }
             else if (over || down) { g.setColour (th().amber.withAlpha (0.10f * alpha)); g.fillRoundedRectangle (r, 3.f); }
             g.setColour (th().amber.withAlpha ((on ? 0.9f : 0.45f) * alpha));
             g.drawRoundedRectangle (r, 3.f, 1.0f);
         }
-        juce::Font getTextButtonFont (juce::TextButton&, int h) override { return serif (juce::jmin (16.f, h * 0.62f)); }
+        juce::Font getTextButtonFont (juce::TextButton&, int h) override { return th().lcd && h > 30 ? serif (h * 0.58f) : serif (juce::jmin (16.f, h * 0.62f)); }
         void drawButtonText (juce::Graphics& g, juce::TextButton& b, bool, bool) override
         {
             curTheme() = theme;
@@ -661,27 +697,46 @@ public:
 
         // grid + axes, as in the videos: a line every 2 along x, every 1 along y, brown-orange and faint
         const juce::Colour gridC = th().grid, axisC = th().axis, labelC = th().label;
+        const bool lcd = th().lcd;
+        const float dotStep = juce::jmax (4.f, getWidth() / 230.f);
         for (int i = -8; i <= 8; i += 2)
         {
             g.setColour (gridC);
-            g.fillRect (X (i) - 0.5f, r.getY(), 1.0f, r.getHeight());
+            if (lcd) for (float y = r.getY(); y <= r.getBottom(); y += dotStep) g.fillRect (X (i) - 0.8f, y, 1.6f, 1.6f);
+            else g.fillRect (X (i) - 0.5f, r.getY(), 1.0f, r.getHeight());
         }
         for (int j = (int) std::ceil (-yRange); j <= (int) std::floor (yRange); ++j)
         {
             g.setColour (gridC);
-            g.fillRect (r.getX(), Y (j) - 0.5f, r.getWidth(), 1.0f);
+            if (lcd) for (float x = r.getX(); x <= r.getRight(); x += dotStep) g.fillRect (x, Y (j) - 0.8f, 1.6f, 1.6f);
+            else g.fillRect (r.getX(), Y (j) - 0.5f, r.getWidth(), 1.0f);
         }
         g.setColour (axisC);
-        g.fillRect (r.getX() - 6.f, Y (0) - 0.75f, r.getWidth() + 12.f, 1.5f);
-        g.fillRect (X (0) - 0.75f, r.getY() - 6.f, 1.5f, r.getHeight() + 12.f);
-        g.setFont (serif (10.5f, true));
+        const float aw = lcd ? 2.6f : 1.5f;
+        g.fillRect (r.getX() - 6.f, Y (0) - aw * 0.5f, r.getWidth() + 12.f, aw);
+        g.fillRect (X (0) - aw * 0.5f, r.getY() - 6.f, aw, r.getHeight() + 12.f);
+        if (lcd)   // arrowheads, as on the calculator
+        {
+            juce::Path ah;
+            const float s = 7.f;
+            ah.addTriangle (r.getRight() + 12.f, Y (0), r.getRight() + 12.f - s * 1.5f, Y (0) - s * 0.7f, r.getRight() + 12.f - s * 1.5f, Y (0) + s * 0.7f);
+            ah.addTriangle (X (0), r.getY() - 12.f, X (0) - s * 0.7f, r.getY() - 12.f + s * 1.5f, X (0) + s * 0.7f, r.getY() - 12.f + s * 1.5f);
+            g.fillPath (ah);
+            for (int i = -8; i <= 8; i += 2) g.fillRect (X (i) - 1.f, Y (0) - 4.f, 2.f, 8.f);   // ticks
+            for (int j = (int) std::ceil (-yRange); j <= (int) std::floor (yRange); ++j) g.fillRect (X (0) - 4.f, Y (j) - 1.f, 8.f, 2.f);
+        }
+        const float ls = lcd ? juce::jmax (12.f, getWidth() / 62.f) : 10.5f;
+        const juce::String minus = lcd ? juce::String ("-") : juce::String::fromUTF8 ("\xe2\x88\x92");
+        g.setFont (serif (ls, true));
         g.setColour (labelC);
         for (int i = -8; i <= 8; i += 2)
-            if (i != 0) g.drawText (juce::String::fromUTF8 (i < 0 ? "\xe2\x88\x92" : "") + juce::String (std::abs (i)), juce::Rectangle<float> (X (i) - 14, Y (0) + 3, 28, 12), juce::Justification::centred);
+            if (i != 0) g.drawText ((i < 0 ? minus : juce::String()) + juce::String (std::abs (i)), juce::Rectangle<float> (X (i) - 2 * ls, Y (0) + 4, 4 * ls, ls + 2), juce::Justification::centred);
         for (int j = (int) std::ceil (-yRange); j <= (int) std::floor (yRange); ++j)
-            if (j != 0) g.drawText (juce::String::fromUTF8 (j < 0 ? "\xe2\x88\x92" : "") + juce::String (std::abs (j)), juce::Rectangle<float> (X (0) - 24, Y (j) - 6, 20, 12), juce::Justification::centredRight);
-        g.drawText ("x", juce::Rectangle<float> (r.getRight() + 2, Y (0) - 7, 12, 12), juce::Justification::centredLeft);
-        g.drawText ("y", juce::Rectangle<float> (X (0) + 4, r.getY() - 10, 12, 12), juce::Justification::centredLeft);
+            if (j != 0) g.drawText ((j < 0 ? minus : juce::String()) + juce::String (std::abs (j)), juce::Rectangle<float> (X (0) - 6 - 3 * ls, Y (j) - ls * 0.6f, 3 * ls, ls + 2), juce::Justification::centredRight);
+        const float xs = lcd ? ls * 1.3f : 12.f;
+        if (lcd) g.setFont (serif (xs));
+        g.drawText ("x", juce::Rectangle<float> (r.getRight() + (lcd ? 14.f : 2.f), Y (0) - xs * 0.6f, xs, xs + 2), juce::Justification::centredLeft);
+        g.drawText ("y", juce::Rectangle<float> (X (0) + (lcd ? 10.f : 4.f), r.getY() - (lcd ? 6.f : 10.f), xs, xs + 2), juce::Justification::centredLeft);
 
         if (nv == 0) return;
         g.reduceClipRegion (r.expanded (10.f, 6.f).toNearestInt());   // lines that leave the window are cut at its edge
@@ -702,14 +757,14 @@ public:
         {
             juce::Path trail;
             build (trail, v, 0, kNow, X, Y, true);
-            const float lw = juce::jmax (2.0f, getWidth() / 380.0f);
+            const float lw = juce::jmax (2.0f, getWidth() / 380.0f) * (th().lcd ? 1.55f : 1.0f);
             const juce::Colour lc = th().perVoice ? th().voice[v % 6] : th().lineCol;
             if (! th().halo.isTransparent())
             {
                 g.setColour (th().halo);
                 g.strokePath (trail, juce::PathStrokeType (lw * 3.2f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
             }
-            g.setColour (lc.withAlpha (0.20f));
+            if (! th().lcd) g.setColour (lc.withAlpha (0.20f)); else g.setColour (juce::Colours::transparentBlack);
             g.strokePath (trail, juce::PathStrokeType (lw * 2.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
             g.setColour (lc);
             g.strokePath (trail, juce::PathStrokeType (lw, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
@@ -751,6 +806,12 @@ public:
             if (! std::isfinite (y) || std::abs (y) > yRange * 1.05) continue;
             const juce::Point<float> p (X (xNow), Y (y));
             const float d = juce::jmax (11.0f, getWidth() / 75.0f);
+            if (th().lcd)
+            {
+                g.setColour (th().paper);   g.fillEllipse (juce::Rectangle<float> (d * 1.15f, d * 1.15f).withCentre (p));
+                g.setColour (th().lineCol); g.drawEllipse (juce::Rectangle<float> (d * 1.15f, d * 1.15f).withCentre (p), juce::jmax (2.2f, d * 0.2f));
+                continue;
+            }
             g.setColour (th().amberHi.withAlpha (0.22f)); g.fillEllipse (juce::Rectangle<float> (d * 1.4f, d * 1.4f).withCentre (p));
             g.setColour (th().amberHi);                   g.fillEllipse (juce::Rectangle<float> (d, d).withCentre (p));
             g.setColour (th().perVoice ? th().voice[v % 6] : th().dotRing);
@@ -1005,24 +1066,29 @@ public:
                 case 0: art = juce::ImageCache::getFromMemory (GhostGraphArt::paper_png,  GhostGraphArt::paper_pngSize);  ah = 37; ay = 6; break;
                 case 1: art = juce::ImageCache::getFromMemory (GhostGraphArt::chroma_png, GhostGraphArt::chroma_pngSize); ah = 48; ay = 3; break;
                 case 2: art = juce::ImageCache::getFromMemory (GhostGraphArt::ink_png,    GhostGraphArt::ink_pngSize);    ah = 41; ay = 5; break;
-                case 4: art = juce::ImageCache::getFromMemory (GhostGraphArt::ti_png,     GhostGraphArt::ti_pngSize);     ah = 17; ay = 6; break;
+                case 3: art = juce::ImageCache::getFromMemory (GhostGraphArt::wine_png,   GhostGraphArt::wine_pngSize);   ah = 37; ay = 6; break;
+                case 4: art = juce::ImageCache::getFromMemory (GhostGraphArt::ti_png,     GhostGraphArt::ti_pngSize);     ah = 30; ay = 8; break;
                 default: break;
             }
             if (art.isValid())
             {
                 const float hh = ah * k, ww = hh * art.getWidth() / (float) art.getHeight();
+                const float ax = lookIdx == 4 ? getWidth() * 0.95f - ww : (getWidth() - ww) * 0.5f;   // TI: on the name plate's right
                 g.setOpacity (1.0f);
-                g.drawImage (art, juce::Rectangle<float> ((getWidth() - ww) * 0.5f, ay * k, ww, hh), juce::RectanglePlacement::stretchToFit);
+                g.drawImage (art, juce::Rectangle<float> (ax, ay * k, ww, hh), juce::RectanglePlacement::stretchToFit);
             }
         }
         g.setFont (serif (23.f * k));
-        g.drawText (juce::String (proc.getScene (viewed).name), (int) (60 * k), (int) (8 * k), 300, (int) (32 * k), juce::Justification::centredLeft);
+        const bool lcd = th().lcd;
+        if (lcd) g.drawText (juce::String (proc.getScene (viewed).name), (int) (getWidth() * 0.05f), (int) (getHeight() * (ggui::ti::lcdTop + 0.008f)), 300, (int) (34 * k), juce::Justification::centredLeft);
+        else g.drawText (juce::String (proc.getScene (viewed).name), (int) (60 * k), (int) (8 * k), 300, (int) (32 * k), juce::Justification::centredLeft);
 
         // progress: through the whole chain, or through this page when looping
         const double page = (lastX + 8.0) / 16.0;
         const bool chain = proc.apvts.getRawParameterValue ("chain")->load() > 0.5f;
         const double prog = chain ? (viewed + page) / juce::jmax (1, count) : page;
-        auto bar = juce::Rectangle<float> ((float) getWidth() - 92 * k - 112 * k, 15 * k, 112 * k, 10 * k);
+        auto bar = lcd ? juce::Rectangle<float> ((float) getWidth() * 0.95f - 130 * k, getHeight() * (ggui::ti::lcdTop + 0.02f), 130 * k, 13 * k)
+                       : juce::Rectangle<float> ((float) getWidth() - 92 * k - 112 * k, 15 * k, 112 * k, 10 * k);
         g.setColour (th().amber.withAlpha (0.7f));
         g.drawRect (bar, 1.0f);
         g.setColour (th().amber);
@@ -1062,13 +1128,17 @@ public:
     void resized() override
     {
         const int w = getWidth(), h = getHeight();
-        const int graphBottom = (int) (h * 0.565f);
-        graph.setBounds (0, (int) (h * 0.075f), w, graphBottom - (int) (h * 0.075f));
+        const bool lcd = lookIdx == 4;
+        const int graphBottom = (int) (h * (lcd ? 0.53f : 0.565f));   // the calculator's screen also holds the equations
+        const int graphTop = (int) (h * (lcd ? 0.12f : 0.075f));
+        graph.setBounds (0, graphTop, w, graphBottom - graphTop);
         math.maxSize = 31.0f * w / 1054.0f;
 
         const int strip = 100;
-        auto mid = juce::Rectangle<int> ((int) (w * 0.02f), graphBottom + 6, (int) (w * 0.96f), h - 40 - graphBottom - 6);
-        pageArea = juce::Rectangle<int> (w - (int) (w * 0.075f) - 100, h - 44, 100, 30);
+        const int midBottom = lcd ? (int) (h * ggui::ti::lcdBottom) - 34 : h - 40;
+        auto mid = juce::Rectangle<int> ((int) (w * (lcd ? 0.045f : 0.02f)), graphBottom + 6, (int) (w * (lcd ? 0.91f : 0.96f)), midBottom - graphBottom - 6);
+        pageArea = lcd ? juce::Rectangle<int> ((int) (w * 0.95f) - 100, midBottom, 100, 30)
+                       : juce::Rectangle<int> (w - (int) (w * 0.075f) - 100, h - 44, 100, 30);
         helpArea = {};
         if (helpBtn.getToggleState())
             helpArea = mid.removeFromRight (juce::jmin (380, (int) (w * 0.34f))).reduced (14, 6);   // the cheat sheet, when asked for
@@ -1076,6 +1146,7 @@ public:
         eq.setBounds (mid);
         math.setBounds (mid);
         editBtn.setBounds (mid.getRight() - 66, mid.getY() + 2, 64, 24);
+        if (lcd) editBtn.setBounds (ggui::tiKey (5, (float) w, (float) h).toNearestInt());   // the sixth calculator key
         undoBtn.setBounds (mid.getRight() - 134, mid.getY() + 2, 64, 24);
         eq.setBounds (mid.withTrimmedRight (140));
 
@@ -1160,6 +1231,7 @@ public:
         // over watercolour, the typing gets a soft paper card behind it so it reads
         eq.setColour (juce::TextEditor::backgroundColourId, (lookIdx == 1 || lookIdx == 2) ? ggui::theme (lookIdx).paper.withAlpha (0.78f) : juce::Colours::transparentBlack);
         lookBtn.setButtonText (juce::String ("LOOK: ") + ggui::theme (lookIdx).name);
+        resized();   // the TI 84 lays the page out like the calculator
         repaint();
     }
 
