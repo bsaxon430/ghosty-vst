@@ -492,7 +492,8 @@ namespace ggui
             setColour (juce::TextEditor::textColourId, th().amber);
             setColour (juce::TextEditor::highlightColourId, th().amber.withAlpha (0.25f));
             setColour (juce::TextEditor::highlightedTextColourId, th().amberHi);
-            setColour (juce::CaretComponent::caretColourId, th().amberHi);
+            // the typing cursor: black on the light pages (CHROMA, INK, TI 84), the text colour on the dark ones
+            setColour (juce::CaretComponent::caretColourId, th().paper.getPerceivedBrightness() > 0.5f ? juce::Colours::black : th().amber);
             setColour (juce::BubbleComponent::backgroundColourId, juce::Colour (0xf01e1b19));
             setColour (juce::BubbleComponent::outlineColourId, th().amber.withAlpha (0.5f));
             setColour (juce::TooltipWindow::textColourId, th().amber);
