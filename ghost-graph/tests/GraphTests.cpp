@@ -476,6 +476,10 @@ int main (int argc, char** argv)
         check (ge->undoCount() == 4, "four drags, four undos");
         for (int i = 0; i < 4; ++i) ge->pressUndo();
         check (p->getScene (0).text == gg::factoryScenes()[0].text, "UNDO brings the original math back");
+        const std::string afterAll = [&] { for (int i = 0; i < 4; ++i) ge->pressRedo(); return p->getScene (0).text; }();
+        check (afterAll != gg::factoryScenes()[0].text && gg::Program::compile (afterAll)->ok(), "REDO puts all four drags back");
+        ge->pressUndo(); ge->pressRedo();
+        check (p->getScene (0).text == afterAll, "UNDO then REDO lands on the same math");
         ge->setEditing (false);
         check (! ge->getGraph().editMode, "DONE ends editing");
     }
@@ -546,6 +550,27 @@ int main (int argc, char** argv)
             os3.setPosition (0); os3.truncate();
             juce::PNGImageFormat().writeImageToStream (im, os3);
             check (im.getWidth() == 1500, juce::String ("LOOK ") + ggui::theme (lk).name + " draws");
+        }
+        // hover tips, drawn in each look over that look's page
+        {
+            juce::Image tips (juce::Image::ARGB, 1500, 5 * 150, true);
+            const juce::String tip = "Change the look: PAPER (the videos), CHROMA (rainbow watercolour), INK (the watercolour ghost), WINE (the burgundy video), TI 84 (a graphing calculator)";
+            for (int lk = 0; lk < 5; ++lk)
+            {
+                setParam (*p, "look", (float) lk);
+                juce::MessageManager::getInstance()->runDispatchLoopUntil (80);
+                auto page = ed->createComponentSnapshot ({ 300, 200, 1500, 150 });
+                juce::Graphics g (tips);
+                g.drawImageAt (page, 0, lk * 150);
+                auto& lf = ed->getLookAndFeel();
+                auto r = lf.getTooltipBounds (tip, { 600, 40 }, { 0, 0, 1500, 150 });
+                juce::Graphics::ScopedSaveState ss (g);
+                g.setOrigin (r.getX(), lk * 150 + r.getY());
+                lf.drawTooltip (g, tip, r.getWidth(), r.getHeight());
+            }
+            juce::FileOutputStream os4 (dir.getChildFile ("ui-tips.png"));
+            os4.setPosition (0); os4.truncate();
+            juce::PNGImageFormat().writeImageToStream (tips, os4);
         }
         ed.reset();
         check (true, "the window closes cleanly");

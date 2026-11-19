@@ -549,6 +549,34 @@ namespace ggui
             g.setColour (th().amber.withAlpha ((on ? 0.9f : 0.45f) * alpha));
             g.drawRoundedRectangle (r, 3.f, 1.0f);
         }
+        // hover tips in the look: the page colour, the look's ink, its type (monospaced on the TI 84)
+        juce::TextLayout tipLayout (const juce::String& tip) const
+        {
+            juce::AttributedString a;
+            a.append (tip, serif (th().lcd ? 16.f : 15.f), th().amber);
+            a.setJustification (juce::Justification::topLeft);
+            a.setWordWrap (juce::AttributedString::byWord);
+            juce::TextLayout tl; tl.createLayout (a, 320.f);
+            return tl;
+        }
+        juce::Rectangle<int> getTooltipBounds (const juce::String& tip, juce::Point<int> pos, juce::Rectangle<int> area) override
+        {
+            const auto tl = tipLayout (tip);
+            const int w = (int) std::ceil (tl.getWidth()) + 22, h = (int) std::ceil (tl.getHeight()) + 14;
+            int x = pos.x - w / 2, y = pos.y + 18;
+            if (y + h > area.getBottom()) y = pos.y - h - 10;   // near the bottom: above the mouse
+            return juce::Rectangle<int> (x, y, w, h).constrainedWithin (area.reduced (4));
+        }
+        void drawTooltip (juce::Graphics& g, const juce::String& tip, int w, int h) override
+        {
+            auto r = juce::Rectangle<float> ((float) w, (float) h);
+            const float rr = th().lcd ? 5.f : 7.f;
+            g.setColour (th().paper.withAlpha (0.97f));
+            g.fillRoundedRectangle (r.reduced (0.5f), rr);
+            g.setColour (th().amber.withAlpha (th().lcd ? 1.f : 0.6f));
+            g.drawRoundedRectangle (r.reduced (th().lcd ? 1.f : 0.5f), rr, th().lcd ? 2.f : 1.f);
+            tipLayout (tip).draw (g, r.reduced (11.f, 7.f));
+        }
         juce::Font getTextButtonFont (juce::TextButton&, int h) override { return th().lcd && h > 30 ? serif (h * 0.58f) : serif (juce::jmin (16.f, h * 0.62f)); }
         void drawButtonText (juce::Graphics& g, juce::TextButton& b, bool, bool) override
         {
@@ -941,6 +969,10 @@ public:
         undoBtn.setTooltip ("Undo the last note drag");
         undoBtn.onClick = [this] { undoDrag(); };
         addChildComponent (undoBtn);
+        redoBtn.setButtonText ("REDO");
+        redoBtn.setTooltip ("Redo the note drag you just undid");
+        redoBtn.onClick = [this] { redoDrag(); };
+        addChildComponent (redoBtn);
 
         eq.setMultiLine (true, false);
         eq.setReturnKeyStartsNewLine (true);
@@ -1147,7 +1179,8 @@ public:
         math.setBounds (mid);
         editBtn.setBounds (mid.getRight() - 66, mid.getY() + 2, 64, 24);
         if (lcd) editBtn.setBounds (ggui::tiKey (5, (float) w, (float) h).toNearestInt());   // the sixth calculator key
-        undoBtn.setBounds (mid.getRight() - 134, mid.getY() + 2, 64, 24);
+        undoBtn.setBounds (mid.getRight() - (lcd ? 134 : 202), mid.getY() + 2, 64, 24);
+        redoBtn.setBounds (mid.getRight() - (lcd ? 66 : 134), mid.getY() + 2, 64, 24);
         eq.setBounds (mid.withTrimmedRight (140));
 
         this->strip.setBounds (getLocalBounds());
@@ -1240,6 +1273,7 @@ public:
     bool isEditing() const { return editing; }
     size_t undoCount() const { return undo.size(); }
     void pressUndo() { undoDrag(); }
+    void pressRedo() { redoDrag(); }
     void showStrip (bool on) { forceStrip = on; stripHold = on ? 75 : 0; stripAlpha = on ? 1.0f : 0.0f; updateStripVisibility(); }
     MathView& getMath() { return math; }
     GraphView& getGraph() { return graph; }
@@ -1257,7 +1291,7 @@ private:
     MathView math;
     bool editing = false;
     juce::OwnedArray<juce::TextButton> sceneTabs;
-    juce::TextButton editBtn, undoBtn, plus, more, helpBtn, tracksBtn, lookBtn, genBtn, playBtn, syncBtn, chainBtn, keysBtn, kitBtn, rateBtn, waveBtn;
+    juce::TextButton editBtn, undoBtn, redoBtn, plus, more, helpBtn, tracksBtn, lookBtn, genBtn, playBtn, syncBtn, chainBtn, keysBtn, kitBtn, rateBtn, waveBtn;
     juce::Slider tempoK, tuneK, glideK, toneK, spaceK, widthK, volK;
     juce::StringArray knobLabels;
     juce::OwnedArray<juce::AudioProcessorValueTreeState::ButtonAttachment> attachments;
@@ -1401,6 +1435,8 @@ private:
         editBtn.setToggleState (editing, juce::dontSendNotification);
         undoBtn.setVisible (editing);
         undoBtn.setEnabled (! undo.empty());
+        redoBtn.setVisible (editing);
+        redoBtn.setEnabled (! redo.empty());
         graph.repaint();
         eq.setVisible (showText);
         math.setVisible (! showText);
@@ -1429,6 +1465,7 @@ private:
     int dragVoice = -1;
     double grabX0 = 0, grabX1 = 0;
     std::vector<std::pair<int, std::string>> undo;   // (scene, text before the drag)
+    std::vector<std::pair<int, std::string>> redo;   // (scene, text an UNDO took back)
 
     void setViewedText (const std::string& t)
     {
@@ -1458,7 +1495,7 @@ private:
         graph.setHighlight (dragVoice, n.A, n.B);
         if (final)
         {
-            if (t != dragBase) undo.push_back ({ viewed, dragBase });
+            if (t != dragBase) { undo.push_back ({ viewed, dragBase }); redo.clear(); }
             if (undo.size() > 100) undo.erase (undo.begin());
             dragVoice = -1;
             updateStatus();
@@ -1471,7 +1508,18 @@ private:
         const auto u = undo.back();
         undo.pop_back();
         if (u.first != viewed) showScene (u.first, true);
+        redo.push_back ({ u.first, proc.getScene (u.first).text });
         setViewedText (u.second);
+        updateStatus();
+    }
+    void redoDrag()
+    {
+        if (redo.empty()) return;
+        const auto r = redo.back();
+        redo.pop_back();
+        if (r.first != viewed) showScene (r.first, true);
+        undo.push_back ({ r.first, proc.getScene (r.first).text });
+        setViewedText (r.second);
         updateStatus();
     }
 

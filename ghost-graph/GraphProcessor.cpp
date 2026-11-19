@@ -109,7 +109,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout GraphProcessor::makeLayout()
                                                    AudioParameterFloatAttributes().withLabel ("dB")));
     l.add (std::make_unique<AudioParameterBool> (ParameterID { "keys", 1 }, "Keys", false));
     l.add (std::make_unique<AudioParameterBool> (ParameterID { "kit", 1 }, "Kit", true));
-    l.add (std::make_unique<AudioParameterChoice> (ParameterID { "look", 1 }, "Look", StringArray { "PAPER", "CHROMA", "INK", "WINE", "TI 84" }, 0));
+    l.add (std::make_unique<AudioParameterChoice> (ParameterID { "look", 1 }, "Look", StringArray { "PAPER", "CHROMA", "INK", "WINE", "TI 84" }, 4));   // opens on the TI 84; LOOK then cycles PAPER, CHROMA, INK, WINE
     return l;
 }
 
