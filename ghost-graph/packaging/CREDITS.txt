@@ -1,0 +1,10 @@
+GHOST GRAPH  ·  v1 beta  ·  GhostBlock
+Music written as equations.
+
+Built with JUCE 8 (https://juce.com), used under the GNU AGPLv3. Ghost Graph is free software under the same licence.
+Everything else in it (the equation engine, the sound, the looks, GENERATE) was written for Ghost Graph.
+
+The six songs under TRACKS are transcriptions of math-music videos made by another creator, whose name we
+don't have. The music and its equations are theirs, included as a tribute. If you made them and would like
+to be credited by name, or would like them taken out, please open an issue:
+https://github.com/bsaxon430/ghosty-vst/issues

@@ -1,0 +1,9 @@
+GHOST GRAPH 1.0 - for Mac
+
+Music written as equations. Every voice is a graph: x is time (in beats), y is the pitch (in octaves).
+
+1. Double-click "Install Ghost Graph.command" (if macOS blocks it: right-click > Open).
+2. FL Studio / Ableton: rescan plug-ins, add Ghost Graph as an INSTRUMENT, press play. It follows the song position (SYNC).
+3. Click the equations to change them - the sound changes as you type. CHAIN plays all the scenes, one every 16 beats.
+
+y = 0 is A4, 1 is an octave up, 1/12 is a semitone. {condition: value} makes a voice play only when the condition is true.
