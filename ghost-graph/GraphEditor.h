@@ -1,6 +1,7 @@
 // Ghost Graph -- the window: a dark crumpled-paper page, amber graphs drawn as they play (glowing dots on the
 // playheads), the scene's equations underneath (type in them: the sound changes as you type) and a slim control strip.
 #pragma once
+#include "BinaryData.h"
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "GraphProcessor.h"
@@ -412,9 +413,7 @@ namespace ggui
         g.drawRect (bat, 1.0f); g.fillRect (bat.reduced (2 * k).withWidth (bat.getWidth() * 0.6f));
         g.fillRect (bat.getRight(), bat.getCentreY() - 2 * k, 2 * k, 4 * k);
         // the name above the screen, where a calculator has its own
-        g.setColour (juce::Colours::white.withAlpha (0.85f));
-        g.setFont (juce::Font (juce::FontOptions (juce::Font::getDefaultSansSerifFontName(), 12.f * k, juce::Font::bold)));
-        g.drawText ("GHOST-84 Plus CE", juce::Rectangle<float> (0, 6 * k, (float) w, 18 * k), juce::Justification::centred);
+        // (the Ghost Graph lettering is drawn there by the editor)
         // the equations panel
         auto panel = juce::Rectangle<float> (w * 0.02f, h * 0.566f, w * 0.96f, h * 0.384f);
         g.setColour (juce::Colour (0xff1a1b1f)); g.fillRoundedRectangle (panel, 8 * k);
@@ -998,6 +997,24 @@ public:
         const int count = proc.getNumScenes();
         g.setColour (th().amber);
         const float k = getWidth() / 1054.0f;   // everything on the page scales with the window, like a video
+        // the Ghost Graph lettering for this look, centred in the top band
+        {
+            juce::Image art; float ah = 0, ay = 0;
+            switch (lookIdx)
+            {
+                case 0: art = juce::ImageCache::getFromMemory (GhostGraphArt::paper_png,  GhostGraphArt::paper_pngSize);  ah = 37; ay = 6; break;
+                case 1: art = juce::ImageCache::getFromMemory (GhostGraphArt::chroma_png, GhostGraphArt::chroma_pngSize); ah = 48; ay = 3; break;
+                case 2: art = juce::ImageCache::getFromMemory (GhostGraphArt::ink_png,    GhostGraphArt::ink_pngSize);    ah = 41; ay = 5; break;
+                case 4: art = juce::ImageCache::getFromMemory (GhostGraphArt::ti_png,     GhostGraphArt::ti_pngSize);     ah = 17; ay = 6; break;
+                default: break;
+            }
+            if (art.isValid())
+            {
+                const float hh = ah * k, ww = hh * art.getWidth() / (float) art.getHeight();
+                g.setOpacity (1.0f);
+                g.drawImage (art, juce::Rectangle<float> ((getWidth() - ww) * 0.5f, ay * k, ww, hh), juce::RectanglePlacement::stretchToFit);
+            }
+        }
         g.setFont (serif (23.f * k));
         g.drawText (juce::String (proc.getScene (viewed).name), (int) (60 * k), (int) (8 * k), 300, (int) (32 * k), juce::Justification::centredLeft);
 

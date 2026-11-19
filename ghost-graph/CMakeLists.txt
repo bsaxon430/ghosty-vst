@@ -2,7 +2,7 @@
 # Mac: VST3 + Standalone (AU when Xcode is there). No third-party code beyond JUCE.
 cmake_minimum_required(VERSION 3.24)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "")
-project(GhostGraph VERSION 1.7.1)
+project(GhostGraph VERSION 1.8.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -17,8 +17,12 @@ if(APPLE AND GHOSTGRAPH_AU)
   list(APPEND GHOSTGRAPH_FORMATS AU)
 endif()
 
+juce_add_binary_data(GhostGraphArt HEADER_NAME BinaryData.h NAMESPACE GhostGraphArt
+  SOURCES art/paper.png art/chroma.png art/ink.png art/ti.png)
+set_target_properties(GhostGraphArt PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
 juce_add_plugin(GhostGraph
-  VERSION 1.7.1
+  VERSION 1.8.0
   COMPANY_NAME "GhostBlock"
   BUNDLE_ID "io.ghostblock.ghostgraph"
   PLUGIN_MANUFACTURER_CODE Ghbk
@@ -42,7 +46,7 @@ endif()
 target_include_directories(GhostGraph PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(GhostGraph PUBLIC
   JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0 JUCE_DISPLAY_SPLASH_SCREEN=0)
-target_link_libraries(GhostGraph PRIVATE juce::juce_audio_utils juce::juce_dsp
+target_link_libraries(GhostGraph PRIVATE GhostGraphArt juce::juce_audio_utils juce::juce_dsp
   PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
 
 # the checks (the ghostgraph-mac workflow builds and runs them)
@@ -52,6 +56,6 @@ if(GHOSTGRAPH_TESTS)
   target_sources(GhostGraphTests PRIVATE tests/GraphTests.cpp GraphProcessor.cpp)
   target_include_directories(GhostGraphTests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
   target_compile_definitions(GhostGraphTests PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_STANDALONE_APPLICATION=1 JUCE_MODAL_LOOPS_PERMITTED=1)
-  target_link_libraries(GhostGraphTests PRIVATE juce::juce_audio_utils juce::juce_dsp juce::juce_gui_extra
+  target_link_libraries(GhostGraphTests PRIVATE GhostGraphArt juce::juce_audio_utils juce::juce_dsp juce::juce_gui_extra
     PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
 endif()
