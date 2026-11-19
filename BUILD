@@ -1,3 +1,4 @@
+build 9 (v1 beta everywhere: no internal build numbers in the notes)
 build 8 (Ghost Graph 1.9.0)
 build 7 (Ghost Graph 1.8.0 with look lettering)
 build 6 (Ghost Graph added, 23 plugins as v1 beta)

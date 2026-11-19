@@ -90,7 +90,7 @@ jobs:
               echo "  + $(ls "out/$N/Contents/Helpers/cdp" | wc -l | tr -d ' ') CDP programs ($(lipo -archs "out/$N/Contents/Helpers/cdp/pvoc"))" | tee -a out/BUILT.txt
             fi
             codesign --force --sign - "out/$N"
-            echo "$N: v1 beta  ($(lipo -archs "out/$N/Contents/MacOS/"* | head -1), build $(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "out/$N/Contents/Info.plist"))" | tee -a out/BUILT.txt
+            echo "$N: v1 beta  ($(lipo -archs "out/$N/Contents/MacOS/"* | head -1))" | tee -a out/BUILT.txt
           done
       - uses: actions/upload-artifact@v4
         with: { name: "${{ matrix.key }}", path: out, retention-days: 30 }
