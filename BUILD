@@ -1,3 +1,4 @@
+build 11 (Ghost Graph v1 beta: delete notes, fast dragging, redo, TI 84 first)
 build 10 (Ghost Graph: TI 84 first, hover tips, redo)
 build 9 (v1 beta everywhere: no internal build numbers in the notes)
 build 8 (Ghost Graph 1.9.0)
