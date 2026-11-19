@@ -1,6 +1,6 @@
 # 👻 GhostBlock plugins · v1 beta
 
-**22 free, open-source music plugins for Mac by GhostBlock**: synths, drum machines, MIDI generators and effects, each with its own hand-built interface. VST3 for FL Studio and Ableton Live, universal builds for Apple Silicon and Intel Macs (macOS 11 or newer).
+**23 free, open-source music plugins for Mac by GhostBlock**: synths, drum machines, MIDI generators and effects, each with its own hand-built interface. VST3 for FL Studio and Ableton Live, universal builds for Apple Silicon and Intel Macs (macOS 11 or newer).
 
 > **Version 1, in beta.** Everything here is v1 and still in beta, so expect a few rough edges. Bug reports are welcome in [Issues](https://github.com/bsaxon430/ghosty-vst/issues).
 
@@ -34,6 +34,7 @@ It downloads every plugin, puts them in `~/Library/Audio/Plug-Ins/VST3` and clea
 | **Ghosty Pro 2** | *Wavetable synth on the Vital engine*: Vital's wavetable engine in the Ghosty look. MORPH spirit boards blend four sounds with a puck that can orbit on its own, and twelve ready-made boards are built in. Three looks: Ghost, Black and a watercolor Light. | [VST3](https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghosty-Pro-2-mac-universal.zip) |
 | **Ghost Bass** | *Bass synth on the Surge XT engine*: Surge XT's sound engine turned into a bass machine, with a clean Bombaz sub underneath and a blend board for mixing bass sounds without them clashing. | [VST3](https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghost-Bass-mac-universal.zip) |
 | **Ghost Atlas** | *Sample instrument*: A sample-based instrument where every sound gets its own painted scene. Layer sounds, browse the library and run them through a full effects rack. | [VST3](https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghost-Atlas-mac-universal.zip) |
+| **Ghost Graph** | *Music written as equations*: Every voice is a line on a graph, where height is pitch and glowing dots play along it. Six songs and a GENERATE button that writes new ones in math. Type the equations or drag notes on the graph, and pick from five looks, including a TI-84 calculator. | [VST3](https://github.com/bsaxon430/ghosty-vst/releases/latest/download/Ghost-Graph-mac-universal.zip) |
 
 ### Drums & beats
 
