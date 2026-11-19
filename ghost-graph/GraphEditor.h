@@ -1293,6 +1293,7 @@ public:
     bool isEditing() const { return editing; }
     size_t undoCount() const { return undo.size(); }
     void pressUndo() { undoDrag(); }
+    std::string equationText() const { return eq.getText().toStdString(); }
     void pressDelete (int v, double a, double b) { deleteNote (v, a, b); }
     void pressRedo() { redoDrag(); }
     void showStrip (bool on) { forceStrip = on; stripHold = on ? 75 : 0; stripAlpha = on ? 1.0f : 0.0f; updateStripVisibility(); }
@@ -1491,7 +1492,7 @@ private:
     std::vector<std::pair<int, std::string>> redo;   // (scene, text an UNDO took back)
     bool mathStale = false;
 
-    void setViewedText (const std::string& t)
+    void setViewedText (const std::string& t, bool live = false)
     {
         proc.setSceneText (viewed, t);
         if (viewed < (int) programs.size())
@@ -1501,7 +1502,7 @@ private:
             if (math.isVisible()) math.setProgram (programs[(size_t) viewed].get());
             else mathStale = true;   // typesetting is slow: done once the math shows again
         }
-        eq.setText (t, juce::dontSendNotification);
+        if (! live) eq.setText (t, juce::dontSendNotification);   // mid-drag the text box catches up when you let go
         pendingEdit = false;
     }
 
@@ -1516,7 +1517,8 @@ private:
         else { n.B = std::max ((dx != 0 ? grabX1 : s0.B) + dx, s0.A + minLen); n.D1 = s0.D1 + dy; }
         const bool moved = std::abs (n.A - s0.A) > 1e-9 || std::abs (n.B - s0.B) > 1e-9 || std::abs (n.D0 - s0.D0) > 1e-9 || std::abs (n.D1 - s0.D1) > 1e-9;
         const std::string t = moved ? gg::applyEdit (dragBase, dragVoice, dragPlan, n) : dragBase;
-        if (t != proc.getScene (viewed).text) setViewedText (t);
+        if (t != proc.getScene (viewed).text) setViewedText (t, ! final);
+        else if (final) eq.setText (t, juce::dontSendNotification);
         graph.setHighlight (dragVoice, n.A, n.B);
         if (final)
         {

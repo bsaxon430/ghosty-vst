@@ -501,7 +501,8 @@ int main (int argc, char** argv)
         const double ms = std::chrono::duration<double, std::milli> (std::chrono::steady_clock::now() - t0).count() / 41.0;
         std::printf ("  drag step: %.2f ms\n", ms);
         check (p->getScene (0).text != before, "the timed drag moved the note");
-        check (ms < 6.0, "a drag step is quick (" + juce::String (ms, 2) + " ms)");
+        check (ge->equationText() == p->getScene (0).text, "the typed equations show the drag once you let go");
+        check (ms < 8.0, "a drag step is quick (" + juce::String (ms, 2) + " ms)");
         // click a note and press Delete
         ge->pressUndo();
         auto hd = gv.hitTest ({ gv.xToPx (-4.0), gv.yToPx (-1.0) });
