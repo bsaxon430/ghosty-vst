@@ -75,6 +75,25 @@ public:
     const std::vector<int>& getVoiceRoots() const { return voices; }
     bool isOutline() const { return outlineY; }
     const std::string& voiceSource (int i) const { return voiceSrc[(size_t) i]; }   // the entry as written in y = [...]
+    // Where a voice's sound at time atX comes from, for pointing at it in the typed math (window only, never the audio
+    // thread). Each spot is a definition the voice goes through, outermost first; branch is which {cond: value} piece
+    // of that definition is playing (0 = the first, the "otherwise" value counts last), or -1 for the whole line.
+    struct Spot { int def = -1; int branch = -1; };
+    std::vector<Spot> locate (int voiceIdx, double atX)
+    {
+        std::vector<Spot> out;
+        if (voiceIdx < 0 || voiceIdx >= (int) voices.size()) return out;
+        x = atX; restamp();   // fresh values at this time
+        int root = voices[(size_t) voiceIdx];
+        if (nodes[(size_t) root].op == Op::Piece)   // a piece written straight into y = [...]: def -1
+        {
+            Spot s; root = activeBranch (root, nullptr, s.branch);
+            out.push_back (s);
+        }
+        follow (root, nullptr, out, 0);
+        return out;
+    }
+
     static const char* builtinName (int f)
     {
         static const char* names[] = { "frac", "floor", "ceil", "round", "abs", "sign", "sqrt", "sin", "cos", "tan",
@@ -155,6 +174,59 @@ private:
             }
         }
         return nan();
+    }
+
+    // which piece of {cond: value, ...} plays now (branch -1 and node -1 when none does)
+    int activeBranch (int piece, const double* args, int& branch)
+    {
+        const Node& pc = nodes[(size_t) piece];
+        const size_t k = pc.kids.size();
+        size_t i = 0; int br = 0;
+        branch = -1;
+        for (; i + 1 < k; i += 2, ++br)
+        {
+            depth = 0;
+            if (truthy (eval (pc.kids[i], args))) { branch = br; return pc.kids[i + 1]; }
+        }
+        if (i < k) { branch = br; return pc.kids[i]; }   // the "otherwise" value
+        return -1;
+    }
+
+    void restamp() { if (++cacheStamp == 0) { std::fill (stamps.begin(), stamps.end(), 0u); cacheStamp = 1; } }
+
+    void follow (int n, const double* args, std::vector<Spot>& out, int hop)
+    {
+        if (n < 0 || hop > 8) return;
+        const Node& nd = nodes[(size_t) n];
+        if (nd.op == Op::Var || nd.op == Op::Call)
+        {
+            double a[8] = {};
+            const double* pa = nullptr;
+            if (nd.op == Op::Call)
+            {
+                for (size_t i = 0; i < nd.kids.size() && i < 8; ++i) { depth = 0; a[i] = eval (nd.kids[i], args); }
+                pa = a;
+            }
+            for (auto& s : out) if (s.def == nd.idx) return;   // a definition that refers to itself
+            Spot s; s.def = nd.idx;
+            int next = defs[(size_t) nd.idx].root;
+            if (next >= 0 && nodes[(size_t) next].op == Op::Piece) next = activeBranch (next, pa, s.branch);
+            out.push_back (s);
+            follow (next, pa, out, hop + 1);
+            return;
+        }
+        if (nd.op == Op::Builtin && nd.idx == fAt && nd.kids.size() >= 2)
+        {
+            depth = 0;
+            const double t = eval (nd.kids[1], args);
+            if (! std::isfinite (t)) return;
+            const double saved = x;
+            x = t; restamp();
+            follow (nd.kids[0], args, out, hop + 1);
+            x = saved; restamp();
+            return;
+        }
+        if (nd.op == Op::Add || nd.op == Op::Sub || nd.op == Op::Neg) follow (nd.a, args, out, hop + 1);   // a note lifted by + 7/12
     }
 
     static double fracOf (double v) { return v - std::floor (v); }
@@ -558,8 +630,17 @@ inline std::unique_ptr<Program> Program::compile (const std::string& text)
             if ((int) p.voices.size() >= kMaxVoices) { ps.err = "at most 16 voices"; break; }
             p.voices.push_back (r);
             p.voiceLabels.push_back (label);
-            {   // an edited voice keeps the sound of what it was (edit1 of "hats" is still a hi-hat)
+            const std::string srcText = ps.toks[before].b < ps.toks[ps.pos - 1].e ? yl.rhs.substr (ps.toks[before].b, ps.toks[ps.pos - 1].e - ps.toks[before].b) : label;
+            {   // an edited voice keeps the sound of what it was (edit1 of "hats" is still a hi-hat, and so is
+                // {1 < x < 2: ..., hats}: a piece whose "otherwise" is a name sounds like that name)
                 std::string base = label;
+                if (base.empty() && ! srcText.empty() && srcText.back() == '}')
+                {
+                    size_t e = srcText.size() - 1, b = e;
+                    while (b > 0 && (std::isalnum ((unsigned char) srcText[b - 1]) || srcText[b - 1] == '_')) --b;
+                    size_t c = b; while (c > 0 && srcText[c - 1] == ' ') --c;
+                    if (b < e && c > 0 && srcText[c - 1] == ',' && ! std::isdigit ((unsigned char) srcText[b])) base = srcText.substr (b, e - b);
+                }
                 for (int hop = 0; hop < 8; ++hop)
                 {
                     bool found = false;
@@ -568,7 +649,7 @@ inline std::unique_ptr<Program> Program::compile (const std::string& text)
                 }
                 p.voiceKinds.push_back (kindOf (base));
             }
-            p.voiceSrc.push_back (ps.toks[before].b < ps.toks[ps.pos - 1].e ? yl.rhs.substr (ps.toks[before].b, ps.toks[ps.pos - 1].e - ps.toks[before].b) : label);
+            p.voiceSrc.push_back (srcText);
         } while (list && ps.accept (","));
         if (list && ps.err.empty()) ps.expect (outline ? ")" : "]");
         if (ps.err.empty() && ps.peek().t != Tok::End) ps.err = "unexpected '" + ps.peek().s + "'";

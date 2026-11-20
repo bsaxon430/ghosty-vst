@@ -7,6 +7,7 @@
 #include "GraphProcessor.h"
 #include "GraphMath.h"
 #include "GraphEdit.h"
+#include <map>
 
 namespace ggui
 {
@@ -609,8 +610,29 @@ public:
     bool editMode = false;
     std::function<void (int voice, double x0, double x1)> onDragStart;
     std::function<void (int part, double dx, double dy, bool final)> onDrag;   // part: 0 the whole note, 1 its start, 2 its end
-    void setHighlight (int v, double a, double b) { hiV = v; hiA = a; hiB = b; repaint(); }
-    void clearHighlight() { hiV = -1; repaint(); }
+
+    // the selected notes: one click picks one; Cmd+click adds or takes one away; Cmd+drag on the paper draws a box
+    // round several. Grab any selected note and they all move together.
+    struct Sel { int v = -1; double a = 0, b = 0; };
+    void setHighlight (int v, double a, double b) { sels.assign (1, Sel { v, a, b }); repaint(); }
+    void clearHighlight() { sels.clear(); repaint(); }
+    void setSelection (std::vector<Sel> s) { sels = std::move (s); repaint(); }
+    const std::vector<Sel>& selection() const { return sels; }
+    int selVoice() const { return sels.empty() ? -1 : sels.front().v; }
+    double selStart() const { return sels.empty() ? 0.0 : sels.front().a; }
+    double selEnd() const { return sels.empty() ? 0.0 : sels.front().b; }
+    bool hasSelection() const { return ! sels.empty(); }
+    std::function<void()> onSelect;                                       // the selection changed: show it in the math
+    std::function<void (const std::vector<Sel>&)> onGroupStart;          // grabbing one of several selected notes
+    std::function<void (double dx, double dy, bool final)> onGroupDrag;
+    // right-click: Copy the note(s), Paste anywhere on the paper (the copy lands where you clicked), Delete
+    std::function<void (const std::vector<Sel>&)> onCopy;
+    std::function<bool()> canPaste;
+    std::function<void (double x, double y, bool fine)> onPaste;
+    std::function<void (int, double, double)> onDelete;
+    std::function<void (const std::vector<Sel>&)> onDeleteMany;
+    double pxToX (float px) const { const auto r = plot(); return -8.0 + 16.0 * (px - r.getX()) / r.getWidth(); }
+    double pxToY (float py) const { const auto r = plot(); return (r.getCentreY() - py) / (r.getHeight() * 0.5) * yRange; }
 
     juce::Rectangle<float> plot() const { return getLocalBounds().toFloat().reduced (getWidth() * 0.085f, 8.f); }
     float xToPx (double x) const { const auto r = plot(); return r.getX() + (float) ((x + 8.0) / 16.0) * r.getWidth(); }
@@ -636,16 +658,35 @@ public:
                 if (d < bd) { bd = d; best.v = v; best.k = k; }
             }
         if (best.v < 0) return best;
-        // the whole unbroken piece around it
-        int k0 = best.k - 1, k1 = best.k;
-        auto ok = [&] (int k) { return std::isfinite (ys[(size_t) (best.v * kSamples + k)]); };
-        while (k0 > 0 && ok (k0 - 1) && ! breaks[(size_t) (best.v * kSamples + k0)]) --k0;
-        while (k1 < kSamples - 1 && ok (k1 + 1) && ! breaks[(size_t) (best.v * kSamples + k1 + 1)]) ++k1;
-        best.x0 = refine (best.v, k0, -1);
-        best.x1 = refine (best.v, k1, +1);
+        pieceAround (best, best.k - 1, best.k);
         const float px0 = xToPx (best.x0), px1 = xToPx (best.x1), grab = juce::jmin (12.0f, (px1 - px0) * 0.3f);
         best.part = (m.x - px0 < grab) ? 1 : ((px1 - m.x < grab) ? 2 : 0);
         return best;
+    }
+
+    // every note with a bit of its line inside the box (in pixels)
+    std::vector<Sel> notesIn (juce::Rectangle<float> box) const
+    {
+        std::vector<Sel> out;
+        if (nv == 0 || box.getWidth() < 2.f || box.getHeight() < 2.f) return out;
+        const int kA = juce::jlimit (0, kSamples - 1, (int) std::floor ((pxToX (box.getX()) + 8.0) / 16.0 * (kSamples - 1)));
+        const int kB = juce::jlimit (0, kSamples - 1, (int) std::ceil ((pxToX (box.getRight()) + 8.0) / 16.0 * (kSamples - 1)));
+        for (int v = 0; v < nv; ++v)
+        {
+            double doneTo = -1e9;
+            for (int k = kA; k <= kB; ++k)
+            {
+                const double x = -8.0 + 16.0 * k / (kSamples - 1);
+                if (x <= doneTo) continue;
+                const double y = ys[(size_t) (v * kSamples + k)];
+                if (! std::isfinite (y) || ! box.contains (xToPx (x), yToPx (y))) continue;
+                Hit h; h.v = v;
+                pieceAround (h, k, k);
+                out.push_back ({ v, h.x0, h.x1 });
+                doneTo = h.x1;
+            }
+        }
+        return out;
     }
 
     void mouseMove (const juce::MouseEvent& e) override
@@ -653,41 +694,95 @@ public:
         if (! editMode) { setMouseCursor (juce::MouseCursor::NormalCursor); return; }
         const auto h = hitTest (e.position);
         if (h.v != hov.v || h.x0 != hov.x0 || h.part != hov.part) { hov = h; repaint(); }
-        setMouseCursor (h.v < 0 ? juce::MouseCursor::NormalCursor
-                                : (h.part == 0 ? juce::MouseCursor::DraggingHandCursor : juce::MouseCursor::LeftRightResizeCursor));
+        const bool inGroup = sels.size() > 1 && findSel (h) >= 0;
+        setMouseCursor (e.mods.isCommandDown() ? juce::MouseCursor::CrosshairCursor
+                        : h.v < 0 ? juce::MouseCursor::NormalCursor
+                        : (h.part == 0 || inGroup ? juce::MouseCursor::DraggingHandCursor : juce::MouseCursor::LeftRightResizeCursor));
     }
     bool keyPressed (const juce::KeyPress& k) override
     {
-        if (! editMode || hiV < 0) return false;
-        if (k == juce::KeyPress::deleteKey || k == juce::KeyPress::backspaceKey)
+        if (! editMode) return false;
+        if (k == juce::KeyPress ('v', juce::ModifierKeys::commandModifier, 0))
         {
-            const int v = hiV; const double a = hiA, b = hiB;
-            clearHighlight();
-            if (onDelete) onDelete (v, a, b);
+            const auto m = getMouseXYRelative().toFloat();   // Cmd+V: the copy lands under the mouse
+            if (plot().contains (m) && canPaste && canPaste() && onPaste) onPaste (pxToX (m.x), pxToY (m.y), false);
             return true;
         }
-        if (k == juce::KeyPress::escapeKey) { clearHighlight(); return true; }
+        if (k == juce::KeyPress ('a', juce::ModifierKeys::commandModifier, 0))   // Cmd+A: every note on the page
+        {
+            sels = notesIn (plot().expanded (2.f));
+            repaint();
+            if (onSelect) onSelect();
+            return true;
+        }
+        if (sels.empty()) return false;
+        if (k == juce::KeyPress::deleteKey || k == juce::KeyPress::backspaceKey)
+        {
+            deleteSelected();
+            return true;
+        }
+        if (k == juce::KeyPress::escapeKey) { clearHighlight(); if (onSelect) onSelect(); return true; }
+        if (k == juce::KeyPress ('c', juce::ModifierKeys::commandModifier, 0))
+        {
+            if (onCopy) onCopy (sels);
+            return true;
+        }
         return false;
     }
-    std::function<void (int, double, double)> onDelete;
-    bool hasSelection() const { return hiV >= 0; }
     void mouseExit (const juce::MouseEvent&) override { if (hov.v >= 0 && ! dragging) { hov = Hit(); repaint(); } }
     void mouseDown (const juce::MouseEvent& e) override
     {
         if (! editMode) { if (onClick) onClick(); return; }
         const auto h = hitTest (e.position);
-        dragging = h.v >= 0; axis = 0; grabbed = h; downPos = e.position;
+        if (e.mods.isPopupMenu()) { showNoteMenu (h, e.position, e.mods.isAltDown()); return; }
         grabKeyboardFocus();
-        if (! dragging) { clearHighlight(); return; }   // a click on empty paper: nothing selected
+        dragging = false; group = false; axis = 0; grabbed = h; downPos = e.position;
+        if (e.mods.isCommandDown())
+        {
+            if (h.v >= 0)   // Cmd+click a note: add it to the selection, or take it out
+            {
+                const int i = findSel (h);
+                if (i >= 0) sels.erase (sels.begin() + i); else sels.push_back ({ h.v, h.x0, h.x1 });
+                repaint();
+                if (onSelect) onSelect();
+                return;
+            }
+            marquee = true; mqA = mqB = e.position; mqBase = sels;   // Cmd+drag on the paper: draw a box round notes
+            repaint();
+            return;
+        }
+        if (h.v < 0) { clearHighlight(); if (onSelect) onSelect(); return; }   // a click on empty paper: nothing selected
+        if (sels.size() > 1 && findSel (h) >= 0)   // grab one of several selected notes: they all move
+        {
+            dragging = group = true;
+            grabbed.part = 0;
+            if (onGroupStart) onGroupStart (sels);
+            return;
+        }
+        dragging = true;
         setHighlight (h.v, h.x0, h.x1);                  // the clicked note is selected (Delete removes it)
+        if (onSelect) onSelect();                        // ...and its place in the math lights up
         if (onDragStart) onDragStart (h.v, h.x0, h.x1);
     }
-    void mouseDrag (const juce::MouseEvent& e) override { if (dragging) sendDrag (e, false); }
+    void mouseDrag (const juce::MouseEvent& e) override
+    {
+        if (marquee)
+        {
+            mqB = e.position;
+            sels = mqBase;
+            for (auto& n : notesIn (juce::Rectangle<float> (mqA, mqB)))
+                if (findSel (n) < 0) sels.push_back (n);
+            repaint();
+            return;
+        }
+        if (dragging) sendDrag (e, false);
+    }
     void mouseUp (const juce::MouseEvent& e) override
     {
+        if (marquee) { marquee = false; repaint(); if (onSelect) onSelect(); return; }
         if (! dragging) return;
         sendDrag (e, true);
-        dragging = false; hov = Hit();   // the note stays selected (highlighted) after the drag
+        dragging = group = false; hov = Hit();   // the notes stay selected (highlighted) after the drag
     }
 
     void resample()
@@ -815,14 +910,12 @@ public:
             g.setColour (lc);
             g.strokePath (trail, juce::PathStrokeType (lw, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
         }
-        // the note under the mouse (or being dragged): thicker, with handles at its ends
+        // the selected notes and the note under the mouse: thicker, with handles at the ends of a single one
         if (editMode)
         {
-            const bool useHi = dragging || (hov.v < 0 && hiV >= 0);
-            const int v = useHi ? hiV : hov.v;
-            const double a = useHi ? hiA : hov.x0, b = useHi ? hiB : hov.x1;
-            if (v >= 0 && v < nv)
+            auto drawNote = [&] (int v, double a, double b, bool handles)
             {
+                if (v < 0 || v >= nv) return;
                 juce::Path seg;
                 const int k0 = juce::jlimit (0, kSamples - 1, (int) std::ceil ((a + 8.0) / 16.0 * (kSamples - 1)));
                 const int k1 = juce::jlimit (0, kSamples - 1, (int) std::floor ((b + 8.0) / 16.0 * (kSamples - 1)));
@@ -832,16 +925,29 @@ public:
                 g.strokePath (seg, juce::PathStrokeType (juce::jmax (6.0f, getWidth() / 160.0f), juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
                 g.setColour (lc);
                 g.strokePath (seg, juce::PathStrokeType (juce::jmax (3.0f, getWidth() / 300.0f), juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-                for (int end = 0; end < 2 && k1 > k0; ++end)
+                for (int end = 0; end < 2 && k1 > k0 && handles; ++end)
                 {
                     const int k = end == 0 ? k0 : k1;
                     const double y = ys[(size_t) (v * kSamples + k)];
                     if (! std::isfinite (y)) continue;
                     const auto c = juce::Point<float> (X (-8.0 + 16.0 * k / (kSamples - 1)), Y (y));
-                    const bool on = ! dragging && hov.part == end + 1;
+                    const bool on = ! dragging && hov.part == end + 1 && hov.v == v && std::abs (hov.x0 - a) < 1e-6;
                     g.setColour (th().amberHi); g.fillRect (juce::Rectangle<float> (on ? 11.f : 8.f, on ? 11.f : 8.f).withCentre (c));
                     g.setColour (lc);           g.drawRect (juce::Rectangle<float> (on ? 11.f : 8.f, on ? 11.f : 8.f).withCentre (c), 1.5f);
                 }
+            };
+            const bool single = sels.size() <= 1;
+            for (auto& sl : sels) drawNote (sl.v, sl.a, sl.b, single);
+            if (! dragging && ! marquee && hov.v >= 0 && findSel (hov) < 0) drawNote (hov.v, hov.x0, hov.x1, single || sels.empty());
+            if (marquee)   // the box you are drawing round notes
+            {
+                const auto box = juce::Rectangle<float> (mqA, mqB);
+                g.setColour (th().amberHi.withAlpha (0.10f)); g.fillRect (box);
+                g.setColour (th().amber.withAlpha (0.8f));
+                const float dash[] = { 5.f, 4.f };
+                juce::Path outline; outline.addRectangle (box);
+                juce::Path dashed; juce::PathStrokeType (1.2f).createDashedStroke (dashed, outline, dash, 2);
+                g.fillPath (dashed);
             }
         }
         // the playheads: pale cream dots with a thin th().amber rim
@@ -875,7 +981,65 @@ private:
     bool dragging = false;
     int axis = 0;                  // the ends follow one direction at a time: 1 longer/shorter, 2 up/down
     juce::Point<float> downPos;
-    int hiV = -1; double hiA = 0, hiB = 0;
+
+    void showNoteMenu (const Hit& h, juce::Point<float> at, bool fine)
+    {
+        juce::PopupMenu m;
+        const bool onNote = h.v >= 0;
+        if (onNote)
+        {
+            if (findSel (h) < 0 || sels.size() < 2) { setHighlight (h.v, h.x0, h.x1); if (onSelect) onSelect(); }
+            const juce::String what = sels.size() > 1 ? juce::String (" ") + juce::String ((int) sels.size()) + " notes" : juce::String();
+            m.addItem (1, "Copy" + what);
+            m.addItem (3, "Delete" + what);
+        }
+        else m.addItem (2, "Paste", canPaste && canPaste());   // greyed out until a note is copied
+        const double px = pxToX (at.x), py = pxToY (at.y);
+        juce::Component::SafePointer<GraphView> safe (this);
+        m.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (this)
+                                                   .withTargetScreenArea (juce::Rectangle<int> (1, 1).withPosition (localPointToGlobal (at.toInt()))),
+                         [safe, px, py, fine] (int r)
+        {
+            if (safe == nullptr) return;
+            if (r == 1 && safe->onCopy) safe->onCopy (safe->sels);
+            if (r == 2 && safe->onPaste) safe->onPaste (px, py, fine);
+            if (r == 3) safe->deleteSelected();
+        });
+    }
+
+    std::vector<Sel> sels;
+    bool group = false, marquee = false;
+    juce::Point<float> mqA, mqB;
+    std::vector<Sel> mqBase;
+
+    int findSel (const Hit& h) const { return findSel (Sel { h.v, h.x0, h.x1 }); }
+    int findSel (const Sel& n) const
+    {
+        if (n.v < 0) return -1;
+        for (size_t i = 0; i < sels.size(); ++i)
+        {
+            const auto& s = sels[i];
+            if (s.v == n.v && n.a < s.b - 1e-6 && n.b > s.a + 1e-6) return (int) i;   // the same piece of the same voice
+        }
+        return -1;
+    }
+    void deleteSelected()
+    {
+        const auto gone = sels;
+        clearHighlight();
+        if (gone.size() == 1) { if (onDelete) onDelete (gone[0].v, gone[0].a, gone[0].b); }
+        else if (onDeleteMany) onDeleteMany (gone);
+        if (onSelect) onSelect();
+    }
+    // the whole unbroken piece of voice h.v around samples k0..k1
+    void pieceAround (Hit& h, int k0, int k1) const
+    {
+        auto ok = [&] (int k) { return std::isfinite (ys[(size_t) (h.v * kSamples + k)]); };
+        while (k0 > 0 && ok (k0 - 1) && ! breaks[(size_t) (h.v * kSamples + k0)]) --k0;
+        while (k1 < kSamples - 1 && ok (k1 + 1) && ! breaks[(size_t) (h.v * kSamples + k1 + 1)]) ++k1;
+        h.x0 = refine (h.v, k0, -1);
+        h.x1 = refine (h.v, k1, +1);
+    }
 
     void sendDrag (const juce::MouseEvent& e, bool final)
     {
@@ -885,6 +1049,7 @@ private:
         double dx = d.x / pxPerBeat(), dy = -d.y / pxPerOct();
         dx = fine ? std::round (dx * 128.0) / 128.0 : std::round (dx * 16.0) / 16.0;      // 1/16 beat (Alt: finer)
         dy = fine ? std::round (dy * 1200.0) / 1200.0 : std::round (dy * 12.0) / 12.0;    // a semitone (Alt: cents)
+        if (group) { if (onGroupDrag) onGroupDrag (dx, dy, final); return; }
         if (grabbed.part != 0) { if (axis != 1) dx = 0; if (axis != 2) dy = 0; }
         if (onDrag) onDrag (grabbed.part, dx, dy, final);
     }
@@ -960,6 +1125,68 @@ public:
 };
 
 // ------------------------------------------------------------------------------------------------ the editor
+// Over the typed equations: where the selected note is written. A box round the exact piece that plays it, an arrow
+// in the margin pointing at it, and fainter boxes round the voice's entry in y = [...] and the lines it plays from.
+class FormulaMarks : public juce::Component
+{
+public:
+    explicit FormulaMarks (juce::TextEditor& e) : ed (e) { setInterceptsMouseClicks (false, false); }
+    const ggui::Theme* theme = &ggui::theme (0);
+    juce::Array<juce::Range<int>> mains;      // characters in the text box: where the selected notes are written
+    juce::Array<juce::Range<int>> others;
+    bool active() const { return ! mains.isEmpty(); }
+    void clear() { mains.clear(); others.clear(); repaint(); }
+
+    void paint (juce::Graphics& g) override
+    {
+        if (! active()) return;
+        const juce::Colour hi = theme->lcd ? theme->lineCol : theme->amberHi;
+        const juce::Colour ink = theme->amber;
+        g.reduceClipRegion (getLocalBounds());
+        for (auto& r : others)
+            for (auto& b : rows (r))
+            {
+                g.setColour (ink.withAlpha (0.10f)); g.fillRoundedRectangle (b.toFloat().expanded (2.f, 1.f), 3.f);
+                g.setColour (ink.withAlpha (0.55f)); g.drawRoundedRectangle (b.toFloat().expanded (2.f, 1.f), 3.f, 1.0f);
+            }
+        juce::Array<juce::Rectangle<int>> rl;
+        for (int m = 0; m < mains.size(); ++m)
+        {
+            const auto rs = rows (mains[m]);
+            if (m == 0) rl = rs;
+            for (auto& b : rs)
+            {
+                g.setColour (hi.withAlpha (0.18f)); g.fillRoundedRectangle (b.toFloat().expanded (3.f, 2.f), 4.f);
+                g.setColour (hi);                   g.drawRoundedRectangle (b.toFloat().expanded (3.f, 2.f), 4.f, 2.0f);
+            }
+        }
+        if (! rl.isEmpty())   // the arrow, in the left margin, at the first line
+        {
+            const auto b = rl.getFirst().toFloat();
+            const float cy = b.getCentreY(), s = juce::jlimit (4.f, 7.f, b.getHeight() * 0.3f);
+            const float tip = (float) margin - 3.f;
+            juce::Path a; a.addTriangle (tip - s * 1.6f, cy - s, tip - s * 1.6f, cy + s, tip, cy);
+            g.setColour (hi); g.fillPath (a);
+        }
+    }
+    static constexpr int margin = 16;   // the text box's left indent: room for the arrow
+private:
+    // the text's boxes, one per line (the text box gives one per word)
+    juce::Array<juce::Rectangle<int>> rows (juce::Range<int> r) const
+    {
+        juce::Array<juce::Rectangle<int>> out;
+        for (auto& b : ed.getTextBounds (r.getIntersectionWith ({ 0, ed.getTotalNumChars() })))
+        {
+            bool merged = false;
+            for (auto& o : out)
+                if (b.getY() < o.getBottom() && b.getBottom() > o.getY()) { o = o.getUnion (b); merged = true; break; }
+            if (! merged) out.add (b);
+        }
+        return out;
+    }
+    juce::TextEditor& ed;
+};
+
 class GraphEditor : public juce::AudioProcessorEditor, private juce::Timer
 {
 public:
@@ -972,17 +1199,29 @@ public:
         {
             flushEdit();
             dragBase = proc.getScene (viewed).text;
-            dragPlan = gg::planEdit (dragBase, v, x0, x1);
+            dragPlan = gg::planNote (dragBase, v, x0, x1);
             dragVoice = v;
             grabX0 = x0; grabX1 = x1;   // the ends you can see (a moved note can run off the page)
         };
         graph.onDrag = [this] (int part, double dx, double dy, bool final) { applyDrag (part, dx, dy, final); };
         graph.setWantsKeyboardFocus (true);
         graph.onDelete = [this] (int v, double a, double b) { deleteNote (v, a, b); };
+        graph.onSelect = [this] { markFormula(); };
+        graph.onCopy = [this] (const std::vector<GraphView::Sel>& n) { copyNotes (n); };
+        graph.canPaste = [this] { return canPaste(); };
+        graph.onPaste = [this] (double x, double y, bool fine) { pasteNotes (x, y, fine); };
+        graph.onDeleteMany = [this] (const std::vector<GraphView::Sel>& n) { deleteNotes (n); };
+        graph.onGroupStart = [this] (const std::vector<GraphView::Sel>& n)
+        {
+            flushEdit();
+            dragBase = proc.getScene (viewed).text;
+            groupNotes = n;
+        };
+        graph.onGroupDrag = [this] (double dx, double dy, bool final) { applyGroupDrag (dx, dy, final); };
 
         // EDIT: type in the equations and drag the notes on the graph; DONE puts the math back on the page
         editBtn.setButtonText ("EDIT");
-        editBtn.setTooltip ("Edit this scene: type in the equations, or drag notes on the graph (Alt = finer steps)");
+        editBtn.setTooltip ("Edit this scene: type in the equations, or drag notes on the graph (Alt = finer steps). Click a note to see where it is in the math; Cmd+click or Cmd+drag a box to pick several and move them together; right-click to copy, paste or delete");
         editBtn.onClick = [this] { if (editing) stopEditing(); else startEditing(); };
         addAndMakeVisible (editBtn);
         undoBtn.setButtonText ("UNDO");
@@ -999,9 +1238,10 @@ public:
         eq.setTabKeyUsedAsCharacter (false);
         eq.setScrollbarsShown (true);
         eq.setFont (ggui::serif (20.f, true));
-        eq.setIndents (4, 4);
-        eq.onTextChange = [this] { pendingEdit = true; editCountdown = 8; };
+        eq.setIndents (FormulaMarks::margin, 4);
+        eq.onTextChange = [this] { pendingEdit = true; editCountdown = 8; marks.clear(); };
         addChildComponent (eq);
+        eq.addAndMakeVisible (marks);
         math.font = [] (float sz, bool it) { return ggui::serif (sz, it); };
         math.onClick = [this] { startEditing(); };
         math.setMouseCursor (juce::MouseCursor::IBeamCursor);
@@ -1202,6 +1442,7 @@ public:
         undoBtn.setBounds (mid.getRight() - (lcd ? 134 : 202), mid.getY() + 2, 64, 24);
         redoBtn.setBounds (mid.getRight() - (lcd ? 66 : 134), mid.getY() + 2, 64, 24);
         eq.setBounds (mid.withTrimmedRight (140));
+        marks.setBounds (eq.getLocalBounds());
 
         this->strip.setBounds (getLocalBounds());
         this->strip.panel = juce::Rectangle<int> (0, h - strip - 30, w, strip + 30);
@@ -1239,7 +1480,7 @@ public:
         using namespace ggui;
         g.setFont (serif (14.f, true));
         g.setColour (th().amber.withAlpha (0.5f));
-        if (errorText.isEmpty()) g.drawText (okText, statusArea.withTrimmedRight (170), juce::Justification::centredLeft);
+        if (errorText.isEmpty()) g.drawText (okFlash.isNotEmpty() ? okFlash : okText, statusArea.withTrimmedRight (170), juce::Justification::centredLeft);
         g.setColour (th().amber.withAlpha (0.65f));
         g.drawText (juce::String::fromUTF8 ("Ghost Graph \xc2\xb7 v1 beta"), statusArea, juce::Justification::centredRight);
         g.setFont (serif (12.f));
@@ -1281,6 +1522,7 @@ public:
         paperImg = {};
         sendLookAndFeelChange();
         eq.applyColourToAllText (ggui::theme (lookIdx).amber);
+        marks.theme = &ggui::theme (lookIdx);
         // over watercolour, the typing gets a soft paper card behind it so it reads
         eq.setColour (juce::TextEditor::backgroundColourId, (lookIdx == 1 || lookIdx == 2) ? ggui::theme (lookIdx).paper.withAlpha (0.78f) : juce::Colours::transparentBlack);
         lookBtn.setButtonText (juce::String ("LOOK: ") + ggui::theme (lookIdx).name);
@@ -1298,6 +1540,7 @@ public:
     void pressRedo() { redoDrag(); }
     void showStrip (bool on) { forceStrip = on; stripHold = on ? 75 : 0; stripAlpha = on ? 1.0f : 0.0f; updateStripVisibility(); }
     MathView& getMath() { return math; }
+    const FormulaMarks& getMarks() const { return marks; }
     GraphView& getGraph() { return graph; }
 
 private:
@@ -1305,6 +1548,7 @@ private:
     ggui::Look look;
     GraphView graph;
     juce::TextEditor eq;
+    FormulaMarks marks { eq };
     ControlStrip strip;
     float stripAlpha = 1.0f;
     int lookIdx = 0;
@@ -1324,7 +1568,8 @@ private:
     int viewed = 0, seenVersion = -1, editCountdown = 0;
     bool pendingEdit = false;
     double lastX = -8.0;
-    juce::String errorText, okText;
+    juce::String errorText, okText, okFlash;
+    int flashCountdown = 0;
     juce::Rectangle<int> helpArea, statusArea, pageArea;
     juce::Image paperImg;
 
@@ -1342,6 +1587,7 @@ private:
         i = juce::jlimit (0, proc.getNumScenes() - 1, i);
         if (i == viewed && ! force) return;
         flushEdit();
+        graph.clearHighlight(); marks.clear();   // another scene (or new math): nothing selected
         viewed = i;
         eq.setText (proc.getScene (i).text, juce::dontSendNotification);
         graph.setProgram (programs[(size_t) i].get());
@@ -1450,7 +1696,7 @@ private:
                       + (p.getErrors().size() > 1 ? "   (+" + juce::String ((int) p.getErrors().size() - 1) + " more)" : juce::String());
         }
         else okText = juce::String (p.numVoices()) + (p.numVoices() == 1 ? " voice" : " voices")
-                    + (editing ? juce::String::fromUTF8 ("   \xc2\xb7   drag a note to move it, its ends to stretch or tilt it, Delete removes it   \xc2\xb7   DONE when finished") : juce::String::fromUTF8 ("   \xc2\xb7   EDIT to change the equations or drag notes   \xc2\xb7   GENERATE writes a new track"));
+                    + (editing ? juce::String::fromUTF8 ("   \xc2\xb7   drag a note to move it (its ends stretch or tilt it), Cmd+drag a box to pick several, right-click to copy, paste or delete   \xc2\xb7   DONE when finished") : juce::String::fromUTF8 ("   \xc2\xb7   EDIT to change the equations or drag notes   \xc2\xb7   GENERATE writes a new track"));
         const bool showText = editing || ! p.ok();
         graph.editMode = editing;
         editBtn.setButtonText (editing ? "DONE" : "EDIT");
@@ -1479,13 +1725,15 @@ private:
         editing = false;
         flushEdit();
         graph.clearHighlight();
+        marks.clear();
         unfocusAllComponents();
         updateStatus();
     }
 
     // ---- note dragging
     std::string dragBase;
-    gg::EditPlan dragPlan;
+    gg::NotePlan dragPlan;
+    std::vector<GraphView::Sel> groupNotes;
     int dragVoice = -1;
     double grabX0 = 0, grabX1 = 0;
     std::vector<std::pair<int, std::string>> undo;   // (scene, text before the drag)
@@ -1508,7 +1756,7 @@ private:
 
     void applyDrag (int part, double dx, double dy, bool final)
     {
-        if (dragPlan.name.empty() || dragVoice < 0) return;
+        if (! dragPlan.ok || dragVoice < 0) return;
         const auto& s0 = dragPlan.start;
         gg::NoteEdit n = s0;
         const double minLen = 1.0 / 32.0;
@@ -1516,7 +1764,7 @@ private:
         else if (part == 1) { n.A = std::min ((dx != 0 ? grabX0 : s0.A) + dx, s0.B - minLen); n.D0 = s0.D0 + dy; }
         else { n.B = std::max ((dx != 0 ? grabX1 : s0.B) + dx, s0.A + minLen); n.D1 = s0.D1 + dy; }
         const bool moved = std::abs (n.A - s0.A) > 1e-9 || std::abs (n.B - s0.B) > 1e-9 || std::abs (n.D0 - s0.D0) > 1e-9 || std::abs (n.D1 - s0.D1) > 1e-9;
-        const std::string t = moved ? gg::applyEdit (dragBase, dragVoice, dragPlan, n) : dragBase;
+        const std::string t = moved ? gg::applyNote (dragBase, dragPlan, n, gg::NoteOp::Move) : dragBase;
         if (t != proc.getScene (viewed).text) setViewedText (t, ! final);
         else if (final) eq.setText (t, juce::dontSendNotification);
         graph.setHighlight (dragVoice, n.A, n.B);
@@ -1526,24 +1774,73 @@ private:
             if (undo.size() > 100) undo.erase (undo.begin());
             dragVoice = -1;
             updateStatus();
+            markFormula();
         }
     }
 
-    // Delete on a selected note: it goes quiet (its edit line keeps the place, empty), and UNDO brings it back
-    void deleteNote (int v, double a, double b)
+    void pushUndo (const std::string& before)
+    {
+        undo.push_back ({ viewed, before }); redo.clear();
+        if (undo.size() > 100) undo.erase (undo.begin());
+    }
+
+    // Delete on a selected note: it goes quiet in its formula, and UNDO brings it back
+    void deleteNote (int v, double a, double b) { deleteNotes ({ GraphView::Sel { v, a, b } }); }
+    void deleteNotes (const std::vector<GraphView::Sel>& notes)
     {
         flushEdit();
         const std::string base = proc.getScene (viewed).text;
-        const auto plan = gg::planEdit (base, v, a, b);
-        if (plan.name.empty()) return;
-        gg::NoteEdit n = plan.start;
-        n.B = n.A;   // an empty span: the note plays nowhere
-        const std::string t = gg::applyEdit (base, v, plan, n);
+        std::string t = base;
+        for (auto& n : notes)
+        {
+            const auto plan = gg::planNote (t, n.v, n.a, n.b);
+            if (! plan.ok) continue;
+            const std::string r = gg::applyNote (t, plan, plan.start, gg::NoteOp::Delete);
+            if (gg::Program::compile (r)->ok()) t = r;
+        }
         if (t == base) return;
         setViewedText (t);
-        undo.push_back ({ viewed, base }); redo.clear();
-        if (undo.size() > 100) undo.erase (undo.begin());
+        pushUndo (base);
         updateStatus();
+    }
+
+    // several selected notes dragged together: each one moved in its own formula, one after another (the one furthest
+    // along the way they go first, so none lands on another before that one has moved)
+    std::string moveNotes (const std::string& base, std::vector<GraphView::Sel> notes, double dx, double dy, std::vector<GraphView::Sel>* landed)
+    {
+        std::sort (notes.begin(), notes.end(), [dx] (const GraphView::Sel& p, const GraphView::Sel& q) { return dx > 0 ? p.a > q.a : p.a < q.a; });
+        std::string t = base;
+        if (landed) landed->clear();
+        for (auto& sel : notes)
+        {
+            const auto plan = gg::planNote (t, sel.v, sel.a, sel.b);
+            if (! plan.ok) continue;
+            gg::NoteEdit n = plan.start;
+            n.A += dx; n.B += dx; n.D0 += dy; n.D1 += dy;
+            if (dx != 0 || dy != 0)
+            {
+                const std::string r = gg::applyNote (t, plan, n, gg::NoteOp::Move);
+                if (gg::Program::compile (r)->ok()) t = r;
+            }
+            if (landed) landed->push_back ({ sel.v, sel.a + dx, sel.b + dx });
+        }
+        return t;
+    }
+    void applyGroupDrag (double dx, double dy, bool final)
+    {
+        if (groupNotes.empty()) return;
+        std::vector<GraphView::Sel> landed;
+        const std::string t = moveNotes (dragBase, groupNotes, dx, dy, &landed);
+        if (t != proc.getScene (viewed).text) setViewedText (t, ! final);
+        else if (final) eq.setText (t, juce::dontSendNotification);
+        graph.setSelection (landed);
+        if (final)
+        {
+            if (t != dragBase) pushUndo (dragBase);
+            groupNotes.clear();
+            updateStatus();
+            markFormula();
+        }
     }
     void undoDrag()
     {
@@ -1554,6 +1851,7 @@ private:
         redo.push_back ({ u.first, proc.getScene (u.first).text });
         setViewedText (u.second);
         updateStatus();
+        markFormula();
     }
     void redoDrag()
     {
@@ -1564,12 +1862,142 @@ private:
         undo.push_back ({ r.first, proc.getScene (r.first).text });
         setViewedText (r.second);
         updateStatus();
+        markFormula();
+    }
+
+    // ---- the selected note in the typed math
+    static int charIndex (const std::string& t, size_t byte) { return juce::String::fromUTF8 (t.data(), (int) std::min (byte, t.size())).length(); }
+    juce::Range<int> chars (const std::string& t, gg::Span sp) const { return { charIndex (t, sp.b), charIndex (t, sp.e) }; }
+
+    void markFormula()
+    {
+        marks.clear();
+        const auto& sel = graph.selection();
+        if (! editing || sel.empty() || pendingEdit) return;
+        const std::string t = eq.getText().toStdString();
+        auto p = gg::Program::compile (t);
+        if (! p->ok()) return;
+        for (size_t s = 0; s < sel.size() && s < 32; ++s)
+        {
+            const int v = sel[s].v;
+            if (v < 0 || v >= p->numVoices()) continue;
+            const auto spots = p->locate (v, 0.5 * (sel[s].a + sel[s].b));
+            const gg::Span entry = gg::voiceEntrySpan (t, v);
+            gg::Span mainSpan;
+            for (size_t i = 0; i < spots.size(); ++i)
+            {
+                gg::Span whole, piece;
+                if (spots[i].def < 0) { whole = entry; const auto it = gg::pieceItems (t, entry); if (spots[i].branch >= 0 && spots[i].branch < (int) it.size()) piece = it[(size_t) spots[i].branch]; }
+                else { whole = gg::lineSpan (t, p->getDefs()[(size_t) spots[i].def].line); piece = gg::branchSpan (t, whole, spots[i].branch); }
+                const gg::Span here = piece.ok() ? piece : whole;
+                if (! here.ok()) continue;
+                if (! mainSpan.ok()) mainSpan = here;                   // where this note is written
+                else if (s == 0) marks.others.add (chars (t, here));    // what it plays from
+            }
+            if (! mainSpan.ok()) mainSpan = entry;                      // a voice written straight into y = [...]
+            else if (s == 0 && entry.ok() && entry.b != mainSpan.b && ! (mainSpan.b >= entry.b && mainSpan.e <= entry.e)) marks.others.add (chars (t, entry));
+            if (mainSpan.ok()) marks.mains.addIfNotAlreadyThere (chars (t, mainSpan));
+        }
+        if (marks.mains.isEmpty()) return;
+        // scroll the text box so it shows (moving the caret there; the graph keeps the keyboard for Delete / Cmd+C)
+        eq.setCaretPosition (marks.mains.getFirst().getEnd());
+        eq.setCaretPosition (marks.mains.getFirst().getStart());
+        marks.repaint();
+    }
+
+    // ---- copy and paste notes (right-click on the graph, or Cmd+C / Cmd+V)
+    struct ClipNote { int voice = -1; std::string name; gg::NoteEdit n; };
+    std::vector<ClipNote> clip;
+    double clipX = 0, clipY = 0;   // the first note's start: a paste puts that point where you click
+
+    void copyNotes (const std::vector<GraphView::Sel>& notes)
+    {
+        flushEdit();
+        if (notes.empty() || viewed >= (int) programs.size()) return;
+        const std::string t = proc.getScene (viewed).text;
+        auto p = gg::Program::compile (t);
+        if (! p->ok()) return;
+        std::vector<ClipNote> c;
+        double x0 = 1e9, y0 = std::numeric_limits<double>::quiet_NaN();
+        for (auto& sel : notes)
+        {
+            const auto plan = gg::planNote (t, sel.v, sel.a, sel.b);
+            if (! plan.ok) continue;
+            c.push_back ({ sel.v, p->voiceLabel (sel.v), plan.start });
+            if (plan.start.A < x0)
+            {
+                x0 = plan.start.A;
+                y0 = std::numeric_limits<double>::quiet_NaN();
+                for (double f : { 0.02, 0.1, 0.25, 0.5 }) { p->setX (sel.a + (sel.b - sel.a) * f); y0 = p->voice (sel.v); if (std::isfinite (y0)) break; }
+            }
+        }
+        if (c.empty() || ! std::isfinite (y0)) return;
+        clip = c; clipX = x0; clipY = y0;
+        okFlash = juce::String::fromUTF8 ("copied   \xc2\xb7   right-click the paper where it should go and Paste (or Cmd+V)");
+        flashCountdown = 90;
+        repaint (statusArea);
+    }
+    bool canPaste() const
+    {
+        if (clip.empty() || viewed >= (int) programs.size()) return false;
+        std::string t = proc.getScene (viewed).text;
+        while (! t.empty() && t.back() == '\n') t.pop_back();
+        for (auto& c : clip) t += "\nggpasteprobe" + std::to_string (&c - clip.data()) + " = " + c.n.V;   // what it plays still reads here
+        return gg::Program::compile (t)->ok();
+    }
+    static bool busy (gg::Program& p, int v, double A, double B)
+    {
+        const double step = std::min (1.0 / 64.0, (B - A) / 8.0);
+        for (double t = A + step * 0.5; t < B; t += step) { p.setX (t); if (std::isfinite (p.voice (v))) return true; }
+        return false;
+    }
+    void pasteNotes (double x, double y, bool fine)
+    {
+        flushEdit();
+        if (! canPaste()) return;
+        const std::string base = proc.getScene (viewed).text;
+        const double A0 = fine ? std::round (x * 16.0) / 16.0 : std::round (x * 4.0) / 4.0;                  // a quarter beat (Alt: 1/16)
+        const double dx = A0 - clipX;
+        const double dy = fine ? std::round ((y - clipY) * 1200.0) / 1200.0 : std::round ((y - clipY) * 12.0) / 12.0;   // semitones (Alt: cents)
+        std::string t = base;
+        std::map<int, int> target;   // where each copied voice's notes go
+        std::vector<GraphView::Sel> landed;
+        for (auto& c : clip)
+        {
+            auto p = gg::Program::compile (t);
+            if (! p->ok()) break;
+            gg::NoteEdit n = c.n;
+            n.A += dx; n.B += dx; n.D0 += dy; n.D1 += dy;
+            // on the voice it came from where that voice is quiet, else a voice of its own (a chord)
+            int v = target.count (c.voice) ? target[c.voice] : (c.voice < p->numVoices() ? c.voice : -1);
+            if (v >= 0 && busy (*p, v, n.A, n.B)) v = -1;
+            std::string r;
+            if (v < 0 && p->numVoices() < gg::Program::kMaxVoices) r = gg::addVoice (t, c.name, n, &v);
+            else
+            {
+                if (v < 0) v = c.voice < p->numVoices() ? c.voice : 0;   // 16 voices: over what that voice had
+                const auto plan = gg::planNote (t, v, n.A, n.B);
+                r = gg::applyNote (t, plan, n, gg::NoteOp::Copy);
+            }
+            if (r == t || ! gg::Program::compile (r)->ok()) continue;
+            t = r;
+            target[c.voice] = v;
+            landed.push_back ({ v, n.A, n.B });
+        }
+        if (t == base) return;
+        setViewedText (t);
+        pushUndo (base);
+        graph.setSelection (landed);   // the copies are selected: drag them, Delete them, or paste again
+        updateStatus();
+        markFormula();
     }
 
     void timerCallback() override
     {
         if (proc.scenesVersion.load() != seenVersion) { rebuildPrograms(); showScene (viewed, true); }
         if (pendingEdit && --editCountdown <= 0) flushEdit();
+        if (marks.active()) marks.repaint();   // follows the text box when it scrolls
+        if (flashCountdown > 0 && --flashCountdown == 0) { okFlash.clear(); repaint (statusArea); }
         // (editing stays on until DONE: clicking the graph to drag a note doesn't end it)
 
         // follow the scene that plays, unless you are typing in this one

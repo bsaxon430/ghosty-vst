@@ -6,7 +6,7 @@ Part of the free [GhostBlock plugins](https://github.com/bsaxon430/ghosty-vst). 
 
 - **TRACKS**: six ready-made songs, each a few scenes of equations
 - **GENERATE**: writes a new song in equations (Drift, Riff house, Breaks, Cosine song or Acid)
-- **EDIT**: type in the math, or drag notes on the graph to move, stretch or tilt them; every drag rewrites the equations
+- **EDIT**: type in the math, or drag notes on the graph to move, stretch or tilt them; every drag rewrites the voice's own formula in place. Click a note to see where it is in the math, right-click to copy, paste or delete, Cmd+drag a box (or Cmd+click) to pick several and move them together
 - **LOOK**: PAPER, CHROMA, INK, WINE and TI 84
 - Six waves (sine, triangle, saw, square, soft saw, round), a KIT that turns voices named hats / snare / clap into drums, and TUNE, GLIDE, TONE, SPACE, WIDTH and VOLUME
 

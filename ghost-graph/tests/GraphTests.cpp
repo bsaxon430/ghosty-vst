@@ -447,7 +447,8 @@ int main (int argc, char** argv)
         pr->setX (-7.0); const double before = pr->voice (1);
         pr->setX (0.0);  const double moved = pr->voice (1);
         check (pr->ok() && ! std::isfinite (before) && std::abs (moved - (-1.0 + 7.0 / 12.0)) < 1e-9, "moving it 2 beats later and up a fifth rewrites the math (" + juce::String (moved, 4) + ")");
-        check (p->getScene (0).text.find ("edit1 = {") != std::string::npos && p->getScene (0).text.find ("y = [kick, edit1,") != std::string::npos, "the voice now reads edit1 in y = [...]");
+        check (p->getScene (0).text.find ("edit") == std::string::npos && p->getScene (0).text.find ("y = [kick, {-6 < x < 10: -5/12, -8 < x < 8: none, -1},") != std::string::npos,
+               "the voice's own formula changes in place (no edit lines): " + juce::String (p->getScene (0).text.substr (0, p->getScene (0).text.find ('\n'))));
         // drag its end: longer can't go past the page, so make it shorter, then tilt the end up
         h = gv.hitTest ({ gv.xToPx (7.9), gv.yToPx (-1.0 + 7.0 / 12.0) });
         check (h.v == 1 && h.part == 2, "grab the end of the moved note");
@@ -456,7 +457,11 @@ int main (int argc, char** argv)
         pr = gg::Program::compile (p->getScene (0).text);
         pr->setX (5.0);
         check (pr->ok() && ! std::isfinite (pr->voice (1)), "pulling the end left makes it shorter");
-        check (p->getScene (0).text.find ("edit2") == std::string::npos, "dragging the same note again updates edit1 (no edit2)");
+        {
+            const std::string first = p->getScene (0).text.substr (0, p->getScene (0).text.find ('\n'));
+            int pieces = 0; for (size_t k = first.find (": "); k != std::string::npos; k = first.find (": ", k + 1)) ++pieces;
+            check (pieces == 2, "dragging the same note again changes its piece (no new pieces): " + juce::String (first));
+        }
         h = gv.hitTest ({ gv.xToPx (3.9), gv.yToPx (-1.0 + 7.0 / 12.0) });
         gv.onDragStart (h.v, h.x0, h.x1);
         gv.onDrag (2, 0.0, 5.0 / 12.0, true);
@@ -522,6 +527,122 @@ int main (int argc, char** argv)
         check (gone && std::isfinite (pd->voice (0) + 0.0) == std::isfinite (pd->voice (0)), "Delete removes the note (the rest still reads)");
         ge->pressUndo();
         check (p->getScene (0).text == before, "UNDO brings the deleted note back");
+    }
+
+    if (want ("drag"))
+    {   // the selected note in the math, right-click copy / paste, Cmd+drag a box round several and move them together
+        auto p = fresh();
+        std::unique_ptr<juce::AudioProcessorEditor> ed (p->createEditor());
+        auto* ge = dynamic_cast<GraphEditor*> (ed.get());
+        ge->setEditing (true);
+        auto& gv = ge->getGraph();
+        auto ev = [&] (juce::Point<float> at, juce::ModifierKeys mods)
+        {
+            return juce::MouseEvent (juce::Desktop::getInstance().getMainMouseSource(), at, mods, 1.0f, 0.f, 0.f, 0.f, 0.f,
+                                     &gv, &gv, juce::Time::getCurrentTime(), at, juce::Time::getCurrentTime(), 1, false);
+        };
+        const std::string orig = p->getScene (0).text;
+        auto shot = [&] (const char* name)
+        {
+            juce::File dir = juce::File::getCurrentWorkingDirectory().getChildFile ("uishots");
+            if (auto env = std::getenv ("GG_SHOTS")) dir = juce::File (juce::String (env));
+            dir.createDirectory();
+            juce::MessageManager::getInstance()->runDispatchLoopUntil (40);
+            auto img = ed->createComponentSnapshot (ed->getLocalBounds());
+            juce::FileOutputStream os (dir.getChildFile (name));
+            os.setPosition (0); os.truncate();
+            juce::PNGImageFormat().writeImageToStream (img, os);
+        };
+        // click the kick at x = 0: its piece of kick = {...} lights up in the typed math
+        const juce::Point<float> kickAt { gv.xToPx (0.05), gv.yToPx (1.5 * std::exp (-14.0 * 0.025) - 2.1) };
+        gv.mouseDown (ev (kickAt, {})); gv.mouseUp (ev (kickAt, {}));
+        const auto& mk = ge->getMarks();
+        const juce::String typed (ge->equationText());
+        check (gv.selVoice() == 0 && mk.active() && typed.substring (mk.mains[0].getStart(), mk.mains[0].getEnd()) == "h < 0.3: 1.5e^(-14h) - 2.1",
+               "clicking a kick points at its piece of the formula (" + (mk.active() ? typed.substring (mk.mains[0].getStart(), mk.mains[0].getEnd()) : juce::String ("nothing")) + ")");
+        shot ("ui-edit-pointing.png");
+        check (mk.others.size() == 1 && typed.substring (mk.others[0].getStart(), mk.others[0].getEnd()) == "kick", "...and at its entry in y = [...]");
+        // the held note "-1": its entry in y = [...]
+        const juce::Point<float> heldAt { gv.xToPx (-4.0), gv.yToPx (-1.0) };
+        gv.mouseDown (ev (heldAt, {})); gv.mouseUp (ev (heldAt, {}));
+        check (mk.active() && typed.substring (mk.mains[0].getStart(), mk.mains[0].getEnd()) == "-1", "a held note points at its entry in y = [...]");
+        // right-click copy the kick, paste it at x = 1, a fifth up
+        gv.setHighlight (0, 0.0, 0.6);
+        check (gv.onCopy != nullptr && gv.canPaste != nullptr && ! gv.canPaste(), "Paste is greyed out before anything is copied");
+        { auto h = gv.hitTest (kickAt); gv.onCopy ({ { h.v, h.x0, h.x1 } }); }
+        check (gv.canPaste(), "after Copy, Paste is ready");
+        double kickTop = 0;   // where the copied note starts: that point lands under the mouse
+        { auto h = gv.hitTest (kickAt); auto q = gg::Program::compile (orig); q->setX (h.x0 + (h.x1 - h.x0) * 0.02); kickTop = q->voice (0); }
+        gv.onPaste (1.02, kickTop + 7.0 / 12.0, false);
+        auto pr = gg::Program::compile (p->getScene (0).text);
+        double was = 0, now = 0;
+        { auto q = gg::Program::compile (orig); q->setX (0.1); was = q->voice (0); }
+        pr->setX (1.1); now = pr->voice (0);
+        check (pr->ok() && std::abs (now - (was + 7.0 / 12.0)) < 1e-9, "the pasted kick plays at x = 1, a fifth up (" + juce::String (now, 3) + ")");
+        pr->setX (0.1);
+        check (std::abs (pr->voice (0) - was) < 1e-9, "the kick it was copied from still plays");
+        check (p->getScene (0).text.find ("edit") == std::string::npos && p->getScene (0).text.find ("kick = {1 < x < 1.6: ") != std::string::npos, "the copy is written into kick = {...} itself");
+        check (gv.hasSelection() && gv.selVoice() == 0 && std::abs (gv.selStart() - 1.0) < 1e-9, "the pasted note is selected");
+        // paste onto a busy voice: over the held note, which plays everywhere -> a voice of its own
+        { auto h = gv.hitTest (heldAt); gv.onCopy ({ { h.v, h.x0, h.x1 } }); }
+        const int before = gg::Program::compile (p->getScene (0).text)->numVoices();
+        gv.onPaste (-8.0, -1.0 + 4.0 / 12.0, false);
+        pr = gg::Program::compile (p->getScene (0).text);
+        check (pr->ok() && pr->numVoices() == before + 1, "a copy pasted where its voice already plays gets a voice of its own (a chord)");
+        ge->pressUndo(); ge->pressUndo();
+        check (p->getScene (0).text == orig, "UNDO takes the pastes back");
+
+        // Cmd+drag a box round the kicks between x = -2 and 3, then grab one and move them all
+        const juce::ModifierKeys cmd (juce::ModifierKeys::commandModifier | juce::ModifierKeys::leftButtonModifier);
+        gv.clearHighlight();
+        const juce::Point<float> a0 { gv.xToPx (-1.2), gv.yToPx (-0.4) }, a1 { gv.xToPx (2.9), gv.yToPx (-2.4) };
+        gv.mouseDown (ev (a0, cmd)); gv.mouseDrag (ev (a1, cmd)); gv.mouseUp (ev (a1, cmd));
+        int kicks = 0; for (auto& s : gv.selection()) if (s.v == 0) ++kicks;
+        check (kicks == 2, "Cmd+drag a box selects the notes inside it (" + juce::String ((int) gv.selection().size()) + " notes, " + juce::String (kicks) + " kicks)");
+        // Cmd+click one more kick (x = 4) to add it
+        const juce::Point<float> k4 { gv.xToPx (4.05), gv.yToPx (1.5 * std::exp (-14.0 * 0.025) - 2.1) };
+        const size_t had = gv.selection().size();
+        gv.mouseDown (ev (k4, cmd)); gv.mouseUp (ev (k4, cmd));
+        check (gv.selection().size() == had + 1, "Cmd+click adds a note to the selection");
+        gv.mouseDown (ev (k4, cmd)); gv.mouseUp (ev (k4, cmd));
+        check (gv.selection().size() == had, "Cmd+click it again takes it out");
+        gv.mouseDown (ev (k4, cmd)); gv.mouseUp (ev (k4, cmd));
+        const auto chosen = gv.selection();
+        shot ("ui-edit-box-select.png");
+        check (ge->getMarks().mains.size() >= 2, "every selected note is pointed at in the math");
+        // drag one of them: all move half a beat later
+        const juce::Point<float> g0 { gv.xToPx (0.05), gv.yToPx (1.5 * std::exp (-14.0 * 0.025) - 2.1) };
+        const juce::ModifierKeys btn (juce::ModifierKeys::leftButtonModifier);
+        gv.mouseDown (ev (g0, btn));
+        gv.mouseDrag (ev (g0.translated ((float) (0.5 * gv.pxPerBeat()), 0.f), btn));
+        gv.mouseUp (ev (g0.translated ((float) (0.5 * gv.pxPerBeat()), 0.f), btn));
+        pr = gg::Program::compile (p->getScene (0).text);
+        auto q = gg::Program::compile (orig);
+        bool allMoved = pr->ok();
+        for (auto& s : chosen)
+        {
+            const double xm = 0.5 * (s.a + s.b);
+            q->setX (xm); pr->setX (xm + 0.5);
+            allMoved = allMoved && std::abs (pr->voice (s.v) - q->voice (s.v)) < 1e-9;
+            pr->setX (s.a + 0.02);
+            allMoved = allMoved && (s.b - s.a > 1.0 || ! std::isfinite (pr->voice (s.v)) || s.v != 0);
+        }
+        shot ("ui-edit-group-moved.png");
+        check (allMoved, "grabbing one of them moves them all together (" + juce::String ((int) chosen.size()) + " notes)");
+        check (gv.selection().size() == chosen.size(), "they stay selected after the move");
+        check (ge->undoCount() >= 1 && p->getScene (0).text.find ("edit") == std::string::npos, "the group move is written into the formulas (one UNDO)");
+        // Cmd+C / Cmd+V the group under the mouse, then Delete them all
+        check (gv.keyPressed (juce::KeyPress ('c', juce::ModifierKeys::commandModifier, 0)), "Cmd+C copies the selected notes");
+        ge->pressUndo();
+        check (p->getScene (0).text == orig, "UNDO puts the group back");
+        gv.setSelection (chosen);
+        check (gv.keyPressed (juce::KeyPress (juce::KeyPress::deleteKey)), "Delete takes the selected notes");
+        pr = gg::Program::compile (p->getScene (0).text);
+        bool quiet = pr->ok();
+        for (auto& s : chosen) { pr->setX (0.5 * (s.a + s.b)); quiet = quiet && ! std::isfinite (pr->voice (s.v)); }
+        check (quiet && ! gv.hasSelection(), "Delete makes every selected note quiet");
+        ge->pressUndo();
+        check (p->getScene (0).text == orig, "UNDO brings them all back");
     }
 
     if (want ("state"))
