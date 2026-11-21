@@ -97,6 +97,7 @@ class PresetPicker : public Component, private TextEditor::Listener, private Lis
     bool keyPressed(const KeyPress&) override;
     void parentHierarchyChanged() override { if (isShowing()) search_.grabKeyboardFocus(); }
     void showType(int type);
+    void refresh(bool scanning, int current);   // the catalog changed (the preset search finished): counts, list and note again
     void setSearch(const String& text) { search_.setText(text, false); refill(); }
     int shownType() const { return type_; }
     const std::vector<int>& shown() const { return shown_; }
@@ -109,6 +110,7 @@ class PresetPicker : public Component, private TextEditor::Listener, private Lis
     void paintListBoxItem(int row, Graphics&, int w, int h, bool selected) override;
     void listBoxItemClicked(int row, const MouseEvent&) override { choose(row); }
     void refill();
+    void buildTypeButtons();
     void choose(int row);
     void close();
     const PresetCatalog& cat_;

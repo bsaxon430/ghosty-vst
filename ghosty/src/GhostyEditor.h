@@ -61,6 +61,7 @@ class GhostyEditor : public AudioProcessorEditor, public SynthGuiInterface, priv
     void applySkin();
     void stepPreset(int delta);
     void presetMenu();
+    void scanFinished();
     void searchPresets();
     void mainMenu();
     void loadFound(int index);
@@ -90,6 +91,7 @@ class GhostyEditor : public AudioProcessorEditor, public SynthGuiInterface, priv
     } fit_;   // the look under SKETCH (what the LOOK button cycles, and what comes back when SKETCH goes off)
     ghosty::MenuIndex index_;      // the preset drop-down's folder tree (built once per scan)
     bool indexDirty_ = true;
+    Component::SafePointer<ghosty::PresetPicker> openPicker_;   // the preset picker while it is open (refreshed when the search ends)
     ghosty::PresetCatalog catalog_;   // every preset by TYPE (the preset picker and the < > arrows)
     int pickerType_ = ghosty::kBass;  // the type the < > arrows step through
     // KEYS on every page, next to the tabs: ARP and HOLD switch, CHORDS / SCALE LOCK pick (full settings on EXTRAS)

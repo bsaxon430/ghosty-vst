@@ -107,6 +107,13 @@ String VitalPresetFinder::unusableReason(const File& preset) {
   return LoadSave::compareFeatureVersionStrings(version, GHOSTY_ENGINE_VERSION_STRING) > 0 ? "newer" : "";
 }
 
+namespace {
+  // the last finished scan of any window in this process: a window opened again (hosts make a new editor each time) lists
+  // every preset at once while its own scan refreshes the list in the background
+  std::mutex sharedLock;
+  std::vector<FoundPreset>& sharedResults() { static std::vector<FoundPreset> r; return r; }
+}
+
 VitalPresetFinder::VitalPresetFinder() : Thread("Ghosty Pro preset finder") { }
 
 VitalPresetFinder::~VitalPresetFinder() {
@@ -227,8 +234,12 @@ void VitalPresetFinder::rescan(std::function<void()> done) {
 }
 
 std::vector<FoundPreset> VitalPresetFinder::results() {
-  std::lock_guard<std::mutex> g(lock_);
-  return results_;
+  {
+    std::lock_guard<std::mutex> g(lock_);
+    if (scansDone_.load() > 0) return results_;
+  }
+  std::lock_guard<std::mutex> g(sharedLock);
+  return sharedResults();
 }
 
 void VitalPresetFinder::run() {
@@ -237,9 +248,14 @@ void VitalPresetFinder::run() {
   roots.addArray(addedFolders());
   auto found = scanNow(roots);
   {
+    std::lock_guard<std::mutex> g(sharedLock);
+    sharedResults() = found;
+  }
+  {
     std::lock_guard<std::mutex> g(lock_);
     results_ = std::move(found);
   }
+  scansDone_.fetch_add(1);
   if (threadShouldExit())
     return;
   auto done = done_;

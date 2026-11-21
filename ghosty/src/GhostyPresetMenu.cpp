@@ -286,6 +286,19 @@ PresetPicker::PresetPicker(const PresetCatalog& catalog, int type, int current, 
   search_.setIndents(10, 8);
   search_.addListener(this);
   addAndMakeVisible(search_);
+  buildTypeButtons();
+  list_.setRowHeight(32);
+  list_.setColour(ListBox::backgroundColourId, Colours::transparentBlack);
+  list_.setColour(ListBox::outlineColourId, Colours::transparentBlack);
+  addAndMakeVisible(list_);
+  setWantsKeyboardFocus(false);
+  setSize(720, 560);
+  showType(type);
+}
+
+void PresetPicker::buildTypeButtons() {
+  typeButtons_.clear();
+  typeOfButton_.clear();
   // one button per type with its count; MY PRESETS and FAVOURITES only when there are some
   for (int t = 0; t <= kFavourites; ++t) {
     const int n = t == kFavourites ? (int) cat_.favourites.size() : (int) cat_.byType[t].size();
@@ -297,13 +310,15 @@ PresetPicker::PresetPicker(const PresetCatalog& catalog, int type, int current, 
     typeOfButton_.push_back(t);
     addAndMakeVisible(b);
   }
-  list_.setRowHeight(32);
-  list_.setColour(ListBox::backgroundColourId, Colours::transparentBlack);
-  list_.setColour(ListBox::outlineColourId, Colours::transparentBlack);
-  addAndMakeVisible(list_);
-  setWantsKeyboardFocus(false);
-  setSize(720, 560);
-  showType(type);
+}
+
+void PresetPicker::refresh(bool scanning, int current) {
+  scanning_ = scanning;
+  current_ = current;
+  search_.setTextToShowWhenEmpty("Search all " + String(cat_.total()) + " presets...", pal().dim);
+  buildTypeButtons();
+  resized();
+  refill();
 }
 
 std::vector<Component*> PresetPicker::parts() {

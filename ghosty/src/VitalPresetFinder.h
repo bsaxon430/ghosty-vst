@@ -40,7 +40,8 @@ class VitalPresetFinder : private Thread {
     // scans on a background thread; 'done' is called on the message thread
     void rescan(std::function<void()> done);
     bool scanning() const { return isThreadRunning(); }
-    std::vector<FoundPreset> results();
+    std::vector<FoundPreset> results();   // this finder's last scan, or (before its first one ends) the last scan any window made
+    int scansDone() const { return scansDone_.load(); }
 
     // the "preset_style" tag of a preset file: only the first 4 KB are read (the engine writes its keys A-Z, so the tag sits
     // near the top, before the sound itself)
@@ -56,6 +57,7 @@ class VitalPresetFinder : private Thread {
     std::mutex lock_;
     std::vector<FoundPreset> results_;
     std::function<void()> done_;
+    std::atomic<int> scansDone_ { 0 };
 };
 
 } // namespace ghosty

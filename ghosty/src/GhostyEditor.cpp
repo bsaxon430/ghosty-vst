@@ -121,7 +121,7 @@ GhostyEditor::GhostyEditor(GhostyProcessor& p) : AudioProcessorEditor(&p), Synth
   showPage(0);   // a new window always opens on the SYNTH page (fresh start: nothing carried over from another instance)
   soundChanged();
   finder_.rescan([sp = Component::SafePointer<GhostyEditor>(this)]() mutable {
-    if (sp) sp->indexDirty_ = true;
+    if (sp) sp->scanFinished();
   });
   startTimerHz(30);
 }
@@ -274,6 +274,15 @@ void GhostyEditor::keysMenu(bool scale) {
   });
 }
 
+// the preset search ended: the next look at the list rebuilds it, and an open picker fills in at once
+void GhostyEditor::scanFinished() {
+  indexDirty_ = true;
+  if (openPicker_ != nullptr) {
+    const int cur = currentEntry();   // (rebuilds the catalog the picker shows)
+    openPicker_->refresh(false, cur);
+  }
+}
+
 void GhostyEditor::rebuildIndex() {
   Array<File> roots = VitalPresetFinder::vitalFolders();
   const File data = VitalPresetFinder::dataFolder();
@@ -332,6 +341,7 @@ void GhostyEditor::presetMenu() {
     sp->loadEntry(i);
   });
   picker->setLookAndFeel(&lnf_);   // our pills and colours (the box is its own window; the look is held weakly)
+  openPicker_ = picker.get();
   CallOutBox::launchAsynchronously(std::move(picker), name_.getScreenBounds(), nullptr);
 }
 
@@ -429,7 +439,7 @@ void GhostyEditor::mainMenu() {
 
 void GhostyEditor::rescanPresets() {
   indexDirty_ = true;
-  finder_.rescan([sp = Component::SafePointer<GhostyEditor>(this)]() mutable { if (sp) sp->indexDirty_ = true; });
+  finder_.rescan([sp = Component::SafePointer<GhostyEditor>(this)]() mutable { if (sp) sp->scanFinished(); });
 }
 
 void GhostyEditor::savePreset() {
