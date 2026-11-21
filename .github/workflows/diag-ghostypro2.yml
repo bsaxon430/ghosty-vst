@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
-        with: { ref: src/ghostypro2 }
+        with: { ref: diag/ghostypro2 }
       - name: Build
         run: |
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 > cfg.log 2>&1 || { tail -50 cfg.log; exit 1; }
