@@ -108,6 +108,35 @@ String VitalPresetFinder::unusableReason(const File& preset) {
 }
 
 namespace {
+  // the found list on disk, next to Ghosty Pro 2's settings: the very first window after a restart lists every preset at
+  // once from the last search, while the new search runs (one line per preset, tab-separated; a missing file is skipped)
+  File cacheFile() {
+    return File::getSpecialLocation(File::userApplicationDataDirectory).getChildFile("Ghosty Pro 2").getChildFile("found-presets.txt");
+  }
+  void saveCache(const std::vector<FoundPreset>& found) {
+    String out;
+    out.preallocateBytes(found.size() * 120);
+    for (auto& p : found)
+      out << p.file.getFullPathName() << "\t" << p.name << "\t" << p.group << "\t" << String(p.size) << "\t" << p.style << "\t"
+          << p.unusable << "\t" << (p.bank ? "1" : "0") << "\n";
+    cacheFile().getParentDirectory().createDirectory();
+    cacheFile().replaceWithText(out);
+  }
+  std::vector<FoundPreset> loadCache() {
+    std::vector<FoundPreset> v;
+    StringArray lines;
+    lines.addLines(cacheFile().loadFileAsString());
+    v.reserve((size_t) lines.size());
+    for (auto& l : lines) {
+      auto f = StringArray::fromTokens(l, "\t", "");
+      if (f.size() < 7) continue;
+      FoundPreset p;
+      p.file = File(f[0]); p.name = f[1]; p.group = f[2]; p.size = f[3].getLargeIntValue(); p.style = f[4]; p.unusable = f[5]; p.bank = f[6] == "1";
+      v.push_back(std::move(p));
+    }
+    return v;
+  }
+
   // the last finished scan of any window in this process: a window opened again (hosts make a new editor each time) lists
   // every preset at once while its own scan refreshes the list in the background
   std::mutex sharedLock;
@@ -239,6 +268,11 @@ std::vector<FoundPreset> VitalPresetFinder::results() {
     if (scansDone_.load() > 0) return results_;
   }
   std::lock_guard<std::mutex> g(sharedLock);
+  static bool cacheRead = false;   // (once per process: the list from the last time, until a search here finishes)
+  if (sharedResults().empty() && !cacheRead) {
+    cacheRead = true;
+    try { sharedResults() = loadCache(); } catch (...) { }
+  }
   return sharedResults();
 }
 
@@ -250,6 +284,7 @@ void VitalPresetFinder::run() {
   {
     std::lock_guard<std::mutex> g(sharedLock);
     sharedResults() = found;
+    try { saveCache(found); } catch (...) { }
   }
   {
     std::lock_guard<std::mutex> g(lock_);

@@ -293,6 +293,10 @@ PresetPicker::PresetPicker(const PresetCatalog& catalog, int type, int current, 
   addAndMakeVisible(list_);
   setWantsKeyboardFocus(false);
   setSize(720, 560);
+  // a type with nothing in it (the sound playing is not in any list yet): open on the first type that has presets
+  if (isPositiveAndBelow(type, (int) kNumPresetTypes) && cat_.byType[type].empty())
+    for (int t = 0; t < kNumPresetTypes; ++t)
+      if (!cat_.byType[t].empty()) { type = t; break; }
   showType(type);
 }
 
@@ -318,7 +322,10 @@ void PresetPicker::refresh(bool scanning, int current) {
   search_.setTextToShowWhenEmpty("Search all " + String(cat_.total()) + " presets...", pal().dim);
   buildTypeButtons();
   resized();
-  refill();
+  if (search_.getText().isEmpty() && isPositiveAndBelow(type_, (int) kNumPresetTypes) && cat_.byType[type_].empty())
+    for (int t = 0; t < kNumPresetTypes; ++t)
+      if (!cat_.byType[t].empty()) { type_ = t; break; }
+  showType(type_);
 }
 
 std::vector<Component*> PresetPicker::parts() {
