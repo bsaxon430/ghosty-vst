@@ -1,0 +1,24 @@
+# One plug-in, built like the release (universal), for testing on Brandon's Mac before a full release.
+name: One plugin (Ghosty Pro)
+on:
+  push:
+    branches: [ builds ]
+    paths: [ ONE ]
+permissions:
+  contents: write
+jobs:
+  one:
+    runs-on: macos-15
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: src/mainplugins }
+      - name: Build
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: |
+          cmake -S ghosty-pro -B build -DCMAKE_BUILD_TYPE=Release "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 -DGHOSTY_BUILD_CLAP=OFF > cfg.log 2>&1 || { tail -50 cfg.log; exit 1; }
+          cmake --build build --config Release --parallel 3 --target GhostyPro_VST3 > b.log 2>&1 || { grep -E "error:" b.log | head -30; exit 1; }
+          V=$(find build -name "Ghosty Pro.vst3" -type d | head -1); codesign --force --deep --sign - "$V"; lipo -archs "$V/Contents/MacOS/"*
+          ditto -c -k --keepParent "$V" Ghosty-Pro-test.zip
+          gh release delete test-ghostypro --repo "${{ github.repository }}" --yes --cleanup-tag 2>/dev/null || true
+          gh release create test-ghostypro Ghosty-Pro-test.zip --repo "${{ github.repository }}" --prerelease --title "test build (not a release)" --notes "Test build; not for use."
