@@ -140,6 +140,10 @@ const Raw raw[] = {
 #include "ProLeadsPresets.inc"
 #include "ProV2Showcase.inc"     // SOUND ENGINE V2: sounds only the new engine can make (category "V2 Showcase", after LEADS: program numbers stay)
 };
+#elif GHOSTY_GHOST_SET
+const Raw raw[] = {
+#include "ProGhostSet.inc"
+};
 #else
 const Raw raw[] = { { "", "", "", "" } };   // FACTORY PRESETS OFF, no layer compat: the old data is not compiled in (the one empty row is skipped)
 #endif
@@ -179,6 +183,8 @@ const Trim trims[] = {
 #if GHOSTY_FACTORY_DATA
 #include "ProTrims.inc"
 #include "ProLeadsTrims.inc"
+#elif GHOSTY_GHOST_SET && __has_include ("ProGhostSetTrims.inc")
+#include "ProGhostSetTrims.inc"
 #endif
 };
 } // namespace
@@ -186,6 +192,10 @@ const Trim trims[] = {
 const juce::StringArray& bankCategories()
 {
     // the TRAP categories come after the classics so every older sound keeps its program number
+#if GHOSTY_GHOST_SET
+    static juce::StringArray g { "Bass", "Leads", "Keys", "Plucks", "Pads", "Bells", "Rhythm & Arps", "FX & Atmos" };
+    return g;
+#endif
     static juce::StringArray c { "Supersaws", "Leads", "Plucks", "Keys", "Pads", "Bass", "Brass & Strings", "Bells & Mallets", "Arps & Sequences",
                                  "FX & Atmos", "Ghost Specials", "Ghosty Classics",
                                  "Trap Brass", "Trap Bass", "Trap Keys & Bells", "Trap Leads & Flutes", "Trap Pads & Choirs", "Trap Stacks & FX",
@@ -199,11 +209,11 @@ const std::vector<FactoryPreset>& factoryLibrary()
     static const std::vector<FactoryPreset> bank = []
     {
         std::vector<FactoryPreset> b;
-        if (! GHOSTY_FACTORY_DATA) return b;
+        if (! GHOSTY_FACTORY_DATA && ! GHOSTY_GHOST_SET) return b;
         for (auto& cat : bankCategories())
         {
             for (auto& r : raw) if (cat == r.cat) b.push_back ({ r.cat, r.name, r.scene, r.spec });
-            if (cat == "Ghosty Classics")
+            if (cat == "Ghosty Classics" && GHOSTY_FACTORY_DATA)
                 for (auto& c : classics) b.push_back ({ "Ghosty Classics", c.name, classicScene (c.name), classicSpec (c) });
         }
         return b;

@@ -17,7 +17,21 @@ class ProProcessor;
 #ifndef GHOSTY_FACTORY_LAYER_COMPAT
  #define GHOSTY_FACTORY_LAYER_COMPAT 1
 #endif
-#define GHOSTY_FACTORY_DATA (GHOSTY_FACTORY_PRESETS || GHOSTY_FACTORY_LAYER_COMPAT)
+// THE GHOST SET (2026-11-21, owner: "build some good presets for the regular ghosty pro"): a new hand-made factory bank
+// (ProGhostSet.inc). ON (default) = BROWSE / host programs list the Ghost Set and none of the old data is compiled in;
+// OFF = the switches above decide, as before.
+#ifndef GHOSTY_GHOST_SET
+ #define GHOSTY_GHOST_SET 1
+#endif
+#if GHOSTY_GHOST_SET
+ #undef GHOSTY_FACTORY_PRESETS
+ #define GHOSTY_FACTORY_PRESETS 1
+ #undef GHOSTY_FACTORY_LAYER_COMPAT
+ #define GHOSTY_FACTORY_LAYER_COMPAT 0
+ #define GHOSTY_FACTORY_DATA 0
+#else
+ #define GHOSTY_FACTORY_DATA (GHOSTY_FACTORY_PRESETS || GHOSTY_FACTORY_LAYER_COMPAT)
+#endif
 
 // The Ghosty Pro factory bank. Each preset is a short text "spec" of parameter=value pairs applied on top of the
 // INIT patch (every sound parameter at its default), plus an optional Ghost FX rack scene.
