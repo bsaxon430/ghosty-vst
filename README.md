@@ -6,6 +6,7 @@ Part of the free [GhostBlock plugins](https://github.com/bsaxon430/ghosty-vst). 
 
 - **TRACKS**: six ready-made songs, each a few scenes of equations
 - **GENERATE**: writes a new song in equations (Drift, Riff house, Breaks, Cosine song or Acid)
+- **EXPERIMENT**: a song from a famous equation (y = mx + b, the bell curve, Euler's formula, the heart curve ...), musical or wild
 - **DRAG**: the song split into its parts (kick, snare, hi-hat, bass, lead, pad ...), each one a WAV and a MIDI to drag into your DAW, plus the whole mix
 - **Tempo** on the main page, with SYNC to follow your DAW
 - **EDIT**: type in the math, or drag notes on the graph to move, stretch or tilt them; every drag rewrites the voice's own formula in place. Click a note to see where it is in the math, right-click to copy, paste or delete, Cmd+drag a box (or Cmd+click) to pick several and move them together

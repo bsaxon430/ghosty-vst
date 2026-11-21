@@ -1,3 +1,4 @@
+#include <set>
 #include <chrono>
 // Ghost Graph checks. Run: GhostGraphTests [all|parse|fresh|sound|midi|tempo|state|speed|ui]
 #include "../GraphProcessor.h"
@@ -378,6 +379,63 @@ int main (int argc, char** argv)
             juce::PNGImageFormat().writeImageToStream (img, os);
         }
         tmp.deleteRecursively();
+    }
+
+    if (want ("experiment"))
+    {   // EXPERIMENT: songs from famous equations, musical and wild
+        int compiled = 0, audible = 0, total = 0;
+        juce::StringArray quiet;
+        for (int wild = 0; wild < 2; ++wild)
+            for (int i = 0; i < gg::Experiment::count(); ++i)
+            {
+                auto p = fresh();
+                p->generateExperiment ((uint32_t) (1000 + i * 7 + wild), i, wild);
+                bool ok = p->getNumScenes() == 4;
+                for (int k = 0; k < p->getNumScenes(); ++k) ok = ok && gg::Program::compile (p->getScene (k).text)->ok();
+                ++total;
+                if (ok) ++compiled;
+                p->fakeHost = { true, true, 0.0, 120.0 };
+                auto st = render (*p, 3.0);
+                if (st.finite && st.rms > 0.005f && st.peak < 1.0f) ++audible;
+                else quiet.add (juce::String::fromUTF8 (gg::Experiment::list()[(size_t) i].name) + (wild ? " (wild)" : "") + " rms " + juce::String (st.rms, 4) + " peak " + juce::String (st.peak, 2));
+            }
+        check (compiled == total, "every famous equation writes 4 scenes that read (" + juce::String (compiled) + " of " + juce::String (total) + ")");
+        check (audible == total, "and every one plays, musical and wild (" + juce::String (audible) + " of " + juce::String (total) + ") " + quiet.joinIntoString ("; "));
+        // the musical ones are in a key: the melody only lands on its 7 notes
+        {
+            gg::Experiment e (42, 0, 0);
+            const auto t = e.track();
+            auto pr = gg::Program::compile (t[2]);
+            std::set<int> pcs;
+            for (int k = 0; k < 256; ++k) { pr->setX (-8.0 + k / 16.0 + 0.01); const double y = pr->voice (0); if (std::isfinite (y)) pcs.insert (((int) std::lround (y * 12.0) % 12 + 12) % 12); }
+            check (pcs.size() <= 7 && pcs.size() >= 3, "y = mx + b, musical: the melody stays on a 7-note scale (" + juce::String ((int) pcs.size()) + " notes used)");
+            check (t[0].find ("f(t) = m t + b") != std::string::npos, "the famous equation is written in, as it is in the textbook");
+        }
+        auto p = fresh();
+        std::unique_ptr<juce::AudioProcessorEditor> ed (p->createEditor());
+        auto* ge = dynamic_cast<GraphEditor*> (ed.get());
+        const std::string before = p->getScene (0).text;
+        ge->runExperiment (20, 0);   // the heart
+        check (p->lastExperiment != nullptr && juce::String (p->getScene (0).text).contains ("Heart curve"), "the EXPERIMENT button writes the song and says which equation");
+        p->undoGenerate();
+        check (p->getScene (0).text == before, "Undo GENERATE takes an experiment back too");
+        juce::File shots = juce::File::getCurrentWorkingDirectory().getChildFile ("uishots");
+        if (auto env = std::getenv ("GG_SHOTS")) shots = juce::File (juce::String (env));
+        shots.createDirectory();
+        for (auto [which, look, scene, name] : { std::tuple<int, int, int, const char*> { 20, 0, 2, "heart" }, { 0, 4, 2, "line" }, { 15, 5, 3, "euler" }, { 3, 3, 2, "bell" } })
+        {
+            ge->runExperiment (which, 0);
+            setParam (*p, "look", (float) look);
+            ge->viewScene (scene);
+            p->fakeHost = { true, true, scene * 16.0 + 11.0, 120.0 };
+            render (*p, 0.05);
+            ge->showStrip (true);
+            juce::MessageManager::getInstance()->runDispatchLoopUntil (150);
+            auto img = ed->createComponentSnapshot (ed->getLocalBounds());
+            juce::FileOutputStream os (shots.getChildFile (juce::String ("ui-experiment-") + name + ".png"));
+            os.setPosition (0); os.truncate();
+            juce::PNGImageFormat().writeImageToStream (img, os);
+        }
     }
 
     if (want ("tracks"))

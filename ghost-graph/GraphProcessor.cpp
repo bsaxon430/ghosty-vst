@@ -218,6 +218,28 @@ void GraphProcessor::generateTrack (uint32_t seed, int style)
     restartClock = true;
 }
 
+void GraphProcessor::generateExperiment (uint32_t seed, int which, int wild)
+{
+    beforeGenerate = scenes;
+    tempoBeforeGenerate = pTempo->load();
+    lastExperiment = std::make_unique<gg::Experiment> (seed, which, wild);
+    std::vector<gg::Scene> sc;
+    const auto t = lastExperiment->track();
+    for (size_t k = 0; k < t.size(); ++k) sc.push_back ({ sceneName ((int) k), t[k] });
+    scenes = sc;
+    rebuildAll();
+    auto set = [this] (const char* id, float v) { if (auto* p = apvts.getParameter (id)) p->setValueNotifyingHost (p->convertTo0to1 (v)); };
+    set ("tempo", (float) lastExperiment->bpm());
+    set ("wave", lastExperiment->wave());
+    set ("tune", lastExperiment->tune());
+    set ("tone", 20000.f);
+    set ("kit", 1.0f);
+    set ("chain", 1.0f);
+    set ("scene", 1.0f);
+    displayScene = 0;
+    restartClock = true;
+}
+
 void GraphProcessor::generateSceneHere (int i)
 {
     if (i < 0 || i >= (int) scenes.size()) return;

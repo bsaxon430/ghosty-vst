@@ -985,7 +985,7 @@ public:
     {
         using namespace ggui;
         const auto r = plot().reduced (0.f, 6.f);
-        const int pairs = nv / 2;
+        const int pairs = nv >= 2 ? 1 : 0;   // plane(a, b, ...): a and b draw the picture, the rest only sing
         double x0 = 0, x1 = 0, y0 = 0, y1 = 0;   // the origin is always on the page
         for (int pr = 0; pr < pairs; ++pr)
             for (int k = 0; k < kSamples; ++k)
@@ -1375,6 +1375,14 @@ public:
         tracksBtn.setTooltip ("Load one of the reference videos: every scene, at its own tempo");
         tracksBtn.onClick = [this] { showTracks(); };
         addAndMakeVisible (tracksBtn);
+        expBtn.setButtonText ("EXPERIMENT");
+        expBtn.setTooltip ("A song made from a famous equation: y = mx + b, a parabola, the bell curve, Euler's formula, the heart curve ... (right-click: pick the equation, musical or wild)");
+        expBtn.onClick = [this]
+        {
+            if (juce::ModifierKeys::currentModifiers.isPopupMenu()) { showExperiments(); return; }
+            experiment (-1, -1);
+        };
+        addAndMakeVisible (expBtn);
         genBtn.setButtonText ("GENERATE");
         genBtn.setTooltip ("Write a brand-new song in equations, the way the videos are written (right-click: pick the style)");
         genBtn.onClick = [this]
@@ -1583,6 +1591,7 @@ public:
         // row 1: the scenes on the left, TRACKS / LOOK / GENERATE on the right
         auto row1 = bottom.removeFromTop (30);
         genBtn.setBounds (row1.removeFromRight (104).reduced (2, 2));
+        expBtn.setBounds (row1.removeFromRight (112).reduced (2, 2));
         lookBtn.setBounds (row1.removeFromRight (118).reduced (2, 2));
         tracksBtn.setBounds (row1.removeFromRight (80).reduced (2, 2));
         helpBtn.setBounds (row1.removeFromRight (32).reduced (2, 2));
@@ -1627,7 +1636,7 @@ public:
 
     std::vector<juce::Component*> stripComps()
     {
-        return { &plus, &more, &helpBtn, &tracksBtn, &lookBtn, &genBtn, &playBtn, &syncBtn, &chainBtn, &keysBtn, &kitBtn, &rateBtn, &waveBtn,
+        return { &plus, &more, &helpBtn, &tracksBtn, &lookBtn, &genBtn, &expBtn, &playBtn, &syncBtn, &chainBtn, &keysBtn, &kitBtn, &rateBtn, &waveBtn,
                  &tempoK, &tuneK, &glideK, &toneK, &spaceK, &widthK, &volK };
     }
 
@@ -1680,6 +1689,8 @@ public:
     const FormulaMarks& getMarks() const { return marks; }
     GraphView& getGraph() { return graph; }
     ExportPanel& getExport() { return exportPanel; }
+    void runExperiment (int which, int wild) { experiment (which, wild); }   // the checks
+    void viewScene (int i) { pickScene (i); }
     TempoBox& getTempoBox() { return tempoBox; }
     void openExport()
     {
@@ -1699,6 +1710,7 @@ private:
     ControlStrip strip;
     TempoBox tempoBox { proc };
     ExportPanel exportPanel { proc };
+    juce::TextButton expBtn;
     juce::TextButton dragBtn;
     float stripAlpha = 1.0f;
     int lookIdx = 0;
@@ -1804,6 +1816,45 @@ private:
         proc.generateTrack ((juce::uint32) juce::Random::getSystemRandom().nextInt(), style);
         rebuildPrograms();
         showScene (0, true);
+    }
+
+    // EXPERIMENT: a song from a famous equation (which = -1: any; wild = -1: decide, 0 musical, 1 the raw maths)
+    void experiment (int which, int wild)
+    {
+        pendingEdit = false;
+        proc.generateExperiment ((juce::uint32) juce::Random::getSystemRandom().nextInt(), which, wild);
+        rebuildPrograms();
+        showScene (0, true);
+        if (proc.lastExperiment != nullptr)
+        {
+            const auto& e = proc.lastExperiment->equation();
+            okFlash = juce::String::fromUTF8 (e.name) + juce::String::fromUTF8 (proc.lastExperiment->wild() ? "  (wild)   \xc2\xb7   " : "   \xc2\xb7   ")
+                    + juce::String::fromUTF8 (e.shows) + juce::String::fromUTF8 ("   \xc2\xb7   ") + juce::String::fromUTF8 (e.about);
+            flashCountdown = 300;
+            repaint (statusArea);
+        }
+    }
+    void showExperiments()
+    {
+        juce::PopupMenu m, musical, wild;
+        m.addItem (200, "Any equation, musical");
+        m.addItem (201, "Any equation, wild (the raw maths)");
+        for (int i = 0; i < gg::Experiment::count(); ++i)
+        {
+            const auto& e = gg::Experiment::list()[(size_t) i];
+            const auto label = juce::String::fromUTF8 (e.name) + juce::String::fromUTF8 ("   ") + juce::String::fromUTF8 (e.shows);
+            musical.addItem (300 + i, label);
+            wild.addItem (400 + i, label);
+        }
+        m.addSubMenu ("Musical: pick the equation", musical);
+        m.addSubMenu ("Wild: pick the equation", wild);
+        m.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (&expBtn), [this] (int r)
+        {
+            if (r == 200) experiment (-1, 0);
+            else if (r == 201) experiment (-1, 1);
+            else if (r >= 300 && r < 400) experiment (r - 300, 0);
+            else if (r >= 400) experiment (r - 400, 1);
+        });
     }
 
     void showGenerateStyles()

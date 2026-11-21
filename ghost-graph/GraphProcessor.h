@@ -9,6 +9,7 @@
 #include "GraphExpr.h"
 #include "GraphTracks.h"
 #include "GraphGen.h"
+#include "GraphFamous.h"
 
 class GraphProcessor : public juce::AudioProcessor
 {
@@ -54,6 +55,9 @@ public:
     void loadTrack (int i);                               // a whole reference video: its scenes and its tempo
     void generateTrack (uint32_t seed, int style = -1);   // GENERATE: a brand-new song of our own, in one of the videos' styles
     void generateSceneHere (int i);                       // a new scene in this slot, same song as the last GENERATE
+    // EXPERIMENT: a song from a famous equation (which: from gg::Experiment::list(), -1 any; wild: 1 raw, 0 musical, -1 decide)
+    void generateExperiment (uint32_t seed, int which = -1, int wild = -1);
+    std::unique_ptr<gg::Experiment> lastExperiment;
     bool canUndoGenerate() const { return ! beforeGenerate.empty(); }
     void undoGenerate();
     std::atomic<int> scenesVersion { 0 };                 // bumps when scenes are added / removed / loaded

@@ -39,8 +39,16 @@ struct Typesetter
         if (s.startsWith ("0.")) s = s.substring (0);
         return s;
     }
-    static juce::String nameText (const std::string& n) { return juce::String (n); }
-    static bool italicName (const std::string& n) { return n.size() == 1; }
+    static const char* greek (const std::string& n)   // theta -> θ and friends, as the famous equations write them
+    {
+        static const char* g[][2] = { { "theta", "\xce\xb8" }, { "phi", "\xcf\x86" }, { "omega", "\xcf\x89" }, { "gamma", "\xce\xb3" },
+                                      { "sigma", "\xcf\x83" }, { "alpha", "\xce\xb1" }, { "beta", "\xce\xb2" }, { "delta", "\xce\xb4" },
+                                      { "lambda", "\xce\xbb" }, { "mu", "\xce\xbc" } };
+        for (auto& e : g) if (n == e[0]) return e[1];
+        return nullptr;
+    }
+    static juce::String nameText (const std::string& n) { if (auto* gk = greek (n)) return juce::String::fromUTF8 (gk); return juce::String (n); }
+    static bool italicName (const std::string& n) { return n.size() == 1 || greek (n) != nullptr; }
 
     using Op = gg::Program::Op;
     const gg::Program::Node& N (int i) const { return p->getNodes()[(size_t) i]; }
