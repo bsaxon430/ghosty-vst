@@ -235,6 +235,46 @@ int main (int argc, char** argv)
         check (p->displayScene.load() == 0, "CHAIN: after the last scene it starts over");
     }
 
+    if (want ("zeta"))
+    {   // Track 7, the zeta video: zeta(1/2 + iu) on the Re / Im plane, its two parts sung
+        double re = 0, im = 0;
+        gg::Program::zetaHalf (14.134725141734693, re, im);
+        check (std::hypot (re, im) < 1e-6, "zre / zim: the first zero of zeta, at u = 14.1347 (" + juce::String (std::hypot (re, im), 9) + ")");
+        gg::Program::zetaHalf (30.0, re, im);
+        check (std::abs (re - (-0.120642287579533)) < 1e-8 && std::abs (im - (-0.583691214767220)) < 1e-8, "zeta(1/2 + 30i) = -0.1206 - 0.5837i");
+        gg::Program::zetaHalf (0.0, re, im);
+        check (std::abs (re + 1.4603545088095868) < 1e-8 && std::abs (im) < 1e-12, "zeta(1/2) = -1.4604");
+        const auto tracks = gg::factoryTracks();
+        check (tracks.size() == 7 && tracks[6].look == 5, "Track 7 is the zeta video, on the SILVER look");
+        auto pr = gg::Program::compile (tracks[6].scenes[0]);
+        check (pr->ok() && pr->isPlane() && pr->numVoices() == 2, "y = plane(zre(u), zim(u)): two voices on the Re / Im plane");
+        auto p = fresh();
+        p->loadTrack (6);
+        check ((int) p->apvts.getRawParameterValue ("look")->load() == 5 && std::abs (p->getScene (0).pitch - 7.0 / 12.0) < 1e-9, "loading it switches to SILVER and sets its pitch range");
+        std::unique_ptr<juce::AudioProcessorEditor> ed (p->createEditor());
+        auto* ge = dynamic_cast<GraphEditor*> (ed.get());
+        check (ge->getMath().hasContent(), "its equations are typeset");
+        auto& gv = ge->getGraph();
+        check (gv.hitTest ({ gv.xToPx (0.0), gv.yToPx (0.0) }).v < 0, "the plane has no notes to grab");
+        p->fakeHost = { true, true, 0.0, 90.0 };
+        auto st = render (*p, 21.0);
+        check (st.finite && st.rms > 0.01f && st.peak < 1.0f, "it plays the whole spiral (rms " + juce::String (st.rms, 3) + ")");
+        juce::File dir = juce::File::getCurrentWorkingDirectory().getChildFile ("uishots");
+        if (auto env = std::getenv ("GG_SHOTS")) dir = juce::File (juce::String (env));
+        dir.createDirectory();
+        for (double beat : { 8.0, 31.0 })
+        {
+            p->fakeHost = { true, true, beat, 90.0 };
+            render (*p, 0.05);
+            ge->showStrip (false);
+            juce::MessageManager::getInstance()->runDispatchLoopUntil (120);
+            auto img = ed->createComponentSnapshot (ed->getLocalBounds());
+            juce::FileOutputStream os (dir.getChildFile ("ui-zeta-" + juce::String ((int) beat) + ".png"));
+            os.setPosition (0); os.truncate();
+            juce::PNGImageFormat().writeImageToStream (img, os);
+        }
+    }
+
     if (want ("tracks"))
     {
         auto p = fresh();
@@ -702,7 +742,7 @@ int main (int argc, char** argv)
         os2.setPosition (0); os2.truncate();
         juce::PNGImageFormat().writeImageToStream (big, os2);
         check (big.getWidth() == 1500, "the window resizes");
-        for (int lk = 1; lk <= 4; ++lk)
+        for (int lk = 1; lk <= 5; ++lk)
         {
             setParam (*p, "look", (float) lk);
             juce::MessageManager::getInstance()->runDispatchLoopUntil (120);
@@ -714,9 +754,9 @@ int main (int argc, char** argv)
         }
         // hover tips, drawn in each look over that look's page
         {
-            juce::Image tips (juce::Image::ARGB, 1500, 5 * 150, true);
-            const juce::String tip = "Change the look: PAPER (the videos), CHROMA (rainbow watercolour), INK (the watercolour ghost), WINE (the burgundy video), TI 84 (a graphing calculator)";
-            for (int lk = 0; lk < 5; ++lk)
+            juce::Image tips (juce::Image::ARGB, 1500, 6 * 150, true);
+            const juce::String tip = "Change the look: PAPER (the videos), CHROMA (rainbow watercolour), INK (the watercolour ghost), WINE (the burgundy video), TI 84 (a graphing calculator), SILVER (the zeta video)";
+            for (int lk = 0; lk < 6; ++lk)
             {
                 setParam (*p, "look", (float) lk);
                 juce::MessageManager::getInstance()->runDispatchLoopUntil (80);

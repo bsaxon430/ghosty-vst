@@ -111,6 +111,16 @@ struct Typesetter
                 if (f == gg::Program::fAbs)   return fenceOf (make (n.kids[0], size), 3, size);
                 if (f == gg::Program::fMod)
                     return row ({ paren (n.kids[0], size, isSum (n.kids[0]) || N (n.kids[0]).op == Op::Div), txt (" mod ", size), paren (n.kids[1], size, ! isAtom (n.kids[1])) }, size);
+                if (f == gg::Program::fZre || f == gg::Program::fZim)   // Re zeta(1/2 + iu), as the video writes it
+                {
+                    Box half; half.k = Box::Frac; half.size = size;
+                    half.kids.push_back (txt ("1", sub));
+                    half.kids.push_back (txt ("2", sub));
+                    const int u = n.kids[0];
+                    Box iu = row ({ txt ("i", size, true), paren (u, size, ! isAtom (u) || N (u).op == Op::Num) }, size);
+                    return row ({ txt (f == gg::Program::fZre ? "Re " : "Im ", size), txt (juce::String::fromUTF8 ("\xce\xb6"), size, true),
+                                  fenceOf (row ({ std::move (half), txt (" + ", size), std::move (iu) }, size), 0, size) }, size);
+                }
                 if (f == gg::Program::fSqrt)
                     return row ({ txt (juce::String::fromUTF8 ("\xe2\x88\x9a"), size), fenceOf (make (n.kids[0], size), 0, size) }, size);
                 return row ({ txt (gg::Program::builtinName (f), size), args (n.kids, size) }, size);

@@ -77,7 +77,7 @@ private:
     std::unique_ptr<gg::Generator> gen;
     std::array<std::unique_ptr<gg::Program>, kMaxScenes> programs;
     std::atomic<int> numPrograms { 0 };
-    std::array<double, kMaxScenes> speeds {};
+    std::array<double, kMaxScenes> speeds {}, pitches {};
     juce::SpinLock progLock;
     void rebuildAll();
     static std::string sceneName (int i);

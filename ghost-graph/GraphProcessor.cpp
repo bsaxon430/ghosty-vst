@@ -109,7 +109,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout GraphProcessor::makeLayout()
                                                    AudioParameterFloatAttributes().withLabel ("dB")));
     l.add (std::make_unique<AudioParameterBool> (ParameterID { "keys", 1 }, "Keys", false));
     l.add (std::make_unique<AudioParameterBool> (ParameterID { "kit", 1 }, "Kit", true));
-    l.add (std::make_unique<AudioParameterChoice> (ParameterID { "look", 1 }, "Look", StringArray { "PAPER", "CHROMA", "INK", "WINE", "TI 84" }, 4));   // opens on the TI 84; LOOK then cycles PAPER, CHROMA, INK, WINE
+    l.add (std::make_unique<AudioParameterChoice> (ParameterID { "look", 1 }, "Look", StringArray { "PAPER", "CHROMA", "INK", "WINE", "TI 84", "SILVER" }, 4));   // opens on the TI 84; LOOK then cycles SILVER, PAPER, CHROMA, INK, WINE
     return l;
 }
 
@@ -129,14 +129,16 @@ std::string GraphProcessor::sceneName (int i)
 void GraphProcessor::rebuildAll()
 {
     std::array<std::unique_ptr<gg::Program>, kMaxScenes> fresh;
-    std::array<double, kMaxScenes> sp {};
+    std::array<double, kMaxScenes> sp {}, pt {};
     for (size_t i = 0; i < scenes.size() && i < (size_t) kMaxScenes; ++i) sp[i] = juce::jlimit (0.1, 10.0, scenes[i].speed);
+    for (size_t i = 0; i < (size_t) kMaxScenes; ++i) pt[i] = i < scenes.size() ? juce::jlimit (0.05, 4.0, scenes[i].pitch) : 1.0;
     for (size_t i = 0; i < scenes.size() && i < (size_t) kMaxScenes; ++i)
         fresh[i] = gg::Program::compile (scenes[i].text);
     {
         const juce::SpinLock::ScopedLockType sl (progLock);
         std::swap (fresh, programs);
         speeds = sp;
+        pitches = pt;
         numPrograms = (int) std::min (scenes.size(), (size_t) kMaxScenes);
     }
     ++scenesVersion;
@@ -178,7 +180,8 @@ void GraphProcessor::loadTrack (int i)
     std::vector<gg::Scene> sc;
     for (size_t k = 0; k < tracks[(size_t) i].scenes.size() && k < (size_t) kMaxScenes; ++k)
         sc.push_back ({ sceneName ((int) k), tracks[(size_t) i].scenes[k],
-                        k < tracks[(size_t) i].speeds.size() ? tracks[(size_t) i].speeds[k] : 1.0 });
+                        k < tracks[(size_t) i].speeds.size() ? tracks[(size_t) i].speeds[k] : 1.0,
+                        k < tracks[(size_t) i].pitches.size() ? tracks[(size_t) i].pitches[k] : 1.0 });
     scenes = sc;
     rebuildAll();
     auto set = [this] (const char* id, float v) { if (auto* p = apvts.getParameter (id)) p->setValueNotifyingHost (p->convertTo0to1 (v)); };
@@ -186,6 +189,7 @@ void GraphProcessor::loadTrack (int i)
     set ("wave", (float) tracks[(size_t) i].wave);
     set ("tune", (float) tracks[(size_t) i].tune);
     set ("tone", (float) tracks[(size_t) i].tone);
+    if (tracks[(size_t) i].look >= 0) set ("look", (float) tracks[(size_t) i].look);
     set ("chain", 1.0f);
     set ("scene", 1.0f);
     displayScene = 0;
@@ -390,7 +394,7 @@ void GraphProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiB
         for (int v = 0; v < gg::Program::kMaxVoices; ++v)
         {
             Voice& vc = voices[(size_t) v];
-            double y = (gateAll && v < nv) ? prog->voice (v) : std::numeric_limits<double>::quiet_NaN();
+            double y = (gateAll && v < nv) ? prog->voice (v) * pitches[(size_t) sceneIdx] : std::numeric_limits<double>::quiet_NaN();
             bool want = std::isfinite (y);
             if (want)
             {
@@ -521,6 +525,7 @@ void GraphProcessor::getStateInformation (juce::MemoryBlock& destData)
         t.setProperty ("name", juce::String (s.name), nullptr);
         t.setProperty ("text", juce::String (s.text), nullptr);
         t.setProperty ("speed", s.speed, nullptr);
+        if (s.pitch != 1.0) t.setProperty ("pitch", s.pitch, nullptr);
         sc.appendChild (t, nullptr);
     }
     state.removeChild (state.getChildWithName ("SCENES"), nullptr);
@@ -538,7 +543,7 @@ void GraphProcessor::setStateInformation (const void* data, int sizeInBytes)
     for (int i = 0; i < sc.getNumChildren() && i < kMaxScenes; ++i)
     {
         auto t = sc.getChild (i);
-        loaded.push_back ({ sceneName (i), t.getProperty ("text").toString().toStdString(), (double) t.getProperty ("speed", 1.0) });
+        loaded.push_back ({ sceneName (i), t.getProperty ("text").toString().toStdString(), (double) t.getProperty ("speed", 1.0), (double) t.getProperty ("pitch", 1.0) });
     }
     state.removeChild (sc, nullptr);
     apvts.replaceState (state);

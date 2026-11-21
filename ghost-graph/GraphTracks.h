@@ -6,7 +6,8 @@
 namespace gg {
 
 // wave: 0 sine, 1 triangle, 2 saw, 3 square, 4 soft saw, 5 round; tune: semitones from A3 for y = 0 (measured from each video's sound)
-struct Track { std::string name; double bpm = 120; std::vector<std::string> scenes; int wave = 3; int tune = 0; float tone = 20000.f; std::vector<double> speeds {}; };
+// pitches: octaves per unit of y for each scene (1 if not given); look: the look it switches to (-1: leave it)
+struct Track { std::string name; double bpm = 120; std::vector<std::string> scenes; int wave = 3; int tune = 0; float tone = 20000.f; std::vector<double> speeds {}; std::vector<double> pitches {}; int look = -1; };
 
 inline std::vector<Track> factoryTracks()
 {
@@ -389,6 +390,20 @@ p = 1 - abs(x)/8
 )GG");
         t.push_back (k);
     }
+    // ---------------------------------------------------------------- 7: the zeta video -- the Riemann zeta function
+    // along the critical line, zeta(1/2 + iu), drawn on the Re / Im plane on grey crumpled paper (black ink, a blue dot),
+    // its real and imaginary parts sung by two voices. The video runs u from 0 to about 60 in 20 seconds; one page here
+    // (x from -8 to 8) is u = 4x + 32, 0 to 64, at 90 BPM and half speed (0.75 x a second = 3 u a second, as measured).
+    // Its two voices glide 7/12 of an octave (a fifth) per unit around D2 (measured: y = 0 at 73 Hz).
+    {
+        Track k { "Track 7", 90, {}, 2, -19 };   // SAW (its strong second harmonic, as measured), y = 0 is D2
+        k.scenes.push_back ("y = plane(zre(u), zim(u))\nu = 4x + 32\n");
+        k.speeds = { 0.5 };
+        k.pitches = { 7.0 / 12.0 };
+        k.look = 5;   // SILVER
+        t.push_back (k);
+    }
+
     return t;
 }
 

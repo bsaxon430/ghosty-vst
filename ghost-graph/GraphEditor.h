@@ -25,7 +25,7 @@ namespace ggui
     };
     inline const Theme& theme (int i)
     {
-        static const Theme t[5] = {
+        static const Theme t[6] = {
             { "PAPER",  juce::Colour (0xffe4b038), juce::Colour (0xffec941a), juce::Colour (0xfffef2a7), juce::Colour (0xccec941a),
               juce::Colour (0xff3d3733), juce::Colour (0xffff7a5c), juce::Colour (0x8c6a4520), juce::Colour (0xff8a5424), juce::Colour (0xffb2702c),
               juce::Colour (0xff1e1b19), juce::Colour (0x00000000), false, {} },
@@ -46,8 +46,12 @@ namespace ggui
             { "TI 84",  juce::Colour (0xff17210f), juce::Colour (0xff17210f), juce::Colour (0xffc2d8a4), juce::Colour (0xff17210f),
               juce::Colour (0xffc2d8a4), juce::Colour (0xff7a1d10), juce::Colour (0x5917210f), juce::Colour (0xff17210f), juce::Colour (0xff17210f),
               juce::Colour (0xffc2d8a4), juce::Colour (0x00000000), false, {}, true },
+            // SILVER: the zeta video (Track 7) -- black ink and a blue dot on light grey crumpled paper
+            { "SILVER", juce::Colour (0xff1b1b1b), juce::Colour (0xff111111), juce::Colour (0xff1d4fd6), juce::Colour (0xff1d4fd6),
+              juce::Colour (0xffcfcfcd), juce::Colour (0xffb0392b), juce::Colour (0x22111111), juce::Colour (0xff1a1a1a), juce::Colour (0xff2a2a2a),
+              juce::Colour (0xffe8e8e6), juce::Colour (0x00000000), false, {} },
         };
-        return t[juce::jlimit (0, 4, i)];
+        return t[juce::jlimit (0, 5, i)];
     }
     inline const Theme*& curTheme() { static const Theme* c = &theme (0); return c; }
     inline const Theme& th() { return *curTheme(); }
@@ -70,7 +74,7 @@ namespace ggui
 
     // a dark sheet of crumpled paper like the videos': flat facets with straight creases, each lit a little differently,
     // a darker fold across the middle, and a fine grain. Same every time (fixed seed).
-    inline juce::Image makePaper (int w, int h, juce::Colour base = juce::Colour (0xff3d3733))
+    inline juce::Image makePaper (int w, int h, juce::Colour base = juce::Colour (0xff3d3733), float depth = 1.0f)   // depth: how deep the creases are
     {
         w = juce::jmax (8, w); h = juce::jmax (8, h);
         juce::Random rnd (20261118);
@@ -96,7 +100,7 @@ namespace ggui
                 const auto& f = fs[(size_t) best];
                 lo[(size_t) (y * sw + x)] = f.base + f.gx * (px - f.x) + f.gy * (py - f.y);
             }
-        for (int pass = 0; pass < 2; ++pass)   // soften the creases a touch
+        for (int pass = 0; pass < (depth < 1.0f ? 7 : 2); ++pass)   // soften the creases a touch (softer, shallow paper: more)
         {
             std::vector<float> t = lo;
             for (int y = 1; y + 1 < sh; ++y)
@@ -122,7 +126,7 @@ namespace ggui
                 const float fold = juce::jlimit (0.0f, 1.0f, (v - 0.31f) / 0.06f);
                 shade += 0.05f - 0.13f * fold * fold * (3 - 2 * fold);                // lighter above the fold, darker below it
                 shade -= 0.07f * std::exp (-std::pow ((v - 0.335f) / 0.02f, 2.0f));   // the fold itself
-                const float k = juce::jlimit (0.5f, 1.5f, 1.0f + shade + (grain.nextFloat() - 0.5f) * 0.18f);
+                const float k = juce::jlimit (0.5f, 1.5f, 1.0f + depth * (shade + (grain.nextFloat() - 0.5f) * 0.18f));
                 bd.setPixelColour (x, y, juce::Colour::fromFloatRGBA (juce::jmin (1.f, base.getFloatRed() * k), juce::jmin (1.f, base.getFloatGreen() * k), juce::jmin (1.f, base.getFloatBlue() * k), 1.f));
             }
         return img;
@@ -468,6 +472,7 @@ namespace ggui
     {
         if (look == 0) return makePaper (w, h);
         if (look == 3) return makePaper (w, h, theme (3).paper);
+        if (look == 5) return makePaper (w, h, theme (5).paper, 0.4f);
         if (look == 4) return makeTI (w, h);
         auto img = look == 1 ? makeChroma (w, h) : makeInk (w, h);
         // where the equations are, the paint thins out a little so the math reads
@@ -644,7 +649,7 @@ public:
     Hit hitTest (juce::Point<float> m) const
     {
         Hit best; float bd = 9.0f;
-        if (nv == 0) return best;
+        if (nv == 0 || plane()) return best;   // the plane shows where the voices are, not when: nothing to grab
         const double xm = -8.0 + 16.0 * (m.x - plot().getX()) / plot().getWidth();
         const int kc = (int) std::round ((xm + 8.0) / 16.0 * (kSamples - 1));
         const int span = (int) std::ceil (12.0 / (plot().getWidth() / (kSamples - 1))) + 2;
@@ -668,7 +673,7 @@ public:
     std::vector<Sel> notesIn (juce::Rectangle<float> box) const
     {
         std::vector<Sel> out;
-        if (nv == 0 || box.getWidth() < 2.f || box.getHeight() < 2.f) return out;
+        if (nv == 0 || plane() || box.getWidth() < 2.f || box.getHeight() < 2.f) return out;
         const int kA = juce::jlimit (0, kSamples - 1, (int) std::floor ((pxToX (box.getX()) + 8.0) / 16.0 * (kSamples - 1)));
         const int kB = juce::jlimit (0, kSamples - 1, (int) std::ceil ((pxToX (box.getRight()) + 8.0) / 16.0 * (kSamples - 1)));
         for (int v = 0; v < nv; ++v)
@@ -828,10 +833,13 @@ public:
     }
 
 
+    bool plane() const { return prog != nullptr && prog->ok() && prog->isPlane(); }
+
     void paint (juce::Graphics& g) override
     {
         using namespace ggui;
         curTheme() = theme;
+        if (plane()) { paintPlane (g); return; }
         const auto r = getLocalBounds().toFloat().reduced (getWidth() * 0.085f, 8.f);
         auto X = [&] (double x) { return r.getX() + (float) ((x + 8.0) / 16.0) * r.getWidth(); };
         auto Y = [&] (double y) { return r.getCentreY() - (float) (y / yRange) * r.getHeight() * 0.5f; };
@@ -968,6 +976,103 @@ public:
             g.setColour (th().amberHi);                   g.fillEllipse (juce::Rectangle<float> (d, d).withCentre (p));
             g.setColour (th().perVoice ? th().voice[v % 6] : th().dotRing);
             g.drawEllipse (juce::Rectangle<float> (d, d).withCentre (p), th().perVoice ? 2.0f : 1.0f);
+        }
+    }
+
+    // y = plane(a, b): the point (a, b) on the Re / Im plane, its path drawn up to now, like the zeta video. Voices go
+    // in pairs (a, b), (c, d) ... The view fits the whole page's path, so it never jumps while it plays.
+    void paintPlane (juce::Graphics& g)
+    {
+        using namespace ggui;
+        const auto r = plot().reduced (0.f, 6.f);
+        const int pairs = nv / 2;
+        double x0 = 0, x1 = 0, y0 = 0, y1 = 0;   // the origin is always on the page
+        for (int pr = 0; pr < pairs; ++pr)
+            for (int k = 0; k < kSamples; ++k)
+            {
+                const double a = ys[(size_t) (2 * pr * kSamples + k)], b = ys[(size_t) ((2 * pr + 1) * kSamples + k)];
+                if (! std::isfinite (a) || ! std::isfinite (b) || std::abs (a) > 1e3 || std::abs (b) > 1e3) continue;
+                x0 = std::min (x0, a); x1 = std::max (x1, a); y0 = std::min (y0, b); y1 = std::max (y1, b);
+            }
+        if (x1 - x0 < 1e-6) { x0 -= 1; x1 += 1; }
+        if (y1 - y0 < 1e-6) { y0 -= 1; y1 += 1; }
+        const double s = std::min (r.getWidth() * 0.86 / (x1 - x0), r.getHeight() * 0.86 / (y1 - y0));
+        const double cx = r.getCentreX() - s * 0.5 * (x0 + x1), cy = r.getCentreY() + s * 0.5 * (y0 + y1);
+        auto P = [&] (double a, double b) { return juce::Point<float> ((float) (cx + s * a), (float) (cy - s * b)); };
+        const auto o = P (0, 0);
+
+        // the axes: thin ink right across, small arrowheads, Re and Im in italics at their ends
+        const juce::Colour ink = th().axis;
+        const float aw = th().lcd ? 2.2f : 1.0f, hs = juce::jmax (4.f, getWidth() / 260.f);
+        const float left = r.getX() - 6.f, right = r.getRight() + 6.f;
+        const float ls = juce::jmax (11.f, getWidth() / 80.f);
+        const float top = (float) juce::jmax ((double) r.getY() + ls + hs * 2.0, cy - s * y1 - r.getHeight() * 0.10);
+        const float bottom = (float) juce::jmin ((double) r.getBottom() + 4.0, cy - s * y0 + r.getHeight() * 0.10);
+        g.setColour (ink);
+        g.fillRect (left, o.y - aw * 0.5f, right - left, aw);
+        g.fillRect (o.x - aw * 0.5f, top, aw, bottom - top);
+        juce::Path ah;
+        ah.addTriangle (right + hs * 1.2f, o.y, right, o.y - hs * 0.45f, right, o.y + hs * 0.45f);
+        ah.addTriangle (o.x, top - hs * 1.2f, o.x - hs * 0.45f, top, o.x + hs * 0.45f, top);
+        g.fillPath (ah);
+        g.setFont (serif (ls, true));
+        g.setColour (th().label);
+        g.drawText ("Re", juce::Rectangle<float> (right + hs * 1.6f, o.y - ls * 0.6f, ls * 2.f, ls + 2), juce::Justification::centredLeft);
+        g.drawText ("Im", juce::Rectangle<float> (o.x - ls, top - hs * 1.4f - ls - 2, ls * 2.f, ls + 2), juce::Justification::centred);
+        if (nv < 2 || pairs == 0) return;
+
+        const int kNow = juce::jlimit (0, kSamples - 1, (int) std::floor ((xNow + 8.0) / 16.0 * (kSamples - 1)));
+        auto pathOf = [&] (int pr, int k1, bool toNow)
+        {
+            juce::Path p; bool pen = false;
+            for (int k = 0; k <= k1; ++k)
+            {
+                const double a = ys[(size_t) (2 * pr * kSamples + k)], b = ys[(size_t) ((2 * pr + 1) * kSamples + k)];
+                if (! std::isfinite (a) || ! std::isfinite (b)) { pen = false; continue; }
+                if (pen) p.lineTo (P (a, b)); else { p.startNewSubPath (P (a, b)); pen = true; }
+            }
+            if (toNow && pen)
+            {
+                prog->setX (xNow);
+                const double a = prog->voice (2 * pr), b = prog->voice (2 * pr + 1);
+                if (std::isfinite (a) && std::isfinite (b)) p.lineTo (P (a, b));
+            }
+            return p;
+        };
+        const float lw = juce::jmax (1.3f, getWidth() / 640.0f) * (th().lcd ? 1.6f : 1.0f);
+        for (int pr = 0; pr < pairs; ++pr)
+        {
+            const juce::Colour lc = th().perVoice ? th().voice[pr % 6] : th().lineCol;
+            if (editMode)   // EDIT: the whole path shows faintly
+            {
+                g.setColour (lc.withAlpha (0.3f));
+                g.strokePath (pathOf (pr, kSamples - 1, false), juce::PathStrokeType (lw, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+            }
+            if (! th().halo.isTransparent())
+            {
+                g.setColour (th().halo);
+                g.strokePath (pathOf (pr, kNow, true), juce::PathStrokeType (lw * 3.f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+            }
+            g.setColour (lc);
+            g.strokePath (pathOf (pr, kNow, true), juce::PathStrokeType (lw, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+        }
+        // the dot: where the voices are now
+        prog->setX (xNow);
+        for (int pr = 0; pr < pairs; ++pr)
+        {
+            const double a = prog->voice (2 * pr), b = prog->voice (2 * pr + 1);
+            if (! std::isfinite (a) || ! std::isfinite (b)) continue;
+            const auto p = P (a, b);
+            const float d = juce::jmax (9.0f, getWidth() / 95.0f);
+            if (th().lcd)
+            {
+                g.setColour (th().paper);   g.fillEllipse (juce::Rectangle<float> (d * 1.15f, d * 1.15f).withCentre (p));
+                g.setColour (th().lineCol); g.drawEllipse (juce::Rectangle<float> (d * 1.15f, d * 1.15f).withCentre (p), juce::jmax (2.2f, d * 0.2f));
+                continue;
+            }
+            g.setColour (th().amberHi); g.fillEllipse (juce::Rectangle<float> (d, d).withCentre (p));
+            g.setColour (th().perVoice ? th().voice[pr % 6] : th().dotRing);
+            g.drawEllipse (juce::Rectangle<float> (d, d).withCentre (p), 1.0f);
         }
     }
 
@@ -1262,8 +1367,8 @@ public:
         helpBtn.setClickingTogglesState (true);
         helpBtn.onClick = [this] { resized(); repaint(); };
         addAndMakeVisible (helpBtn);
-        lookBtn.setTooltip ("Change the look: PAPER (the videos), CHROMA (rainbow watercolour), INK (the watercolour ghost), WINE (the burgundy video), TI 84 (a graphing calculator)");
-        lookBtn.onClick = [this] { cycle ("look", 5); };
+        lookBtn.setTooltip ("Change the look: PAPER (the videos), CHROMA (rainbow watercolour), INK (the watercolour ghost), WINE (the burgundy video), TI 84 (a graphing calculator), SILVER (the zeta video)");
+        lookBtn.onClick = [this] { cycle ("look", 6); };
         tracksBtn.setButtonText ("TRACKS");
         tracksBtn.setTooltip ("Load one of the reference videos: every scene, at its own tempo");
         tracksBtn.onClick = [this] { showTracks(); };
@@ -1360,6 +1465,7 @@ public:
                 case 2: art = juce::ImageCache::getFromMemory (GhostGraphArt::ink_png,    GhostGraphArt::ink_pngSize);    ah = 41; ay = 5; break;
                 case 3: art = juce::ImageCache::getFromMemory (GhostGraphArt::wine_png,   GhostGraphArt::wine_pngSize);   ah = 37; ay = 6; break;
                 case 4: art = juce::ImageCache::getFromMemory (GhostGraphArt::ti_png,     GhostGraphArt::ti_pngSize);     ah = 30; ay = 8; break;
+                case 5: art = juce::ImageCache::getFromMemory (GhostGraphArt::ink_png,    GhostGraphArt::ink_pngSize);    ah = 41; ay = 5; break;
                 default: break;
             }
             if (art.isValid())
@@ -1514,7 +1620,7 @@ public:
 
     void applyLook (int idx)
     {
-        lookIdx = juce::jlimit (0, 4, idx);
+        lookIdx = juce::jlimit (0, 5, idx);
         look.applyColours (lookIdx);
         graph.theme = strip.theme = &ggui::theme (lookIdx);
         math.colour = ggui::theme (lookIdx).amber;

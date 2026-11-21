@@ -14,6 +14,7 @@
 // a variable before "(" (w(1-w)). Comparisons: < > <= >= = (chains like 0.5 < w < 0.97 work), and, or.
 // Built in: frac floor ceil round abs sign sqrt sin cos tan exp ln log min max clamp mod tri saw sq, e, pi.
 #pragma once
+#include <complex>
 #include <cmath>
 #include <cstdint>
 #include <memory>
@@ -66,7 +67,7 @@ public:
     enum class Op : uint8_t { Num, X, Var, Param, Call, Builtin, Neg, Add, Sub, Mul, Div, Pow,
                               Lt, Gt, Le, Ge, Eq, And, Or, Piece, Ne };
     enum Fn : uint8_t { fFrac, fFloor, fCeil, fRound, fAbs, fSign, fSqrt, fSin, fCos, fTan, fExp, fLn, fLog,
-                        fMin, fMax, fClamp, fMod, fTri, fSaw, fSq, fAt };
+                        fMin, fMax, fClamp, fMod, fTri, fSaw, fSq, fAt, fZre, fZim };
     // Num: idx 1 = e, 2 = pi, 3 = tau (as written)
     struct Node { Op op = Op::Num; double num = 0; int a = -1, b = -1, idx = 0; std::vector<int> kids; };
     struct Def  { std::string name; std::vector<std::string> params; int root = -1; int line = 0; std::string rhs; };
@@ -74,6 +75,7 @@ public:
     const std::vector<Def>& getDefs() const { return defs; }
     const std::vector<int>& getVoiceRoots() const { return voices; }
     bool isOutline() const { return outlineY; }
+    bool isPlane() const { return planeY; }   // y = plane(a, b): drawn as a point moving on the Re / Im plane (a across, b up)
     const std::string& voiceSource (int i) const { return voiceSrc[(size_t) i]; }   // the entry as written in y = [...]
     // Where a voice's sound at time atX comes from, for pointing at it in the typed math (window only, never the audio
     // thread). Each spot is a definition the voice goes through, outermost first; branch is which {cond: value} piece
@@ -97,7 +99,7 @@ public:
     static const char* builtinName (int f)
     {
         static const char* names[] = { "frac", "floor", "ceil", "round", "abs", "sign", "sqrt", "sin", "cos", "tan",
-                                       "exp", "ln", "log", "min", "max", "clamp", "mod", "tri", "saw", "sq", "at" };
+                                       "exp", "ln", "log", "min", "max", "clamp", "mod", "tri", "saw", "sq", "at", "zre", "zim" };
         return names[f];
     }
 
@@ -110,7 +112,8 @@ private:
     std::vector<int> voiceKinds;
     std::vector<std::string> voiceSrc;
     std::vector<ExprError> errors;
-    bool outlineY = false;
+    bool outlineY = false, planeY = false;
+    double zU = std::numeric_limits<double>::quiet_NaN(), zRe = 0, zIm = 0;   // the last zeta value (zre and zim of the same u)
     std::vector<double> cache;
     std::vector<uint32_t> stamps;
     uint32_t cacheStamp = 0;
@@ -231,6 +234,35 @@ private:
 
     static double fracOf (double v) { return v - std::floor (v); }
 
+public:
+    // zeta(1/2 + i t), by Euler-Maclaurin summation (good to ~1e-9 for |t| up to a few hundred)
+    static void zetaHalf (double t, double& re, double& im)
+    {
+        using C = std::complex<double>;
+        const C s (0.5, t);
+        const int N = (int) std::max (10.0, std::abs (t) / 3.14159265358979 + 10.0);
+        C sum (0.0, 0.0);
+        for (int n = 1; n < N; ++n) sum += std::exp (-s * std::log ((double) n));
+        const C Ns = std::exp (-s * std::log ((double) N));   // N^-s
+        sum += Ns * (double) N / (s - 1.0) + Ns * 0.5;
+        static const double B[8] = { 1.0 / 6, -1.0 / 30, 1.0 / 42, -1.0 / 30, 5.0 / 66, -691.0 / 2730, 7.0 / 6, -3617.0 / 510 };
+        C fac = s;              // s (s + 1) ... (s + 2k - 2)
+        C pw = Ns / (double) N; // N^(-s - 2k + 1), starting at k = 1
+        double fact = 2.0;      // (2k)!
+        for (int k = 1; k <= 8; ++k)
+        {
+            if (k > 1)
+            {
+                fac *= (s + (double) (2 * k - 3)) * (s + (double) (2 * k - 2));
+                pw /= (double) N * (double) N;
+                fact *= (double) (2 * k - 1) * (double) (2 * k);
+            }
+            sum += B[k - 1] / fact * fac * pw;
+        }
+        re = sum.real(); im = sum.imag();
+    }
+private:
+
     double builtin (Fn f, const Node& nd, const double* args)
     {
         if (f == fAt)
@@ -264,6 +296,13 @@ private:
             case fSaw:   return 2 * fracOf (a) - 1;
             case fSq:    return fracOf (a) < 0.5 ? 1.0 : -1.0;
             case fAt:    break;
+            case fZre:
+            case fZim:
+            {
+                if (! std::isfinite (a)) return nan();
+                if (a != zU) { zetaHalf (a, zRe, zIm); zU = a; }
+                return f == fZre ? zRe : zIm;
+            }
             case fMin:   { double m = a; for (size_t i = 1; i < nd.kids.size(); ++i) m = std::fmin (m, eval (nd.kids[i], args)); return m; }
             case fMax:   { double m = a; for (size_t i = 1; i < nd.kids.size(); ++i) m = std::fmax (m, eval (nd.kids[i], args)); return m; }
             case fMod:   { const double b = eval (nd.kids[1], args); return b == 0 ? nan() : a - b * std::floor (a / b); }
@@ -410,8 +449,8 @@ private:
         static int builtinIndex (const std::string& s, int& arity)
         {
             static const char* names[] = { "frac", "floor", "ceil", "round", "abs", "sign", "sqrt", "sin", "cos", "tan",
-                                           "exp", "ln", "log", "min", "max", "clamp", "mod", "tri", "saw", "sq", "at" };
-            for (int i = 0; i < 21; ++i)
+                                           "exp", "ln", "log", "min", "max", "clamp", "mod", "tri", "saw", "sq", "at", "zre", "zim" };
+            for (int i = 0; i < 23; ++i)
                 if (s == names[i])
                 {
                     arity = (i == fMin || i == fMax) ? -2 : (i == fClamp ? 3 : ((i == fMod || i == fAt) ? 2 : 1));
@@ -618,6 +657,8 @@ inline std::unique_ptr<Program> Program::compile (const std::string& text)
         bool outline = false;
         if (ps.isWord ("outline") && ps.toks[ps.pos + 1].t == Tok::Sym && ps.toks[ps.pos + 1].s == "(")
         { ps.pos += 2; outline = true; p.outlineY = true; }   // y = outline(a, b, c): a list of voices, as in the reference
+        else if (ps.isWord ("plane") && ps.toks[ps.pos + 1].t == Tok::Sym && ps.toks[ps.pos + 1].s == "(")
+        { ps.pos += 2; outline = true; p.planeY = true; }     // y = plane(a, b): a point on the Re / Im plane (each one a voice too)
         const bool list = outline || ps.accept ("[");
         do
         {
@@ -664,7 +705,8 @@ inline std::unique_ptr<Program> Program::compile (const std::string& text)
 }
 
 // ------------------------------------------------------------------------------------------------ the scenes
-struct Scene { std::string name, text; double speed = 1.0; };   // speed: how fast x moves in this scene (1 = one unit per beat)
+// speed: how fast x moves in this scene (1 = one unit per beat); pitch: octaves per unit of y (1 = y in octaves)
+struct Scene { std::string name, text; double speed = 1.0; double pitch = 1.0; };
 
 inline std::vector<Scene> factoryScenes()
 {
