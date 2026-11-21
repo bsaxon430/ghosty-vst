@@ -650,6 +650,31 @@ int cmdWindow(const StringArray& a) {
   return 0;
 }
 
+
+// scanprobe [secs]: DIAGNOSTIC - a real editor on the screen (as in a host), then once a second: is the preset finder still
+// searching, and how many presets has it found
+int cmdScanProbe(const StringArray& a) {
+  GhostyProcessor p;
+  p.setPlayConfigDetails(0, 2, 44100, 512);
+  p.prepareToPlay(44100, 512);
+  std::unique_ptr<GhostyEditor> ed(dynamic_cast<GhostyEditor*>(p.createEditor()));
+  ed->setTopLeftPosition(0, 0);
+  ed->addToDesktop(ComponentPeer::windowHasDropShadow);
+  ed->setVisible(true);
+  const int secs = a.size() > 1 ? a[1].getIntValue() : 90;
+  const double t0 = Time::getMillisecondCounterHiRes();
+  for (int i = 0; i < secs; ++i) {
+    MessageManager::getInstance()->runDispatchLoopUntil(1000);
+    const bool sc = ed->finder().scanning();
+    std::printf("t=%5.1f s  scanning=%d  found=%d\n", (Time::getMillisecondCounterHiRes() - t0) / 1000.0, sc ? 1 : 0, (int) ed->finder().results().size());
+    std::fflush(stdout);
+    if (!sc) { std::printf("indexed %d\n", (int) ed->menuIndex().flat.size()); break; }
+  }
+  ed->removeFromDesktop();
+  ed = nullptr;
+  return 0;
+}
+
 // flick <look> <secs>: the editor in a real window with scripted GHOST ORBIT flicks on Vital's knobs and our MORPH knobs,
 // for recording (ffmpeg x11grab). Prints each knob's screen bounds. Synthetic mouse events, real time, real physics.
 SynthSlider* findSlider(Component* c, const String& name) {
@@ -945,6 +970,7 @@ int main(int argc, char* argv[]) {
   else if (c == "shots") rc = cmdShots(a);
   else if (c == "dump-params") rc = cmdDumpParams(a);
   else if (c == "types") rc = cmdTypes(a);
+  else if (c == "scanprobe") rc = cmdScanProbe(a);
   else if (c == "preset-folders") rc = cmdPresetFolders(a);
   else if (c == "nulltest-all") rc = cmdNullTestAll(a);
   else if (c == "fit-level") rc = cmdFitLevel(a);
