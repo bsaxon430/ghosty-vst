@@ -66,6 +66,7 @@ GraphProcessor::GraphProcessor()
     : AudioProcessor (BusesProperties().withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
       apvts (*this, nullptr, "GHOSTGRAPH", makeLayout())
 {
+    soloMask.fill (0xFFFFu);
     pSync   = apvts.getRawParameterValue ("sync");
     pPlay   = apvts.getRawParameterValue ("play");
     pTempo  = apvts.getRawParameterValue ("tempo");
@@ -243,6 +244,46 @@ void GraphProcessor::resetScenes()
 }
 
 // ------------------------------------------------------------------------------------------------ audio
+std::unique_ptr<GraphProcessor> GraphProcessor::makeRenderCopy()
+{
+    auto r = std::make_unique<GraphProcessor>();
+    juce::MemoryBlock mb;
+    getStateInformation (mb);
+    r->setStateInformation (mb.getData(), (int) mb.getSize());
+    auto set = [&r] (const char* id, float v) { if (auto* p = r->apvts.getParameter (id)) p->setValueNotifyingHost (p->convertTo0to1 (v)); };
+    set ("sync", 0.f);   // its own clock, from the top
+    set ("play", 1.f);
+    set ("keys", 0.f);
+    return r;
+}
+
+void GraphProcessor::renderOffline (juce::AudioBuffer<float>& out, double bpm, double seconds, double sampleRate,
+                                    const std::vector<uint16_t>& mask, const std::atomic<bool>* cancel)
+{
+    const int block = 512;
+    prepareToPlay (sampleRate, block);
+    for (size_t k = 0; k < soloMask.size(); ++k) soloMask[k] = mask.empty() ? 0xFFFFu : (k < mask.size() ? mask[k] : 0u);
+    offlineBpm = bpm;
+    freeBeat = 0.0;
+    restartClock = true;
+    const int total = (int) std::ceil (seconds * sampleRate);
+    out.setSize (2, total, false, true, false);
+    out.clear();
+    juce::AudioBuffer<float> buf (2, block);
+    juce::MidiBuffer none;
+    for (int pos = 0; pos < total; pos += block)
+    {
+        if (cancel != nullptr && cancel->load()) return;
+        const int n = juce::jmin (block, total - pos);
+        buf.setSize (2, n, false, false, true);
+        buf.clear();
+        processBlock (buf, none);
+        for (int c = 0; c < 2; ++c) out.copyFrom (c, pos, buf, c, 0, n);
+    }
+    soloMask.fill (0xFFFFu);
+    offlineBpm = 0;
+}
+
 void GraphProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     sr = sampleRate > 0 ? sampleRate : 48000.0;
@@ -331,6 +372,9 @@ void GraphProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiB
     }
     if (keys && ! running && numHeld > 0) { running = true; useKeyClock = true; beat0 = keyBeat; }
 
+    if (offlineBpm > 0) bpm = offlineBpm;
+    displayBpm = bpm;
+    if (hostBpm > 0 && syncOn) displaySeenHost = true;
     const double bps = bpm / 60.0 / sr;
     if (! syncOn && pPlay->load() > 0.5f) freeBeat += n * bps;
     if (useKeyClock) keyBeat += n * bps;
@@ -395,7 +439,7 @@ void GraphProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiB
         {
             Voice& vc = voices[(size_t) v];
             double y = (gateAll && v < nv) ? prog->voice (v) * pitches[(size_t) sceneIdx] : std::numeric_limits<double>::quiet_NaN();
-            bool want = std::isfinite (y);
+            bool want = std::isfinite (y) && ((soloMask[(size_t) sceneIdx] >> v) & 1u) != 0;
             if (want)
             {
                 const double f = kBaseHz * std::exp2 (y + transpose);

@@ -275,6 +275,111 @@ int main (int argc, char** argv)
         }
     }
 
+    if (want ("export"))
+    {   // DRAG: the song split into its parts, each a WAV and a MIDI; the tempo on the main page
+        auto tmp = juce::File::getSpecialLocation (juce::File::tempDirectory).getChildFile ("gg-export-check");
+        tmp.deleteRecursively();
+        setenv ("GG_EXPORT_DIR", tmp.getFullPathName().toRawUTF8(), 1);
+        auto p = fresh();
+        p->loadTrack (1);   // Track 2: kick, riff, clap, hats, lead, fifth, arp, pad ...
+        setParam (*p, "sync", 0.f);
+        p->displayBpm = p->apvts.getRawParameterValue ("tempo")->load();
+        std::unique_ptr<juce::AudioProcessorEditor> ed (p->createEditor());
+        auto* ge = dynamic_cast<GraphEditor*> (ed.get());
+        ge->openExport();
+        auto& ex = ge->getExport();
+        juce::StringArray names;
+        for (auto& s : ex.getStems()) names.add (juce::String::fromUTF8 (s.name.c_str()));
+        check (names.contains ("Kick") && names.contains ("Clap") && names.contains ("Hi-hat") && names.contains ("Open hat"),
+               "DRAG finds the drums: " + names.joinIntoString (", "));
+        check (names.contains (juce::String::fromUTF8 ("Bass \xc2\xb7 riff")) && names.contains ("Lead") && names.contains ("Arp") && names.contains ("Pad"),
+               "...and the tones by what they are");
+        const auto dir = ex.getFolder();
+        auto midiNotes = [] (const juce::File& f, int& tracks)
+        {
+            juce::FileInputStream in (f);
+            juce::MidiFile mf;
+            tracks = 0;
+            if (! in.openedOk() || ! mf.readFrom (in)) return -1;
+            tracks = mf.getNumTracks();
+            int n = 0;
+            for (int t = 0; t < mf.getNumTracks(); ++t)
+                for (auto* e : *mf.getTrack (t)) if (e->message.isNoteOn()) ++n;
+            return n;
+        };
+        int tr = 0;
+        const int kickNotes = midiNotes (dir.getChildFile ("Kick.mid"), tr);
+        check (kickNotes > 20 && tr == 2, "Kick.mid: " + juce::String (kickNotes) + " hits on MIDI note 36");
+        const int allNotes = midiNotes (dir.getChildFile ("Whole song.mid"), tr);
+        check (allNotes > kickNotes && tr == (int) ex.getStems().size() + 1, "Whole song.mid has every part, a track each (" + juce::String (tr - 1) + " parts)");
+        {
+            juce::FileInputStream in (dir.getChildFile ("Kick.mid"));
+            juce::MidiFile mf; mf.readFrom (in);
+            bool drums = true; double tempo = 0;
+            for (auto* e : *mf.getTrack (1)) if (e->message.isNoteOn()) drums = drums && e->message.getChannel() == 10 && e->message.getNoteNumber() == 36;
+            for (auto* e : *mf.getTrack (0)) if (e->message.isTempoMetaEvent()) tempo = 60.0 / e->message.getTempoSecondsPerQuarterNote();
+            check (drums && std::abs (tempo - ex.getBpm()) < 0.01, "the kick plays MIDI note 36 on the drum channel, at the song's tempo (" + juce::String (tempo, 1) + " BPM)");
+        }
+        check (ex.waitForRenders (180000), "every WAV renders");
+        auto readWav = [] (const juce::File& f, juce::AudioBuffer<float>& b)
+        {
+            juce::WavAudioFormat wav;
+            std::unique_ptr<juce::AudioFormatReader> r (wav.createReaderFor (new juce::FileInputStream (f), true));
+            if (r == nullptr) return false;
+            b.setSize ((int) r->numChannels, (int) r->lengthInSamples);
+            r->read (&b, 0, (int) r->lengthInSamples, 0, true, true);
+            return true;
+        };
+        juce::AudioBuffer<float> mix, kick, hats;
+        check (readWav (dir.getChildFile ("Whole song.wav"), mix) && readWav (dir.getChildFile ("Kick.wav"), kick) && readWav (dir.getChildFile ("Hi-hat.wav"), hats),
+               "Whole song.wav, Kick.wav and Hi-hat.wav are real WAV files");
+        const double want = ex.getStems().empty() ? 0 : 80.0 * 60.0 / ex.getBpm();
+        check (std::abs (mix.getNumSamples() / 48000.0 - want) < 3.0, "the whole song lasts " + juce::String (mix.getNumSamples() / 48000.0, 1) + " s");
+        check (mix.getRMSLevel (0, 0, mix.getNumSamples()) > kick.getRMSLevel (0, 0, kick.getNumSamples()) && kick.getRMSLevel (0, 0, kick.getNumSamples()) > 0.005f
+               && hats.getRMSLevel (0, 0, hats.getNumSamples()) > 0.002f, "each part is just that part (quieter than the mix, not silent)");
+        // the kick on its own sounds like the kick inside the mix: low, with nothing at hi-hat frequencies
+        {
+            auto hi = [] (const juce::AudioBuffer<float>& b)
+            {
+                double e = 0, h = 0, prev = 0;
+                for (int i = 0; i < b.getNumSamples(); ++i) { const double x = b.getSample (0, i); h += (x - prev) * (x - prev); e += x * x; prev = x; }
+                return h / juce::jmax (1e-12, e);
+            };
+            check (hi (kick) < hi (hats) * 0.2, "Kick.wav is low and Hi-hat.wav is bright");
+        }
+        // the tempo on the main page
+        auto& tb = ge->getTempoBox();
+        check (! tb.following() && std::abs (tb.shown() - p->apvts.getRawParameterValue ("tempo")->load()) < 0.01, "with SYNC off the main page shows the plugin's tempo");
+        setParam (*p, "sync", 1.f);
+        p->fakeHost = { true, true, 0.0, 128.0 };
+        render (*p, 0.05);
+        check (tb.following() && std::abs (tb.shown() - 128.0) < 0.01, "with SYNC on it shows the DAW's tempo (128)");
+        setParam (*p, "sync", 0.f);
+        p->fakeHost = {};
+        juce::File shots = juce::File::getCurrentWorkingDirectory().getChildFile ("uishots");
+        if (auto env = std::getenv ("GG_SHOTS")) shots = juce::File (juce::String (env));
+        shots.createDirectory();
+        for (int lk : { 0, 4 })
+        {
+            setParam (*p, "look", (float) lk);
+            juce::MessageManager::getInstance()->runDispatchLoopUntil (150);
+            auto img = ed->createComponentSnapshot (ed->getLocalBounds());
+            juce::FileOutputStream os (shots.getChildFile ("ui-drag-" + juce::String (lk) + ".png"));
+            os.setPosition (0); os.truncate();
+            juce::PNGImageFormat().writeImageToStream (img, os);
+        }
+        ex.close();
+        ge->showStrip (false);
+        juce::MessageManager::getInstance()->runDispatchLoopUntil (150);
+        {
+            auto img = ed->createComponentSnapshot (ed->getLocalBounds());
+            juce::FileOutputStream os (shots.getChildFile ("ui-tempo-main.png"));
+            os.setPosition (0); os.truncate();
+            juce::PNGImageFormat().writeImageToStream (img, os);
+        }
+        tmp.deleteRecursively();
+    }
+
     if (want ("tracks"))
     {
         auto p = fresh();

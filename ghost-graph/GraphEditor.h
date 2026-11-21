@@ -1292,6 +1292,8 @@ private:
     juce::TextEditor& ed;
 };
 
+#include "GraphExport.h"
+
 class GraphEditor : public juce::AudioProcessorEditor, private juce::Timer
 {
 public:
@@ -1381,6 +1383,14 @@ public:
             generate (-1);
         };
         addAndMakeVisible (genBtn);
+        // DRAG: the song split into its parts, each a WAV and a MIDI to drag into the DAW
+        dragBtn.setButtonText ("DRAG");
+        dragBtn.setTooltip ("Drag the song out: the whole mix, or each part on its own (kick, snare, hi-hat, bass, lead ...) as WAV or MIDI");
+        dragBtn.onClick = [this] { openExport(); };
+        addAndMakeVisible (dragBtn);
+        addAndMakeVisible (tempoBox);
+        exportPanel.onClose = [this] { grabKeyboardFocus(); repaint(); };
+        addChildComponent (exportPanel);
         more.setButtonText ("...");
         more.onClick = [this] { showMore(); };
         addAndMakeVisible (more);
@@ -1550,6 +1560,22 @@ public:
         eq.setBounds (mid.withTrimmedRight (140));
         marks.setBounds (eq.getLocalBounds());
 
+        // the top band: the tempo (left, after the scene name) and DRAG (right, after the progress bar)
+        {
+            const float k = w / 1054.0f;
+            if (lcd)
+            {
+                tempoBox.setBounds ((int) (w * 0.05f + 110 * k), (int) (h * (ggui::ti::lcdTop + 0.006f)), (int) (176 * k), (int) (34 * k));
+                dragBtn.setBounds ((int) (w * 0.95f - 130 * k - 86 * k), (int) (h * (ggui::ti::lcdTop + 0.012f)), (int) (72 * k), (int) (26 * k));
+            }
+            else
+            {
+                tempoBox.setBounds ((int) (124 * k), (int) (4 * k), (int) (164 * k), (int) (32 * k));
+                dragBtn.setBounds ((int) (w - 84 * k), (int) (7 * k), (int) (68 * k), (int) (25 * k));
+            }
+            exportPanel.setBounds (getLocalBounds());
+        }
+
         this->strip.setBounds (getLocalBounds());
         this->strip.panel = juce::Rectangle<int> (0, h - strip - 30, w, strip + 30);
         statusArea = juce::Rectangle<int> (22, h - strip - 28, w - 44, 24);
@@ -1629,6 +1655,11 @@ public:
         sendLookAndFeelChange();
         eq.applyColourToAllText (ggui::theme (lookIdx).amber);
         marks.theme = &ggui::theme (lookIdx);
+        ggui::curTheme() = &ggui::theme (lookIdx);
+        tempoBox.theme = exportPanel.theme = &ggui::theme (lookIdx);
+        tempoBox.applyLookColours();
+        tempoBox.repaint();
+        exportPanel.repaint();
         // over watercolour, the typing gets a soft paper card behind it so it reads
         eq.setColour (juce::TextEditor::backgroundColourId, (lookIdx == 1 || lookIdx == 2) ? ggui::theme (lookIdx).paper.withAlpha (0.78f) : juce::Colours::transparentBlack);
         lookBtn.setButtonText (juce::String ("LOOK: ") + ggui::theme (lookIdx).name);
@@ -1648,6 +1679,16 @@ public:
     MathView& getMath() { return math; }
     const FormulaMarks& getMarks() const { return marks; }
     GraphView& getGraph() { return graph; }
+    ExportPanel& getExport() { return exportPanel; }
+    TempoBox& getTempoBox() { return tempoBox; }
+    void openExport()
+    {
+        flushEdit();
+        if (editing) stopEditing();
+        exportPanel.open();
+        exportPanel.setVisible (true);
+        exportPanel.toFront (true);
+    }
 
 private:
     GraphProcessor& proc;
@@ -1656,6 +1697,9 @@ private:
     juce::TextEditor eq;
     FormulaMarks marks { eq };
     ControlStrip strip;
+    TempoBox tempoBox { proc };
+    ExportPanel exportPanel { proc };
+    juce::TextButton dragBtn;
     float stripAlpha = 1.0f;
     int lookIdx = 0;
     int stripHold = 120;

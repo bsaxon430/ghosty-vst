@@ -63,6 +63,16 @@ public:
     std::atomic<int> displayScene { 0 };
     std::atomic<bool> displayRunning { false };
     std::atomic<bool> displayHostSync { false };          // true when the host's transport drives the clock
+    std::atomic<double> displayBpm { 75.0 };              // the tempo it is playing at (the DAW's, when SYNC follows it)
+    std::atomic<bool> displaySeenHost { false };          // a DAW has told it a tempo
+
+    // ---- DRAG: render the song (or some of its voices) on its own, faster than real time
+    // A copy of this plugin, made on the message thread, that can render on another thread.
+    std::unique_ptr<GraphProcessor> makeRenderCopy();
+    // On a render copy: the whole song from the top at bpm, only the voices in mask (one bit per voice, per scene;
+    // empty = all of them), through TONE / SPACE / VOLUME like the real thing. Stops early if cancel turns true.
+    void renderOffline (juce::AudioBuffer<float>& out, double bpm, double seconds, double sampleRate,
+                        const std::vector<uint16_t>& mask, const std::atomic<bool>* cancel = nullptr);
 
     bool isStandalone() const { return wrapperType == wrapperType_Standalone; }
 
@@ -102,6 +112,8 @@ private:
         bool on = false;
     };
     std::array<Voice, gg::Program::kMaxVoices> voices;
+    std::array<uint16_t, kMaxScenes> soloMask {};   // DRAG renders: which voices sound (all of them normally)
+    double offlineBpm = 0;                          // DRAG renders: the tempo, whatever the clock says
     int lastSceneIdx = -1;
 
     juce::dsp::StateVariableTPTFilter<float> lowpass;

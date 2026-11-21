@@ -36,6 +36,8 @@ public:
     const std::vector<ExprError>& getErrors() const { return errors; }
     int numVoices() const { return (int) voices.size(); }
     const std::string& voiceLabel (int i) const { return voiceLabels[(size_t) i]; }
+    // the name a voice goes by: its label, or what an edited voice was ({..., kick} and old edit1 lines are "kick")
+    const std::string& voiceName (int i) const { static const std::string none; return i >= 0 && i < (int) voiceNames.size() ? voiceNames[(size_t) i] : none; }
     // like the videos: a voice named ...hat... is a hi-hat, snare / clap / rim are noise; everything else is a tone
     int voiceKind (int i) const { return i >= 0 && i < (int) voiceKinds.size() ? voiceKinds[(size_t) i] : 0; }
     static int kindOf (std::string n)
@@ -108,7 +110,7 @@ private:
     std::vector<Node> nodes;
     std::vector<Def> defs;
     std::vector<int> voices;
-    std::vector<std::string> voiceLabels;
+    std::vector<std::string> voiceLabels, voiceNames;
     std::vector<int> voiceKinds;
     std::vector<std::string> voiceSrc;
     std::vector<ExprError> errors;
@@ -689,6 +691,7 @@ inline std::unique_ptr<Program> Program::compile (const std::string& text)
                     if (! found) break;
                 }
                 p.voiceKinds.push_back (kindOf (base));
+                p.voiceNames.push_back (base);
             }
             p.voiceSrc.push_back (srcText);
         } while (list && ps.accept (","));
@@ -697,7 +700,7 @@ inline std::unique_ptr<Program> Program::compile (const std::string& text)
         if (! ps.err.empty()) p.errors.push_back ({ yl.line, ps.err });
     }
     std::sort (p.errors.begin(), p.errors.end(), [] (const ExprError& a, const ExprError& b) { return a.line < b.line; });
-    if (! p.ok()) { p.voices.clear(); p.voiceLabels.clear(); p.voiceKinds.clear(); p.voiceSrc.clear(); }
+    if (! p.ok()) { p.voices.clear(); p.voiceLabels.clear(); p.voiceNames.clear(); p.voiceKinds.clear(); p.voiceSrc.clear(); }
     p.cache.assign (p.defs.size(), 0.0);
     p.stamps.assign (p.defs.size(), 0u);
     p.cacheStamp = 0;
