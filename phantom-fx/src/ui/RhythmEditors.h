@@ -299,6 +299,8 @@ public:
     void paint (juce::Graphics& g) override
     {
         auto* f = fx(); const int held = f ? f->uiHeld.load() : -1; const float env = f ? f->uiEnv.load() : 0.0f, prog = f ? f->uiProgress.load() : 0.0f;
+        const bool fol = following();
+        if (fol) g.beginTransparencyLayer (0.32f);   // FOLLOW GHOST BREAK: the pads rest (greyed, as every control that does nothing)
         for (int i = 0; i < hauntdata::kPads; ++i)
         {
             auto r = padRect (i).reduced (4); const auto d = f ? f->pad (i) : hauntdata::factory (i); const auto c = T (juce::Colour (hauntdata::typeColour (d.type))); const bool down = held == i;
@@ -310,7 +312,17 @@ public:
             g.setColour (col::dim.get()); g.setFont (font (10.0f)); g.drawText (hauntdata::sizeNames()[d.size], r.withTrimmedTop (r.getHeight() * 0.55f), juce::Justification::centred);
             g.setColour (col::white.withAlpha (0.25f)); g.setFont (font (9.0f)); g.drawText (juce::String (i + 1), r.reduced (7, 5), juce::Justification::topLeft);
         }
-        const auto acc = accentOf (uHaunt); g.setColour (acc); g.setFont (font (10.0f));
+        if (fol) g.endTransparencyLayer();
+        const auto acc = accentOf (uHaunt);
+        if (fol)
+        {   // what is being followed, over the resting pads
+            const float sh = f ? f->uiShift.load() : -1.0f; const int bay = (int) std::lround (proc.apvts.getRawParameterValue (PhantomProcessor::pid (uHaunt, "fbay"))->load());
+            const juce::String bayName = juce::String ("BAY ") + juce::String::charToString ((juce::juce_wchar) ('A' + juce::jlimit (0, 3, bay)));
+            const juce::String line = sh < 0.0f ? "FOLLOWING GHOST BREAK " + bayName + "\nno Ghost Break playing in this project yet"
+                                                : "FOLLOWING GHOST BREAK " + bayName + "\nNUDGE moves the sound " + juce::String (sh, 3) + " beats earlier";
+            g.setColour (acc); g.setFont (font (15.0f)); g.drawFittedText (line, pads.reduced (12), juce::Justification::centred, 3);
+        }
+        g.setColour (acc); g.setFont (font (10.0f));
         g.drawText ("PAD " + juce::String (selected + 1) + " TYPE", type.getBounds().translated (0, -16).withHeight (14), juce::Justification::centredLeft);
         g.drawText ("SIZE", size.getBounds().translated (0, -16).withHeight (14), juce::Justification::centredLeft);
         g.drawText ("MOTION", motion.getBounds().translated (0, -16).withHeight (14), juce::Justification::centredLeft);
@@ -318,8 +330,10 @@ public:
         g.drawFittedText ("hold a pad to play it, and slide across the pads to move between them (LATCH: click on / off). MIDI notes 48-63 play pads 1-16. Right-click: edit a pad without playing it.", info, juce::Justification::topLeft, 6, 0.9f);
     }
     int padAt (juce::Point<float> p) const { for (int i = 0; i < hauntdata::kPads; ++i) if (padRect (i).contains (p)) return i; return -1; }
+    bool following() const { auto* a = proc.apvts.getRawParameterValue (PhantomProcessor::pid (uHaunt, "follow")); return a != nullptr && a->load() >= 0.5f; }
     void mouseDown (const juce::MouseEvent& e) override
     {
+        if (following()) return;   // the pads rest while FOLLOW GHOST BREAK is on
         const int i = padAt (e.position); if (i < 0) return; select (i);
         if (e.mods.isPopupMenu()) return;
         if (auto* f = fx())
@@ -332,7 +346,7 @@ public:
     // the pad under the mouse plays (LATCH: becomes the latched one); off the pads, the last one keeps playing until the button is let go
     void mouseDrag (const juce::MouseEvent& e) override
     {
-        if (e.mods.isPopupMenu()) return;
+        if (e.mods.isPopupMenu() || following()) return;
         const int i = padAt (e.position); if (i < 0 || i == selected) return;
         select (i); if (auto* f = fx()) f->uiPad.store (i);
     }
@@ -340,7 +354,13 @@ public:
     { const bool latch = proc.apvts.getRawParameterValue (PhantomProcessor::pid (uHaunt, "latch"))->load() >= 0.5f; if (! latch) if (auto* f = fx()) f->uiPad.store (-1); }
 private:
     template <typename Fn> void edit (Fn fn) { if (loading) return; if (auto* f = fx()) { auto d = f->pad (selected); fn (d); f->setPad (selected, d); proc.setUnitData (uHaunt, f->getData()); } repaint(); }
-    void timerCallback() override { repaint (pads); }
+    void timerCallback() override
+    {
+        const bool fol = following();
+        for (auto* c : std::initializer_list<juce::Component*> { &type, &size, &motion }) if ((c->getAlpha() < 0.99f) != fol) c->setAlpha (fol ? 0.32f : 1.0f);
+        if (fol != wasFol) { wasFol = fol; repaint(); } else repaint (pads);
+    }
+    bool wasFol = false;
     PhantomProcessor& proc; juce::ComboBox type, size; juce::Slider motion; int selected = 0; bool loading = false; juce::Rectangle<int> pads, info;
 };
 

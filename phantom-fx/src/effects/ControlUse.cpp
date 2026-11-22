@@ -86,6 +86,13 @@ namespace
                 break;
             }
             case uWarp: if (id == "formant" && idx (v, "mode") == 1) return "TAPE MODE BENDS TIME AND PITCH TOGETHER"; break;
+            case uHaunt:
+            {   // FOLLOW GHOST BREAK: the pads rest while the stutter follows Ghost Break's NUDGE
+                static const Ids pads { "pad", "sync", "latch", "motion", "ptype", "psize" };
+                if (in (pads, id) && onOf (v, "follow")) return "FOLLOW GHOST BREAK IS ON: GHOST BREAK'S NUDGE MOVES THE SOUND, NOT THE PADS";
+                if (id == "fbay" && ! onOf (v, "follow")) return "FOLLOW GHOST BREAK IS OFF";
+                break;
+            }
             case uCrackle:
             {
                 const int bands = idx (v, "bands") + 1;
@@ -174,6 +181,7 @@ std::vector<std::string> controlRuleIds (int u)
         { uFilter, { "type", "reso", "poles", "routing", "spread", "lforate", "lfosync", "lfodiv" } },
         { uGate, { "pmode", "trig", "pdepth", "pshape", "plen", "prel", "patk", "phold", "pthr", "ponly", "plook", "tthr", "tsens", "length", "smooth", "time", "swing" } },
         { uWarp, { "mode", "formant" } },
+        { uHaunt, { "pad", "sync", "latch", "motion", "ptype", "psize", "follow", "fbay" } },
         { uCrackle, { "bands", "xlo", "xhi", "b2_drive", "b3_drive", "box", "boxmix" } },
         { uRetro, { "noise_on", "noise", "ntype", "ntone", "nfollow", "wobble_on", "wobble", "flutter", "dist_on", "dist", "dtype", "digi_on", "digi", "space_on", "space", "mag_on", "mag", "bias", "speed" } },
         { uFatten, { "mode", "punch" } },

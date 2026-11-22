@@ -121,6 +121,9 @@ public:
     // up to a whole host sample and reports that, so the rack compensates the dry path and parallel lanes exactly. It may change only in
     // prepare() or when a latency-changing choice parameter changes (the rack re-asks after such changes).
     virtual int getLatencySamples() const = 0;
+    // true when the latency this module would report now differs from what it reported last (message thread: the processor's timer
+    // asks while the host is stopped, and re-reads the latency through a topology refresh). Only HAUNT EDIT's FOLLOW GHOST BREAK.
+    virtual bool latencyStale() const { return false; }
 
     virtual StereoMode stereoMode() const { return StereoMode::TrueStereo; }
     virtual bool isNonlinear() const { return false; }     // nonlinear modules get the global oversampling policy; linear ones skip it

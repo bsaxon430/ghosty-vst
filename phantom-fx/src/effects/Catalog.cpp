@@ -80,7 +80,9 @@ std::vector<ParamSpec> unitParams (int u, bool withEngineMenu)
         case uHaunt:
             v = { P::integer ("pad", "Pad", 0, 16, 0), P::toggle ("sync", "Sync Start", true), P::toggle ("latch", "Latch", false), P::pct ("motion", "Motion", 0.5f),
                   P::choice ("ptype", "Pad Type", { "STUTTER", "BUILD", "GATE", "GLITCH", "REVERSE", "TAPE STOP", "LP SWEEP", "HP SWEEP", "CRUSH", "PITCH DROP" }, 0),
-                  P::choice ("psize", "Pad Size", { "1/64", "1/32", "1/16T", "1/16", "1/8T", "1/8", "1/4T", "1/4", "1/2", "1 BAR", "2 BARS" }, 7) }; break;
+                  P::choice ("psize", "Pad Size", { "1/64", "1/32", "1/16T", "1/16", "1/8T", "1/8", "1/4T", "1/4", "1/2", "1 BAR", "2 BARS" }, 7),
+                  // FOLLOW GHOST BREAK (0.1.26): the stutter moves this audio by the NUDGE of one of Ghost Break's bays (rhythm/NudgeLink.h)
+                  P::toggle ("follow", "Follow Ghost Break", false), P::choice ("fbay", "Follow Bay", { "BAY A", "BAY B", "BAY C", "BAY D" }, 0) }; break;
         case uWarp:
             v = { P::choice ("mode", "Mode", { "PITCH", "TAPE" }, 0), P::pct ("amount", "Amount", 1.0f), P::choice ("length", "Length", lengths(), 1),
                   P::choice ("range", "Range", { "+-2 ST", "+-7 ST", "+-12 ST", "+-24 ST" }, 2), P::toggle ("formant", "Keep Formants", false) }; break;

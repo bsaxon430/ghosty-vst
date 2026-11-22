@@ -77,7 +77,7 @@ public:
         }
         laneUsed[0] = true;
         int maxLat = 0; for (int k = 0; k < kLanes; ++k) if (laneUsed[(size_t) k]) maxLat = juce::jmax (maxLat, laneLat[(size_t) k]);
-        for (int k = 0; k < kLanes; ++k) laneDelay[(size_t) k].setDelay (laneUsed[(size_t) k] ? maxLat - laneLat[(size_t) k] : 0);
+        for (int k = 0; k < kLanes; ++k) { laneDelay[(size_t) k].ensure (maxLat); laneDelay[(size_t) k].setDelay (laneUsed[(size_t) k] ? maxLat - laneLat[(size_t) k] : 0); }
         // SPATIAL: each unit's wet joins at the end of the chain (before the limiter), so it waits for the rest of its lane + the lane's alignment
         const bool wasSpatial = spatialActive;
         spatialActive = spatialRequested.load() && channels == 2 && spatial.ready();
@@ -94,7 +94,7 @@ public:
             if (! wasSpatial) spatial.reset();
         }
         total = maxLat + (spatialActive ? spatial.latency() : 0) + slots[(size_t) uLim]->getLatencySamples();
-        dryDelay.setDelay (total);
+        dryDelay.ensure (total); dryDelay.setDelay (total);
     }
     int getLatencySamples() const noexcept { return total; }
 

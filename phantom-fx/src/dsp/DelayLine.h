@@ -40,6 +40,9 @@ public:
         buf.setSize (numChannels, juce::jmax (1, maxSamples + 1)); buf.clear(); w = 0; len = 0;
     }
     void reset() noexcept { buf.clear(); w = 0; }
+    // room for at least maxSamples (message thread, no block running: it re-allocates and clears when it must grow). A delay set past
+    // the room would be cut short; FOLLOW GHOST BREAK's look-ahead can be seconds long, past the 1 << 16 most paths start with
+    void ensure (int maxSamples) { if (buf.getNumSamples() < maxSamples + 1) { const int d = len; prepare (maxSamples, juce::jmax (1, buf.getNumChannels())); len = d; } }
     void setDelay (int samples) noexcept { len = juce::jlimit (0, buf.getNumSamples() - 1, samples); }
     int delay() const noexcept { return len; }
     void process (juce::dsp::AudioBlock<float> block) noexcept

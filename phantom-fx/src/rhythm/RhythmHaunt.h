@@ -6,6 +6,7 @@
 #pragma once
 #include "RhythmCore.h"
 #include "../effects/ColourSst.h"
+#include "NudgeLink.h"
 
 namespace phantom
 {
@@ -61,12 +62,39 @@ public:
     // test hook: the absolute sample (since reset) at which the playing gesture's slice grid starts, and the sample the pad went down
     long long debugOrigin = -1, debugPress = -1;
 
+    // ---- FOLLOW GHOST BREAK (0.1.26). Ghost Break's NUDGE moves a bay's slices to a later point of its break: what plays at a step is
+    // what would have played that much later. With FOLLOW on, this audio is moved the same way, by the followed bay's move at each of
+    // Ghost Break's steps (live moves and played-back automation alike: Ghost Break sends what it plays, rhythm/NudgeLink.h).
+    // Playing audio from later means looking ahead: the unit reports a latency as long as the longest move the bay can make (its
+    // break, at the host's tempo) and FL Studio's delay compensation lines everything up. With no move the audio is only delayed.
+    int getLatencySamples() const override { return lat; }
+    bool latencyStale() const override { return follow && wantedLatency() != lat && ! hostPlaying.load (std::memory_order_relaxed); }
+    void updateParameters (const ModulationContext& ctx) override
+    {
+        CatalogEffect::updateParameters (ctx);
+        follow = iFollow >= 0 && iFollow < ctx.numValues && ctx.values[iFollow] >= 0.5f;
+        bayF = iBay >= 0 && iBay < ctx.numValues ? juce::jlimit (0, ghostlink::kBays - 1, (int) std::lround (ctx.values[iBay])) : 0;
+        const int L = follow ? wantedLatency() : 0;
+        if (L > 0 && hist.empty()) hist.resize (kHist);
+        if (L != lat) { lat = L; fD = fOld = L; fXf = 0; }
+    }
+    // the look-ahead the followed bay needs now: its longest move at the host's tempo, plus the crossfade and a margin
+    int wantedLatency() const
+    {
+        const double q = rx.maxShift (bayF); if (! (q > 0) || tape.size() < 4096) return 0;
+        const double spb = sr * 60.0 / juce::jlimit (20.0, 999.0, hostBpm.load (std::memory_order_relaxed));
+        return juce::jlimit (0, tape.size() - 64, (int) std::ceil (q * spb) + fXfLen + 64);
+    }
+    std::atomic<double> hostBpm { 120.0 }; std::atomic<bool> hostPlaying { false };   // what the host said at the last block (audio thread)
+    std::atomic<float> uiShift { -1.0f };   // the move playing now, in quarter notes (-1: not following / no Ghost Break)
+
 protected:
     void prepareEffect (double sampleRate, int, int) override
     {
         declick = (float) std::exp (-1.0 / (0.003 * sampleRate)); lastL = lastR = offL = offR = 0.0f; jump = false;
-        iPad = id ("pad"); iSync = id ("sync"); iLatch = id ("latch"); iMotion = id ("motion");
+        iPad = id ("pad"); iSync = id ("sync"); iLatch = id ("latch"); iMotion = id ("motion"); iFollow = id ("follow"); iBay = id ("fbay");
         tape.prepare ((int) (sampleRate * 12.0)); head.prepare (sampleRate); setEnvTimes();
+        fXfLen = juce::jmax (16, (int) (0.0015 * sampleRate));   // Ghost Break's own slice fade
         resetEffect();
     }
     void resetEffect() override
@@ -74,6 +102,7 @@ protected:
         tape.clear(); head.reset(); held = gPad = -1; midiPad = -1; latched = -1; o = 0; tapeD = 0; absPos = 0; envV = 0; gateV = 1; lastParamPad = 0;
         for (auto& f : svf) f = {};
         debugOrigin = debugPress = -1;
+        fD = fOld = lat; fXf = 0; hTotal = 0; hCur = 0; wasFollow = false;
     }
     void process (juce::dsp::AudioBlock<float> block, const ModulationContext& ctx) noexcept override
     {
@@ -82,6 +111,17 @@ protected:
         const int n = (int) block.getNumSamples(), nch = juce::jmin (2, (int) block.getNumChannels());
         float* L = block.getChannelPointer (0); float* R = nch > 1 ? block.getChannelPointer (1) : L;
         rhythm::HostClock clk; clk.set (ctx.tempo);
+        // FOLLOW GHOST BREAK: the pads rest (their controls grey out). While the look-ahead is still set (just switched off, before the
+        // message thread has taken it away) the audio stays delayed by it, so the slot's latency-matched dry keeps lining up
+        const bool fol = iFollow >= 0 && on (iFollow);
+        if (fol || lat > 0)
+        {
+            if (! wasFollow) { held = gPad = midiPad = latched = -1; paramWant = -1; head.reset(); envV = 0; jump = false; offL = offR = 0; wasFollow = true; }
+            followBlock (L, R, n, nch, ctx.tempo, fol);
+            uiHeld.store (-1, std::memory_order_relaxed); uiEnv.store (0, std::memory_order_relaxed); uiProgress.store (0, std::memory_order_relaxed);
+            return;
+        }
+        if (wasFollow) { wasFollow = false; uiShift.store (-1.0f, std::memory_order_relaxed); lastParamPad = choice (iPad); }   // a PAD value left over does not fire on the way back
         const bool latch = on (iLatch);
         // the PAD parameter (automation): 1..16 holds that pad, 0 releases it
         const int paramPad = choice (iPad);
@@ -128,6 +168,44 @@ protected:
     }
 
 private:
+    void followBlock (float* L, float* R, int n, int nch, const TempoInfo& t, bool fol) noexcept
+    {
+        hostBpm.store (t.bpm, std::memory_order_relaxed); hostPlaying.store (t.playing, std::memory_order_relaxed);
+        if (! hist.empty()) { hist[(size_t) (hTotal % kHist)] = { absPos, t.ppqPosition, t.samplesPerBeat(), t.playing }; ++hTotal; }
+        const ghostlink::Writer* src = fol ? rx.source() : nullptr; const int bay = juce::jlimit (0, ghostlink::kBays - 1, choice (iBay));
+        double shown = -1.0;
+        for (int i = 0; i < n; ++i)
+        {
+            tape.write (L[i], nch > 1 ? R[i] : L[i]);
+            if (lat <= 0) { ++absPos; continue; }   // no Ghost Break heard yet: nothing to look ahead for, the audio passes
+            // the input sample leaving now (lat samples ago) and where the host was then; the bay's move at that point
+            double Dt = lat;
+            if (src != nullptr && ! hist.empty())
+            {
+                const long long a = absPos - lat;
+                if (hCur < hTotal - kHist) hCur = hTotal - kHist;
+                while (hCur + 1 < hTotal && hist[(size_t) ((hCur + 1) % kHist)].abs <= a) ++hCur;
+                const Rec& r = hist[(size_t) (hCur % kHist)];
+                if (hCur < hTotal && r.abs <= a && r.play && r.spb > 0)
+                {
+                    double sh = 0;
+                    if (ghostlink::Receiver::shiftAt (src, bay, r.ppq + (double) (a - r.abs) / r.spb, sh)) { Dt = juce::jlimit (0.0, (double) lat, lat - sh * r.spb); shown = sh; }
+                }
+            }
+            // a new move lands on its step through Ghost Break's own 1.5 ms slice fade (raised cosine from the old read point)
+            if (std::abs (Dt - fD) > 0.5) { fOld = fXf > 0 ? fOld : fD; fD = Dt; fXf = fXfLen; }
+            float yl = tape.read (0, fD), yr = nch > 1 ? tape.read (1, fD) : yl;
+            if (fXf > 0)
+            {
+                const float w = 0.5f - 0.5f * std::cos ((float) rhythm::kPi * (float) (fXfLen - fXf) / (float) fXfLen);
+                yl = yl * w + tape.read (0, fOld) * (1.0f - w); if (nch > 1) yr = yr * w + tape.read (1, fOld) * (1.0f - w);
+                if (--fXf == 0) fOld = fD;
+            }
+            L[i] = yl; if (nch > 1) R[i] = yr;
+            ++absPos;
+        }
+        uiShift.store (src != nullptr ? (float) juce::jmax (0.0, shown) : -1.0f, std::memory_order_relaxed);
+    }
     void start (int padIndex, const rhythm::HostClock& clk, int i, const TempoInfo& t)
     {
         using namespace hauntdata;
@@ -197,7 +275,13 @@ private:
     Pads model;   // message thread
     rhythm::Published<Pads> published;
     rhythm::TapeBuffer tape; rhythm::TimeHead head; std::array<Svf, 2> svf;
-    hauntdata::Pad def; int iPad = 0, iSync = 1, iLatch = 2, iMotion = 3;
+    hauntdata::Pad def; int iPad = 0, iSync = 1, iLatch = 2, iMotion = 3, iFollow = -1, iBay = -1;
+    // FOLLOW GHOST BREAK: the look-ahead (set on the message thread under the callback lock), the read point and its crossfade, and
+    // a record of where the host was at each block start (to find the host position of the sample leaving the look-ahead)
+    struct Rec { long long abs = 0; double ppq = 0, spb = 0; bool play = false; };
+    static constexpr long long kHist = 32768;
+    ghostlink::Receiver rx; std::vector<Rec> hist; long long hTotal = 0, hCur = 0;
+    int lat = 0, bayF = 0, fXf = 0, fXfLen = 72; double fD = 0, fOld = 0; bool follow = false, wasFollow = false;
     int held = -1, gPad = -1, midiPad = -1, latched = -1, paramWant = -1, lastParamPad = 0, holdC = 0;
     double o = 0, tapeD = 0, sliceLen = 24000; long long absPos = 0; uint32_t seed = 1, starts = 0;
     float envV = 0, gateV = 1, hl = 0, hr = 0, envUp = 0.02f, envDown = 0.004f;

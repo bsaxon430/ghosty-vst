@@ -62,7 +62,7 @@ public:
         const int hostLat = (procLat + currentFactor - 1) / currentFactor;             // whole host samples
         padDelay.setDelay (hostLat * currentFactor - procLat);
         latency = hostLat;
-        dryDelay.setDelay (latency);
+        dryDelay.ensure (latency); dryDelay.setDelay (latency);
     }
     int getLatencySamples() const noexcept { return latency; }
 

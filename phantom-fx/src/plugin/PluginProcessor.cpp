@@ -177,6 +177,7 @@ void PhantomProcessor::reset() { rack.reset(); globalDry.reset(); if (tpOs) tpOs
 void PhantomProcessor::refreshLatency()
 {
     const int total = rack.getLatencySamples();
+    if (total > globalDry.delay()) { const juce::ScopedLock sl (getCallbackLock()); globalDry.ensure (total); }   // (grows only: FOLLOW GHOST BREAK)
     globalDry.setDelay (total);
     if (total != reportedLatency.exchange (total)) setLatencySamples (total);
 }
@@ -523,6 +524,9 @@ void PhantomProcessor::timerCallback()
     // SPATIAL: merge what the audio thread recorded; switching SPATIAL on / off changes the latency, so it goes through the topology fade
     drainSpatial();
     if (! spatialSwitchPending && (pSpOn->load() >= 0.5f) != rack.isSpatialActive() && getTotalNumOutputChannels() == 2 && rack.spatial.ready()) { spatialSwitchPending = true; rack.requestTopology (rack.topology()); }
+    // HAUNT EDIT's FOLLOW GHOST BREAK: the look-ahead it needs follows Ghost Break's break length and the tempo; while the host is
+    // stopped a new length is taken up (FL Studio lines the track up again), never mid-song
+    for (int u = 0; u < rack.numSlots(); ++u) if (rack.slot (u).fx().latencyStale()) { topologyDirty = true; triggerAsyncUpdate(); break; }
     // scene requests from MIDI / the scene parameter
     { const int r = midiSceneRequest.exchange (-1); if (r >= 0) recallScene (r); }
     if (quantisedFire.exchange (0) == 1 && quantisePending >= 0) { const int i = quantisePending; quantisePending = -1; recallScene (i); }

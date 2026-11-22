@@ -4,6 +4,7 @@
 // no clicks while dragging; the page fits at 1200 x 760 with nothing overlapping; SPATIAL's own CPU with 4, 8 and all tiles placed.
 #include "../src/spatial/SteamVoice.h"
 #include "../src/engines/Engines.h"
+#include "../src/rhythm/NudgeLink.h"
 namespace spatialtest
 {
 using namespace phantom;
@@ -346,9 +347,65 @@ static void engineSwitchChecks()
     }
 }
 
+// HAUNT EDIT's FOLLOW GHOST BREAK (0.1.26): a stand-in Ghost Break in this process sends BAY A's move at every step; each click of the
+// input must come out moved earlier by exactly that move, against the latency the plugin reports (FL Studio lines that up)
+static void followChecks()
+{
+    const double sr = 48000.0, bpm = 120.0, spb = sr * 60.0 / bpm; const int bs = 256;
+    const double maxQN = 127.0 / 16.0;   // a 32-slice break, less a 64th
+    auto shiftOf = [] (long long step) { return step < 64 ? 0.25 : 0.75; };   // a NUDGE move at step 64 (ppq 16)
+    auto run = [&] (bool withGb, bool follow, int& lat, int& hauntLat, int& good, int& bad, juce::String& info)
+    {
+        auto gb = withGb ? std::make_unique<ghostlink::Sender>() : nullptr;
+        auto beat = [&] { if (gb) { gb->beat (true, 1.0); for (int b = 0; b < ghostlink::kBays; ++b) gb->setMaxShift (b, maxQN); } };
+        beat();
+        PhantomProcessor p; TestHead head; head.bpm = bpm; head.ppq = 0; p.setPlayHead (&head);
+        setP (p, PhantomProcessor::pid (uHaunt, "on"), 1.0f); setP (p, PhantomProcessor::pid (uHaunt, "follow"), follow ? 1.0f : 0.0f);
+        setP (p, PhantomProcessor::pid (uLim, "on"), 0.0f);   // the clicks are measured to the sample: nothing else in the chain
+        p.prepareToPlay (sr, bs); p.flushUpdates();
+        lat = p.getLatencySamples(); hauntLat = p.rack.slot (uHaunt).getLatencySamples();
+        const int total = (int) (24 * sr); juce::AudioBuffer<float> in (2, total), out (2, total); in.clear();
+        for (int k = 0; k * 24000 + 3000 < total; ++k) for (int c = 0; c < 2; ++c) in.setSample (c, k * 24000 + 3000, 0.001f * (float) (k + 1));
+        juce::MidiBuffer m; long long sent = 0;
+        for (int o = 0; o < total; o += bs)
+        {
+            beat();
+            if (gb) for (; sent * 0.25 < head.ppq + bs / spb; ++sent) gb->step (0, sent, sent * 0.25, shiftOf (sent));
+            juce::AudioBuffer<float> b (2, bs); for (int c = 0; c < 2; ++c) b.copyFrom (c, 0, in, c, o, bs);
+            p.processBlock (b, m); for (int c = 0; c < 2; ++c) out.copyFrom (c, o, b, c, 0, bs);
+            head.ppq += bs / spb;
+        }
+        good = bad = 0;
+        for (int t = 0; t < total; ++t)
+        {
+            const float v = out.getSample (0, t); if (std::abs (v) < 0.0005f) continue;
+            const int k = (int) std::lround (v / 0.001f) - 1; if (k < 0 || std::abs (v - 0.001f * (float) (k + 1)) > 1.0e-5f) continue;   // a click caught in a 1.5 ms move fade
+            const long long x = 3000 + (long long) k * 24000, a = t - (lat - hauntLat) - hauntLat;   // the input sample leaving the look-ahead
+            const double sh = (follow && withGb && a >= 0) ? shiftOf ((long long) std::floor (a / spb * 4.0)) : 0.0;
+            const long long want = x + lat - (long long) std::llround (sh * spb);
+            if (std::llabs (t - want) <= 1) ++good; else { ++bad; if (bad <= 3) info << "click " << k << " at " << t << " (want " << want << "); "; }
+        }
+    };
+    {
+        int lat, hl, good, bad; juce::String info; run (true, true, lat, hl, good, bad, info);
+        const int want = (int) std::ceil (maxQN * spb) + juce::jmax (16, (int) (0.0015 * sr)) + 64;
+        report (hl == want && lat >= hl, "FOLLOW GHOST BREAK: the look-ahead is the bay's longest move at the tempo", "HAUNT EDIT " + juce::String (hl) + " samples (want " + juce::String (want) + "), plugin " + juce::String (lat));
+        report (bad == 0 && good >= 30, "FOLLOW GHOST BREAK: each click comes out moved earlier by the bay's NUDGE, before and after a move",
+                juce::String (good) + " clicks in place, " + juce::String (bad) + " not; " + info);
+    }
+    {
+        int lat, hl, good, bad; juce::String info; run (false, true, lat, hl, good, bad, info);
+        report (hl == 0 && bad == 0 && good >= 40, "FOLLOW GHOST BREAK with no Ghost Break: no look-ahead, the sound passes in time", "HAUNT EDIT " + juce::String (hl) + " samples; " + juce::String (good) + " clicks in place, " + juce::String (bad) + " not; " + info);
+    }
+    {
+        int lat, hl, good, bad; juce::String info; run (true, false, lat, hl, good, bad, info);
+        report (hl == 0 && bad == 0 && good >= 40, "FOLLOW GHOST BREAK off: no look-ahead even with Ghost Break playing", "HAUNT EDIT " + juce::String (hl) + " samples; " + juce::String (good) + " in place, " + juce::String (bad) + " not");
+    }
+}
+
 static void run (bool withCpu)
 {
-    rateChecks(); bitExactChecks(); imageChecks(); clickChecks(); automationChecks(); automationStateChecks(); layoutChecks(); engineSwitchChecks();
+    rateChecks(); bitExactChecks(); imageChecks(); clickChecks(); automationChecks(); automationStateChecks(); layoutChecks(); engineSwitchChecks(); followChecks();
     if (withCpu) cpuChecks();
 }
 } // namespace spatialtest

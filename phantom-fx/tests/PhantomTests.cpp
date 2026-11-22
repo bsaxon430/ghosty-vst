@@ -457,16 +457,20 @@ static void checkTable (const char* name, std::function<std::unique_ptr<PhantomE
 #include "EngineTests.inc"
 
 // ---------------------------------------------------------------- rack checks
+// the CPU time this thread has used, in seconds (2026-11-21: the budget counts the plugin's own work. A stopwatch also counted
+// whatever else the Mac was doing: 0.1.25 measured 36 %, the same code 45-47 % while macOS's photo analysis and Spotlight ran)
+static double threadCpuSeconds() { timespec ts {}; clock_gettime (CLOCK_THREAD_CPUTIME_ID, &ts); return (double) ts.tv_sec + ts.tv_nsec * 1.0e-9; }
 static void cpuCheck()
 {
     // every one of the 24 units switched on at its defaults (the brief's case), plus the all-off rack for reference
     double offPct = 0.0;
-    { PhantomProcessor p; p.prepareToPlay (48000.0, 256); auto buf = noise (256, 0.5f); juce::MidiBuffer m; const auto t0 = std::chrono::steady_clock::now(); for (int i = 0; i < 1000; ++i) p.processBlock (buf, m);
-      offPct = 100.0 * std::chrono::duration<double> (std::chrono::steady_clock::now() - t0).count() / (1000 * 256.0 / 48000.0); }
+    { PhantomProcessor p; p.prepareToPlay (48000.0, 256); auto buf = noise (256, 0.5f); juce::MidiBuffer m; const double c0 = threadCpuSeconds(); for (int i = 0; i < 1000; ++i) p.processBlock (buf, m);
+      offPct = 100.0 * (threadCpuSeconds() - c0) / (1000 * 256.0 / 48000.0); }
     { PhantomProcessor p; for (auto* q : p.getParameters()) if (auto* rp = dynamic_cast<juce::RangedAudioParameter*> (q)) for (int u = 0; u < kNumUnits; ++u) if (rp->getParameterID() == juce::String ("fx_") + unitDef (u).key + "_on") q->setValueNotifyingHost (1.0f);
       p.prepareToPlay (48000.0, 256); auto buf = noise (256, 0.5f); juce::MidiBuffer m; const int blocks = 4000;
-      const auto t0 = std::chrono::steady_clock::now(); for (int i = 0; i < blocks; ++i) p.processBlock (buf, m);
-      const double s = std::chrono::duration<double> (std::chrono::steady_clock::now() - t0).count(), audio = blocks * 256.0 / 48000.0, pct = 100.0 * s / audio;
+      const auto t0 = std::chrono::steady_clock::now(); const double c0 = threadCpuSeconds(); for (int i = 0; i < blocks; ++i) p.processBlock (buf, m);
+      const double s = threadCpuSeconds() - c0, wall = std::chrono::duration<double> (std::chrono::steady_clock::now() - t0).count(), audio = blocks * 256.0 / 48000.0, pct = 100.0 * s / audio;
+      std::printf ("INFO rack CPU: %.2f %% of one core by the plugin's own thread, %.2f %% by the wall clock\n", pct, 100.0 * wall / audio);
       int onCount = 0; for (int u = 0; u < p.rack.numSlots(); ++u) if (p.rack.slot (u).isEnabled()) ++onCount;
       report (pct < 40.0, "rack CPU budget", juce::String (pct, 2) + " % of one core with " + juce::String (onCount) + " of " + juce::String (p.rack.numSlots()) + " units on (limit 40, Brandon 2026-11-09, DECISIONS.md 28); all off: " + juce::String (offPct, 2) + " %"); }
 }
@@ -546,14 +550,16 @@ static void eqChecks()
 static void rackChecks()
 {
     // state round trip is bit-exact
-    // (0.1.13: the ENGINE menus draw from their own random stream, so every other control keeps the values this check has always used)
+    // (0.1.13: the ENGINE menus draw from their own random stream, so every other control keeps the values this check has always used;
+    //  0.1.26: FOLLOW GHOST BREAK's two controls too)
     { PhantomProcessor a; a.prepareToPlay (48000.0, 256); std::mt19937 rng (99), rngEngine (199); std::uniform_real_distribution<float> d (0.0f, 1.0f);
       for (auto* p : a.getParameters()) if (auto* rp = dynamic_cast<juce::RangedAudioParameter*> (p))
-      { auto& g = rp->getParameterID().endsWith ("_engine") ? rngEngine : rng; rp->setValueNotifyingHost (p->isDiscrete() || p->isBoolean() ? std::round (d (g)) : d (g)); }
+      { const auto pidS = rp->getParameterID(); auto& g = pidS.endsWith ("_engine") || pidS.endsWith ("_follow") || pidS.endsWith ("_fbay") ? rngEngine : rng; rp->setValueNotifyingHost (p->isDiscrete() || p->isBoolean() ? std::round (d (g)) : d (g)); }
       juce::MemoryBlock mb; a.getStateInformation (mb);
       PhantomProcessor b; b.prepareToPlay (48000.0, 256); b.setStateInformation (mb.getData(), (int) mb.getSize());
       bool same = true; int n = 0; juce::String diff; for (int i = 0; i < a.getParameters().size(); ++i) { const float x = a.getParameters()[i]->getValue(), y = b.getParameters()[i]->getValue(); if (std::abs (x - y) > 2.0e-7f) { /* a skewed range may land one float ulp off after the text round trip; the saved bytes below must still be identical */ same = false; diff += a.getParameters()[i]->getName (32) + " " + juce::String (x, 9) + "/" + juce::String (y, 9) + "; "; } ++n; }
       juce::MemoryBlock mb2; b.getStateInformation (mb2); const bool bytesSame = mb == mb2;
+      if (! bytesSame) { juce::File ("/tmp/pfx-state-a.bin").replaceWithData (mb.getData(), mb.getSize()); juce::File ("/tmp/pfx-state-b.bin").replaceWithData (mb2.getData(), mb2.getSize()); }
       report (same && bytesSame, "rack state round trip", juce::String (n) + " parameters compared bit-exact: " + (same ? "yes" : "NO " + diff) + "; saved state bytes identical after reload: " + (bytesSame ? "yes" : "NO")); }
     // sample-rate / buffer-size changes: no crash, finite output, latency reported
     { PhantomProcessor p; bool ok = true; juce::String nums;
@@ -823,6 +829,8 @@ int main (int argc, char** argv)
     if (argc >= 2 && juce::String (argv[1]) == "spatial") { spatialtest::run (true); std::printf ("%d passed, %d failed\n", passes, failures); return failures; }
     if (argc >= 2 && juce::String (argv[1]) == "spatialdbg") { spatialtest::debug (argc >= 3 ? juce::String (argv[2]).getIntValue() : -1); return 0; }
     if (argc >= 3 && juce::String (argv[1]) == "spatialdemo") return spatialtest::demo (juce::File::getCurrentWorkingDirectory().getChildFile (argv[2]));
+    if (argc >= 2 && juce::String (argv[1]) == "follow") { spatialtest::followChecks(); std::printf ("%d passed, %d failed\n", passes, failures); return failures; }
+    if (argc >= 2 && juce::String (argv[1]) == "rackstate") { rackChecks(); std::printf ("%d passed, %d failed\n", passes, failures); return failures; }
     if (argc >= 2 && juce::String (argv[1]) == "enginepick") { spatialtest::engineSwitchChecks(); std::printf ("%d passed, %d failed\n", passes, failures); return failures; }
     if (argc >= 2 && juce::String (argv[1]) == "spatialcpu") { spatialtest::cpuChecks(); return failures; }
     if (argc >= 2 && juce::String (argv[1]) == "rhythm") { rhythmtest::run(); hauntSlideCheck(); std::printf ("%d passed, %d failed\n", passes, failures); return failures; }
