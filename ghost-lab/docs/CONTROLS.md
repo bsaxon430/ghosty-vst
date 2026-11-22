@@ -1,6 +1,8 @@
 # SPECTRE (build 17): the page Ghost Lab opens on
 
-SPECTRE listens to the sound, finds up to 1,024 of its sine-wave partials, and plays it back from a bank of oscillators, so each partial can be bent on the way out. It is live: in **Ghost Lab FX**, **LIVE ON THIS TRACK** runs the track's own audio through it as FL plays (the plug-in reports SPECTRE's latency, about 32 ms, so FL lines the track up). In **Ghost Lab** (the instrument), **LISTEN** plays your sound round and round through it. **PRINT IT** renders the whole sound through it into the lab's history (UNDO takes it back; printing again replaces the last print). **RESET** puts every control back. Double-click any control for its start value; hold shift while dragging for fine moves.
+SPECTRE listens to the sound, finds up to 1,024 of its sine-wave partials, and plays it back from a bank of oscillators, so each partial can be bent on the way out. It is live: in **Ghost Lab FX**, **LIVE ON THIS TRACK** runs the track's own audio through it as FL plays (the plug-in reports SPECTRE's latency, about 43 ms, so FL lines the track up). In **Ghost Lab** (the instrument), **LISTEN** plays your sound round and round through it. **PRINT IT** renders the whole sound through it into the lab's history (UNDO takes it back; printing again replaces the last print). **RESET** puts every control back. Double-click any control for its start value; hold shift while dragging for fine moves. Every control is also a plug-in parameter ("SPECTRE PHASE" ...), so FL can automate it.
+
+SPECTRE splits the sound three ways: the **partials** (sine waves, which every control bends), the **noise** that is left (breath, hiss, the body of a drum, played back as shaped noise), and the **attacks** (the first few milliseconds of each hit, let through as they were).
 
 | Control | Range | What it does |
 |---|---|---|
@@ -14,6 +16,9 @@ SPECTRE listens to the sound, finds up to 1,024 of its sine-wave partials, and p
 | INF | 0 .. 100% | hold: the higher, the less of each new moment gets in; at the top the sound freezes forever (CLOUD and SMOOTH grey out: nothing moves) |
 | PARTIALS | 16 .. 1024 | how many sine waves rebuild it (the loudest ones are kept) |
 | OUTPUT | -24 .. +12 dB | the level; a safety limiter keeps it under 0 dBFS |
+| NOISE | 0 .. 100% | up: hiss, breath and drums stay noise (a peak must stand clear of its neighbours to count as a sine wave); down: everything becomes sine waves, the glassy, tuned sound |
+| TRANSIENT | 0 .. 100% | lets the first few milliseconds of every hit through as it was, so drums keep their punch (greyed while INF holds everything) |
+| WAVETABLE (the box over the pad) | SINE, SAW, SQUARE, TRIANGLE, PULSE, ORGAN, GLASS, GHOST, FM, or your own | each partial plays this shape instead of a sine wave (band-limited: nothing folds back past Nyquist). The folder, or a WAV dropped on the box, loads your own: a single cycle, or a Serum / Vital wavetable file (its first frame). Saved with the session and with PRINT IT |
 
 # Ghost Lab UNDER THE HOOD: every CDP control, and where it is now
 

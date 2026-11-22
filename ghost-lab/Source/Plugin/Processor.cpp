@@ -16,7 +16,20 @@ juce::AudioProcessor::BusesProperties Processor::buses()
 
 Processor::Processor() : juce::AudioProcessor (buses())
 {
-    { const spectre::Params d; for (int i = 0; i < spectre::kParams; ++i) spectreV[(size_t) i].store (d[i]); }
+    // SPECTRE's controls, as parameters FL can automate (the same travel as the page's controls)
+    for (int i = 0; i < spectre::kParams; ++i)
+    {
+        const auto& in = spectre::param (i);
+        juce::NormalisableRange<float> range (in.lo, in.hi,
+            [i] (float, float, float t) { return spectre::fromNorm (i, t); },
+            [i] (float, float, float v) { return spectre::toNorm (i, v); },
+            [in] (float, float, float v) { return juce::jlimit (in.lo, in.hi, v); });
+        auto* prm = new juce::AudioParameterFloat (juce::ParameterID { juce::String ("spectre_") + in.key, 1 }, juce::String ("SPECTRE ") + in.name, range, in.def,
+            juce::AudioParameterFloatAttributes().withStringFromValueFunction ([i] (float v, int) { return spectre::display (i, v); }));
+        addParameter (prm);
+        spectreP[(size_t) i] = prm;
+        spectreSaved[(size_t) i] = in.def;
+    }
     engine.onChange = [this] { syncPlayer(); refreshState(); };
     terrain.onChange = [this]
     {
@@ -255,16 +268,27 @@ void Processor::setSpaceListening (bool on, AudioPtr base)
 spectre::Params Processor::spectreParams() const
 {
     spectre::Params p;
-    for (int i = 0; i < spectre::kParams; ++i) p.v[(size_t) i] = spectreV[(size_t) i].load (std::memory_order_relaxed);
+    for (int i = 0; i < spectre::kParams; ++i) p.v[(size_t) i] = spectreP[(size_t) i]->get();
     return p;
 }
 
 void Processor::setSpectreParam (int p, float v)
 {
     if (p < 0 || p >= spectre::kParams) return;
-    const auto& in = spectre::param (p);
-    spectreV[(size_t) p].store (juce::jlimit (in.lo, in.hi, v));
-    spectreDirty = true;   // (saved by the timer, not on every drag step)
+    auto* prm = spectreP[(size_t) p];
+    prm->setValueNotifyingHost (prm->convertTo0to1 (juce::jlimit (spectre::param (p).lo, spectre::param (p).hi, v)));
+}
+
+void Processor::beginSpectreGesture (int p) { if (p >= 0 && p < spectre::kParams) spectreP[(size_t) p]->beginChangeGesture(); }
+void Processor::endSpectreGesture (int p) { if (p >= 0 && p < spectre::kParams) spectreP[(size_t) p]->endChangeGesture(); }
+
+void Processor::setSpectreTable (const juce::String& name, const std::vector<float>& cycle)
+{
+    tableName = cycle.empty() ? juce::String ("SINE") : name;
+    tableCycle = cycle;
+    spectreTrack.setTable (tableCycle);
+    spectreLoop.setTable (tableCycle);
+    spectreDirty = true;
 }
 
 void Processor::setSpectreLive (bool on)
@@ -401,7 +425,10 @@ void Processor::timerCallback()
         if (it == exactOwners.end()) break;
         exactOwners.erase (it);   // (the oldest one nobody plays; four are kept, so a block that just picked one up is never left holding a freed one)
     }
-    if (spectreDirty.exchange (false)) refreshState();
+    // SPECTRE: a control moved (by hand or by FL's automation): the saved state follows, a few times a second at most
+    bool moved = spectreDirty.exchange (false);
+    for (int i = 0; i < spectre::kParams; ++i) moved = moved || spectreP[(size_t) i]->get() != spectreSaved[(size_t) i];
+    if (moved) refreshState();
     // a drag's speed fades (the WOBBLE settles when your hand is still)
     if (terrain.motion() > 0.001f || landNow.live.wobble > 0.001f) applyLand();
 }
@@ -421,8 +448,10 @@ void Processor::refreshState()
     t.setProperty ("terrain", juce::JSON::toString (terrain.stateToVar(), true), nullptr);
     {
         auto* o = new juce::DynamicObject();
-        for (int i = 0; i < spectre::kParams; ++i) o->setProperty (spectre::param (i).key, spectreV[(size_t) i].load());
+        for (int i = 0; i < spectre::kParams; ++i) { spectreSaved[(size_t) i] = spectreP[(size_t) i]->get(); o->setProperty (spectre::param (i).key, spectreSaved[(size_t) i]); }
         o->setProperty ("live", spectreOn.load());
+        o->setProperty ("table", tableName);
+        if (! tableCycle.empty()) o->setProperty ("tableData", spectre::tableToText (tableCycle));
         t.setProperty ("spectre", juce::JSON::toString (juce::var (o), true), nullptr);
     }
     juce::MemoryBlock mb;
@@ -454,7 +483,8 @@ void Processor::setStateInformation (const void* data, int size)
             juce::var sv = juce::JSON::parse (t["spectre"].toString());
             const spectre::Params d;
             for (int i = 0; i < spectre::kParams; ++i)
-                spectreV[(size_t) i].store (sv.isObject() && sv.hasProperty (spectre::param (i).key) ? (float) sv[spectre::param (i).key] : d[i]);
+                setSpectreParam (i, sv.isObject() && sv.hasProperty (spectre::param (i).key) ? (float) sv[spectre::param (i).key] : d[i]);
+            setSpectreTable (sv.isObject() ? sv["table"].toString() : juce::String(), sv.isObject() ? spectre::tableFromText (sv["tableData"].toString()) : std::vector<float>());
             if (isFx) setSpectreLive (sv.isObject() && (bool) sv["live"]);
             syncPlayer(); refreshState();
         }

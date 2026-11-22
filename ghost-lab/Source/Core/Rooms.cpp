@@ -23,7 +23,7 @@ static const RoomInfo kRooms[] = {
     { Room::Space, Op::Space, "SPACE", "Put the sound somewhere around your head: left, right, near, far, in a room.",
       "Best in headphones. Works on anything.", "Pertylizer" },
     { Room::Spectre, Op::Spectre, "SPECTRE", "Rebuilds your sound from up to 1,024 sine waves, so you can bend every one of them live.",
-      "Works on anything. Voices, pads, basses and guitars turn to glass; drums turn to tuned metal.", "Ghost Lab's own resynthesis" },
+      "Works on anything: voices, pads, basses, guitars and drums. Turn NOISE down for the glassy, all-sine-wave sound.", "Ghost Lab's own resynthesis" },
 };
 
 const RoomInfo& info (Room r) { return kRooms[juce::jlimit (0, (int) Room::Count - 1, (int) r)]; }
@@ -355,7 +355,7 @@ static RenderResult spectreRender (const Step& s, const Audio& in, const std::at
     RenderResult res;
     spectre::Params p;
     for (int i = 0; i < spectre::kParams; ++i) p.v[(size_t) i] = s.get (spectre::param (i).key);
-    auto out = spectre::renderOffline (in.buf, in.sampleRate, p, cancel);
+    auto out = spectre::renderOffline (in.buf, in.sampleRate, p, spectre::tableFromText (s.data), cancel);   // (Step.data: the WAVETABLE, if any)
     if (out.getNumSamples() < 2) { res.error = "Stopped."; return res; }
     res.audio = asAudio (out, in.sampleRate, in.sampleRate);
     juce::String line;

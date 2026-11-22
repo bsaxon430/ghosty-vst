@@ -110,19 +110,30 @@ public:
     // the audio thread share them through plain atomics.
     //   Ghost Lab FX: LIVE runs the track's own audio through SPECTRE as it plays (the plug-in then reports SPECTRE's
     //   latency so the host lines it up). Ghost Lab (the instrument): LISTEN plays your sound round and round through it.
-    void setSpectreParam (int p, float v);                     // message thread
-    float spectreParam (int p) const { return spectreV[(size_t) juce::jlimit (0, spectre::kParams - 1, p)].load(); }
+    // Every control is a plug-in parameter too ("SPECTRE PHASE" ...), so FL can automate it.
+    void setSpectreParam (int p, float v);                     // message thread (tells the host)
+    float spectreParam (int p) const { return spectreP[(size_t) juce::jlimit (0, spectre::kParams - 1, p)]->get(); }
+    void beginSpectreGesture (int p);                          // a hand is on the control (FL records automation between these)
+    void endSpectreGesture (int p);
+    juce::AudioParameterFloat* spectreParameter (int p) const { return spectreP[(size_t) juce::jlimit (0, spectre::kParams - 1, p)]; }
     spectre::Params spectreParams() const;
     void setSpectreLive (bool on);                              // message thread (FX only)
     bool spectreLiveOn() const { return isFx && spectreOn.load(); }
     void setSpectreListening (bool on, AudioPtr base = nullptr);   // message thread
     bool spectreListening() const { return player.playingSlot() == Player::Room && roomEngine.load() == 1; }
+    // the WAVETABLE the partials play: a built-in one by name, or one cycle from a file (empty cycle: plain sines)
+    void setSpectreTable (const juce::String& name, const std::vector<float>& cycle);   // message thread
+    const juce::String& spectreTableName() const { return tableName; }
+    const std::vector<float>& spectreTable() const { return tableCycle; }
     // what the page draws: the engine the sound is going through right now (the listen loop if it plays, else the track)
     const spectre::Engine& spectreShown() const { return spectreListening() || ! spectreLiveOn() ? spectreLoop : spectreTrack; }
 
 private:
     spectre::Engine spectreTrack, spectreLoop;                  // audio thread only (made in prepareToPlay)
-    std::array<std::atomic<float>, spectre::kParams> spectreV;
+    std::array<juce::AudioParameterFloat*, spectre::kParams> spectreP {};
+    std::array<float, spectre::kParams> spectreSaved {};       // message thread: the values last written into the state
+    juce::String tableName { "SINE" };
+    std::vector<float> tableCycle;
     std::atomic<bool> spectreOn { isFx }, spectreDirty { false };
     std::atomic<int> roomEngine { 0 };                          // what the Room slot's loop goes through: 0 SPACE, 1 SPECTRE
     bool spectreWasLive = false;                                // audio thread

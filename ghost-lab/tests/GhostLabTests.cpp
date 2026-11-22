@@ -2802,6 +2802,60 @@ static void testSpectre (const std::shared_ptr<Audio>& voice)
         for (int i = 0; i < 48000; i += 512) e.process (L.data() + i, R.data() + i, juce::jmin (512, 48000 - i), p);
         check (e.mid.activeCount.load() <= 24, "SPECTRE: PARTIALS 16 rebuilds a 40-harmonic tone from about 16 sine waves (" + juce::String (e.mid.activeCount.load()) + " live)");
     }
+    // ---- NOISE: hiss stays hiss (at its own level); TRANSIENT: drum hits keep their attack
+    {
+        juce::Random rn (3);
+        std::vector<float> L ((size_t) n), R;
+        for (auto& v : L) v = 0.3f * (rn.nextFloat() * 2.0f - 1.0f);
+        const float in = rmsOf (L.data() + 40000, 40000);
+        R = L; spectre::Engine e; e.prepare (sr, 512); Params p;
+        for (int i = 0; i < n; i += 512) e.process (L.data() + i, R.data() + i, juce::jmin (512, n - i), p);
+        const float db = juce::Decibels::gainToDecibels (rmsOf (L.data() + 40000, 40000) / in);
+        check (std::abs (db) < 1.5f, "SPECTRE: white noise comes back as noise at its own level (" + juce::String (db, 2) + " dB)");
+    }
+    {
+        juce::Random rn (5);
+        std::vector<float> dry ((size_t) n, 0.0f);
+        int hits = 0;
+        for (int s0 = 4800; s0 < n - 12000; s0 += 12000)
+        {
+            ++hits;
+            for (int i = 0; i < 6000; ++i)
+                dry[(size_t) (s0 + i)] += 0.5f * std::exp (-i / 800.0f) * (rn.nextFloat() * 2 - 1) + 0.5f * std::exp (-i / 2000.0f) * (float) std::sin (2.0 * juce::MathConstants<double>::pi * (60.0 + 200.0 * std::exp (-i / 400.0)) * i / sr);
+        }
+        auto attack = [&] (float tr, int& onsets)
+        {
+            auto L = dry, R = dry; spectre::Engine e; e.prepare (sr, 512); Params p; p.v[Transient] = tr;
+            for (int i = 0; i < n; i += 512) e.process (L.data() + i, R.data() + i, juce::jmin (512, n - i), p);
+            onsets = e.mid.onsets.load();
+            double eD = 0, eW = 0; const int lat = e.latency();
+            for (int s0 = 4800; s0 < n - 12000 - lat; s0 += 12000) for (int i = 0; i < 240; ++i) { eD += dry[(size_t) (s0 + i)] * dry[(size_t) (s0 + i)]; eW += L[(size_t) (s0 + i + lat)] * L[(size_t) (s0 + i + lat)]; }
+            return (float) (eW / eD);
+        };
+        int on0 = 0, on1 = 0;
+        const float a0 = attack (0.0f, on0), a1 = attack (1.0f, on1);
+        check (on1 == hits, "SPECTRE: it finds every drum hit (" + juce::String (on1) + " of " + juce::String (hits) + ")");
+        check (a1 > 0.85f && a1 > a0 + 0.3f, "SPECTRE: TRANSIENT keeps each hit's first 5 ms (" + juce::String (juce::roundToInt (a1 * 100)) + "% of the attack, " + juce::String (juce::roundToInt (a0 * 100)) + "% without)");
+    }
+    // ---- WAVETABLE: a sine played back through SAW gets a saw's harmonics, and nothing past Nyquist
+    {
+        auto L = runSine ({}, 220.0f, n), M = std::vector<float> ((size_t) n);
+        spectre::Engine e; e.prepare (sr, 256); e.setTable (tableCycle (tableNames().indexOf ("SAW")));
+        std::vector<float> R ((size_t) n);
+        for (int i = 0; i < n; ++i) M[(size_t) i] = R[(size_t) i] = 0.3f * (float) std::sin (2.0 * juce::MathConstants<double>::pi * 220.0 * i / sr);
+        for (int i = 0; i < n; i += 256) e.process (M.data() + i, R.data() + i, juce::jmin (256, n - i), {});
+        juce::dsp::FFT f (14); std::vector<float> b (32768, 0.0f);
+        for (int i = 0; i < 16384; ++i) b[(size_t) i] = M[(size_t) (50000 + i)] * (0.5f - 0.5f * (float) std::cos (2.0 * juce::MathConstants<double>::pi * i / 16384));
+        f.performFrequencyOnlyForwardTransform (b.data());
+        auto at = [&] (float hz) { const int k = juce::roundToInt (hz * 16384 / sr); float m = 0; for (int j = k - 2; j <= k + 2; ++j) m = juce::jmax (m, b[(size_t) j]); return m; };
+        const float h2 = at (440.0f) / at (220.0f), h3 = at (660.0f) / at (220.0f);
+        check (h2 > 0.35f && h2 < 0.65f && h3 > 0.2f && h3 < 0.45f, "SPECTRE: WAVETABLE SAW gives a 220 Hz sine a saw's harmonics (2nd " + juce::String (h2, 2) + ", 3rd " + juce::String (h3, 2) + ")");
+        auto cyc = tableCycle (3);
+        check (tableFromText (tableToText (cyc)) == cyc && tableFromText ("rubbish").empty(), "SPECTRE: a wavetable is saved and read back exactly");
+        juce::AudioBuffer<float> one (1, 600); for (int i = 0; i < 600; ++i) one.setSample (0, i, (float) i / 600.0f - 0.5f);
+        check ((int) cycleFromFile (one).size() == kTableSize, "SPECTRE: a short single-cycle WAV is stretched into a 2048-sample cycle");
+        juce::ignoreUnused (L);
+    }
     // ---- PRINT IT: the offline render through the lab's history
     {
         Step s; s.op = Op::Spectre; s.values["transpose"] = 7.0f; s.values["phase"] = -0.6f;
@@ -2824,6 +2878,14 @@ static void testSpectre (const std::shared_ptr<Audio>& voice)
             check (p.getLatencySamples() == 0, "FX: LIVE off: no latency");
             p.setSpectreLive (true);
         }
+        // every control is a parameter FL can automate
+        check (p.getParameters().size() >= kParams && p.spectreParameter (Transpose)->getName (64) == "SPECTRE TRANSPOSE",
+               "SPECTRE: every control is a plug-in parameter FL can automate (" + juce::String (p.getParameters().size()) + ")");
+        p.spectreParameter (Cloud)->setValueNotifyingHost (0.5f);   // (as FL's automation moves it)
+        check (std::abs (p.spectreParams()[Cloud] - 0.5f) < 1e-4f && static_cast<juce::AudioProcessorParameter*> (p.spectreParameter (Shift))->getText (p.spectreParameter (Shift)->convertTo0to1 (100.0f), 32) == "+100 Hz",
+               "SPECTRE: automation moves the engine; FL shows the values in words (\"+100 Hz\")");
+        p.spectreParameter (Cloud)->setValueNotifyingHost (0.0f);
+        p.setSpectreTable ("SAW", tableCycle (1));
         p.setSpectreParam (Transpose, 5.0f);
         p.setSpectreListening (true, p.engine.processedAudio());
         juce::AudioBuffer<float> buf (2, 512); juce::MidiBuffer midi;
@@ -2843,7 +2905,8 @@ static void testSpectre (const std::shared_ptr<Audio>& voice)
         juce::MemoryBlock mb; p.refreshState(); p.getStateInformation (mb);
         Processor q; q.setStateInformation (mb.getData(), (int) mb.getSize());
         juce::MessageManager::getInstance()->runDispatchLoopUntil (400);
-        check (std::abs (q.spectreParam (Transpose) - 5.0f) < 1e-4f && q.spectreLiveOn() == Processor::isFx, "SPECTRE: its controls (and LIVE) come back with the session");
+        check (std::abs (q.spectreParam (Transpose) - 5.0f) < 1e-4f && q.spectreLiveOn() == Processor::isFx && q.spectreTableName() == "SAW" && q.spectreTable() == tableCycle (1),
+               "SPECTRE: its controls, its WAVETABLE (and LIVE) come back with the session");
         if (Processor::isFx)
         {
             // a session saved before build 17 (no SPECTRE in it): the track still plays dry
@@ -2884,7 +2947,14 @@ static void testSpectre (const std::shared_ptr<Audio>& voice)
         juce::MessageManager::getInstance()->runDispatchLoopUntil (100);
         check (p.engine.historySize() == before + 1 && p.engine.current().label.startsWith ("SPECTRE +3.0 st"), "SPECTRE: printing again replaces the last print (nothing stacks)");
         pg.pressReset();
-        check (std::abs (p.spectreParam (spectre::Transpose)) < 1e-6f && std::abs (p.spectreParam (spectre::Partials) - 512.0f) < 1e-3f, "SPECTRE: RESET puts every control back");
+        check (std::abs (p.spectreParam (spectre::Transpose)) < 1e-6f && std::abs (p.spectreParam (spectre::Partials) - 512.0f) < 0.5f && p.spectreTableName() == "SINE", "SPECTRE: RESET puts every control back (and the partials back to sines)");
+        pg.stepTable (1);
+        check (p.spectreTableName() == "SAW" && ! p.spectreTable().empty(), "SPECTRE: the WAVETABLE arrows pick the built-in tables");
+        pg.stepTable (-1);
+        check (p.spectreTableName() == "SINE" && p.spectreTable().empty(), "SPECTRE: ... and back to SINE");
+        pg.setValue (spectre::Inf, 1.0f);
+        check (! pg.controlEnabled (spectre::Transient), "SPECTRE: TRANSIENT greys out while INF holds everything");
+        pg.setValue (spectre::Inf, 0.0f);
         ed->setRoom (rooms::Room::Lab);
         check (! ed->spectrePage().isVisible() && ed->body().isVisible(), "SPECTRE: THE LAB is one tap away");
         ed->setRoom (rooms::Room::Stretch);
@@ -2915,6 +2985,7 @@ static void spectreShots (const juce::File& dir)
     shot ("1-open", Editor::kW, Editor::kH);
     ed->spectrePage().setValue (spectre::PhaseX, -0.55f); ed->spectrePage().setValue (spectre::CepstrumY, 0.4f);
     ed->spectrePage().setValue (spectre::Transpose, 7.0f); ed->spectrePage().setValue (spectre::Cloud, 0.6f); ed->spectrePage().setValue (spectre::Inf, 0.35f);
+    ed->spectrePage().stepTable (7);   // GHOST
     pump (90);
     shot ("2-moved", Editor::kW, Editor::kH);
     shot ("3-big", 1600, 1000);

@@ -38,15 +38,21 @@ public:
     void pressPrint();
     void pressLive();                      // Ghost Lab FX only
     void pressReset();
+    void stepTable (int dir);              // WAVETABLE: the next / previous built-in one
+    void chooseTable();                    // WAVETABLE: a file of yours
+    bool loadTable (const juce::File&);
+    static constexpr int kWaveHover = 100;
     bool listening() const;
     juce::String caption() const { return captionText; }
     class Control;
 
 private:
-    class Pad; class Scope; class Button;
+    class Pad; class Scope; class Button; class WaveBox;
     Editor& ed;
     std::unique_ptr<Pad> pad;
     std::unique_ptr<Scope> scope;
+    std::unique_ptr<WaveBox> wave;
+    std::unique_ptr<juce::FileChooser> chooser;
     juce::OwnedArray<Control> controls;     // the sliders and knobs (not the pad)
     std::unique_ptr<Button> liveBtn, listenBtn, printBtn, resetBtn;
     juce::Rectangle<float> titleR, doesR, captionR, leftR, rightR, knobR, mainR;
@@ -56,6 +62,6 @@ private:
     void refreshEnabled();
     void setHover (int param);
     Control* controlFor (int param) const;
-    friend class Pad; friend class Control; friend class Scope;
+    friend class Pad; friend class Control; friend class Scope; friend class WaveBox;
 };
 }
