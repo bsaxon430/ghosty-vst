@@ -750,6 +750,8 @@ static void testPure()
 }
 #include "HostScenarios.h"
 #include "MosaicShots.inc"
+#include "TapTests.inc"      // the studio's tap tests: static void testTap()
+#include "StudioShots.inc"   // the studio's standard screenshot set and paint-cost meter: static int runStudio (const juce::StringArray&)
 extern "C" const char* ghostmosaic_host_test (const char* cmd, const char* arg);
 
 // ---------------------------------------------------------------- does it make sound like in a host (in-process twin of HostTest)
@@ -784,6 +786,7 @@ int main (int argc, char** argv)
     for (int i = 1; i < argc; ++i) args.add (argv[i]);
     if (args[0] == "shots") return runShots (juce::File (args[1]));
     if (args[0] == "demos") return runDemos (juce::File (args[1]));
+    if (args[0] == "studio") return runStudio (args);
     const auto only = args[0];
     auto want = [&] (const char* n) { return only.isEmpty() || only == n; };
 #if GHOSTMOSAIC_FX
@@ -812,6 +815,7 @@ int main (int argc, char** argv)
     if (want ("ghost")) testGhostShape();
     if (want ("ui")) { testFreshStart(); testUi(); }
 #endif
+    if (want ("tap")) testTap();
     std::printf ("\n%d passed, %d failed\n", gPasses, gFails);
     return gFails;
 }

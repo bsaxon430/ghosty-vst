@@ -59,8 +59,16 @@ public:
 
     // ---- additions
     void setKeyPitch (float ratio) { m_key_pitch = ratio; }
-    struct Observer { void (*fn) (void* ctx, u32 src, u32 tgt, u32 time) = nullptr; void* ctx = nullptr; };
+    // (the tap, Tap.h: `before` runs before each search, `picked` after it, `ended` when a piece leaves the list;
+    //  all read-only, none set = none called)
+    struct Observer { void (*fn) (void* ctx, u32 src, u32 tgt, u32 time) = nullptr; void* ctx = nullptr;
+                      void (*before) (void* ctx) = nullptr;
+                      void (*picked) (void* ctx, u32 src, u32 tgt, u32 time, u32 renderIndex, bool advanced) = nullptr;
+                      void (*ended) (void* ctx, u32 src, u32 tgt, u32 time, float pos) = nullptr; };
     void setObserver (Observer o) { m_observer = o; }
+    u32 resetCount() const { return m_resets; }               // (the tap) goes up each time the positions start again
+    float getKeyPitch() const { return m_key_pitch; }
+    const spiralcore::block_source* getTargetSource() const { return m_target; }
     float getTargetTime() const { return m_target_time; }
     void holdTargetTime (float t) { m_target_time = t; }
     void primeShift (u32 hop) { m_last_tgt_shift = hop; }   // live: start without upstream's first-buffer reset
@@ -122,7 +130,7 @@ private:
     size_t m_count = 0, m_dropped = 0;
     float m_key_pitch = 1;
     Observer m_observer;
-    u32 m_last_src = 0;
+    u32 m_last_src = 0, m_resets = 0;
     const Shaping* m_shaping = nullptr;
     float m_base_novelty = 0, m_base_boredom = 0.9f, m_shaped_pos = 0, m_shaped_wild = 0;
     bool m_time_shaped = false, m_tm_glide = false;

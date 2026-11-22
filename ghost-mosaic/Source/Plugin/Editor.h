@@ -1,7 +1,8 @@
 // Ghost Mosaic - a fork of Samplebrain (Then Try This), GPL-2.0-or-later.
 //
 // The GhostBlock screen:
-//   header      the GHOST MOSAIC wordmark (heat word), PLAY / UNDER THE HOOD, status
+//   header      the GHOST MOSAIC wordmark (heat word), status, and the page buttons: PLAY / TERRAIN /
+//               UNDER THE HOOD / the new mode that shows the engine at work (Scope/, working name INSIDE)
 //   left        SOURCE SOUNDS (the library: drop sounds or folders) and TARGET (drop the sound
 //               to rebuild; in the effect, the track's own audio, live), with play and record
 //   middle      THE LIVE VIEW (dots = library pieces, or the heat of which pieces are used)
@@ -14,6 +15,7 @@
 #include "HeatWord.h"
 #include "HoodPage.h"
 #include "TerrainPage.h"
+#include "Scope/ScopePage.h"
 
 namespace mosaic
 {
@@ -84,8 +86,9 @@ public:
     Macro (Processor& p, const juce::String& label, std::vector<const char*> ids, double lo, double hi, double mid);
     void resized() override;
     void paint (juce::Graphics&) override;
+    void paintOverChildren (juce::Graphics&) override;
     void sync();                                  // follow the settings when they change elsewhere
-    void syncLive (const Engine& e);              // MOVING NOW: the in-use value follows TERRAIN (a second indicator; the handle stays)
+    void syncLive (const Engine& e);              // MOVING NOW: the in-use value follows TERRAIN (a second indicator; the handle stays); greyed while the setting does nothing
     juce::Slider knob { juce::Slider::RotaryHorizontalVerticalDrag, juce::Slider::NoTextBox };
     juce::String label;
 
@@ -96,6 +99,7 @@ private:
     juce::String m_left, m_right;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> m_att;
     int m_liveIdx = -1; bool m_liveOn = false; float m_liveP = -1; juce::String m_liveText;
+    juce::String m_idleWhy;                       // rule 3: why the setting does nothing right now ("" = it does something)
 };
 
 // ------------------------------------------------------------------ DRAG WAV
@@ -141,7 +145,7 @@ public:
     void generate();
     void mutate();
     void showPage (bool hood) { setPage (hood ? 2 : 0); }
-    void setPage (int page);                       // 0 PLAY, 1 TERRAIN, 2 UNDER THE HOOD
+    void setPage (int page);                       // 0 PLAY, 1 TERRAIN, 2 UNDER THE HOOD, 3 the new mode (INSIDE)
     int page() const { return m_page; }
     bool hoodShown() const { return m_hoodShown; }
 
@@ -158,6 +162,13 @@ public:
     juce::String shownStateLine() const { return m_stateLine; }
     juce::String shownStatus() const { return m_status; }
     bool showsProgressBar() const { return m_building; }
+    scope::Page& scopePage() { return *m_scope; }
+    HeatWord& wordmark() { return m_word; }
+    juce::Rectangle<int> statusArea() const { return m_statusArea; }
+    // tests and the studio harness: no wall clock. The editor's own 60 Hz timer stops (the new mode's page and the
+    // wordmark stop following the clock too); each stepForTests is exactly one frame of dt seconds.
+    void setTestClock (bool on);
+    void stepForTests (double dtSeconds);
 
 private:
     void timerCallback() override;
@@ -165,6 +176,7 @@ private:
     void valueTreePropertyChanged (juce::ValueTree&, const juce::Identifier&) override;
     void refreshAll();
     void syncLive();                               // ~30 fps: the in-use values of what TERRAIN moves, on PLAY and UNDER THE HOOD
+    void scopeOnScreen();                          // the new mode runs only while its page shows and the window is up
     bool m_algoLive = false; juce::String m_algoLiveText;
     int m_liveFrame = 0;
     void openSession();
@@ -178,7 +190,7 @@ private:
     look::LookAndFeel m_lnf;
     juce::TooltipWindow m_tips { this, 600 };
     HeatWord m_word;
-    juce::TextButton m_tabPlay { "PLAY" }, m_tabTerrain { "TERRAIN" }, m_tabHood { "UNDER THE HOOD" };
+    juce::TextButton m_tabPlay { "PLAY" }, m_tabTerrain { "TERRAIN" }, m_tabHood { "UNDER THE HOOD" }, m_tabScope { "INSIDE" };
     SourcePanel m_source;
     TargetPanel m_target;
     Swarm m_swarm;
@@ -194,6 +206,7 @@ private:
     bool m_hoodShown = false;
     int m_page = 0;
     std::unique_ptr<TerrainPage> m_terrain;
+    std::unique_ptr<scope::Page> m_scope;          // page 3: the view of the engine at work, and the tap's model it reads
     std::unique_ptr<juce::FileChooser> m_chooser;
     std::shared_ptr<const LibraryPicture> m_libShown;
     juce::String m_status, m_stateLine, m_notice;

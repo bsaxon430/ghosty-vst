@@ -10,7 +10,7 @@ ghost::terrain::Palette TerrainPage::palette()
     // the Ghost Lab theme is Ghost Mosaic's palette too: charcoal, electric purple -> acid green
     auto p = ghost::terrain::Palette::ghostLab();
     p.ground = juce::Colour (0xff111113);
-    p.font = [] (float h, bool bold) { return look::font (h * 0.8f, bold ? 1 : 0); };
+    p.font = [] (float h, bool bold) { return look::font (juce::jmax (10.0f, h * 0.92f), bold ? 1 : 0); };   // (never under 10 px)
     return p;
 }
 
@@ -68,20 +68,26 @@ TerrainPage::TerrainPage (Processor& p) : m_proc (p), m_view (p.terrain, terrain
     addAndMakeVisible (m_rate);
 }
 
-juce::Rectangle<int> TerrainPage::cardArea() const { return getLocalBounds().withTrimmedTop (44).withTrimmedBottom (34).withTrimmedRight (262); }
-juce::Rectangle<int> TerrainPage::barsArea() const { return getLocalBounds().withTrimmedTop (44).withTrimmedBottom (34).removeFromRight (250); }
+int TerrainPage::headH() const { return look::headOf (winH()); }
+int TerrainPage::gut() const { return look::gutterOf (winH()); }
+juce::Rectangle<int> TerrainPage::cardArea() const { return getLocalBounds().withTrimmedBottom (footH() + gut()).withTrimmedRight (sideW() + gut()).withTrimmedTop (headH()); }
+juce::Rectangle<int> TerrainPage::barsArea() const { return getLocalBounds().withTrimmedBottom (footH() + gut()).removeFromRight (sideW()); }
+juce::Rectangle<int> TerrainPage::footArea() const { return getLocalBounds().removeFromBottom (footH()); }
 
 void TerrainPage::resized()
 {
     m_view.setBounds (cardArea().reduced (2));
-    auto head = getLocalBounds().removeFromTop (44).reduced (0, 6);
-    m_on.setBounds (head.removeFromRight (70));
-    head.removeFromRight (8);
-    m_rate.setBounds (head.removeFromRight (96));
-    head.removeFromRight (6);
-    m_move.setBounds (head.removeFromRight (120));
-    head.removeFromRight (76);   // ("MOVEMENT" is painted left of it)
-    m_shapes.setBounds (head.removeFromRight (180));   // (hidden)
+    const float k = scaleNow();
+    const int hh = headH(), ch = juce::jmin (hh - 10, juce::roundToInt (28.0f * k));
+    auto head = cardArea().withY (0).withHeight (hh).withTrimmedRight (hh / 2);
+    auto take = [&] (float w) { const int ww = juce::roundToInt (w * k); return head.removeFromRight (ww).withSizeKeepingCentre (ww, ch); };
+    for (juce::Component* c : std::initializer_list<juce::Component*> { &m_on, &m_rate, &m_move }) look::setScale (*c, k);
+    m_on.setBounds (take (74)); head.removeFromRight (10);
+    m_rate.setBounds (take (100)); head.removeFromRight (8);
+    m_move.setBounds (take (130));
+    m_moveLabel = take (96);
+    m_shapes.setBounds (head.removeFromRight (juce::jmin (180, head.getWidth())).withSizeKeepingCentre (juce::jmin (180, head.getWidth()), ch));   // (hidden)
+    look::setScale (m_rate, k);   // (again, now that it has its place: the menu's type follows)
 }
 
 void TerrainPage::tick()
@@ -129,7 +135,7 @@ void TerrainPage::tick()
     for (size_t i = 0; ! changed && i < ps.size(); ++i) changed = ps[i].name != m_pushes[i].name || std::abs (ps[i].amount - m_pushes[i].amount) > 0.005f;
     for (size_t i = 0; ! changed && i < moving.size(); ++i) changed = moving[i].name != m_moving[i].name || moving[i].now != m_moving[i].now || moving[i].set != m_moving[i].set;
     if (m_on.getToggleState() != m_proc.terrainOn()) m_on.setToggleState (m_proc.terrainOn(), juce::dontSendNotification);
-    if (changed) { m_readout = sum; m_pushes = ps; m_moving = moving; m_soundsLine = soundsLine; repaint (barsArea()); repaint (0, getHeight() - 34, getWidth(), 34); }
+    if (changed) { m_readout = sum; m_pushes = ps; m_moving = moving; m_soundsLine = soundsLine; repaint (barsArea()); repaint (footArea()); }
     const auto now = e.shapeNow();
     // the playhead: where the target is (front = its start)
     const auto tp = e.targetPicture();
@@ -139,79 +145,119 @@ void TerrainPage::tick()
     else m_view.setPlayhead (-1.0f);
 }
 
+// Words on the land (the land itself is a shared component and is not edited here): what its two directions mean,
+// and, while it is flat, where to start.
+void TerrainPage::paintOverChildren (juce::Graphics& g)
+{
+    const float k = scaleNow();
+    const int lh = juce::roundToInt (17.0f * k);
+    auto land = cardArea().reduced (juce::roundToInt (16.0f * k), juce::roundToInt (12.0f * k));
+    g.setColour (look::inkDim);
+    g.setFont (look::font (juce::jmax (11.0f, 11.5f * k), 0));
+    g.drawText ("left to right: low notes to high notes", land.removeFromTop (lh), juce::Justification::centredLeft, true);
+    g.drawText (m_proc.isEffect() ? "front to back: an 8-second loop of the input" : "front to back: the target's start to its end", land.removeFromTop (lh), juce::Justification::centredLeft, true);
+    if (m_proc.terrainOn() && m_pushes.empty())
+    {
+        land.removeFromTop (juce::roundToInt (4.0f * k));
+        g.setColour (look::ink);
+        g.setFont (look::spaced (juce::jmax (11.0f, 12.0f * k), 1, 0.08f));
+        g.drawText ("FLAT LAND: PULL THE GROUND UP ANYWHERE, OR PICK A SHAPE", land.removeFromTop (lh), juce::Justification::centredLeft, true);
+    }
+}
+
 void TerrainPage::paint (juce::Graphics& g)
 {
-    auto r = getLocalBounds();
-    auto head = r.removeFromTop (44);
-    look::title (g, "TERRAIN", head.withWidth (120), look::ink, 13.0f);
-    g.setColour (look::inkDim);
-    g.setFont (look::font (12.0f, 0));
-    g.drawFittedText ("Across = which frequencies count when a piece is picked.  Front to back = the target's time: tall or rough land gets wild there.  "
-                      "Spires stutter, plateaus run smooth, merged mountains blend.",
-                      head.withTrimmedLeft (110).withTrimmedRight (400).reduced (0, 4), juce::Justification::centredLeft, 2, 0.85f);
-    g.setColour (look::inkDim);
-    g.setFont (look::spaced (11.0f, 1, 0.14f));
-    g.drawText ("MOVEMENT", m_move.getBounds().translated (-78, 0).withWidth (74), juce::Justification::centredRight);
-    look::card (g, cardArea().toFloat());
+    const float k = scaleNow();
+    const int hh = headH(), gp = gut();
+    auto f = [k] (float h, int w = 0) { return look::font (h * k, w); };
+    // a card with nothing to show says so like a poster: the words before the colon big, the rest under them
+    auto statement = [&] (juce::Rectangle<int>& b, const juce::String& text)
+    {
+        const auto head = text.upToFirstOccurrenceOf (":", false, false), tail = text.fromFirstOccurrenceOf (":", false, false).trim();
+        g.setColour (look::ink); g.setFont (look::spaced (18.0f * k, 2, 0.1f));
+        g.drawFittedText (head.toUpperCase(), b.removeFromTop (juce::roundToInt (28.0f * k)), juce::Justification::centredLeft, 1, 0.7f);
+        g.setColour (look::inkDim); g.setFont (f (12.0f));
+        g.drawFittedText (tail.substring (0, 1).toUpperCase() + tail.substring (1), b.removeFromTop (juce::roundToInt (38.0f * k)), juce::Justification::topLeft, 2);
+    };
+    // 01 TERRAIN: the land under its band; MOVEMENT and the switch at the band's right
+    const auto land = cardArea();
+    look::zone (g, land.withTop (0), "01", "TERRAIN", hh);
     g.setColour (palette().ground);
-    g.fillRoundedRectangle (cardArea().toFloat().reduced (1.0f), 11.0f);
+    g.fillRect (land.reduced (1));
+    g.setColour (look::inkDim);
+    g.setFont (look::spaced (11.0f * k, 1, 0.14f));
+    g.drawText ("MOVEMENT", m_moveLabel.withTrimmedRight (8), juce::Justification::centredRight);
 
-    // what the shape is doing: the strongest moves, with bars
-    auto b = barsArea();
-    look::card (g, b.toFloat());
-    b = b.reduced (16, 14);
-    look::title (g, "WHAT THE SHAPE DOES", b.removeFromTop (22), look::ink, 12.0f);
-    b.removeFromTop (8);
-    if (! m_proc.terrainOn()) { g.setColour (look::inkFaint); g.setFont (look::font (12.0f, 0)); g.drawFittedText ("TERRAIN is off: the knobs as set.", b.removeFromTop (40), juce::Justification::topLeft, 2); }
-    else if (m_pushes.empty()) { g.setColour (look::inkFaint); g.setFont (look::font (12.0f, 0)); g.drawFittedText ("Flat land: nothing yet. Pull the ground up, or pick a shape.", b.removeFromTop (40), juce::Justification::topLeft, 3); }
-    for (auto& p : m_pushes)
+    // the right column: two numbered cards on the same grid
+    auto col = barsArea();
+    const int hs = juce::jmax (30, hh - 4), pad = juce::roundToInt (16.0f * k);
+    auto top = col.removeFromTop ((col.getHeight() - gp) * 2 / 5);
+    col.removeFromTop (gp);
+    // 02 what the shape is doing: the strongest moves, with bars
     {
-        auto row = b.removeFromTop (46);
-        g.setColour (look::inkDim);
-        g.setFont (look::spaced (10.5f, 1, 0.08f));
-        g.drawText (p.name, row.removeFromTop (18), juce::Justification::centredLeft, true);
-        auto bar = row.removeFromTop (8).toFloat();
-        g.setColour (look::line); g.fillRoundedRectangle (bar, 4.0f);
-        juce::ColourGradient gr (look::purple, bar.getX(), 0, look::green, bar.getRight(), 0, false);
-        g.setGradientFill (gr);
-        g.fillRoundedRectangle (bar.withWidth (juce::jmax (8.0f, bar.getWidth() * juce::jlimit (0.0f, 1.0f, p.amount))), 4.0f);
-    }
-    // MOVING NOW: the original controls being moved, set value > value in use
-    {
-        b.removeFromTop (6);
-        look::title (g, "MOVING NOW", b.removeFromTop (22), look::live, 12.0f);
-        if (! m_proc.terrainOn() || (m_moving.empty() && m_soundsLine.isEmpty()))
+        look::zone (g, top, "02", "WHAT THE SHAPE DOES", hs);
+        auto b = top.withTrimmedTop (hs).reduced (pad, juce::roundToInt (12.0f * k));
+        if (! m_proc.terrainOn()) statement (b, "TERRAIN is off: the knobs as set.");
+        else if (m_pushes.empty()) statement (b, "Flat land: nothing yet. Pull the ground up, or pick a shape.");
+        for (auto& p : m_pushes)
         {
-            g.setColour (look::inkFaint); g.setFont (look::font (12.0f, 0));
-            g.drawFittedText (m_proc.terrainOn() ? "Nothing yet: the controls are as set." : "Nothing: TERRAIN is off.", b.removeFromTop (34), juce::Justification::topLeft, 2);
+            auto row = b.removeFromTop (juce::roundToInt (46.0f * k));
+            g.setColour (look::ink);
+            g.setFont (look::spaced (11.0f * k, 1, 0.08f));
+            g.drawText (p.name, row.removeFromTop (juce::roundToInt (18.0f * k)), juce::Justification::centredLeft, true);
+            auto bar = row.removeFromTop (juce::roundToInt (10.0f * k));
+            g.setColour (look::line); g.fillRect (bar);
+            g.setColour (look::purple);
+            g.fillRect (bar.withWidth (juce::jmax (8, juce::roundToInt ((float) bar.getWidth() * juce::jlimit (0.0f, 1.0f, p.amount)))));
         }
+    }
+    // 03 MOVING NOW: the original controls being moved, set value > value in use
+    {
+        look::zone (g, col, "03", "MOVING NOW", hs, false, false, look::live);
+        auto b = col.withTrimmedTop (hs).reduced (pad, juce::roundToInt (12.0f * k));
+        const int lh = juce::roundToInt (19.0f * k);
+        if (! m_proc.terrainOn() || (m_moving.empty() && m_soundsLine.isEmpty()))
+            statement (b, m_proc.terrainOn() ? "Nothing yet: the controls are as set." : "Nothing: TERRAIN is off.");
         for (auto& m : m_moving)
         {
-            auto row = b.removeFromTop (18);
-            g.setColour (look::inkDim); g.setFont (look::spaced (10.5f, 1, 0.06f));
+            auto row = b.removeFromTop (lh);
+            g.setColour (look::inkDim); g.setFont (look::spaced (11.0f * k, 1, 0.06f));
             g.drawText (m.name, row.removeFromLeft (row.getWidth() / 2 + 10), juce::Justification::centredLeft, true);
-            g.setColour (look::inkFaint); g.setFont (look::font (11.5f, 0));
+            g.setColour (look::inkDim); g.setFont (f (11.5f));
             g.drawText (m.set, row.removeFromLeft (row.getWidth() / 2 - 4), juce::Justification::centredRight, true);
-            g.setColour (look::live); g.setFont (look::font (11.5f, 1));
+            g.setColour (look::live); g.setFont (f (11.5f, 1));
             g.drawText ("> " + m.now, row, juce::Justification::centredRight, true);
         }
         if (m_soundsLine.isNotEmpty())
         {
-            auto row = b.removeFromTop (18);
-            g.setColour (look::inkDim); g.setFont (look::spaced (10.5f, 1, 0.06f));
+            auto row = b.removeFromTop (lh);
+            g.setColour (look::inkDim); g.setFont (look::spaced (11.0f * k, 1, 0.06f));
             g.drawText ("SOURCE SOUNDS", row.removeFromLeft (row.getWidth() / 2 + 10), juce::Justification::centredLeft, true);
-            g.setColour (look::live); g.setFont (look::font (11.5f, 1));
+            g.setColour (look::live); g.setFont (f (11.5f, 1));
             g.drawText (m_soundsLine, row, juce::Justification::centredRight, true);
         }
-        b.removeFromTop (4);
-        g.setColour (look::inkFaint); g.setFont (look::font (10.5f, 0));
-        g.drawFittedText ("NOT MOVED: needs a rebuild (PIECE SIZE, OVERLAP, FADE SHAPES), restarts the sound (STEREO), or level (VOLUME).", b.removeFromTop (38), juce::Justification::topLeft, 3, 0.9f);
-        g.setColour (look::purple); g.setFont (look::font (10.5f, 0));
-        g.drawFittedText ("DRAG FX: the burst of wildness and stutter from pulling a mountain fades out when you let go.", b.removeFromTop (28), juce::Justification::topLeft, 2, 0.9f);
+        // the two notes sit on the card's bottom edge, so the card is used from top to bottom
+        auto notes = b.removeFromBottom (juce::jmin (b.getHeight(), juce::roundToInt (88.0f * k)));
+        g.setColour (look::line); g.fillRect (notes.removeFromTop (1));
+        notes.removeFromTop (juce::roundToInt (8.0f * k));
+        g.setColour (look::inkDim); g.setFont (f (11.0f));
+        g.drawFittedText ("NOT MOVED: needs a rebuild (PIECE SIZE, OVERLAP, FADE SHAPES), restarts the sound (STEREO), or level (VOLUME).", notes.removeFromTop (notes.getHeight() * 3 / 5), juce::Justification::topLeft, 3, 0.9f);
+        g.setColour (look::purple.brighter (0.2f)); g.setFont (f (11.0f));
+        g.drawFittedText ("DRAG FX: the burst of wildness and stutter from pulling a mountain fades out when you let go.", notes, juce::Justification::topLeft, 2, 0.9f);
     }
-    auto foot = r.removeFromBottom (34);
-    g.setColour (look::green);
-    g.setFont (look::spaced (11.5f, 1, 0.08f));
-    g.drawText (m_readout, foot, juce::Justification::centredLeft, true);
+    // the band along the bottom: what the land is doing now (green), and how to read the land
+    {
+        auto foot = footArea();
+        const auto shape = look::cutRect (foot.toFloat().reduced (0.5f), 14.0f);
+        g.setColour (look::band); g.fillPath (shape);
+        g.setColour (look::green); g.fillRect (foot.withWidth (juce::roundToInt (6.0f * k)));
+        auto t = foot.reduced (juce::roundToInt (20.0f * k), juce::roundToInt (5.0f * k)).withTrimmedRight (10);
+        g.setFont (look::spaced (12.0f * k, 1, 0.08f));
+        g.drawText (m_readout, t.removeFromTop (t.getHeight() * 2 / 5), juce::Justification::centredLeft, true);
+        g.setColour (look::inkDim);
+        g.setFont (f (11.0f));
+        g.drawFittedText ("Across = which frequencies count when a piece is picked.  Front to back = the target's time: tall or rough land gets wild there.  "
+                          "Spires stutter, plateaus run smooth, merged mountains blend.", t, juce::Justification::centredLeft, 2, 0.85f);
+    }
 }
 }

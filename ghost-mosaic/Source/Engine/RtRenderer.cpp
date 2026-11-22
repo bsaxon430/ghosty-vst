@@ -28,10 +28,12 @@ void RtRenderer::init (brain* source, const block_source* target)
     m_stretch = 1;
     m_last_tgt_shift = 0;
     m_autotune = 0;
+    ++m_resets;
 }
 
 void RtRenderer::reset()
 {
+    ++m_resets;   // (the tap: counts restarts; read-only elsewhere)
     m_target_time = 0;
     m_render_time = 0;
     m_target_index = 0;
@@ -96,6 +98,7 @@ bool RtRenderer::find_render_blocks (const block_source& target, u32 nframes)
         u32 time = m_render_index * tgt_shift;
         u32 src_index = 0;
         if (m_shaping != nullptr || m_time_shaped) shapeSearch (target);   // (addition: TERRAIN wildness along the target)
+        if (m_observer.before != nullptr) m_observer.before (m_observer.ctx);   // (the tap: read-only)
 
         switch (m_search_algo)
         {
@@ -111,6 +114,7 @@ bool RtRenderer::find_render_blocks (const block_source& target, u32 nframes)
                 break;
         }
 
+        const u32 tgtWas = m_target_index;   // (the tap)
         if (m_search_algo == renderer::SYNAPTIC_SLIDE)
         {
             push (src_index, m_target_index, time);
@@ -130,6 +134,7 @@ bool RtRenderer::find_render_blocks (const block_source& target, u32 nframes)
                 m_target_time += tgt_shift;
             }
         }
+        if (m_observer.picked != nullptr) m_observer.picked (m_observer.ctx, src_index, tgtWas, time, m_render_index, m_target_index != tgtWas);   // (the tap: read-only)
         counter++;
         m_render_index++;
     }
@@ -255,6 +260,7 @@ void RtRenderer::clean_up()
             if (w != r) m_blocks[w] = m_blocks[r];
             ++w;
         }
+        else if (m_observer.ended != nullptr) m_observer.ended (m_observer.ctx, m_blocks[r].m_index, m_blocks[r].m_tgt_index, m_blocks[r].m_time, m_blocks[r].m_position);   // (the tap: read-only)
     m_count = w;
 }
 
@@ -271,6 +277,7 @@ void RtRenderer::copyStateFrom (const RtRenderer& o)
     m_stretch = o.m_stretch; m_n_mix = o.m_n_mix; m_target_mix = o.m_target_mix; m_autotune = o.m_autotune;
     m_search_algo = o.m_search_algo; m_slide_error = o.m_slide_error; m_last_tgt_shift = o.m_last_tgt_shift;
     m_count = 0;
+    ++m_resets;
 }
 
 void RtRenderer::stream (std::ios& s)

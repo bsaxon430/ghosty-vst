@@ -50,17 +50,22 @@ void SourcePanel::filesDropped (const juce::StringArray& files, int, int)
     repaint();
 }
 
+// GHOST POSTER: the PLAY page's own scale (a tall window gets bigger rows, type and buttons)
+static float playScale (int windowH) { return juce::jlimit (1.0f, 1.5f, (float) windowH / 760.0f); }
+// ...and the frame's (page buttons, status, bottom bar): only a window that is big both ways gets bigger type
+static float frameScale (int w, int h) { return juce::jlimit (1.0f, 1.5f, juce::jmin ((float) h / 760.0f, (float) w / 1200.0f)); }
+
 void SourcePanel::paint (juce::Graphics& g)
 {
-    look::card (g, getLocalBounds().toFloat(), m_hot);
-    auto top = getLocalBounds().reduced (16, 0).withHeight (42).translated (0, 4);
-    look::title (g, "SOURCE SOUNDS", top, look::ink, 13.0f);
+    const int hh = look::headOf (m_ed.getHeight());
+    look::zone (g, getLocalBounds(), "01", "SOURCE SOUNDS", hh, m_hot);
     double secs = 0; int on = 0;
     for (auto& s : m_sounds) { secs += s.seconds; on += s.enabled ? 1 : 0; }
     g.setColour (look::inkDim);
-    g.setFont (look::font (12.0f, 0));
+    g.setFont (look::font (12.0f * playScale (m_ed.getHeight()), 0));
     if (! m_sounds.empty())
-        g.drawText (juce::String (on) + " of " + juce::String ((int) m_sounds.size()) + "  -  " + juce::String (secs, 1) + " s", top, juce::Justification::centredRight);
+        g.drawText (juce::String (on) + " of " + juce::String ((int) m_sounds.size()) + "  -  " + juce::String (secs, 1) + " s",
+                    getLocalBounds().withHeight (hh).withTrimmedRight (hh / 2 + 6).withTrimmedLeft (getWidth() / 2), juce::Justification::centredRight);
 }
 
 void SourcePanel::paintOverChildren (juce::Graphics& g)
@@ -93,56 +98,63 @@ void SourcePanel::paintOverChildren (juce::Graphics& g)
 
 void SourcePanel::resized()
 {
-    auto r = getLocalBounds().reduced (14, 0);
-    r.removeFromTop (46);
-    auto row = r.removeFromTop (30);
-    const int w3 = (row.getWidth() - 12) / 3;
-    m_add.setBounds (row.removeFromLeft (w3)); row.removeFromLeft (6);
-    m_folder.setBounds (row.removeFromLeft (w3)); row.removeFromLeft (6);
-    m_kits.setBounds (row);
-    auto bottom = r.removeFromBottom (44).withTrimmedTop (8).withTrimmedBottom (6);
-    const int b3 = (bottom.getWidth() - 12) / 3;
-    m_all.setBounds (bottom.removeFromLeft (b3)); bottom.removeFromLeft (6);
-    m_none.setBounds (bottom.removeFromLeft (b3)); bottom.removeFromLeft (6);
-    m_clear.setBounds (bottom);
-    m_list.setBounds (r.withTrimmedTop (8));
+    const int hh = look::headOf (m_ed.getHeight());
+    const float k = playScale (m_ed.getHeight());
+    const int bh = juce::roundToInt (30.0f * k), gap = 8, pad = 14;
+    auto r = getLocalBounds().reduced (pad, 0).withTrimmedTop (hh + 10).withTrimmedBottom (12);
+    auto three = [&] (juce::Rectangle<int> row, juce::Button& a, juce::Button& b, juce::Button& c)
+    {
+        const int w3 = (row.getWidth() - 2 * gap) / 3;
+        a.setBounds (row.withWidth (w3)); b.setBounds (row.withX (row.getX() + w3 + gap).withWidth (row.getWidth() - 2 * w3 - 2 * gap)); c.setBounds (row.withLeft (row.getRight() - w3));
+        for (auto* x : { &a, &b, &c }) look::setScale (*x, k);
+    };
+    three (r.removeFromTop (bh), m_add, m_folder, m_kits);
+    three (r.removeFromBottom (bh), m_all, m_none, m_clear);
+    auto list = r.reduced (0, gap);
+    // whole rows only: the list never ends on half a sound
+    const int want = juce::roundToInt (34.0f * k), rows = juce::jmax (1, juce::roundToInt ((float) list.getHeight() / (float) want));
+    const int rowH = juce::jmax (24, list.getHeight() / rows);
+    m_list.setRowHeight (rowH);
+    m_list.setBounds (list.withSizeKeepingCentre (list.getWidth(), juce::jmin (list.getHeight(), rowH * rows)));
 }
 
 void SourcePanel::paintListBoxItem (int row, juce::Graphics& g, int w, int h, bool)
 {
     if (row < 0 || row >= (int) m_sounds.size()) return;
     const auto& s = m_sounds[(size_t) row];
-    auto r = juce::Rectangle<int> (w, h).reduced (0, 3);
-    g.setColour (look::ground.withAlpha (0.6f));
-    g.fillRoundedRectangle (r.toFloat(), 8);
+    auto r = juce::Rectangle<int> (w, h).reduced (0, 2);
+    const float k = playScale (m_ed.getHeight());
+    g.setColour (look::well);
+    g.fillRect (r);
     const auto tint = look::sourceTint (row);
+    g.setColour (s.enabled ? tint : look::inkFaint);      // the sound's own colour: a bar down the row's left edge
+    g.fillRect (r.withWidth (4));
     // TERRAIN keeps some sounds out of play (your own switch is untouched): they dim and their switch goes hollow; the ones in play glow
     const bool masked = m_ed.proc().engine().soundsMasked();
     const bool benched = s.enabled && masked && (row < (int) m_benched.size() ? m_benched[(size_t) row] != 0 : false);
     const bool glow = s.enabled && masked && ! benched;
     g.setColour (s.enabled ? (benched ? tint.withAlpha (0.3f) : tint) : look::inkFaint);
-    g.fillEllipse ((float) r.getX() + 10, (float) r.getCentreY() - 4.5f, 9, 9);
-    if (glow) { g.setColour (look::live.withAlpha (0.8f)); g.drawEllipse ((float) r.getX() + 7.5f, (float) r.getCentreY() - 7.0f, 14, 14, 1.5f); }
+    g.fillRect ((float) r.getX() + 12, (float) r.getCentreY() - 4.5f, 9.0f, 9.0f);
+    if (glow) { g.setColour (look::live); g.drawRect ((float) r.getX() + 9.5f, (float) r.getCentreY() - 7.0f, 14.0f, 14.0f, 1.5f); }
     // the switch and the x
     auto right = r.removeFromRight (30);
     g.setColour (look::inkDim);
     g.drawLine ((float) right.getCentreX() - 4, (float) right.getCentreY() - 4, (float) right.getCentreX() + 4, (float) right.getCentreY() + 4, 1.5f);
     g.drawLine ((float) right.getCentreX() + 4, (float) right.getCentreY() - 4, (float) right.getCentreX() - 4, (float) right.getCentreY() + 4, 1.5f);
-    auto sw = r.removeFromRight (40).withSizeKeepingCentre (30, 16).toFloat();
-    if (glow)
-        for (int k = 3; k >= 1; --k) { g.setColour (look::live.withAlpha (0.10f * (float) (4 - k))); g.fillRoundedRectangle (sw.expanded ((float) k * 1.6f), 8.0f + (float) k * 1.6f); }
-    g.setColour (benched ? look::green.withAlpha (0.18f) : s.enabled ? look::green.withAlpha (0.9f) : look::line);
-    g.fillRoundedRectangle (sw, 8);
-    if (benched) { g.setColour (look::green.withAlpha (0.4f)); g.drawRoundedRectangle (sw.reduced (0.5f), 8, 1.0f); }
-    if (glow) { g.setColour (look::live); g.drawRoundedRectangle (sw.reduced (0.5f), 8, 1.5f); }
+    auto sw = r.removeFromRight (40).withSizeKeepingCentre (32, 16).toFloat();
+    const auto swShape = look::cutRect (sw, 5.5f);
+    g.setColour (benched ? look::green.withAlpha (0.18f) : s.enabled ? look::green : look::line);
+    g.fillPath (swShape);
+    if (benched) { g.setColour (look::green.withAlpha (0.4f)); g.strokePath (swShape, juce::PathStrokeType (1.0f)); }
+    if (glow) { g.setColour (look::live); g.strokePath (swShape, juce::PathStrokeType (1.5f)); }
     g.setColour (benched ? look::inkDim : s.enabled ? look::ground : look::inkDim);
-    g.fillEllipse (s.enabled ? sw.getRight() - 14 : sw.getX() + 2, sw.getY() + 2, 12, 12);
-    r.removeFromLeft (28);
-    g.setColour (look::inkFaint);
-    g.setFont (look::font (11.5f, 0));
-    g.drawText (juce::String (s.seconds, 1) + " s", r.removeFromRight (48), juce::Justification::centredRight);
+    g.fillRect (s.enabled ? sw.getRight() - 13 : sw.getX() + 3, sw.getY() + 3, 10.0f, 10.0f);
+    r.removeFromLeft (30);
+    g.setColour (look::inkDim);
+    g.setFont (look::font (11.5f * k, 0));
+    g.drawText (juce::String (s.seconds, 1) + " s", r.removeFromRight (juce::roundToInt (48.0f * k)), juce::Justification::centredRight);
     g.setColour (benched ? look::inkFaint : s.enabled ? look::ink : look::inkDim);
-    g.setFont (look::font (13.0f, 0));
+    g.setFont (look::font (13.0f * k, 1));
     g.drawText (s.name, r.withTrimmedRight (8), juce::Justification::centredLeft, true);
 }
 
@@ -195,7 +207,11 @@ void TargetPanel::tick()
     m_rec.setButtonText (m_ed.proc().engine().isRecording() ? "STOP REC" : "RECORD");
 }
 
-juce::Rectangle<int> TargetPanel::waveArea() const { return getLocalBounds().reduced (14, 0).withTrimmedTop (46).withTrimmedBottom (48); }
+juce::Rectangle<int> TargetPanel::waveArea() const
+{
+    const int bh = juce::roundToInt (30.0f * playScale (m_ed.getHeight()));
+    return getLocalBounds().reduced (14, 0).withTrimmedTop (look::headOf (m_ed.getHeight()) + 10).withTrimmedBottom (bh + 12 + 8);
+}
 
 void TargetPanel::filesDropped (const juce::StringArray& files, int, int)
 {
@@ -212,13 +228,13 @@ void TargetPanel::mouseDown (const juce::MouseEvent& e)
 
 void TargetPanel::paint (juce::Graphics& g)
 {
-    look::card (g, getLocalBounds().toFloat(), m_hot);
-    auto top = getLocalBounds().reduced (16, 0).withHeight (42).translated (0, 4);
-    look::title (g, "TARGET", top, look::ink, 13.0f);
+    const int hh = look::headOf (m_ed.getHeight());
+    look::zone (g, getLocalBounds(), "02", "TARGET", hh, m_hot);
+    auto top = getLocalBounds().withHeight (hh).withTrimmedRight (hh / 2 + 6).withTrimmedLeft (getWidth() * 2 / 5);
     const bool live = m_ed.proc().isEffect() && m_ed.proc().getParam ("live_input") > 0.5f;
     auto wave = waveArea();
-    g.setColour (look::ground.withAlpha (0.6f));
-    g.fillRoundedRectangle (wave.toFloat(), 8);
+    g.setColour (look::well);
+    g.fillRect (wave);
     if (live)
     {
         g.setColour (look::green);
@@ -239,8 +255,9 @@ void TargetPanel::paint (juce::Graphics& g)
         return;
     }
     g.setColour (look::inkDim);
-    g.setFont (look::font (12.0f, 0));
-    g.drawText (m_pic->name + "  -  " + juce::String (m_pic->seconds, 1) + " s", top, juce::Justification::centredRight, true);
+    g.setFont (look::font (12.0f * playScale (m_ed.getHeight()), 0));
+    if (! m_live.isVisible()) g.drawText (m_pic->name + "  -  " + juce::String (m_pic->seconds, 1) + " s", top, juce::Justification::centredRight, true);
+    else g.drawText (m_pic->name + "  -  " + juce::String (m_pic->seconds, 1) + " s", wave.reduced (8, 4), juce::Justification::topRight, true);
     const int n = m_pic->numBlocks;
     auto r = wave.reduced (8, 10).toFloat();
     const float bw = r.getWidth() / (float) n;
@@ -264,11 +281,20 @@ void TargetPanel::paint (juce::Graphics& g)
 
 void TargetPanel::resized()
 {
+    const int hh = look::headOf (m_ed.getHeight());
+    const float k = playScale (m_ed.getHeight());
+    const int bh = juce::roundToInt (30.0f * k), gap = 8;
     auto r = getLocalBounds().reduced (14, 0);
-    if (m_live.isVisible()) m_live.setBounds (r.withHeight (42).translated (0, 4).removeFromRight (130).reduced (0, 9));
-    auto row = r.removeFromBottom (44).withTrimmedBottom (12);
-    const int w4 = (row.getWidth() - 18) / 4;
-    for (auto* b : { &m_load, &m_demo, &m_play, &m_rec }) { b->setBounds (row.removeFromLeft (w4)); row.removeFromLeft (6); }
+    if (m_live.isVisible()) m_live.setBounds (r.withHeight (hh).withTrimmedRight (hh / 2).removeFromRight (136).withSizeKeepingCentre (136, juce::jmin (hh - 8, 26)));
+    auto row = r.removeFromBottom (bh + 12).withTrimmedBottom (12);
+    // four equal buttons, the last one ending exactly on the card's inner edge
+    juce::Button* bs[] = { &m_load, &m_demo, &m_play, &m_rec };
+    const int w4 = (row.getWidth() - 3 * gap) / 4;
+    for (int i = 0; i < 4; ++i)
+    {
+        bs[i]->setBounds (i == 3 ? row.withLeft (row.getRight() - w4) : row.withX (row.getX() + i * (w4 + gap)).withWidth (w4));
+        look::setScale (*bs[i], k);
+    }
 }
 
 // ================================================================== macros
@@ -319,6 +345,18 @@ void Macro::sync()
 
 void Macro::syncLive (const Engine& e)
 {
+    if (m_att != nullptr)
+    {
+        // rule 3: a knob whose setting does nothing right now (SMOOTH while SEARCH STYLE is Most different) is greyed and says why
+        const auto why = idleReason (m_proc, m_ids[0], false);
+        if (why != m_idleWhy)
+        {
+            m_idleWhy = why;
+            knob.setEnabled (why.isEmpty());
+            knob.setTooltip (why.isEmpty() ? juce::String (paramInfo (m_ids[0]).help) : why + "  " + paramInfo (m_ids[0]).help);
+            repaint();
+        }
+    }
     if (m_liveIdx < 0) return;
     const auto v = e.liveValue (m_liveIdx);
     const bool on = v.moving;
@@ -348,19 +386,20 @@ juce::String Macro::valueText() const
 void Macro::resized()
 {
     auto r = getLocalBounds();
-    r.removeFromBottom (36);
+    r.removeFromBottom (juce::roundToInt (38.0f * playScale (getParentHeight())));
     knob.setBounds (r.withSizeKeepingCentre (juce::jmin (r.getWidth(), r.getHeight()), juce::jmin (r.getWidth(), r.getHeight())));
 }
 
 void Macro::paint (juce::Graphics& g)
 {
     auto r = getLocalBounds();
-    auto bottom = r.removeFromBottom (36);
+    const float k = playScale (getParentHeight());
+    auto bottom = r.removeFromBottom (juce::roundToInt (38.0f * k));
     g.setColour (look::ink);
-    g.setFont (look::spaced (12.0f, 1, 0.12f));
-    g.drawFittedText (label, bottom.removeFromTop (18), juce::Justification::centred, 1, 0.7f);
+    g.setFont (look::spaced (12.5f * k, 2, 0.12f));
+    g.drawFittedText (label, bottom.removeFromTop (bottom.getHeight() / 2), juce::Justification::centred, 1, 0.7f);
     g.setColour (look::inkDim);
-    g.setFont (look::font (11.5f, 0));
+    g.setFont (look::font (11.5f * k, 0));
     if (m_left.isNotEmpty())
     {
         g.drawText (m_left, bottom.removeFromLeft (bottom.getWidth() / 2).withTrimmedLeft (4), juce::Justification::centredLeft);
@@ -372,7 +411,20 @@ void Macro::paint (juce::Graphics& g)
         g.setColour (look::live);
         g.drawText (valueText() + "  >  " + m_liveText, bottom, juce::Justification::centred);
     }
+    else if (m_idleWhy.isNotEmpty())
+    {
+        // rule 3 on screen: greyed knobs say why where their value would be ("NOT USED BY MOST DIFFERENT")
+        g.setFont (look::font (10.5f * k, 1));
+        g.drawFittedText (idleShort (m_proc, m_ids[0], false), bottom, juce::Justification::centred, 1, 0.9f);
+    }
     else g.drawText (valueText(), bottom, juce::Justification::centred);
+}
+
+void Macro::paintOverChildren (juce::Graphics& g)
+{
+    if (m_idleWhy.isEmpty()) return;
+    g.setColour (look::panel.withAlpha (0.55f));
+    g.fillRect (getLocalBounds());
 }
 
 // ================================================================== DRAG WAV
@@ -413,16 +465,18 @@ void DragWav::paint (juce::Graphics& g)
 {
     auto r = getLocalBounds().toFloat().reduced (0.5f);
     const bool ready = fresh();
+    const auto shape = look::cutRect (r, juce::jmin (10.0f, r.getHeight() * 0.32f));
     g.setColour (isMouseOver() ? look::panelHi : look::panel);
-    g.fillRoundedRectangle (r, 10);
-    g.setColour (ready ? look::green : look::line);
-    g.drawRoundedRectangle (r, 10, ready ? 1.5f : 1.0f);
-    auto t = getLocalBounds().reduced (10, 6);
+    g.fillPath (shape);
+    g.setColour (ready ? look::green : look::line.brighter (0.25f));
+    g.strokePath (shape, juce::PathStrokeType (ready ? 1.5f : 1.0f));
+    auto t = getLocalBounds().reduced (10, 4);
+    const float fk = juce::jmin (1.25f, look::scaleOf (*this));
     g.setColour (look::ink);
-    g.setFont (look::spaced (13.0f, 1, 0.14f));
+    g.setFont (look::spaced (13.0f * fk, 1, 0.14f));
     g.drawText ("DRAG WAV", t.removeFromTop (t.getHeight() / 2 + 2), juce::Justification::centredBottom);
     g.setColour (ready ? look::green : look::inkDim);
-    g.setFont (look::font (11.0f, 0));
+    g.setFont (look::font (11.0f * fk, 0));
     g.drawText (m_rendering ? "making it..." : ready ? "ready: drag it out" : "click to make it", t, juce::Justification::centredTop);
 }
 
@@ -446,10 +500,10 @@ Editor::Editor (Processor& p)
     setLookAndFeel (&m_lnf);
     addAndMakeVisible (m_word);
     m_word.setComponentID ("wordmark");
-    for (auto* b : { &m_tabPlay, &m_tabTerrain, &m_tabHood })
+    for (auto* b : { &m_tabPlay, &m_tabTerrain, &m_tabHood, &m_tabScope })
     {
         addAndMakeVisible (b);
-        b->onClick = [this, b] { setPage (b == &m_tabHood ? 2 : b == &m_tabTerrain ? 1 : 0); };
+        b->onClick = [this, b] { setPage (b == &m_tabScope ? 3 : b == &m_tabHood ? 2 : b == &m_tabTerrain ? 1 : 0); };
     }
     pill (m_tabPlay, "tabPlay", "The main screen.");
     pill (m_tabTerrain, "tabTerrain", "TERRAIN: shape a landscape that steers the matching. Across = which frequencies count; front to back = how wild it gets along the target.");
@@ -538,6 +592,11 @@ Editor::Editor (Processor& p)
     addChildComponent (m_hoodView);
     m_terrain = std::make_unique<TerrainPage> (p);
     addChildComponent (*m_terrain);
+    // the new mode: its page hosts whichever view Scope/ActiveView.cpp makes; the view names the button
+    m_scope = std::make_unique<scope::Page> (p);
+    addChildComponent (*m_scope);
+    m_tabScope.setButtonText (m_scope->buttonName());
+    pill (m_tabScope, "tabScope", m_scope->buttonTip());
 
     m_proc.engine().addChangeListener (this);
     m_proc.params().state.addListener (this);
@@ -576,20 +635,42 @@ juce::Component* Editor::findById (const juce::String& id)
 
 void Editor::setPage (int page)
 {
-    m_page = juce::jlimit (0, 2, page);
+    m_page = juce::jlimit (0, 3, page);
     m_proc.engine().setDrag (0, 0, 0);   // (a drag can't outlive its page)
-    const bool hood = m_page == 2, land = m_page == 1, main = m_page == 0;
+    const bool hood = m_page == 2, land = m_page == 1, main = m_page == 0, inside = m_page == 3;
     m_hoodShown = hood;
     m_tabPlay.setToggleState (main, juce::dontSendNotification);
     m_tabTerrain.setToggleState (land, juce::dontSendNotification);
     m_tabHood.setToggleState (hood, juce::dontSendNotification);
+    m_tabScope.setToggleState (inside, juce::dontSendNotification);
     m_hoodView.setVisible (hood);
     m_terrain->setVisible (land);
+    m_scope->setVisible (inside);
+    scopeOnScreen();
     for (juce::Component* c : std::initializer_list<juce::Component*> { &m_source, &m_target, &m_swarm, &m_viewDots, &m_viewHeat, &m_algo })
         c->setVisible (main);
     for (auto* m : m_macros) m->setVisible (main);
     if (hood) m_hood->refresh();
     repaint();
+}
+
+// The new mode reads the engine's tap only while it is really on screen: its page chosen and the window up. Any other
+// page, a closed or minimised window: the tap is detached and no frame runs. (No window at all, as in the tests'
+// headless editor, counts as up: there the page number alone decides, as it does for TERRAIN.)
+void Editor::scopeOnScreen() { m_scope->setOnScreen (m_page == 3 && (getPeer() == nullptr || isShowing())); }
+
+void Editor::setTestClock (bool on)
+{
+    if (on) stopTimer(); else startTimerHz (60);
+    m_scope->useTestClock (on);
+    m_word.setManualClock (on);
+}
+
+void Editor::stepForTests (double dt)
+{
+    timerCallback();
+    m_scope->stepForTests (dt);
+    m_word.advance ((float) dt);
 }
 
 void Editor::refreshAll()
@@ -674,6 +755,7 @@ void Editor::timerCallback()
     m_swarm.tick();
     m_target.tick();
     if (m_page == 1) m_terrain->tick();
+    if (m_page == 3 || m_scope->onScreen()) { scopeOnScreen(); m_scope->tick(); }
     if ((++m_liveFrame & 1) == 0) syncLive();   // (~30 fps)
     const auto tp = e.targetPicture();
     const int cur = e.currentTargetBlock();
@@ -741,29 +823,31 @@ void Editor::paint (juce::Graphics& g)
             ga.draw (g);
         }
     }
+    // the frame: two rules, and on the upper one a purple bar under the page you are on
     g.setColour (look::line);
-    g.fillRect (0, 96, r.getWidth(), 1);
-    g.fillRect (0, r.getHeight() - 80, r.getWidth(), 1);
+    g.fillRect (0, 95, r.getWidth(), 2);
+    g.fillRect (0, r.getHeight() - 81, r.getWidth(), 2);
+    for (auto* t : { &m_tabPlay, &m_tabTerrain, &m_tabHood, &m_tabScope })
+        if (t->getToggleState()) { g.setColour (look::purple); g.fillRect (t->getX(), 93, t->getWidth(), 4); }
     // status: a dot (green ready, purple busy) and the engine's words
     {
         auto s = m_statusArea;
         const float pulse = m_busy ? 0.55f + 0.45f * std::sin ((float) juce::Time::getMillisecondCounter() * 0.008f) : 1.0f;
         const auto dotC = m_busy ? look::purple : look::green;
-        auto dot = s.removeFromLeft (20).withSizeKeepingCentre (10, 10).toFloat();
-        g.setColour (dotC.withAlpha (0.25f * pulse));
-        g.fillEllipse (dot.expanded (4));
+        auto dot = s.removeFromLeft (20).withSizeKeepingCentre (12, 12).toFloat();
         g.setColour (dotC.withAlpha (pulse));
-        g.fillEllipse (dot);
+        g.fillPath (look::cutRect (dot, 4.0f));
         // line 1: what you hear and why ("Building library... 40%", "Playing", "Silent: no target loaded");
         // line 2: the latest message, or a note that matters right now (a long sound); a bar while the library builds
         auto t = s.withTrimmedLeft (6);
         auto bar = t.removeFromBottom (8).toFloat();
         const bool silent = m_stateLine.startsWith ("Silent");
+        const float fk = frameScale (getWidth(), getHeight());
         g.setColour (silent ? look::purple.brighter (0.4f) : look::ink);
-        g.setFont (look::font (13.0f, 1));
+        g.setFont (look::font (13.0f * fk, 1));
         g.drawFittedText (m_stateLine, t.removeFromTop (t.getHeight() * 3 / 5), juce::Justification::centredLeft, 2, 0.85f);
         g.setColour (look::inkDim);
-        g.setFont (look::font (11.0f, 0));
+        g.setFont (look::font (11.0f * fk, 0));
         g.drawFittedText (m_status, t, juce::Justification::centredLeft, 1, 0.8f);
         if (m_building)
         {
@@ -773,18 +857,18 @@ void Editor::paint (juce::Graphics& g)
         }
     }
     if (m_page != 0) return;
-    look::card (g, m_viewCard.toFloat());
-    look::title (g, "THE LIVE VIEW", m_viewCard.reduced (18, 0).withHeight (44).translated (0, 2), look::ink, 13.0f);
-    g.setColour (look::inkFaint);
-    g.setFont (look::font (12.0f, 0));
+    const int hh = look::headOf (getHeight());
+    const float pk = playScale (getHeight());
+    look::zone (g, m_viewCard, "03", "THE LIVE VIEW", hh);
+    g.setColour (look::inkDim);
+    g.setFont (look::font (12.0f * pk, 0));
     const auto pic = m_libShown;
     const juce::String info = pic != nullptr && pic->numBlocks > 0 ? juce::String (pic->numBlocks) + " pieces from " + juce::String ((int) pic->soundNames.size()) + " sounds" : juce::String();
-    g.drawText (info, m_viewCard.reduced (150, 0).withHeight (44).translated (0, 2), juce::Justification::centredLeft, true);
-    look::card (g, m_macroCard.toFloat());
-    look::title (g, "MACROS", m_macroCard.reduced (18, 0).withHeight (40).translated (0, 2), look::ink, 13.0f);
+    g.drawText (info, m_viewCard.withHeight (hh).withRight (m_viewDots.getX() - 14).withTrimmedLeft (m_viewCard.getWidth() / 3), juce::Justification::centredRight, true);
+    look::zone (g, m_macroCard, "04", "MACROS", hh);
     g.setColour (look::inkDim);
-    g.setFont (look::spaced (11.5f, 1, 0.12f));
-    g.drawText ("SEARCH STYLE", m_algo.getBounds().translated (-130, 0).withWidth (122), juce::Justification::centredRight);
+    g.setFont (look::spaced (11.5f * pk, 1, 0.12f));
+    g.drawText ("SEARCH STYLE", m_algo.getBounds().withX (m_algo.getX() - 170).withWidth (160), juce::Justification::centredRight);
 }
 
 void Editor::resized()
@@ -806,56 +890,84 @@ void Editor::resized()
         m_subSpan = { inkAbs.getX(), inkAbs.getBottom() + subGap, inkAbs.getWidth(), subH };
     }
     const bool narrow = r.getWidth() < 1150;
-    const int tabW = narrow ? 350 : 410;
-    auto tabs = juce::Rectangle<int> (r.getRight() - pad - tabW, 26, tabW, 34);
-    m_tabHood.setBounds (tabs.removeFromRight (narrow ? 156 : 180));
-    tabs.removeFromRight (8);
-    m_tabTerrain.setBounds (tabs.removeFromRight (narrow ? 100 : 114));
-    tabs.removeFromRight (8);
-    m_tabPlay.setBounds (tabs);
+    {
+        // the page buttons, right-aligned on one line with equal gaps: each is as wide as its words plus the same room
+        // on both sides, so the new mode's button belongs with the other three whatever a design calls it. In a narrow
+        // window the four share the 350 px the three had, so the status keeps all of its room.
+        juce::TextButton* tabs[] = { &m_tabPlay, &m_tabTerrain, &m_tabHood, &m_tabScope };
+        const float fk = frameScale (r.getWidth(), r.getHeight());
+        for (auto* t : tabs) look::setScale (*t, fk);
+        const int tabH = juce::roundToInt (40.0f * juce::jmin (1.3f, fk)), gap = narrow ? 6 : 8;
+        const auto f = m_lnf.getTextButtonFont (m_tabPlay, tabH);
+        int words[4], sum = 0;
+        for (int i = 0; i < 4; ++i) { words[i] = (int) std::ceil (juce::GlyphArrangement::getStringWidth (f, tabs[i]->getButtonText())); sum += words[i]; }
+        const int side = narrow ? juce::jlimit (7, 22, (350 - 3 * gap - sum) / 8) : 22;
+        int x = r.getRight() - pad;
+        for (int i = 4; --i >= 0;)
+        {
+            const int w = words[i] + 2 * side;
+            tabs[i]->setBounds (x - w, (96 - tabH) / 2, w, tabH);
+            x -= w + gap;
+        }
+    }
     m_statusArea = juce::Rectangle<int> (m_word.getRight() + 24, 14, m_tabPlay.getX() - m_word.getRight() - 48, 62);
 
-    // bottom bar
-    auto bar = juce::Rectangle<int> (pad, r.getHeight() - 66, r.getWidth() - 2 * pad, 50);
-    auto bh = [] (juce::Rectangle<int> b) { return b.withSizeKeepingCentre (b.getWidth(), 42); };
-    // (narrow windows: the side buttons give way so GENERATE keeps its room)
-    m_undo.setBounds (bh (bar.removeFromLeft (narrow ? 72 : 84))); bar.removeFromLeft (8);
-    m_redo.setBounds (bh (bar.removeFromLeft (narrow ? 72 : 84))); bar.removeFromLeft (8);
-    m_ab.setBounds (bh (bar.removeFromLeft (narrow ? 84 : 96))); bar.removeFromLeft (8);
-    m_presets.setBounds (bh (bar.removeFromLeft (narrow ? 150 : 200)));
-    m_session.setBounds (bh (bar.removeFromRight (narrow ? 100 : 110))); bar.removeFromRight (10);
-    m_drag.setBounds (bar.removeFromRight (narrow ? 124 : 150).withSizeKeepingCentre (narrow ? 124 : 150, 46)); bar.removeFromRight (10);
-    m_mutate.setBounds (bh (bar.removeFromRight (narrow ? 104 : 128))); bar.removeFromRight (16);
-    bar.removeFromLeft (16);
-    m_generate.setBounds (bar.withSizeKeepingCentre (juce::jmin (300, bar.getWidth()), 50));
+    // bottom bar (GHOST POSTER): eight blocks of one height on one line with equal gaps, sharing the whole width by weight;
+    // GENERATE is the widest. The same room above and below (18 px).
+    {
+        const auto bar = juce::Rectangle<int> (pad, r.getHeight() - 80 + 18, r.getWidth() - 2 * pad, 44);
+        juce::Component* items[] = { &m_undo, &m_redo, &m_ab, &m_presets, &m_generate, &m_mutate, &m_drag, &m_session };
+        const float weight[] = { 1.0f, 1.0f, 1.0f, 2.2f, 3.0f, 1.4f, 1.6f, 1.2f };
+        const int bg = 8;
+        const float unit = (float) (bar.getWidth() - 7 * bg) / 12.4f;
+        float at = 0.0f;
+        for (int i = 0; i < 8; ++i)
+        {
+            const int x0 = bar.getX() + juce::roundToInt (at) + i * bg;
+            at += unit * weight[i];
+            const int x1 = i == 7 ? bar.getRight() : bar.getX() + juce::roundToInt (at) + i * bg;
+            items[i]->setBounds (x0, bar.getY(), x1 - x0, bar.getHeight());
+            look::setScale (*items[i], frameScale (r.getWidth(), r.getHeight()));
+            items[i]->repaint();
+        }
+    }
 
+    // the body: one grid for every page (24 px to the sides, 14 px to both rules, one gutter between cards)
     auto body = juce::Rectangle<int> (pad, 110, r.getWidth() - 2 * pad, r.getHeight() - 110 - 94);
-    m_hoodView.setBounds (body.withTrimmedRight (-12));
+    const int g = look::gutterOf (r.getHeight()), hh = look::headOf (r.getHeight());
+    const float pk = playScale (r.getHeight());
+    m_hoodView.setBounds (body);
     m_terrain->setBounds (body);
-    m_hood->setSize (body.getWidth() - 4, juce::jmax (m_hood->getHeight(), 400));
-    m_hood->resized();
+    m_scope->setBounds (body);
+    m_hood->setBounds (0, 0, body.getWidth(), body.getHeight());   // (it fits at every size: nothing scrolls)
 
+    // PLAY: two rows of two cards. Each row's cards share their top and bottom edges (SOURCE SOUNDS | THE LIVE VIEW, TARGET | MACROS).
     auto left = body.removeFromLeft (colW);
-    body.removeFromLeft (16);
-    const int tgtH = 210;
-    m_target.setBounds (left.removeFromBottom (tgtH));
-    left.removeFromBottom (14);
+    body.removeFromLeft (g);
+    const int lowH = juce::jlimit (190, 460, juce::roundToInt ((float) body.getHeight() * 0.36f));
+    m_target.setBounds (left.removeFromBottom (lowH));
+    left.removeFromBottom (g);
     m_source.setBounds (left);
-
-    m_macroCard = body.removeFromBottom (190);
-    body.removeFromBottom (14);
+    m_macroCard = body.removeFromBottom (lowH);
+    body.removeFromBottom (g);
     m_viewCard = body;
-    auto vh = m_viewCard.reduced (14, 0).withHeight (44).translated (0, 2);
-    m_viewHeat.setBounds (vh.removeFromRight (74).reduced (0, 7));
-    vh.removeFromRight (6);
-    m_viewDots.setBounds (vh.removeFromRight (74).reduced (0, 7));
-    m_swarm.setBounds (m_viewCard.reduced (12).withTrimmedTop (40));
-
-    auto mh = m_macroCard.reduced (14, 0).withHeight (40).translated (0, 2);
-    m_algo.setBounds (mh.removeFromRight (230).reduced (0, 6));
-    auto knobs = m_macroCard.reduced (12, 0).withTrimmedTop (46).withTrimmedBottom (10);
-    const int kw = knobs.getWidth() / juce::jmax (1, m_macros.size());
-    for (auto* m : m_macros) m->setBounds (knobs.removeFromLeft (kw).reduced (4, 0));
+    {
+        const int bh = juce::jmin (hh - 10, juce::roundToInt (28.0f * pk)), bw = juce::roundToInt (76.0f * pk);
+        auto vh = m_viewCard.withHeight (hh).withTrimmedRight (hh / 2);
+        m_viewHeat.setBounds (vh.removeFromRight (bw).withSizeKeepingCentre (bw, bh));
+        vh.removeFromRight (6);
+        m_viewDots.setBounds (vh.removeFromRight (bw).withSizeKeepingCentre (bw, bh));
+        look::setScale (m_viewHeat, pk); look::setScale (m_viewDots, pk);
+        m_swarm.setBounds (m_viewCard.withTrimmedTop (hh).reduced (10));
+        auto mh = m_macroCard.withHeight (hh).withTrimmedRight (hh / 2);
+        const int aw = juce::roundToInt (230.0f * pk);
+        m_algo.setBounds (mh.removeFromRight (aw).withSizeKeepingCentre (aw, bh));
+        look::setScale (m_algo, pk);
+        auto knobs = m_macroCard.withTrimmedTop (hh + 8).reduced (12, 0).withTrimmedBottom (10);
+        const int n = juce::jmax (1, m_macros.size()), kw = knobs.getWidth() / n;
+        knobs = knobs.withSizeKeepingCentre (kw * n, knobs.getHeight());
+        for (auto* m : m_macros) m->setBounds (knobs.removeFromLeft (kw).reduced (4, 0));
+    }
 }
 
 // ------------------------------------------------------------------ actions

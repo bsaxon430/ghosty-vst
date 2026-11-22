@@ -9,6 +9,7 @@
 #pragma once
 #include <juce_audio_utils/juce_audio_utils.h>
 #include "Processor.h"
+#include "ParamRow.h"
 
 namespace mosaic
 {
@@ -26,7 +27,7 @@ public:
     void resized() override;
     void refresh();                          // network status, recording / playing state
     void refreshSounds();                    // the loaded-sounds list
-    void syncLive (const Engine& e);         // MOVING NOW: what TERRAIN moves shows its in-use value
+    void syncLive (const Engine& e);         // MOVING NOW: what TERRAIN moves shows its in-use value; and a setting that does nothing right now greys
 
     // tests
     bool hasControlFor (const juce::String& paramId) const;
@@ -40,25 +41,9 @@ public:
 private:
     class Transport;
     class SoundList;
-    enum class Style { Slider, Number, NumberInline, Combo, Check, Added };
-    struct Row : public juce::Component, public juce::SettableTooltipClient
-    {
-        Row (Processor& p, const ParamInfo& info, Style s, juce::String mainLabel, juce::String subLabel, juce::String prefix = {});
-        void paint (juce::Graphics&) override;
-        void resized() override;
-        const ParamInfo& info;
-        Style style;
-        juce::String mainText, subText, prefixText;
-        int liveIdx = -1; bool liveOn = false; float liveP = -1; juce::String liveText;
-        void syncLive (const Engine& e);
-        std::unique_ptr<juce::Slider> slider;
-        std::unique_ptr<juce::ComboBox> combo;
-        std::unique_ptr<juce::ToggleButton> toggle;
-        std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> sa;
-        std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> ca;
-        std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> ba;
-    };
-    struct Panel { juce::String title; juce::Rectangle<int> box; float titleSize = 22.0f; };
+    using Style = ParamRow::Style;
+    using Row = ParamRow;                    // one setting (ParamRow.h): the same control the new mode's views can place
+    struct Panel { juce::String title; juce::Rectangle<int> box; juce::String number; int headH = 40; bool lower = true; };
     juce::TextButton& addButton (const juce::String& id, const juce::String& text, std::function<void()> fn, const juce::String& tip);
     Row* addRow (const char* id, Style s, const juce::String& mainLabel, const juce::String& sub, const juce::String& prefix = {});
     Row* row (const char* id) const;
@@ -76,10 +61,12 @@ private:
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> m_volumeAtt;
     juce::ToggleButton m_micOff;             // "use mic input" in the instrument (it has no input: the effect version does)
     juce::TextButton m_tabSearch { "search" }, m_tabNet { "net" };
-    bool m_netTab = false;
+    bool m_netTab = false, m_fftIdle = false;
     int m_originalBottom = 0;
     std::vector<Panel> m_panels;
-    juce::Rectangle<int> m_fftLabel, m_mixLabel, m_volumeLabel;
+    juce::Rectangle<int> m_fftLabel, m_mixLabel, m_volumeLabel, m_micLabel;
+    float m_k = 1.0f, m_rowK = 1.0f;         // GHOST POSTER: the page's scale and its rows' (from the room there is)
+    int m_numW = 42;                         // the width of a section's number block
     // network
     juce::ToggleButton m_netOn { "NETWORK ON" };
     juce::Label m_portLabel[3];

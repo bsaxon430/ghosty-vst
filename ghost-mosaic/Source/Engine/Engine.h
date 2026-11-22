@@ -17,6 +17,7 @@
 #include "Limiter.h"
 #include "Shaping.h"
 #include "TerrainModel.h"
+#include "Tap.h"
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <deque>
 #include <list>
@@ -162,6 +163,11 @@ public:
     bool isEffect() const { return m_isEffect; }
     double sampleRate() const { return m_sr; }
 
+    // ---- the tap (Tap.h; read-only, studio/TAP.md). Views read mosaic::tap::Model (TapModel.h), not these.
+    tap::Tap& tap() { return m_tap; }
+    std::shared_ptr<const tap::BrainSnapshot> brainSnapshot() const { const juce::ScopedLock l (m_modelLock); return m_tapBrain; }      // of the newest library built
+    std::shared_ptr<const tap::TargetSnapshot> targetSnapshot() const { const juce::ScopedLock l (m_modelLock); return m_tapTarget; }   // of the newest target built
+
     // tests
     void waitUntilIdle (int timeoutMs = 600000);
     RtRenderer& leftRenderer() { return m_left; }
@@ -181,6 +187,7 @@ private:
         std::unique_ptr<RtRenderer> stateL, stateR;   // from a session file
         bool forcePlay = false, playValue = false;
         PieceInfo* info = nullptr;                    // with a new source
+        juce::uint32 brainGen = 0, targetGen = 0;     // (the tap) the snapshots made for this library / target
         ~Swap() { delete info; }
     };
     struct Retired { brain* b = nullptr; std::list<brain::sound>* g = nullptr; LiveTarget* live = nullptr; Swap* swap = nullptr; PieceInfo* info = nullptr; };
@@ -211,6 +218,19 @@ private:
     void startPlaying (bool fromTop);
     void stopPlaying();
     static void observe (void* ctx, juce::uint32 src, juce::uint32 tgt, juce::uint32 time);
+
+    // the tap (all in Tap.cpp). Audio thread: copies numbers out, never waits, never allocates. Worker: the snapshots.
+    tap::Tap m_tap;
+    bool tapBegin (int numSamples, int lastNote, bool stereo, int mode, bool hostPlaying, bool hostInfoValid);   // true = someone is reading
+    void tapEnd (const float* left, const float* right, int len, float peak);
+    void tapResets (int where);
+    void tapRested (juce::uint32 piece);
+    static void tapBefore (void* ctx);
+    static void tapPicked (void* ctx, juce::uint32 src, juce::uint32 tgt, juce::uint32 time, juce::uint32 renderIndex, bool advanced);
+    static void tapEnded (void* ctx, juce::uint32 src, juce::uint32 tgt, juce::uint32 time, float pos);
+    void tapSnapBrain (const brain& b, const LibraryPicture& pic);
+    void tapSnapTarget (const brain& left, const brain& right);
+    juce::uint32 m_tapGens = 0, m_tapPendingBrain = 0, m_tapPendingTarget = 0;   // worker only
 
     juce::AudioProcessorValueTreeState& m_params;
     const bool m_isEffect;
@@ -311,6 +331,8 @@ private:
     juce::String m_targetKey, m_targetName;
     std::shared_ptr<const LibraryPicture> m_libPic;
     std::shared_ptr<const TargetPicture> m_tgtPic;
+    std::shared_ptr<const tap::BrainSnapshot> m_tapBrain;
+    std::shared_ptr<const tap::TargetSnapshot> m_tapTarget;
     Shaping m_shapeMsg;
     ghost::terrain::Terrain m_terrainMsg;
     juce::String m_terrainState;

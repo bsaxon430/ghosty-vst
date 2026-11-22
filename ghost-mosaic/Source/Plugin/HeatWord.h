@@ -38,12 +38,17 @@ public:
     void mouseMove (const juce::MouseEvent&) override;
     void mouseExit (const juce::MouseEvent&) override;
     float power() const { return m_power; }
+    float grown() const { return m_grow; }          // 0 = not drawn yet .. 1 = fully drawn (it grows in once, when it first appears)
+    // tests and the studio harness: no timer and no wall clock; advance (dt) is one step of what the timer does
+    void setManualClock (bool on);
+    void advance (float dtSeconds);
 
 private:
     void timerCallback() override;
     void build();
     void paintField();
     void run();
+    bool step (float dt);                           // one frame; false = everything has come to rest
 
     juce::String m_word;
     juce::Image m_shown;
@@ -51,7 +56,7 @@ private:
     int m_w = 0, m_h = 0;
     float m_px = 0.5f, m_py = 0.5f, m_tx = 0.5f, m_ty = 0.5f, m_power = 0, m_want = 0, m_grow = 0;
     float m_audioX = 0.5f, m_audioLevel = 0, m_audioPower = 0, m_ax = 0.5f;
-    bool m_roam = false;
+    bool m_roam = false, m_built = false, m_manual = false, m_moving = false;
     float m_roamPhase = 0, m_pulse = 0, m_ay = 0.5f;
     float m_inset = 0;
     juce::Rectangle<float> m_ink;

@@ -290,7 +290,9 @@ void Swarm::resized()
 {
     const auto b = getLocalBounds().toFloat();
     m_scale = juce::jmin (b.getWidth() / W, b.getHeight() / H);
-    m_toView = juce::AffineTransform::scale (m_scale).translated (b.getCentreX() - CX * m_scale, b.getCentreY() - CY * m_scale);
+    // the cloud is stretched to its panel (at most 2.8 times wider than tall; the last 20 px are the key's)
+    const float sy = juce::jmax (0.1f, (b.getHeight() - 20.0f) / 360.0f), sx = juce::jmax (sy, juce::jmin (b.getWidth() / 300.0f, sy * 2.8f));
+    m_toView = juce::AffineTransform::scale (sx, sy).translated (b.getCentreX() - CX * sx, b.getCentreY() - 10.0f - CY * sy);
 }
 
 juce::Point<float> Swarm::toLocal (juce::Point<float> p) const
@@ -347,22 +349,27 @@ void Swarm::paintDots (juce::Graphics& g)
             }
         }
     }
+    g.restoreState();
+    // The dots are placed by the panel's stretch but drawn round, in screen pixels, big enough to show their colour.
     // one path per tint for the dots at rest or moving (the many), one by one for the lit (the few)
+    const float R = juce::jlimit (1.6f, 4.5f, r * std::sqrt (std::abs (m_toView.mat00 * m_toView.mat11)) * 1.3f);
+    auto at = [this] (float x, float y) { return juce::Point<float> (x, y).transformedBy (m_toView); };
     std::map<juce::uint32, juce::Path> groups;
     std::vector<const Dot*> lit;
     for (auto& d : m_dots)
     {
         if (d.flash > 0.05f) { lit.push_back (&d); continue; }
         auto& p = groups[d.tint.getARGB()];
+        const auto c = at (d.x, d.y);
         const float sp = std::hypot (d.vx, d.vy);
-        if (sp < 0.3f) p.addEllipse (d.x - r, d.y - r, r * 2, r * 2);
+        if (sp < 0.3f) p.addEllipse (c.x - R, c.y - R, R * 2, R * 2);
         else
         {
             /* Bencho: long along its path, a little thin across it */
             const float s = juce::jmin (2.6f, 1 + sp * 0.12f);
-            const float rot = std::atan2 (d.vy, d.vx);
-            juce::Path e; e.addEllipse (-r * s, -r / std::sqrt (s), r * s * 2, r / std::sqrt (s) * 2);
-            p.addPath (e, juce::AffineTransform::rotation (rot).translated (d.x, d.y));
+            const float rot = std::atan2 (d.vy * m_toView.mat11, d.vx * m_toView.mat00);
+            juce::Path e; e.addEllipse (-R * s, -R / std::sqrt (s), R * s * 2, R / std::sqrt (s) * 2);
+            p.addPath (e, juce::AffineTransform::rotation (rot).translated (c.x, c.y));
         }
     }
     for (auto& [argb, p] : groups)
@@ -372,13 +379,21 @@ void Swarm::paintDots (juce::Graphics& g)
     }
     for (auto* d : lit)
     {
-        const float rr = r * (1 + 1.4f * d->flash);
+        const auto c = at (d->x, d->y);
+        const float rr = R * (1 + 1.4f * d->flash);
         g.setColour (d->tint.withAlpha (0.25f * d->flash));
-        g.fillEllipse (d->x - rr * 2.6f, d->y - rr * 2.6f, rr * 5.2f, rr * 5.2f);
+        g.fillEllipse (c.x - rr * 2.6f, c.y - rr * 2.6f, rr * 5.2f, rr * 5.2f);
         g.setColour (d->tint.interpolatedWith (juce::Colours::white, 0.6f * d->flash));
-        g.fillEllipse (d->x - rr, d->y - rr, rr * 2, rr * 2);
+        g.fillEllipse (c.x - rr, c.y - rr, rr * 2, rr * 2);
     }
-    g.restoreState();
+    // the key: what a dot, its colour, a glowing dot and a line are
+    if (m_pic != nullptr && m_pic->numBlocks > 0)
+    {
+        g.setColour (look::inkDim);
+        g.setFont (look::font (11.0f, 0));
+        g.drawFittedText ("dot = a piece of a sound    colour = which sound    glowing = playing now    line = a piece it is linked to (Network styles)",
+                          getLocalBounds().removeFromBottom (20).reduced (10, 0), juce::Justification::centred, 1, 0.8f);
+    }
 }
 
 void Swarm::paintHeat (juce::Graphics& g)

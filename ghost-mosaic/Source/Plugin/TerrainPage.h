@@ -20,6 +20,7 @@ public:
     explicit TerrainPage (Processor& p);
     void tick();                                   // the editor's frame clock
     void paint (juce::Graphics&) override;
+    void paintOverChildren (juce::Graphics&) override;
     void resized() override;
     void visibilityChanged() override { if (! isShowing()) { m_feel = {}; m_proc.engine().setDrag (0, 0, 0); } }   // leaving the page mid-drag: the drag effect is gone, nothing is held
     ~TerrainPage() override { m_proc.engine().setDrag (0, 0, 0); }
@@ -37,8 +38,17 @@ public:
     std::vector<Moving> shownMoving() const { return m_moving; }
 
 private:
-    juce::Rectangle<int> cardArea() const;
-    juce::Rectangle<int> barsArea() const;
+    juce::Rectangle<int> cardArea() const;       // the land (under the 01 TERRAIN band)
+    juce::Rectangle<int> barsArea() const;       // the right column: 02 WHAT THE SHAPE DOES over 03 MOVING NOW
+    juce::Rectangle<int> footArea() const;       // the band along the bottom: what the land is doing now, and how to read it
+    // GHOST POSTER: the page's grid, from the window's height
+    int winH() const { return getHeight() + 204; }
+    float scaleNow() const { return juce::jlimit (1.0f, 1.5f, (float) winH() / 760.0f); }
+    int headH() const;
+    int gut() const;
+    int sideW() const { return juce::jlimit (270, 460, getWidth() / 4); }
+    int footH() const { return juce::roundToInt (54.0f * scaleNow()); }
+    juce::Rectangle<int> m_moveLabel;
     Processor& m_proc;
     ghost::terrain::TerrainView m_view;
     juce::ComboBox m_shapes;

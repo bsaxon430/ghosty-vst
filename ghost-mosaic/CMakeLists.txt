@@ -75,6 +75,9 @@ set(GHOSTMOSAIC_ENGINE_SOURCES
 set(GHOSTMOSAIC_UI_SOURCES
   Source/Plugin/Processor.cpp Source/Plugin/Editor.cpp Source/Plugin/Swarm.cpp Source/Plugin/HeatWord.cpp
   Source/Plugin/HoodPage.cpp Source/Plugin/Look.cpp Source/Plugin/TerrainPage.cpp)
+# the studio's additions keep their file lists in their own files (the read-only tap: engine side; the new mode: screen side)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/TapSources.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ScopeSources.cmake)
 set(GHOSTMOSAIC_DEFS JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0 JUCE_DISPLAY_SPLASH_SCREEN=0
   JUCE_USE_MP3AUDIOFORMAT=1 GHOSTMOSAIC_VERSION="${GHOSTMOSAIC_VERSION}")
 set(GHOSTMOSAIC_MODULES juce::juce_audio_utils juce::juce_dsp juce::juce_osc)

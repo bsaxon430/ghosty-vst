@@ -84,8 +84,8 @@ Engine::Engine (juce::AudioProcessorValueTreeState& params, bool isEffect)
 {
     for (auto& p : paramTable())
         m_raw.push_back (params.getRawParameterValue (p.id));
-    m_left.setObserver ({ &Engine::observe, &m_obsL });
-    m_right.setObserver ({ &Engine::observe, &m_obsR });
+    m_left.setObserver ({ &Engine::observe, &m_obsL, &Engine::tapBefore, &Engine::tapPicked, &Engine::tapEnded });
+    m_right.setObserver ({ &Engine::observe, &m_obsR, &Engine::tapBefore, &Engine::tapPicked, &Engine::tapEnded });
     m_left.init (nullptr, nullptr);
     m_right.init (nullptr, nullptr);
     m_scratch.setSize (2, 16384);
@@ -599,6 +599,8 @@ void Engine::publish (std::unique_ptr<Swap> s)
         else { std::vector<float> hz; pieceBrightness (*s->source, m_sr, s->info->bright, hz); }
         s->info->factor.assign (s->info->bright.size(), 1.0f);
     }
+    if (s->source != nullptr) s->brainGen = m_tapPendingBrain;    // (the tap: which snapshot describes it)
+    if (s->left != nullptr) s->targetGen = m_tapPendingTarget;
     for (;;)
     {
         int s1, n1, s2, n2;
@@ -632,6 +634,7 @@ void Engine::drainQueues()
             m_source = s->source; m_graveyard = s->graveyard;
             m_left.setSource (m_source); m_right.setSource (m_source);
             r.info = m_info; m_info = s->info; s->info = nullptr;
+            m_tap.audio.brainGen = s->brainGen;
             m_biasTilt = 0; m_left.setBlockBias (nullptr, 0); m_right.setBlockBias (nullptr, 0);   // (made again for this library)
             {
                 // your switches as the new library was built with them (the landscape's pick goes on top)
@@ -646,6 +649,7 @@ void Engine::drainQueues()
             Retired rt; rt.b = m_tl; retire (rt);
             Retired rr; rr.b = m_tr; retire (rr);
             m_tl = s->left; m_tr = s->right;
+            m_tap.audio.targetGen = s->targetGen;
         }
         if (s->setLive)
         {
@@ -717,7 +721,10 @@ void Engine::drainQueues()
                 break;
             case Cmd::Rest:
                 if (m_source != nullptr && c.a >= 0 && (u32) c.a < m_source->get_num_blocks())
+                {
                     const_cast<block&> (m_source->get_block ((u32) c.a)).get_usage() += 1000.0f;   // brain.cpp usage_factor
+                    tapRested ((u32) c.a);
+                }
                 break;
         }
     }
@@ -816,6 +823,7 @@ void Engine::process (juce::AudioBuffer<float>& io, juce::MidiBuffer& midi, bool
     if (m_exclusiveRequest.load())
     {
         m_exclusiveGranted.store (true);
+        if (m_tap.audio.on) ++m_tap.audio.parked;   // (the tap: a buffer spent waiting for a library job)
         io.clear();
         m_audioBusy.store (false);
         return;
@@ -854,6 +862,7 @@ void Engine::process (juce::AudioBuffer<float>& io, juce::MidiBuffer& midi, bool
     m_lastHostPlaying = hostPlaying;
     if (want && (! m_running || m_stopAfterFade)) startPlaying (hostStarted);
     else if (! want && m_running && ! m_stopAfterFade) stopPlaying();
+    const bool tapOn = tapBegin (n, lastNote, stereo, mode, hostPlaying, hostInfoValid);   // (the tap: read-only, Tap.cpp)
 
     // ---- render
     auto* L = m_scratch.getWritePointer (0);
@@ -986,6 +995,7 @@ void Engine::process (juce::AudioBuffer<float>& io, juce::MidiBuffer& midi, bool
         }
         m_level.store (juce::jmax (peak, m_level.load() * 0.9f));
         m_limGain.store (m_limiter.takeMinGain());
+        if (tapOn) tapEnd (L, R, len, peak);
         done += len;
     }
     m_runningUi.store (m_running); m_notesUi.store (m_notesDown);
@@ -1281,6 +1291,7 @@ void Engine::targetJob()   // (worker)
         std::unique_ptr<brain> l, r;
         buildTarget (l, r);
         makeTargetPicture (*l);
+        tapSnapTarget (*l, *r);
         auto s = std::make_unique<Swap>();
         s->left = l.release(); s->right = r.release();
         const auto nb = s->left->get_num_blocks();
@@ -1436,6 +1447,7 @@ void Engine::makeLibraryPicture (const brain& b)
         m_builtRate = m_sr;
     }
     m_terrainRefresh = true;   // (which sounds a mountain picks depends on the library: redone on the message thread)
+    tapSnapBrain (b, *pic);    // (the tap: the same library as plain read-only numbers)
 }
 
 void Engine::refreshTerrain()
@@ -1650,6 +1662,7 @@ void Engine::loadSessionFile (const juce::File& f)
             m_sounds = items; m_targetKey = tkey; m_targetName = tname;
         }
         makeTargetPicture (*tl);
+        tapSnapTarget (*tl, *tr);
         // the session's settings onto the controls (MainWindow::init_from_session)
         auto* p = rl->get_params();
         struct KV { const char* id; float v; };

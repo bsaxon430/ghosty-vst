@@ -101,7 +101,17 @@ HeatWord::HeatWord (juce::String word) : m_word (std::move (word))
     setInterceptsMouseClicks (true, false);
 }
 
-void HeatWord::resized() { build(); m_grow = 0; run(); }
+// Bencho: the shape grows in from nothing when it changes. Ghost Mosaic: the word never changes, only its size does
+// (the window being resized), so it grows in once, when it first appears, and stays drawn through every resize.
+// (Before, every change of its width started the 0.9 s grow again from nothing: the name blinked out, came back
+//  only after a quarter of a second, and stayed gone for as long as the window's edge was being dragged.)
+void HeatWord::resized()
+{
+    if (! m_built) m_grow = 0;
+    m_built = true;
+    build();
+    run();
+}
 
 // box blur, one direction, radius r, on a w*h byte field (in place via a scratch row)
 static void boxPass (std::vector<float>& f, int w, int h, int r, bool horizontal)
@@ -269,13 +279,32 @@ void HeatWord::setAudioHeat (float where, float level)
 }
 
 /* Bencho: the loop runs only while something is moving */
-void HeatWord::run() { if (! isTimerRunning()) { m_prev = juce::Time::getMillisecondCounterHiRes(); startTimerHz (60); } }
+void HeatWord::run()
+{
+    if (m_manual) { m_moving = true; return; }
+    if (! isTimerRunning()) { m_prev = juce::Time::getMillisecondCounterHiRes(); startTimerHz (60); }
+}
+
+void HeatWord::setManualClock (bool on)
+{
+    if (on == m_manual) return;
+    m_manual = on;
+    if (on) { stopTimer(); m_moving = true; }
+    else run();
+}
+
+void HeatWord::advance (float dt) { if (m_manual && m_moving) m_moving = step (juce::jmin (0.05f, dt)); }
 
 void HeatWord::timerCallback()
 {
     const double t = juce::Time::getMillisecondCounterHiRes();
     const float dt = (float) juce::jmin (0.05, (t - m_prev) / 1000.0);
     m_prev = t;
+    if (! step (dt)) stopTimer();
+}
+
+bool HeatWord::step (float dt)
+{
     const float k = 1 - std::pow (0.002f, dt);
     m_px += (m_tx - m_px) * k;
     m_py += (m_ty - m_py) * k;
@@ -305,6 +334,7 @@ void HeatWord::timerCallback()
                        && std::abs (awant - m_audioPower) < 0.004f && (awant == 0 || (! m_roam && std::abs (aw - m_ax) < 0.001f && m_pulse < 0.004f));
     if (still && m_want == 0) m_power = 0;
     if (still && awant == 0) m_audioPower = 0;
-    if (still) { stopTimer(); paintField(); repaint(); }
+    if (still) { paintField(); repaint(); }
+    return ! still;
 }
 }

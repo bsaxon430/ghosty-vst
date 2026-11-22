@@ -5,167 +5,6 @@
 
 namespace mosaic
 {
-namespace
-{
-constexpr int kRowH = 35;
-
-// The original window's own control names (gui/samplebrain.ui), spelling included.
-juce::String originalName (const juce::String& id)
-{
-    static const std::map<juce::String, juce::String> m = {
-        { "ratio", "fft / mfcc" }, { "n_ratio", "freq & dynamics / freq only" }, { "fft_start", "Start" }, { "fft_end", "End" },
-        { "novelty", "novelty" }, { "boredom", "boredom" }, { "stickyness", "stickyness" }, { "stretch", "search stretch" },
-        { "algo", "algorithm" }, { "synapses", "num synpases" }, { "slide_error", "synaptic slide error" },
-        { "tgt_block", "block size" }, { "tgt_overlap", "block overlap" }, { "tgt_window", "window shape" },
-        { "autotune", "autotune" }, { "n_mix", "normalised" }, { "target_mix", "brain / target" }, { "stereo", "stereo mode" },
-        { "src_block", "block size" }, { "src_overlap", "block overlap" }, { "src_window", "window shape" }, { "live_input", "use mic input" } };
-    auto it = m.find (id);
-    return it == m.end() ? juce::String() : it->second;
-}
-
-// the original's own names for the menu items (same order, same count as ours)
-const char* originalChoices (const juce::String& id)
-{
-    if (id == "tgt_window" || id == "src_window") return "dodgy|bartlett|blackman|flat top|gaussian|hamming|hann|rectangle";
-    if (id == "algo") return "basic|reversed|synaptic|synaptic slide";
-    return nullptr;
-}
-
-bool isNumberBox (const juce::String& id)
-{
-    return id == "tgt_block" || id == "tgt_overlap" || id == "src_block" || id == "src_overlap";
-}
-}
-
-// ------------------------------------------------------------------ one setting
-HoodPage::Row::Row (Processor& p, const ParamInfo& i, Style s, juce::String m, juce::String sub, juce::String pre)
-    : info (i), style (s), mainText (std::move (m)), subText (std::move (sub)), prefixText (std::move (pre))
-{
-    auto& vts = p.params();
-    liveIdx = Engine::liveIndexOf (i.id);
-    setTooltip (juce::String (i.help) + "  (original: " + shownOriginal (i) + ")");
-    if (style == Style::Combo || (style == Style::Added && i.choices != nullptr))
-    {
-        combo = std::make_unique<juce::ComboBox>();
-        const char* oc = originalChoices (i.id);
-        combo->addItemList (juce::StringArray::fromTokens (oc != nullptr ? oc : i.choices, "|", ""), 1);
-        addAndMakeVisible (*combo);
-        ca = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment> (vts, i.id, *combo);
-        combo->setTooltip (getTooltip());
-    }
-    else if (style == Style::Check || (style == Style::Added && i.min == 0 && i.max == 1 && i.step == 1))
-    {
-        toggle = std::make_unique<juce::ToggleButton>();
-        addAndMakeVisible (*toggle);
-        ba = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment> (vts, i.id, *toggle);
-        toggle->setTooltip (getTooltip());
-    }
-    else if (style == Style::Number || style == Style::NumberInline)
-    {
-        slider = std::make_unique<juce::Slider> (juce::Slider::IncDecButtons, juce::Slider::TextBoxLeft);
-        slider->setIncDecButtonsMode (juce::Slider::incDecButtonsDraggable_AutoDirection);
-        slider->setTextBoxStyle (juce::Slider::TextBoxLeft, false, style == Style::NumberInline ? 40 : 64, 24);
-        slider->setColour (juce::Slider::textBoxTextColourId, look::ink);
-        slider->setColour (juce::Slider::textBoxBackgroundColourId, look::ground);
-        slider->setColour (juce::Slider::textBoxOutlineColourId, look::line);
-        addAndMakeVisible (*slider);
-        sa = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (vts, i.id, *slider);
-        slider->setNumDecimalPlacesToDisplay (i.step < 1 ? 2 : 0);
-        slider->setTooltip (getTooltip());
-        slider->onDragStart = [&p] { p.undo().beginNewTransaction(); };
-    }
-    else
-    {
-        slider = std::make_unique<juce::Slider> (juce::Slider::LinearHorizontal, juce::Slider::TextBoxRight);
-        slider->setTextBoxStyle (juce::Slider::TextBoxRight, false, 62, 20);
-        slider->setColour (juce::Slider::textBoxTextColourId, look::ink);
-        addAndMakeVisible (*slider);
-        sa = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (vts, i.id, *slider);
-        if (i.max - i.min > 2000) slider->setSkewFactorFromMidPoint (juce::String (i.id) == "slide_error" ? 1000.0 : 2000.0);
-        slider->setNumDecimalPlacesToDisplay (i.step < 1 ? 2 : 0);
-        slider->setTooltip (getTooltip());
-        slider->onDragStart = [&p] { p.undo().beginNewTransaction(); };
-    }
-}
-
-void HoodPage::Row::syncLive (const Engine& e)
-{
-    if (liveIdx < 0) return;
-    const auto v = e.liveValue (liveIdx);
-    const bool on = v.moving;
-    float p = 0;
-    juce::String txt;
-    if (on) { txt = live::text (liveIdx, v.now); if (slider) p = (float) slider->valueToProportionOfLength (v.now); }
-    if (on == liveOn && std::abs (p - liveP) < 0.002f && txt == liveText) return;
-    liveOn = on; liveP = p; liveText = txt;
-    if (slider) { slider->getProperties().set ("liveOn", on); slider->getProperties().set ("live", (double) p); slider->repaint(); }
-    repaint();
-    if (combo) { combo->getProperties().set ("liveOn", on); combo->getProperties().set ("liveText", txt); combo->resized(); combo->repaint(); }
-}
-
-void HoodPage::Row::paint (juce::Graphics& g)
-{
-    auto r = getLocalBounds();
-    const bool added = style == Style::Added;
-    if (style == Style::NumberInline)
-    {
-        g.setColour (look::ink);
-        g.setFont (look::font (12.0f, 1));
-        g.drawText (prefixText, r.removeFromLeft (34).withTrimmedBottom (10), juce::Justification::centredLeft, false);
-    }
-    else if (style == Style::Check)
-    {
-        auto left = r.withTrimmedLeft (42);
-        g.setColour (look::ink);
-        g.setFont (look::font (12.5f, 1));
-        g.drawFittedText (mainText, left.removeFromTop (kRowH / 2 + 2).withTrimmedTop (2), juce::Justification::bottomLeft, 1, 0.75f);
-        g.setColour (look::inkFaint);
-        g.setFont (look::font (9.5f, 0));
-        g.drawText (subText, left, juce::Justification::topLeft, true);
-    }
-    else
-    {
-        auto left = r.removeFromLeft (juce::jmin (added ? 170 : 186, r.getWidth() / 2));
-        g.setColour (look::ink);
-        if (added) g.setFont (look::spaced (12.0f, 1, 0.1f)); else g.setFont (look::font (12.5f, 1));
-        auto top = left.removeFromTop (kRowH / 2 + 2).withTrimmedTop (2);
-        g.drawFittedText (mainText, top, juce::Justification::bottomLeft, 1, 0.72f);
-        if (subText.isNotEmpty())
-        {
-            g.setColour (look::inkFaint);
-            g.setFont (look::spaced (9.0f, 0, 0.08f));
-            g.drawText (subText, left, juce::Justification::topLeft, true);
-        }
-    }
-    if (liveOn && slider)
-    {
-        g.setColour (look::live);
-        g.setFont (look::spaced (10.5f, 1, 0.06f));
-        if (style == Style::Slider || style == Style::Added)
-            g.drawText ("NOW " + liveText, slider->getBounds().withY (0).withHeight (13).withTrimmedRight (70), juce::Justification::centredRight, true);
-        else
-            g.drawText ("NOW " + liveText, juce::Rectangle<int> (slider->getX(), slider->getBottom() - 1, slider->getWidth(), 11), juce::Justification::centredRight, true);
-    }
-}
-
-void HoodPage::Row::resized()
-{
-    auto r = getLocalBounds();
-    const bool added = style == Style::Added;
-    if (style == Style::Check) { if (toggle) toggle->setBounds (r.removeFromLeft (38).reduced (0, 5)); return; }
-    if (style == Style::NumberInline)
-    {
-        r.removeFromLeft (34);
-        if (slider) slider->setBounds (r.removeFromLeft (juce::jmin (84, r.getWidth())).withHeight (24).translated (0, 1));
-        return;
-    }
-    r.removeFromLeft (juce::jmin (added ? 170 : 186, r.getWidth() / 2));
-    if (style == Style::Number) { if (slider) slider->setBounds (r.removeFromRight (juce::jmin (130, r.getWidth())).withHeight (24).translated (0, 1)); return; }
-    if (slider) slider->setBounds (r.reduced (0, 4));
-    if (combo) combo->setBounds (r.reduced (0, 5));
-    if (toggle) toggle->setBounds (r.removeFromLeft (60).reduced (0, 5));
-}
-
 // ------------------------------------------------------------------ the loaded sounds ("brain contents" list)
 class HoodPage::SoundList : public juce::Component, public juce::FileDragAndDropTarget, private juce::ListBoxModel
 {
@@ -174,12 +13,23 @@ public:
     {
         setComponentID ("hoodSounds");
         m_list.setRowHeight (28);
-        m_list.setColour (juce::ListBox::backgroundColourId, look::ground.withAlpha (0.7f));
+        m_list.setColour (juce::ListBox::backgroundColourId, look::well);
         m_list.setColour (juce::ListBox::outlineColourId, look::line);
         m_list.setOutlineThickness (1);
         addAndMakeVisible (m_list);
     }
     void refresh() { m_sounds = m_p.engine().sounds(); m_list.updateContent(); m_list.repaint(); repaint(); }
+    // GHOST POSTER: the list grows with the page: whole rows only, type and switches at the page's scale
+    void setScale (float k)
+    {
+        m_k = k;
+        const int want = juce::jmax (22, juce::roundToInt (28.0f * k));
+        const int rows = juce::jmax (1, juce::roundToInt ((float) (getHeight() - 2) / (float) want));
+        const int rowH = juce::jmax (20, (getHeight() - 2) / rows);
+        m_list.setRowHeight (rowH);
+        m_list.setBounds (0, 0, getWidth(), juce::jmin (getHeight(), rowH * rows + 2));   // (whole rows only)
+        m_list.repaint();
+    }
     void syncLive()
     {
         auto& e = m_p.engine();
@@ -210,40 +60,46 @@ private:
     {
         if (row < 0 || row >= (int) m_sounds.size()) return;
         const auto& s = m_sounds[(size_t) row];
+        const float k = m_k;
         auto r = juce::Rectangle<int> (w, h).reduced (2, 1);
+        if (row % 2 == 1) { g.setColour (look::ground); g.fillRect (r); }
         const auto tint = look::sourceTint (row);
         const bool masked = m_p.engine().soundsMasked();
         const bool benched = s.enabled && masked && (row < (int) m_benched.size() ? m_benched[(size_t) row] != 0 : false);
         const bool glow = s.enabled && masked && ! benched;
+        const float d = juce::jmax (8.0f, 9.0f * k);
         g.setColour (s.enabled ? (benched ? tint.withAlpha (0.3f) : tint) : look::inkFaint);
-        g.fillEllipse ((float) r.getX() + 6, (float) r.getCentreY() - 4.0f, 8, 8);
-        if (glow) { g.setColour (look::live.withAlpha (0.8f)); g.drawEllipse ((float) r.getX() + 4, (float) r.getCentreY() - 6.0f, 12, 12, 1.4f); }
-        auto right = r.removeFromRight (26);
+        g.fillRect ((float) r.getX() + 6, (float) r.getCentreY() - d * 0.5f, d, d);
+        if (glow) { g.setColour (look::live); g.drawRect ((float) r.getX() + 4, (float) r.getCentreY() - d * 0.5f - 2, d + 4, d + 4, 1.4f); }
+        auto right = r.removeFromRight (juce::roundToInt (26.0f * k));
+        const float u = 3.5f * k;
         g.setColour (look::inkDim);
-        g.drawLine ((float) right.getCentreX() - 3.5f, (float) right.getCentreY() - 3.5f, (float) right.getCentreX() + 3.5f, (float) right.getCentreY() + 3.5f, 1.4f);
-        g.drawLine ((float) right.getCentreX() + 3.5f, (float) right.getCentreY() - 3.5f, (float) right.getCentreX() - 3.5f, (float) right.getCentreY() + 3.5f, 1.4f);
-        auto sw = r.removeFromRight (36).withSizeKeepingCentre (28, 15).toFloat();
-        g.setColour (benched ? look::green.withAlpha (0.18f) : s.enabled ? look::green.withAlpha (0.9f) : look::line);
-        g.fillRoundedRectangle (sw, 7.5f);
-        if (glow) { g.setColour (look::live); g.drawRoundedRectangle (sw.reduced (0.5f), 7.5f, 1.4f); }
+        g.drawLine ((float) right.getCentreX() - u, (float) right.getCentreY() - u, (float) right.getCentreX() + u, (float) right.getCentreY() + u, 1.4f * k);
+        g.drawLine ((float) right.getCentreX() + u, (float) right.getCentreY() - u, (float) right.getCentreX() - u, (float) right.getCentreY() + u, 1.4f * k);
+        const float sh = std::floor (juce::jmin (15.0f * k, (float) h - 6));
+        auto sw = r.removeFromRight (juce::roundToInt (40.0f * k)).toFloat().withSizeKeepingCentre (std::floor (sh * 1.9f), sh);
+        g.setColour (benched ? look::green.withAlpha (0.18f) : s.enabled ? look::green : look::line);
+        g.fillPath (look::cutRect (sw, sh * 0.34f));
+        if (glow) { g.setColour (look::live); g.strokePath (look::cutRect (sw, sh * 0.34f), juce::PathStrokeType (1.4f)); }
         g.setColour (benched ? look::inkDim : s.enabled ? look::ground : look::inkDim);
-        g.fillEllipse (s.enabled ? sw.getRight() - 13 : sw.getX() + 2, sw.getY() + 2, 11, 11);
-        r.removeFromLeft (22);
-        g.setColour (look::inkFaint);
-        g.setFont (look::font (10.5f, 0));
-        g.drawText (juce::String (s.seconds, 1) + " s", r.removeFromRight (44), juce::Justification::centredRight);
+        g.fillRect (s.enabled ? sw.getRight() - (sh - 6) - 3 : sw.getX() + 3, sw.getY() + 3, sh - 6, sh - 6);
+        r.removeFromLeft (juce::roundToInt (d + 14.0f));
+        g.setColour (look::inkDim);
+        g.setFont (look::font (juce::jmax (11.0f, 10.5f * k), 0));
+        g.drawText (juce::String (s.seconds, 1) + " s", r.removeFromRight (juce::roundToInt (44.0f * k)), juce::Justification::centredRight);
         g.setColour (benched ? look::inkFaint : s.enabled ? look::ink : look::inkDim);
-        g.setFont (look::font (12.0f, 0));
+        g.setFont (look::font (juce::jmax (12.0f, 12.5f * k), 0));
         g.drawText (s.name, r.withTrimmedRight (6), juce::Justification::centredLeft, true);
     }
     void listBoxItemClicked (int row, const juce::MouseEvent& e) override
     {
         if (row < 0 || row >= (int) m_sounds.size()) return;
         const int w = m_list.getVisibleRowWidth();
-        if (e.x > w - 28) m_p.engine().deleteSound (row);
-        else if (e.x > w - 66) m_p.engine().setSoundEnabled (row, ! m_sounds[(size_t) row].enabled);
+        if (e.x > w - juce::roundToInt (28.0f * m_k)) m_p.engine().deleteSound (row);
+        else if (e.x > w - juce::roundToInt (68.0f * m_k)) m_p.engine().setSoundEnabled (row, ! m_sounds[(size_t) row].enabled);
         refresh();
     }
+    float m_k = 1.0f;
     Processor& m_p;
     juce::ListBox m_list { "sounds", this };
     std::vector<SoundItem> m_sounds;
@@ -263,28 +119,26 @@ public:
     void setLit (bool b) { if (b != m_lit) { m_lit = b; repaint(); } }
     void paintButton (juce::Graphics& g, bool over, bool down) override
     {
-        auto r = getLocalBounds().toFloat().reduced (2.0f);
-        const float d = juce::jmin (r.getWidth(), r.getHeight());
-        r = r.withSizeKeepingCentre (d, d);
-        juce::Colour c = m_kind == Play ? look::green : m_kind == Pause ? look::purple : m_kind == Record ? look::danger : look::panelHi;
+        auto r = getLocalBounds().toFloat().reduced (1.0f);
+        juce::Colour c = m_kind == Play ? look::green : m_kind == Pause ? look::purple : m_kind == Record ? look::danger : look::band;
         if (down) c = c.darker (0.25f); else if (over) c = c.brighter (0.15f);
-        if (m_lit)
-            for (int k = 3; k >= 1; --k) { g.setColour (c.withAlpha (0.10f * (float) (4 - k))); g.fillEllipse (r.expanded ((float) k * 2.0f)); }
+        const auto shape = look::cutRect (r, juce::jmin (12.0f, r.getHeight() * 0.3f));
         g.setColour (c);
-        g.fillEllipse (r);
-        if (m_kind == Stop) { g.setColour (look::ink.withAlpha (0.55f)); g.drawEllipse (r.reduced (0.5f), 1.5f); }
+        g.fillPath (shape);
+        if (m_kind == Stop) { g.setColour (look::inkFaint); g.strokePath (shape, juce::PathStrokeType (1.0f)); }
+        if (m_lit) { g.setColour (look::ink); g.strokePath (shape, juce::PathStrokeType (2.0f)); }   // (what it is doing now: a bright edge)
         const auto ctr = r.getCentre();
-        const float u = d * 0.17f;
+        const float u = juce::jmin (r.getWidth(), r.getHeight()) * 0.2f;
         g.setColour (m_kind == Stop || m_kind == Record ? look::ink : look::ground);
         if (m_kind == Play)
         {
             juce::Path t; t.addTriangle (ctr.x - u * 0.8f, ctr.y - u * 1.2f, ctr.x - u * 0.8f, ctr.y + u * 1.2f, ctr.x + u * 1.3f, ctr.y);
             g.fillPath (t);
         }
-        else if (m_kind == Pause) { g.fillRoundedRectangle (ctr.x - u * 1.1f, ctr.y - u * 1.2f, u * 0.8f, u * 2.4f, 1.5f); g.fillRoundedRectangle (ctr.x + u * 0.3f, ctr.y - u * 1.2f, u * 0.8f, u * 2.4f, 1.5f); }
+        else if (m_kind == Pause) { g.fillRect (ctr.x - u * 1.1f, ctr.y - u * 1.2f, u * 0.8f, u * 2.4f); g.fillRect (ctr.x + u * 0.3f, ctr.y - u * 1.2f, u * 0.8f, u * 2.4f); }
         else if (m_kind == Record) g.fillEllipse (ctr.x - u * 1.1f, ctr.y - u * 1.1f, u * 2.2f, u * 2.2f);
-        else g.fillRoundedRectangle (ctr.x - u, ctr.y - u, u * 2, u * 2, 2.0f);
-        if (! isEnabled()) { g.setColour (look::ground.withAlpha (0.55f)); g.fillEllipse (r); }
+        else g.fillRect (ctr.x - u, ctr.y - u, u * 2, u * 2);
+        if (! isEnabled()) { g.setColour (look::ground.withAlpha (0.55f)); g.fillPath (shape); }
     }
 private:
     Kind m_kind; bool m_lit = false;
@@ -293,7 +147,10 @@ private:
 // ------------------------------------------------------------------ the page
 void HoodPage::syncLive (const Engine& e)
 {
-    for (auto* r : m_rows) r->syncLive (e);
+    for (auto* r : m_rows) r->sync (e);      // (the marker of what TERRAIN moves, and greyed while the setting does nothing)
+    // "fft subsection" is printed once, by the page, for its two boxes: it greys with them
+    const bool fftIdle = row ("fft_start") != nullptr && row ("fft_start")->idle();
+    if (fftIdle != m_fftIdle) { m_fftIdle = fftIdle; repaint (m_fftLabel); }
     if (m_list) m_list->syncLive();
 }
 
@@ -324,8 +181,8 @@ HoodPage::HoodPage (Processor& p, Actions a) : m_proc (p), m_actions (std::move 
     m_tabSearch.setTooltip ("The search settings, the target sound and the loaded sounds (the original's search tab).");
     m_tabNet.setTooltip ("Talk to other copies over the network (the original's net tab).");
 
-    auto sub = [] (const char* id) { return juce::String (paramInfo (id).label); };
-    auto orig = [] (const char* id) { return originalName (id); };
+    auto sub = [] (const char* id) { return ParamRow::plainWords (id); };
+    auto orig = [] (const char* id) { return ParamRow::originalName (id); };
     // ---- brain tweaks
     addRow ("ratio", Style::Slider, orig ("ratio"), sub ("ratio"));
     addRow ("n_ratio", Style::Slider, orig ("n_ratio"), sub ("n_ratio"));
@@ -482,7 +339,8 @@ void HoodPage::buildNetwork()
                             "Port for sounds, sizes, building and files (original settings: process OSC port)." };
     for (int i = 0; i < 3; ++i)
     {
-        m_portLabel[i].setText (names[i], juce::dontSendNotification);
+        m_portLabel[i].setText ({}, juce::dontSendNotification);      // (the page prints the name and its plain-words line: paint)
+        juce::ignoreUnused (names);
         m_portLabel[i].setFont (look::spaced (11.0f, 1, 0.1f));
         m_portLabel[i].setColour (juce::Label::textColourId, look::inkDim);
         addAndMakeVisible (m_portLabel[i]);
@@ -497,7 +355,7 @@ void HoodPage::buildNetwork()
     for (int i = 0; i < OscBridge::kDestinations; ++i)
     {
         m_dest[i].setText (net["dest" + juce::String (i)].toString(), false);
-        m_dest[i].setTextToShowWhenEmpty ("osc.udp://address", look::inkFaint);
+        m_dest[i].setTextToShowWhenEmpty ("osc.udp://address of another copy: every setting you change is sent there", look::inkDim.withAlpha (0.7f));
         m_dest[i].setFont (look::font (13.0f, 0));
         m_dest[i].setTooltip ("Another copy to send every setting you change to (the original's net tab).");
         m_dest[i].onReturnKey = [this] { applyNetwork(); };
@@ -543,165 +401,246 @@ void HoodPage::refresh()
 
 void HoodPage::paint (juce::Graphics& g)
 {
+    const float k = m_rowK;
+    const float mainH = juce::jmax (12.0f, 13.0f * k), subH = juce::jmax (11.0f, 10.5f * k);
+    // a name with its plain-words line under it, as every row prints them (greyed: the name under a veil, and the
+    // short reason in the plain-words line's place, readable)
+    auto twoLines = [&] (juce::Rectangle<int> area, const juce::String& name, const juce::String& sub, juce::Colour c, bool greyed = false)
+    {
+        const float lead = area.getHeight() < 32 ? 1.0f : 1.12f;
+        const int mh = juce::roundToInt (mainH * lead), sh = juce::roundToInt (subH * lead);
+        auto b = area.withSizeKeepingCentre (area.getWidth(), juce::jmin (area.getHeight(), mh + sh));
+        g.setColour (greyed ? c.interpolatedWith (look::panel, 0.55f) : c);
+        g.setFont (look::font (mainH, 1));
+        g.drawFittedText (name, b.removeFromTop (juce::jmin (b.getHeight(), mh)), juce::Justification::centredLeft, 1, 0.72f);
+        g.setColour (greyed ? look::ink.interpolatedWith (look::inkDim, 0.5f) : look::inkDim);
+        g.setFont (look::spaced (subH, greyed ? 1 : 0, 0.06f));
+        g.drawFittedText (sub, b, juce::Justification::centredLeft, 1, 0.72f);
+    };
+    // the tab rail: the two tabs stand on a purple line that runs the whole width
+    g.setColour (look::purple);
+    g.fillRect (0, m_tabSearch.getBottom(), getWidth(), 2);
+    g.setColour (look::inkDim);
+    g.setFont (look::spaced (juce::jmax (10.5f, 11.0f * m_k), 0, 0.14f));
+    g.drawFittedText ("THE ORIGINAL'S OWN WINDOW: EVERY SETTING UNDER ITS OWN NAME, PLAIN WORDS BELOW IT",
+                      juce::Rectangle<int> (m_tabNet.getRight() + 16, 0, getWidth() - m_tabNet.getRight() - 16, m_tabSearch.getHeight()), juce::Justification::centredRight, 1, 0.75f);
     for (auto& s : m_panels)
     {
-        look::card (g, s.box.toFloat());
-        if (s.titleSize >= 18.0f)
+        if (s.title.isEmpty())
         {
-            g.setColour (look::ink);
-            g.setFont (look::font (s.titleSize, 2));
-            g.drawText (s.title, s.box.reduced (16, 0).withHeight (40).translated (0, 6), juce::Justification::centredLeft, true);
+            // the bottom row: a band of its own tone
+            const auto shape = look::cutRect (s.box.toFloat().reduced (0.5f), 14.0f);
+            g.setColour (look::panel); g.fillPath (shape);
+            g.setColour (look::line); g.strokePath (shape, juce::PathStrokeType (1.0f));
         }
-        else look::title (g, s.title, s.box.reduced (16, 0).withHeight (38).translated (0, 4), look::purple.brighter (0.2f), 12.5f);
+        else look::zone (g, s.box, s.number, s.title, s.headH, false, s.lower);
     }
     if (! m_netTab)
     {
+        // "mix": the second section of the middle column (the original's own heading): a band on the same grid, numbered like the others
+        g.setColour (look::band);
+        g.fillRect (m_mixLabel);
+        g.setColour (look::purple);
+        g.fillRect (m_mixLabel.withWidth (m_numW));
+        g.setColour (look::ground);
+        g.setFont (look::font (juce::jmin ((float) m_numW * 0.5f, (float) m_mixLabel.getHeight() * 0.7f), 2));
+        g.drawText ("03", m_mixLabel.withWidth (m_numW), juce::Justification::centred, false);
         g.setColour (look::ink);
-        g.setFont (look::font (22.0f, 2));
-        g.drawText ("mix", m_mixLabel, juce::Justification::centredLeft, false);
-        g.setFont (look::font (12.5f, 1));
-        g.drawText ("fft subsection", m_fftLabel.withHeight (kRowH / 2 + 2).translated (0, 2), juce::Justification::bottomLeft, false);
-        g.setColour (look::inkFaint);
-        g.setFont (look::spaced (9.0f, 0, 0.08f));
-        g.drawText ("LOWEST / HIGHEST BAND", m_fftLabel.withTrimmedTop (kRowH / 2 + 2), juce::Justification::topLeft, false);
-        if (m_micOff.isVisible())
-        {
-            auto r = m_micOff.getBounds().withTrimmedLeft (42).withWidth (200);
-            g.setColour (look::inkFaint);
-            g.setFont (look::font (12.5f, 1));
-            g.drawText ("use mic input", r, juce::Justification::centredLeft, false);
-        }
+        g.setFont (look::font (juce::jlimit (12.0f, 26.0f, (float) m_mixLabel.getHeight() * 0.62f), 2));
+        g.drawText ("mix", m_mixLabel.withTrimmedLeft (m_numW + juce::roundToInt (12.0f * m_k)), juce::Justification::centredLeft, false);
+        // "fft subsection": its name, then Start and End, on ONE row, as the original has it
+        twoLines (m_fftLabel, "fft subsection", m_fftIdle ? idleShort (m_proc, "fft_start", true) : juce::String ("LOWEST / HIGHEST BAND"), look::ink, m_fftIdle);
+        if (m_micOff.isVisible()) twoLines (m_micLabel, "use mic input", "ONLY IN THE EFFECT VERSION (GHOST MOSAIC FX)", look::ink, true);
     }
-    g.setColour (look::inkDim);
-    g.setFont (look::spaced (9.5f, 1, 0.12f));
-    g.drawText ("volume", m_volumeLabel, juce::Justification::centredLeft, false);
+    twoLines (m_volumeLabel, "volume", ParamRow::plainWords ("volume"), look::ink);
+    if (m_netTab)
+    {
+        // the three ports under the original settings' own names, plain words below, like every row of the search tab
+        static const char* const portName[3] = { "gui OSC port", "audio OSC port", "process OSC port" };
+        static const char* const portPlain[3] = { "STATUS MESSAGES GO OUT HERE", "PLAY, STOP AND SETTINGS COME IN", "SOUNDS AND BUILDING COME IN" };
+        for (int i = 0; i < 3; ++i) twoLines (m_portLabel[i].getBounds(), portName[i], portPlain[i], look::ink);
+    }
 }
 
 void HoodPage::resized()
 {
     m_panels.clear();
-    const int W = getWidth(), gap = 14, pad = 16, Hc = 440;
-    m_tabSearch.setBounds (0, 0, 92, 28);
-    m_tabNet.setBounds (98, 0, 72, 28);
-    const int top = 34;
+    const int W = getWidth(), H = getHeight();
+    if (W < 400 || H < 300) return;
+    // ---- GHOST POSTER: one grid for the whole page. Everything is on screen at every window size (nothing scrolls):
+    // the page's scale comes from the room there is, the three columns share eleven equal lines, and what is left over
+    // goes to the header bands, so the last card ends exactly on the body's bottom edge.
+    const float k = juce::jlimit (0.8f, 1.75f, juce::jmin ((float) H / 556.0f, (float) W / 1152.0f));
+    m_k = k;
+    auto px = [k] (float v) { return juce::roundToInt (v * k); };
+    const int g = look::gutterOf (H + 204);
+    const int pad = juce::jlimit (12, 26, px (16));
+    const int tabsH = juce::jlimit (22, 46, px (26));
+    int headH = juce::jlimit (30, 64, px (38));
+    const int inPad = juce::jlimit (3, 12, px (4));          // air above the first and under the last line of a column
+    const int barH = juce::jlimit (48, 100, px (58));        // (room for "load session" above "save session")
+    std::vector<Row*> added; for (auto* r : m_rows) if (r->style == Style::Added) added.push_back (r);
+    const int items = (int) added.size() + 1;                // + BACK TO START
+    const int addLines = items > 8 ? 3 : 2;                  // (the effect has one more setting: three lines of three)
+    const int addCols = (items + addLines - 1) / addLines;
+    const int addHead = juce::jlimit (18, 36, px (20)), addRow = juce::jlimit (22, 52, px (26));
+    const int addH = addHead + addLines * addRow + 2 * inPad;
+    constexpr int kSlots = 11;
+    const int fixed = tabsH + g + headH + 2 * inPad + g + barH + g + addH;
+    const int slot = juce::jmax (22, (H - fixed) / kSlots);
+    headH += juce::jmax (0, H - fixed - slot * kSlots);
+    const float rowK = juce::jlimit (0.8f, 1.75f, juce::jmin ((float) slot / 32.0f, (float) W / 1152.0f));
+    m_rowK = rowK;
+    m_numW = (int) std::floor ((float) headH * 1.05f);
+    for (auto* r : m_rows) if (r->style != Style::Added) r->setScale (rowK);
+    const int btnH = juce::jmin (slot - 2, juce::roundToInt (30.0f * rowK));
+    const int btnInset = juce::jmax (1, (slot - btnH) / 2);
+
+    m_tabSearch.setBounds (0, 0, px (100), tabsH);
+    m_tabNet.setBounds (px (100) + 4, 0, px (80), tabsH);
+    look::setScale (m_tabSearch, k); look::setScale (m_tabNet, k);
+    const int top = tabsH + g;
+    const int colH = headH + 2 * inPad + slot * kSlots;
     auto place = [] (Row* r, juce::Rectangle<int> b) { if (r) r->setBounds (b); };
-    auto rowAt = [&] (const char* id, juce::Rectangle<int>& col) { place (row (id), col.removeFromTop (kRowH)); };
-    auto btnAt = [&] (const char* id, juce::Rectangle<int> b) { if (auto* x = button (id)) x->setBounds (b); };
+    auto btnAt = [&] (const char* id, juce::Rectangle<int> b) { if (auto* x = button (id)) { x->setBounds (b); look::setScale (*x, rowK); } };
+    auto take = [&] (juce::Rectangle<int>& c, int n = 1) { return c.removeFromTop (slot * n); };
+    auto btn = [&] (juce::Rectangle<int> cell) { return cell.reduced (0, btnInset); };
+    // n equal buttons on one line, the last one ending exactly on the right edge
+    auto inLine = [&] (juce::Rectangle<int> line, std::initializer_list<const char*> ids)
+    {
+        const int n = (int) ids.size(), gap = juce::jmax (6, px (8)), w = (line.getWidth() - (n - 1) * gap) / n;
+        int i = 0;
+        for (auto* id : ids) { btnAt (id, i == n - 1 ? line.withLeft (line.getRight() - w) : line.withX (line.getX() + i * (w + gap)).withWidth (w)); ++i; }
+    };
 
     if (! m_netTab)
     {
-        const int colW = (W - 2 * gap) / 3;
-        juce::Rectangle<int> box[3];
-        for (int i = 0; i < 3; ++i) box[i] = { i * (colW + gap), top, colW, Hc };
-        m_panels.push_back ({ "brain tweaks", box[0] });
-        m_panels.push_back ({ "target sound", box[1] });
-        m_panels.push_back ({ "brain contents", box[2] });
-        // brain tweaks
+        const int colW = (W - 2 * g) / 3;
+        juce::Rectangle<int> box[3] = { { 0, top, colW, colH }, { colW + g, top, W - 2 * colW - 2 * g, colH }, { W - colW, top, colW, colH } };
+        m_panels.push_back ({ "brain tweaks", box[0], "01", headH });
+        m_panels.push_back ({ "target sound", box[1], "02", headH });
+        m_panels.push_back ({ "brain contents", box[2], "04", headH });
+        auto lines = [&] (int i) { return box[i].reduced (pad, 0).withTrimmedTop (headH + inPad).withHeight (slot * kSlots); };
+        // 01 brain tweaks: the original's ten rows share the column's height evenly
         {
-            auto c = box[0].reduced (pad, 0).withTrimmedTop (54);
-            rowAt ("ratio", c); rowAt ("n_ratio", c);
-            auto f = c.removeFromTop (kRowH);
-            const int lw = 112;
-            m_fftLabel = f.removeFromLeft (lw);
-            const int half = f.getWidth() / 2;
-            place (row ("fft_start"), f.removeFromLeft (half)); place (row ("fft_end"), f);
-            for (auto* id : { "novelty", "boredom", "stickyness", "stretch", "algo", "synapses", "slide_error" }) rowAt (id, c);
+            const auto c = lines (0);
+            constexpr int kRows1 = 10;
+            int at = 0;
+            auto next = [&] { const int y0 = c.getY() + c.getHeight() * at / kRows1, y1 = c.getY() + c.getHeight() * (at + 1) / kRows1; ++at; return juce::Rectangle<int> (c.getX(), y0, c.getWidth(), y1 - y0); };
+            place (row ("ratio"), next()); place (row ("n_ratio"), next());
+            // "fft subsection": its name, Start and End on ONE row, as the original has it
+            auto f = next();
+            m_fftLabel = f.removeFromLeft (juce::jmin (juce::roundToInt (186.0f * juce::jmax (1.0f, rowK)), f.getWidth() * 34 / 100)).withTrimmedRight (6);
+            const int fg = juce::jmax (6, px (8)), half = (f.getWidth() - fg) / 2;
+            place (row ("fft_start"), f.withWidth (half)); place (row ("fft_end"), f.withLeft (f.getRight() - half));
+            for (auto* id : { "novelty", "boredom", "stickyness", "stretch", "algo", "synapses", "slide_error" }) place (row (id), next());
         }
-        // target sound + mix
+        // 02 target sound, 03 mix
         {
-            auto c = box[1].reduced (pad, 0).withTrimmedTop (52);
-            btnAt ("loadTarget", c.removeFromTop (30)); c.removeFromTop (6);
-            for (auto* id : { "tgt_block", "tgt_overlap", "tgt_window" }) rowAt (id, c);
-            btnAt ("generateTarget", c.removeFromTop (30)); c.removeFromTop (6);
-            auto mic = c.removeFromTop (28);
-            if (auto* r = row ("live_input")) r->setBounds (mic); else m_micOff.setBounds (mic.removeFromLeft (38).reduced (0, 5));
-            c.removeFromTop (8);
-            m_mixLabel = c.removeFromTop (30);
-            for (auto* id : { "autotune", "n_mix", "target_mix", "stereo" }) rowAt (id, c);
+            auto c = lines (1);
+            btnAt ("loadTarget", btn (take (c)));
+            for (auto* id : { "tgt_block", "tgt_overlap", "tgt_window" }) place (row (id), take (c));
+            btnAt ("generateTarget", btn (take (c)));
+            auto mic = take (c);
+            if (auto* r = row ("live_input")) r->setBounds (mic);
+            else
+            {
+                const int tw = juce::roundToInt (36.0f * juce::jmax (0.85f, rowK));
+                look::setScale (m_micOff, rowK);
+                m_micOff.setBounds (mic.removeFromLeft (tw).withSizeKeepingCentre (tw, juce::jmin (slot, juce::roundToInt (22.0f * juce::jmax (0.9f, rowK)))));
+                m_micLabel = mic.withTrimmedLeft (juce::roundToInt (8.0f * rowK));
+            }
+            m_mixLabel = take (c).withX (box[1].getX() + 1).withWidth (box[1].getWidth() - 2).reduced (0, juce::jmax (1, slot / 12));
+            for (auto* id : { "autotune", "n_mix", "target_mix", "stereo" }) place (row (id), take (c));
         }
-        // brain contents
+        // 04 brain contents
         {
-            auto head = box[2].reduced (pad, 0).withHeight (46).translated (0, 6);
-            btnAt ("allOff", head.removeFromRight (54).withSizeKeepingCentre (54, 24)); head.removeFromRight (6);
-            btnAt ("allOn", head.removeFromRight (40).withSizeKeepingCentre (40, 24));
-            auto c = box[2].reduced (pad, 0).withTrimmedTop (52);
-            m_list->setBounds (c.removeFromTop (146)); c.removeFromTop (8);
-            auto b3 = c.removeFromTop (30); c.removeFromTop (8);
-            const int w3 = (b3.getWidth() - 12) / 3;
-            btnAt ("addSounds", b3.removeFromLeft (w3)); b3.removeFromLeft (6);
-            btnAt ("addFolder", b3.removeFromLeft (w3)); b3.removeFromLeft (6);
-            btnAt ("clearLibrary", b3);
-            for (auto* id : { "src_block", "src_overlap", "src_window" }) rowAt (id, c);
-            btnAt ("generateLibrary", c.removeFromTop (30)); c.removeFromTop (6);
-            auto l = c.removeFromTop (30);
-            btnAt ("openLibrary", l.removeFromLeft (l.getWidth() / 2 - 3)); l.removeFromLeft (6);
-            btnAt ("saveLibrary", l);
+            auto head = box[2].withHeight (headH).withTrimmedRight (pad);
+            const int hb = juce::jmin (headH - 10, juce::roundToInt (26.0f * k));
+            btnAt ("allOff", head.removeFromRight (px (60)).withSizeKeepingCentre (px (60), hb)); head.removeFromRight (6);
+            btnAt ("allOn", head.removeFromRight (px (46)).withSizeKeepingCentre (px (46), hb));
+            auto c = lines (2);
+            m_list->setBounds (take (c, 5).reduced (0, btnInset));
+            m_list->setScale (rowK);
+            inLine (btn (take (c)), { "addSounds", "addFolder", "clearLibrary" });
+            for (auto* id : { "src_block", "src_overlap", "src_window" }) place (row (id), take (c));
+            btnAt ("generateLibrary", btn (take (c)));
+            inLine (btn (take (c)), { "openLibrary", "saveLibrary" });
         }
     }
     else
     {
-        // the original's net tab
-        const int lh = 30;
-        juce::Rectangle<int> box (0, top, juce::jmin (W, 680), Hc);
-        m_panels.push_back ({ "net", box });
-        auto inner = box.reduced (pad, 0).withTrimmedTop (54);
+        // the original's net tab, the whole width of the page: the switch and the status, the three ports, the ten addresses
+        juce::Rectangle<int> box (0, top, W, colH);
+        m_panels.push_back ({ "net", box, "01", headH });
+        auto inner = box.reduced (pad, 0).withTrimmedTop (headH + inPad).withHeight (slot * kSlots);
+        const int lh = inner.getHeight() / (2 + OscBridge::kDestinations);
+        const int eh = juce::jmin (lh - 2, juce::roundToInt (26.0f * juce::jmax (0.85f, rowK)));
+        const auto typeFont = look::font (juce::jmax (12.0f, 13.0f * rowK), 0);
         auto t = inner.removeFromTop (lh);
-        m_netOn.setBounds (t.removeFromLeft (170));
-        inner.removeFromTop (6);
+        look::setScale (m_netOn, rowK);
+        m_netOn.setBounds (t.removeFromLeft (px (190)).withSizeKeepingCentre (px (190), juce::jmin (lh, juce::roundToInt (24.0f * rowK))));
+        m_netStatus.setFont (typeFont);
+        m_netStatus.setBounds (t.withTrimmedLeft (pad));
         auto ports = inner.removeFromTop (lh);
-        const int pw = ports.getWidth() / 3;
+        const int pw = (ports.getWidth() - 2 * pad) / 3;
         for (int i = 0; i < 3; ++i)
         {
-            auto c = ports.removeFromLeft (pw).reduced (2, 0);
-            m_portLabel[i].setBounds (c.removeFromLeft (juce::jmin (84, c.getWidth() / 2)));
-            m_port[i].setBounds (c.reduced (0, 3));
+            auto c = i == 2 ? ports.withLeft (ports.getRight() - pw) : ports.withX (ports.getX() + i * (pw + pad)).withWidth (pw);
+            m_portLabel[i].setFont (look::spaced (juce::jmax (11.0f, 11.0f * rowK), 1, 0.1f));
+            m_portLabel[i].setBounds (c.removeFromLeft (juce::jmin (px (214), c.getWidth() * 62 / 100)));
+            m_port[i].applyFontToAllText (typeFont);
+            m_port[i].setBounds (c.withSizeKeepingCentre (c.getWidth(), eh));
         }
-        inner.removeFromTop (8);
         for (int i = 0; i < OscBridge::kDestinations; ++i)
         {
-            auto l = inner.removeFromTop (lh - 2);
-            m_destOn[i].setBounds (l.removeFromRight (48).reduced (0, 4));
-            m_dest[i].setBounds (l.reduced (0, 2).withTrimmedRight (6));
+            auto l = inner.removeFromTop (lh);
+            look::setScale (m_destOn[i], rowK);
+            m_destOn[i].setBounds (l.removeFromRight (px (44)).withSizeKeepingCentre (px (44), juce::jmin (lh, juce::roundToInt (22.0f * juce::jmax (0.9f, rowK)))));
+            m_dest[i].applyFontToAllText (typeFont);
+            m_dest[i].setBounds (l.withTrimmedRight (pad).withSizeKeepingCentre (l.getWidth() - pad, eh));
         }
-        inner.removeFromTop (8);
-        m_netStatus.setBounds (inner.removeFromTop (24));
     }
 
-    // the bottom row: play, pause, record, stop, the volume dial, load session, save session
-    auto bar = juce::Rectangle<int> (0, top + Hc + 8, W, 68);
-    m_panels.push_back ({ "", bar, 0.0f });
+    // the bottom row on one line, the whole width: play, pause, record, stop | the volume dial | load session, save session
+    auto bar = juce::Rectangle<int> (0, top + colH + g, W, barH);
+    m_panels.push_back ({ "", bar, "", 0 });
     {
-        auto c = bar.reduced (pad, 8);
-        for (auto* t : m_transport) { t->setBounds (c.removeFromLeft (52)); c.removeFromLeft (12); }
-        c.removeFromLeft (28);
-        m_volume.setBounds (c.removeFromLeft (52));
-        c.removeFromLeft (6);
-        m_volumeLabel = c.removeFromLeft (54).withSizeKeepingCentre (54, 16);
-        c.removeFromLeft (14);
-        auto s = c.removeFromLeft (160);
-        btnAt ("openSession", s.removeFromTop (26)); s.removeFromTop (4);
-        btnAt ("saveSession", s.removeFromTop (26));
+        auto c = bar.reduced (pad, juce::jlimit (4, 12, px (7)));
+        const int gg = juce::jmax (6, px (8));
+        const float unit = (float) (c.getWidth() - 6 * gg) / 11.6f;
+        const int tw = (int) (unit * 1.2f), vw = (int) (unit * 2.0f);
+        for (auto* t : m_transport) { t->setBounds (c.removeFromLeft (tw)); c.removeFromLeft (gg); }
+        auto v = c.removeFromLeft (vw); c.removeFromLeft (gg);
+        m_volume.setBounds (v.removeFromLeft (v.getHeight()));
+        m_volumeLabel = v.withTrimmedLeft (px (8));
+        // "load session" above "save session", right of the volume dial, as the original has them
+        const int sg = juce::jmax (2, px (4)), sh = (c.getHeight() - sg) / 2;
+        btnAt ("openSession", c.withHeight (sh));
+        btnAt ("saveSession", c.withTop (c.getBottom() - sh));
     }
     m_originalBottom = bar.getBottom();
 
-    // our additions, in their own strip below
+    // our additions, in their own strip below: a slim numbered band, then two lines of settings (three in the effect)
     {
-        std::vector<Row*> added; for (auto* r : m_rows) if (r->style == Style::Added) added.push_back (r);
-        const int items = (int) added.size() + 1;           // + BACK TO START
-        const int perCol = (items + 2) / 3;
-        const int h = 46 + perCol * 40 + 10;
-        juce::Rectangle<int> box (0, bar.getBottom() + 14, W, h);
-        m_panels.push_back ({ "GHOST MOSAIC (added)", box, 12.5f });
-        auto inner = box.reduced (pad, 0).withTrimmedTop (44).withTrimmedBottom (10);
-        const int cw = (inner.getWidth() - 2 * 20) / 3;
-        for (int k = 0; k < items; ++k)
+        juce::Rectangle<int> box (0, bar.getBottom() + g, W, H - bar.getBottom() - g);
+        m_panels.push_back ({ "GHOST MOSAIC (added)", box, "05", addHead, false });
+        auto inner = box.withTrimmedTop (addHead + inPad).reduced (pad, 0).withHeight (addLines * addRow);
+        const int cg = juce::jmax (pad, px (22)), cw = (inner.getWidth() - (addCols - 1) * cg) / addCols;
+        const float addK = juce::jlimit (0.8f, 1.75f, juce::jmin ((float) addRow / 26.0f, (float) W / 1152.0f));
+        for (int i = 0; i < items; ++i)
         {
-            juce::Rectangle<int> cell (inner.getX() + (k / perCol) * (cw + 20), inner.getY() + (k % perCol) * 40, cw, 40);
-            if (k < (int) added.size()) added[(size_t) k]->setBounds (cell);
-            else btnAt ("restart", cell.withSizeKeepingCentre (juce::jmin (cw, 180), 30).withX (cell.getX()));
+            const int col = i / addLines, line = i % addLines;
+            juce::Rectangle<int> cell (inner.getX() + col * (cw + cg), inner.getY() + line * addRow, cw, addRow);
+            if (col == addCols - 1) cell = cell.withLeft (inner.getRight() - cw);
+            if (i < (int) added.size()) { added[(size_t) i]->setScale (addK); added[(size_t) i]->setBounds (cell); }
+            else
+            {
+                cell.setBottom (inner.getBottom());                     // (the button takes what is left of its column)
+                if (cell.getHeight() > addRow) cell = cell.withSizeKeepingCentre (cell.getWidth(), addRow);
+                btnAt ("restart", cell.reduced (0, juce::jmax (1, (addRow - juce::jmin (addRow - 2, juce::roundToInt (26.0f * addK))) / 2)));
+            }
         }
-        const int bottom = box.getBottom() + 8;
-        if (bottom != getHeight()) setSize (getWidth(), bottom);
     }
 }
 }

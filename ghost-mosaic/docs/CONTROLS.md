@@ -265,3 +265,28 @@ controls and stay as set.
 glide. The one deliberate drag-only gesture is the burst of wildness and stutter from pulling fast; it is labelled on the page
 ("DRAG FX ... fades out when you let go") and is cleared when you leave the page. There are no preview notes in Ghost Mosaic
 (LISTEN is the plain play / pause), so nothing can stay stuck.
+
+## The plain-words lines (polish pass 1)
+
+Under each original name on UNDER THE HOOD, and in THE RIVER's row of controls, stands one short plain-words line
+(`ParamRow::plainWords`). It is our own name for the control (the "ours" column of the tables above), except where
+that name only repeated the original's; there the line says what the control does to the sound:
+
+| original name | plain-words line |
+|---|---|
+| boredom | HOW LONG PIECES STAY USED |
+| autotune | FOLLOW THE TARGET'S PITCH |
+| stereo mode | LEFT AND RIGHT APART |
+| volume | HOW LOUD IT PLAYS |
+| novelty | NOVELTY (kept as it was: a UI test holds this wording) |
+
+The names themselves are unchanged everywhere: the original's lowercase names (spelling included, "num synpases")
+and, on PLAY, our knob names (NOVELTY, SMOOTH, REPEAT, AUTOTUNE, VOLUME ...).
+
+While a control does nothing (rule 3) its row is greyed and the plain-words line shows the short reason instead, from
+the same table as the tooltip: `NOT USED BY BASIC` / `REVERSED` / `SYNAPTIC` (the algorithm in use: num synpases,
+synaptic slide error, stickyness), `NEEDS NOVELTY ABOVE 0` (boredom), `NOT USED AT FULL MFCC` (fft subsection).
+
+On the net tab the three ports stand under the original settings' own names with a plain-words line each:
+`gui OSC port` STATUS MESSAGES GO OUT HERE, `audio OSC port` PLAY, STOP AND SETTINGS COME IN, `process OSC port`
+SOUNDS AND BUILDING COME IN.
