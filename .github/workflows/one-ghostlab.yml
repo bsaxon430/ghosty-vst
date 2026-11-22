@@ -1,0 +1,68 @@
+# One plug-in (Ghost Lab + Ghost Lab FX), built like the release (universal: Apple Silicon + Intel), for testing on
+# Brandon's Mac before a full release. The two Mac types build side by side, then are joined with lipo.
+name: One plugin (Ghost Lab)
+on:
+  push:
+    branches: [ builds ]
+    paths: [ ONELAB ]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: { group: one-ghostlab, cancel-in-progress: true }
+jobs:
+  arch:
+    runs-on: macos-15
+    timeout-minutes: 180
+    strategy:
+      fail-fast: true
+      matrix:
+        arch: [ arm64, x86_64 ]
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: src/ghostlab }
+      - name: Build (${{ matrix.arch }})
+        run: |
+          set -u
+          J=$(sysctl -n hw.ncpu)
+          rustup toolchain install stable --profile minimal > /dev/null 2>&1 || true; rustup target add aarch64-apple-darwin x86_64-apple-darwin
+          [ "${{ matrix.arch }}" = x86_64 ] && { /usr/bin/pgrep -q oahd || sudo softwareupdate --install-rosetta --agree-to-license > /dev/null 2>&1 || true; }
+          B="$RUNNER_TEMP/build"
+          cmake -S ghost-lab -B "$B" -DCMAKE_BUILD_TYPE=Release "-DCMAKE_OSX_ARCHITECTURES=${{ matrix.arch }}" -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 -DCMAKE_POLICY_VERSION_MINIMUM=3.5 > cfg.log 2>&1 || { tail -n 60 cfg.log; exit 1; }
+          set +e
+          cmake --build "$B" --config Release --parallel $J --target GhostLab_VST3 GhostLabFX_VST3 > build.log 2>&1; rb=$?
+          set -e
+          [ $rb = 0 ] || { grep -a -E "error:|ld: " build.log | head -40; tail -n 30 build.log; exit 1; }
+          mkdir -p out
+          for N in "Ghost Lab.vst3" "Ghost Lab FX.vst3"; do b=$(find "$B" -maxdepth 7 -type d -name "$N" -prune | head -1); [ -n "$b" ] || { echo "MISSING $N"; exit 1; }; ditto "$b" "out/$N"; done
+          lipo -archs "out/Ghost Lab.vst3/Contents/MacOS/"*
+      - uses: actions/upload-artifact@v4
+        with: { name: "lab-${{ matrix.arch }}", path: out, retention-days: 7 }
+  join:
+    needs: arch
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: src/ghostlab }
+      - uses: actions/download-artifact@v4
+        with: { path: arts }
+      - name: Join, add CDP, sign, publish
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: |
+          set -eu
+          bash ghost-lab/cdp/build-cdp.sh "$PWD/cdp-bin" "$PWD/cdp8-src" > cdp.log 2>&1 || { tail -n 40 cdp.log; exit 1; }
+          mkdir -p out
+          for N in "Ghost Lab.vst3" "Ghost Lab FX.vst3"; do
+            ditto "arts/lab-arm64/$N" "out/$N"
+            ex=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "out/$N/Contents/Info.plist")
+            lipo -create "arts/lab-arm64/$N/Contents/MacOS/$ex" "arts/lab-x86_64/$N/Contents/MacOS/$ex" -output "out/$N/Contents/MacOS/$ex"
+            chmod +x "out/$N/Contents/MacOS/$ex"
+            mkdir -p "out/$N/Contents/Helpers/cdp" "out/$N/Contents/Resources/cdp"; cp cdp-bin/* "out/$N/Contents/Helpers/cdp/"
+            cp ghost-lab/packaging/licenses/CDP-LGPL-2.1.txt "out/$N/Contents/Resources/cdp/LICENSE-LGPL-2.1.txt"; cp ghost-lab/packaging/CDP-NOTICE.txt "out/$N/Contents/Resources/cdp/NOTICE.txt"
+            cp ghost-lab/packaging/CREDITS.txt "out/$N/Contents/Resources/CREDITS.txt"; cp ghost-lab/NOTICE.md ghost-lab/LICENSE "out/$N/Contents/Resources/" 2>/dev/null || true
+            for h in "out/$N/Contents/Helpers/cdp/"*; do file "$h" | grep -q Mach-O && codesign --force --sign - "$h"; done
+            codesign --force --sign - "out/$N"
+            echo "$N: $(lipo -archs "out/$N/Contents/MacOS/$ex"), $(ls "out/$N/Contents/Helpers/cdp" | wc -l | tr -d ' ') CDP programs"
+          done
+          (cd out && ditto -c -k --keepParent "Ghost Lab.vst3" ../Ghost-Lab-test.zip && ditto -c -k --keepParent "Ghost Lab FX.vst3" ../Ghost-Lab-FX-test.zip)
+          gh release delete test-ghostlab --repo "${{ github.repository }}" --yes --cleanup-tag 2>/dev/null || true
+          gh release create test-ghostlab Ghost-Lab-test.zip Ghost-Lab-FX-test.zip --repo "${{ github.repository }}" --prerelease --title "Ghost Lab test build (not a release)" --notes "Ghost Lab build 17 (SPECTRE) test build, universal Mac VST3. Not a release."
