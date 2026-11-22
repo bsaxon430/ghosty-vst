@@ -122,6 +122,32 @@ public:
     int sliceCount() const;
     static constexpr int rootNote = 36;       // C1, INTERSECT's own first note (Flayr Chop's pad A1 too)
 
+    // ---- UNDER THE HOOD: INTERSECT's own controls (thin pass-throughs to INTERSECT's existing command API; no DSP of ours)
+    // the SAMPLE level (INTERSECT's SAMPLE tab): the clip's own settings that every chop follows unless it sets its own,
+    // in that tab's units (ms, %, dB, Hz), exactly what IntersectProcessor::CmdSetSampleParam takes
+    float sampleParam (int field) const;
+    void setSampleParam (int field, float value, bool newUndoStep = true);   // a drag sends its steps with newUndoStep = false
+    bool sliceOverrides (int sliceIndex, int field) const;   // the chop has its own value (INTERSECT's lock bit) instead of SAMPLE's
+    int voices() const;                       // VOICES: INTERSECT's plug-in parameter (its voice pool)
+    void setVoices (int);
+    int engineRootNote() const;               // ROOT as INTERSECT holds it
+    void setBpmFromLength (int sliceIndex, bool sliceScope, float bars);   // SET BPM (its 16 Bars .. 1/16 Note menu)
+    juce::uint32 engineVersion() const;       // changes whenever INTERSECT's slices / settings change
+    // INTERSECT's AUTO CHOP panel (AutoChopPanel): SENS / MIN / DIV with SPLIT TRANSIENTS / SPLIT EQUAL. The cut points come from
+    // INTERSECT's own code (AudioAnalysis's spectral-flux transients, its equal split); the pieces become chops (one undo step).
+    struct SplitSettings { float sens = 50.0f, minMs = 100.0f; int div = 16; } split;   // INTERSECT's own panel defaults
+    std::vector<juce::int64> equalPoints (int sliceIndex, int div) const;                        // clip frames
+    std::vector<juce::int64> transientPoints (int sliceIndex, float sens, float minMs) const;    // clip frames
+    bool splitChop (int sliceIndex, const std::vector<juce::int64>& cuts, const juce::String& what);
+    // OpenVPI audio-slicer's own parameters for PHRASES (defaults = what PHRASES has always used; untouched = the same command)
+    struct PhraseSettings
+    {
+        float db = -40.0f; int minLength = 500, minInterval = 150, hop = 10, maxSilKept = 200;
+        bool isDefault() const { return db == -40.0f && minLength == 500 && minInterval == 150 && hop == 10 && maxSilKept == 200; }
+        bool valid() const { return minLength >= minInterval && minInterval >= hop && maxSilKept >= hop && hop > 0; }   // slicer2.py's own rule
+        juce::StringArray args() const;       // the extra helper arguments (none when untouched)
+    } phrase;
+
     // ---- the clip's transport (SPACE / LOOP)
     void play (juce::int64 from, Region loopRegion, bool loop);
     void stop();

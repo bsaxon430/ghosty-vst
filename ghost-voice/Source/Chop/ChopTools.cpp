@@ -41,15 +41,22 @@ bool Tools::install (Kind k, std::function<void (bool)> onDone)
     return true;
 }
 
-bool Tools::run (Kind k, const juce::File& wav, std::function<void (bool, std::vector<ToolChop>)> onDone)
+juce::StringArray Tools::commandFor (Kind k, const juce::String& py, const juce::File& wav, const juce::File& out, const juce::StringArray& extra) const
+{
+    juce::StringArray c { "/usr/bin/env", "HF_HOME=" + dir().getChildFile ("hf").getFullPathName(), "TORCH_HOME=" + dir().getChildFile ("torch").getFullPathName(),
+                          "PYTHONNOUSERSITE=1", py, script().getFullPathName(), k == Kind::words ? "words" : "phrases", wav.getFullPathName(), out.getFullPathName() };
+    if (k == Kind::phrases) c.addArray (extra);
+    return c;
+}
+
+bool Tools::run (Kind k, const juce::File& wav, std::function<void (bool, std::vector<ToolChop>)> onDone, const juce::StringArray& extra)
 {
     if (busy()) return false;
     const auto py = pythonFor (k);
     if (py.isEmpty()) { lastError = "not installed"; return false; }
     kind = k; installing = false; runDone = std::move (onDone); installDone = nullptr;
     outFile = juce::File::createTempFile (".json");
-    cmd = { "/usr/bin/env", "HF_HOME=" + dir().getChildFile ("hf").getFullPathName(), "TORCH_HOME=" + dir().getChildFile ("torch").getFullPathName(),
-            "PYTHONNOUSERSITE=1", py, script().getFullPathName(), k == Kind::words ? "words" : "phrases", wav.getFullPathName(), outFile.getFullPathName() };
+    cmd = commandFor (k, py, wav, outFile, extra);
     { const juce::ScopedLock l (lock); step = k == Kind::words ? "Finding the words..." : "Finding the phrases..."; }
     lastError = {};
     startThread();

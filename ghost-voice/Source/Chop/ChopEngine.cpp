@@ -3,6 +3,9 @@
 #include "VoiceEngine.h"
 #include "src/PluginProcessor.h"   // INTERSECT (third_party/intersect/src, untouched)
 #include "Analysis.h"              // Flayr Chop's analysis (third_party/flayr-chop, untouched)
+#include "src/audio/AudioAnalysis.h"   // INTERSECT's transient finder (its AUTO CHOP panel's)
+#include "src/audio/GrainEngine.h"     // INTERSECT's SET BPM arithmetic
+#include "src/params/ParamIds.h"       // INTERSECT's VOICES parameter
 #include <algorithm>
 #include <cmath>
 #include <set>
@@ -548,7 +551,7 @@ bool ChopEngine::autoChop()
             rebuildSlices();
             message = autoModeName (mode) + ": " + juce::String ((int) chops.size()) + (mode == AutoMode::words ? " words" : " phrases") + " on the keys from C1";
             changed();
-        });
+        }, mode == AutoMode::phrases ? phrase.args() : juce::StringArray());
         message = started ? (autoMode == AutoMode::words ? juce::String ("Finding the words...") : juce::String ("Finding the phrases...")) : "Couldn't start: " + tools.lastError;
         changed();
         return started;
@@ -624,17 +627,31 @@ namespace
 using P = IntersectProcessor;
 struct FieldInfo { int field; uint64_t lock; };
 float sliceValue (const Slice& s, int f)
-{
+{   // a chop's own value, in INTERSECT's slice units (seconds, 0..1 sustain)
     switch (f)
     {
-        case P::FieldPitch: return s.pitchSemitones;            case P::FieldCentsDetune: return s.centsDetune;
-        case P::FieldVolume: return s.volume;                   case P::FieldAttack: return s.attackSec;
-        case P::FieldRelease: return s.releaseSec;              case P::FieldReverse: return s.reverse ? 1.0f : 0.0f;
+        case P::FieldBpm: return s.bpm;                         case P::FieldPitch: return s.pitchSemitones;
+        case P::FieldAlgorithm: return (float) s.algorithm;     case P::FieldRepitchMode: return (float) s.repitchMode;
+        case P::FieldAttack: return s.attackSec;                case P::FieldDecay: return s.decaySec;
+        case P::FieldSustain: return s.sustainLevel;            case P::FieldRelease: return s.releaseSec;
+        case P::FieldMuteGroup: return (float) s.muteGroup;     case P::FieldStretchEnabled: return s.stretchEnabled ? 1.0f : 0.0f;
+        case P::FieldTonality: return s.tonalityHz;             case P::FieldFormant: return s.formantSemitones;
+        case P::FieldFormantComp: return s.formantComp ? 1.0f : 0.0f;
+        case P::FieldGrainMode: return (float) s.grainMode;     case P::FieldVolume: return s.volume;
+        case P::FieldReleaseTail: return s.releaseTail ? 1.0f : 0.0f;
+        case P::FieldReverse: return s.reverse ? 1.0f : 0.0f;   case P::FieldOutputBus: return (float) s.outputBus;
         case P::FieldLoop: return (float) s.loopMode;           case P::FieldOneShot: return s.oneShot ? 1.0f : 0.0f;
-        case P::FieldAlgorithm: return (float) s.algorithm;     case P::FieldFormantComp: return s.formantComp ? 1.0f : 0.0f;
+        case P::FieldCentsDetune: return s.centsDetune;
         case P::FieldFilterEnabled: return s.filterEnabled ? 1.0f : 0.0f;
-        case P::FieldFilterType: return (float) s.filterType;   case P::FieldFilterCutoff: return s.filterCutoff;
-        case P::FieldFilterReso: return s.filterReso;
+        case P::FieldFilterType: return (float) s.filterType;   case P::FieldFilterSlope: return (float) s.filterSlope;
+        case P::FieldFilterCutoff: return s.filterCutoff;       case P::FieldFilterReso: return s.filterReso;
+        case P::FieldFilterDrive: return s.filterDrive;         case P::FieldFilterAsym: return s.filterAsym;
+        case P::FieldFilterKeyTrack: return s.filterKeyTrack;
+        case P::FieldFilterEnvAttack: return s.filterEnvAttackSec;   case P::FieldFilterEnvDecay: return s.filterEnvDecaySec;
+        case P::FieldFilterEnvSustain: return s.filterEnvSustain;    case P::FieldFilterEnvRelease: return s.filterEnvReleaseSec;
+        case P::FieldFilterEnvAmount: return s.filterEnvAmount;      case P::FieldCrossfade: return s.crossfadePct;
+        case P::FieldMidiNote: return (float) s.midiNote;       case P::FieldHighNote: return (float) s.highNote;
+        case P::FieldSliceRootNote: return (float) s.sliceRootNote;
         default: break;
     }
     return 0;
@@ -643,17 +660,40 @@ uint64_t lockOf (int f)
 {
     switch (f)
     {
-        case P::FieldPitch: return kLockPitch;                  case P::FieldCentsDetune: return kLockCentsDetune;
-        case P::FieldVolume: return kLockVolume;                case P::FieldAttack: return kLockAttack;
-        case P::FieldRelease: return kLockRelease;              case P::FieldReverse: return kLockReverse;
+        case P::FieldBpm: return kLockBpm;                      case P::FieldPitch: return kLockPitch;
+        case P::FieldAlgorithm: return kLockAlgorithm;          case P::FieldRepitchMode: return kLockRepitchMode;
+        case P::FieldAttack: return kLockAttack;                case P::FieldDecay: return kLockDecay;
+        case P::FieldSustain: return kLockSustain;              case P::FieldRelease: return kLockRelease;
+        case P::FieldMuteGroup: return kLockMuteGroup;          case P::FieldStretchEnabled: return kLockStretch;
+        case P::FieldTonality: return kLockTonality;            case P::FieldFormant: return kLockFormant;
+        case P::FieldFormantComp: return kLockFormantComp;      case P::FieldGrainMode: return kLockGrainMode;
+        case P::FieldVolume: return kLockVolume;                case P::FieldReleaseTail: return kLockReleaseTail;
+        case P::FieldReverse: return kLockReverse;              case P::FieldOutputBus: return kLockOutputBus;
         case P::FieldLoop: return kLockLoop;                    case P::FieldOneShot: return kLockOneShot;
-        case P::FieldAlgorithm: return kLockAlgorithm;          case P::FieldFormantComp: return kLockFormantComp;
-        case P::FieldFilterEnabled: return kLockFilterEnabled;  case P::FieldFilterType: return kLockFilterType;
+        case P::FieldCentsDetune: return kLockCentsDetune;      case P::FieldFilterEnabled: return kLockFilterEnabled;
+        case P::FieldFilterType: return kLockFilterType;        case P::FieldFilterSlope: return kLockFilterSlope;
         case P::FieldFilterCutoff: return kLockFilterCutoff;    case P::FieldFilterReso: return kLockFilterReso;
+        case P::FieldFilterDrive: return kLockFilterDrive;      case P::FieldFilterAsym: return kLockFilterAsym;
+        case P::FieldFilterKeyTrack: return kLockFilterKeyTrack;
+        case P::FieldFilterEnvAttack: return kLockFilterEnvAttack;   case P::FieldFilterEnvDecay: return kLockFilterEnvDecay;
+        case P::FieldFilterEnvSustain: return kLockFilterEnvSustain; case P::FieldFilterEnvRelease: return kLockFilterEnvRelease;
+        case P::FieldFilterEnvAmount: return kLockFilterEnvAmount;   case P::FieldCrossfade: return kLockCrossfade;
         default: break;
     }
     return 0;
 }
+// SAMPLE-tab units -> a chop's units (INTERSECT keeps a chop's times in seconds and its sustains as 0..1)
+float sampleToSlice (int f, float v)
+{
+    switch (f)
+    {
+        case P::FieldAttack: case P::FieldDecay: case P::FieldRelease:
+        case P::FieldFilterEnvAttack: case P::FieldFilterEnvDecay: case P::FieldFilterEnvRelease: return v / 1000.0f;
+        case P::FieldSustain: case P::FieldFilterEnvSustain: return v / 100.0f;
+        default: return v;
+    }
+}
+bool notAParam (int f) { return f == P::FieldMidiNote || f == P::FieldHighNote || f == P::FieldSliceRootNote; }
 }
 
 float ChopEngine::sliceParam (int idx, int field) const
@@ -661,9 +701,169 @@ float ChopEngine::sliceParam (int idx, int field) const
     const auto& s = engine->getUiSliceSnapshot();
     if (idx < 0 || idx >= s.numSlices) return 0;
     const auto& sl = s.slices[(size_t) idx];
-    if ((sl.lockMask & lockOf (field)) != 0) return sliceValue (sl, field);
+    if (notAParam (field) || (sl.lockMask & lockOf (field)) != 0) return sliceValue (sl, field);
+    if (field == P::FieldOutputBus) return 0.0f;                         // (INTERSECT: OUT 1 unless the chop sets its own)
     const float v = s.sampleParamsFor (sl.sampleId).getField (field);   // not set on the chop: the clip's own value
-    return field == P::FieldAttack || field == P::FieldRelease ? v / 1000.0f : v;   // (the clip's own value is in ms; a chop's in seconds)
+    return sampleToSlice (field, v);                                     // (the clip's own value is in ms / %; a chop's in seconds / 0..1)
+}
+
+bool ChopEngine::sliceOverrides (int idx, int field) const
+{
+    const auto& s = engine->getUiSliceSnapshot();
+    if (idx < 0 || idx >= s.numSlices) return false;
+    return (s.slices[(size_t) idx].lockMask & lockOf (field)) != 0;
+}
+
+namespace { int paramSampleId (const IntersectProcessor::UiSliceSnapshot& s)
+{
+    if (s.selectedSessionSampleId >= 0) return s.selectedSessionSampleId;
+    return s.numSlices > 0 ? s.slices[0].sampleId : -1;
+} }
+
+float ChopEngine::sampleParam (int field) const
+{
+    const auto& s = engine->getUiSliceSnapshot();
+    return s.sampleParamsFor (paramSampleId (s)).getField (field);
+}
+
+void ChopEngine::setSampleParam (int field, float value, bool newUndoStep)
+{   // what INTERSECT's own SAMPLE tab sends (CmdSetSampleParam; a click is one undo step of INTERSECT's)
+    const auto& s = engine->getUiSliceSnapshot();
+    const int id = paramSampleId (s);
+    if (id < 0) return;
+    if (newUndoStep) { IntersectProcessor::Command g; g.type = IntersectProcessor::CmdBeginGesture; engine->pushCommand (g); }
+    IntersectProcessor::Command c; c.type = IntersectProcessor::CmdSetSampleParam; c.intParam1 = id; c.intParam2 = field; c.floatParam1 = value;
+    engine->pushCommand (c);
+}
+
+int ChopEngine::voices() const
+{
+    auto* raw = engine->apvts.getRawParameterValue (ParamIds::maxVoices);
+    return raw != nullptr ? juce::roundToInt (raw->load()) : 16;
+}
+
+void ChopEngine::setVoices (int n)
+{
+    if (auto* prm = engine->apvts.getParameter (ParamIds::maxVoices))
+    {
+        prm->beginChangeGesture();
+        prm->setValueNotifyingHost (prm->convertTo0to1 ((float) juce::jlimit (1, 31, n)));
+        prm->endChangeGesture();
+    }
+}
+
+int ChopEngine::engineRootNote() const { return engine->getUiSliceSnapshot().rootNote; }
+juce::uint32 ChopEngine::engineVersion() const { return engine->getUiSliceSnapshotVersion(); }
+
+void ChopEngine::setBpmFromLength (int idx, bool sliceScope, float bars)
+{   // INTERSECT's SET BPM menu: a chop's own BPM (CmdStretch), or the SAMPLE's from the chop's length (its own arithmetic)
+    const auto& s = engine->getUiSliceSnapshot();
+    if (idx < 0 || idx >= s.numSlices || bars <= 0) return;
+    if (sliceScope)
+    {
+        IntersectProcessor::Command c; c.type = IntersectProcessor::CmdStretch; c.floatParam1 = bars; c.sliceIdx = idx; engine->pushCommand (c);
+        return;
+    }
+    const auto snap = engine->sampleData.getSnapshot();
+    const double rate = snap != nullptr && snap->decodedSampleRate > 0.0 ? snap->decodedSampleRate : 44100.0;
+    const auto& sl = s.slices[(size_t) idx];
+    if (sl.endSample <= sl.startSample) return;
+    setSampleParam (P::FieldBpm, GrainEngine::calcStretchBpm (sl.startSample, sl.endSample, bars, rate));
+}
+
+// ------------------------------------------------------------------------------------------------ INTERSECT's AUTO CHOP panel
+std::vector<juce::int64> ChopEngine::equalPoints (int idx, int div) const
+{   // INTERSECT's CmdSplitSlice: count pieces of equal length (snapped to a zero crossing when its snap is on)
+    std::vector<juce::int64> out;
+    const auto& s = engine->getUiSliceSnapshot();
+    if (! engineLoaded() || idx < 0 || idx >= s.numSlices) return out;
+    const auto& sl = s.slices[(size_t) idx];
+    const int count = juce::jlimit (2, 128, div), startS = sl.startSample, len = sl.endSample - sl.startSample;
+    const auto snap = engine->sampleData.getSnapshot();
+    const bool doSnap = engine->snapToZeroCrossing.load() && snap != nullptr;
+    for (int i = 1; i < count; ++i)
+    {
+        int e = startS + i * len / count;
+        if (doSnap) e = AudioAnalysis::findNearestZeroCrossing (snap->buffer, e);
+        out.push_back (toClip (e));
+    }
+    return out;
+}
+
+std::vector<juce::int64> ChopEngine::transientPoints (int idx, float sens, float minMs) const
+{   // INTERSECT's AutoChopPanel: spectral-flux onsets over the slice, picked with SENS (x 0.1) and MIN, as it does
+    std::vector<juce::int64> out;
+    const auto& s = engine->getUiSliceSnapshot();
+    const auto snap = engine->sampleData.getSnapshot();
+    if (! engineLoaded() || idx < 0 || idx >= s.numSlices || snap == nullptr) return out;
+    const auto& sl = s.slices[(size_t) idx];
+    const double rate = snap->decodedSampleRate > 0.0 ? snap->decodedSampleRate : 44100.0;
+    const auto odf = AudioAnalysis::computeSpectralFluxODF (snap->buffer, sl.startSample, sl.endSample, rate);
+    auto positions = AudioAnalysis::pickTransientsFromODF (odf, snap->buffer, sens * 0.1f, rate, minMs);
+    if (engine->snapToZeroCrossing.load())
+    {
+        for (auto& p : positions) p = juce::jlimit (sl.startSample + 1, sl.endSample - 1, AudioAnalysis::findNearestZeroCrossing (snap->buffer, p));
+        std::sort (positions.begin(), positions.end());
+        const int minDist = (int) std::round (rate * (double) minMs / 1000.0);
+        std::vector<int> kept; int last = sl.startSample - minDist;
+        for (int p : positions) if (p - last >= minDist) { kept.push_back (p); last = p; }
+        positions = std::move (kept);
+    }
+    if (positions.size() > 128) positions.resize (128);
+    for (int p : positions) out.push_back (toClip (p));
+    return out;
+}
+
+bool ChopEngine::splitChop (int idx, const std::vector<juce::int64>& cuts, const juce::String& what)
+{   // the chop under INTERSECT's slice idx becomes pieces at the cuts (the other chops stay); keys go to CHOPS
+    auto c = clip();
+    if (c == nullptr || cuts.empty()) return false;
+    Region r { 0, c->frames() };
+    int target = -1;
+    if (keys == KeysMode::chops && ! chops.empty())
+    {
+        Region sr {};
+        for (auto& v : slices()) if (v.index == idx) sr = v.r;
+        if (sr.empty()) return false;
+        juce::int64 best = 0;
+        for (size_t i = 0; i < chops.size(); ++i)
+        {
+            const auto ov = juce::jmin (chops[i].b, sr.b) - juce::jmax (chops[i].a, sr.a);
+            if (ov > best) { best = ov; target = (int) i; }
+        }
+        if (target < 0) return false;
+        r = chops[(size_t) target];
+    }
+    std::vector<juce::int64> at;
+    for (auto x : cuts) if (x > r.a + 64 && x < r.b - 64) at.push_back (x);
+    std::sort (at.begin(), at.end()); at.erase (std::unique (at.begin(), at.end()), at.end());
+    if (at.empty()) return false;
+    std::vector<Region> pieces; juce::int64 a = r.a;
+    for (auto x : at) { if (x - a >= 64) { pieces.push_back ({ a, x }); a = x; } }
+    pieces.push_back ({ a, r.b });
+    if (pieces.size() < 2) return false;
+    pushUndo();
+    std::vector<Region> nc; std::vector<juce::String> nl;
+    const bool hadLabels = ! labels.empty();
+    if (target < 0) { nc = pieces; }
+    else
+        for (size_t i = 0; i < chops.size(); ++i)
+        {
+            if ((int) i == target) { for (auto& p : pieces) { nc.push_back (p); if (hadLabels) nl.push_back ({}); } }
+            else { nc.push_back (chops[i]); if (hadLabels) nl.push_back (labelFor (i)); }
+        }
+    chops = nc; labels = nl; keys = KeysMode::chops;
+    rebuildSlices();
+    message = what + ": " + juce::String ((int) pieces.size()) + " pieces, " + juce::String ((int) chops.size()) + " chops on the keys from C1";
+    changed();
+    return true;
+}
+
+juce::StringArray ChopEngine::PhraseSettings::args() const
+{   // OpenVPI slicer2.py's own option names; nothing at all when untouched (the helper's defaults are these values)
+    if (isDefault()) return {};
+    return { "--db_thresh", juce::String (db, 1), "--min_length", juce::String (minLength), "--min_interval", juce::String (minInterval),
+             "--hop_size", juce::String (hop), "--max_sil_kept", juce::String (maxSilKept) };
 }
 
 void ChopEngine::setSliceParam (int idx, int field, float value)
@@ -721,6 +921,11 @@ juce::ValueTree ChopEngine::toTree() const
     t.setProperty ("keys", (int) keys, nullptr);
     t.setProperty ("auto", (int) autoMode, nullptr);
     t.setProperty ("count", chopCount, nullptr);
+    // (UNDER THE HOOD) the original engines' own options; an old project has none of these, so it loads with today's values
+    t.setProperty ("phraseDb", phrase.db, nullptr); t.setProperty ("phraseMinLength", phrase.minLength, nullptr);
+    t.setProperty ("phraseMinInterval", phrase.minInterval, nullptr); t.setProperty ("phraseHop", phrase.hop, nullptr);
+    t.setProperty ("phraseMaxSilKept", phrase.maxSilKept, nullptr);
+    t.setProperty ("splitSens", split.sens, nullptr); t.setProperty ("splitMinMs", split.minMs, nullptr); t.setProperty ("splitDiv", split.div, nullptr);
     juce::StringArray cs; for (auto& r : chops) cs.add (juce::String (r.a) + ":" + juce::String (r.b));
     t.setProperty ("chops", cs.joinIntoString (","), nullptr);
     { juce::Array<juce::var> ls; for (auto& l : labels) ls.add (l); t.setProperty ("labels", juce::JSON::toString (juce::var (ls), true), nullptr); }
@@ -734,6 +939,18 @@ void ChopEngine::fromTree (const juce::ValueTree& t)
     if (! t.hasType ("CHOP")) return;
     autoMode = (AutoMode) juce::jlimit (0, (int) AutoMode::kModes - 1, (int) t.getProperty ("auto", 0));
     chopCount = juce::jlimit (1, 64, (int) t.getProperty ("count", 16));
+    {
+        const PhraseSettings d; const SplitSettings sd;
+        phrase.db = juce::jlimit (-80.0f, 0.0f, (float) t.getProperty ("phraseDb", d.db));
+        phrase.minLength = juce::jlimit (10, 30000, (int) t.getProperty ("phraseMinLength", d.minLength));
+        phrase.minInterval = juce::jlimit (10, 30000, (int) t.getProperty ("phraseMinInterval", d.minInterval));
+        phrase.hop = juce::jlimit (1, 1000, (int) t.getProperty ("phraseHop", d.hop));
+        phrase.maxSilKept = juce::jlimit (1, 30000, (int) t.getProperty ("phraseMaxSilKept", d.maxSilKept));
+        if (! phrase.valid()) phrase = d;
+        split.sens = juce::jlimit (0.0f, 100.0f, (float) t.getProperty ("splitSens", sd.sens));
+        split.minMs = juce::jlimit (20.0f, 500.0f, (float) t.getProperty ("splitMinMs", sd.minMs));
+        split.div = juce::jlimit (2, 128, (int) t.getProperty ("splitDiv", sd.div));
+    }
     const juce::File f (t.getProperty ("clip").toString());
     if (! f.existsAsFile()) return;
     juce::AudioFormatManager fm; fm.registerBasicFormats();

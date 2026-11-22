@@ -1,22 +1,29 @@
 // Ghost Voice - AGPL-3.0-only (see LICENSE, NOTICE.md).
+//
+// CHOP in THE GHOST CHOIR look: the clip is a long stained-glass window (each chop a pane of coloured glass, the wave the light
+// through it), the choir stalls stand over the keys (one hooded singer per chop, on its own key: it lights up and sings when its
+// key sounds), and SOUND is the chop engine's own signal chain (TIME/PITCH, FILTER, AMP, PLAYBACK) under its own control names.
+// Static art is cached in Images (the page's stone and frames, the window's glass and wave, the stalls); a repaint draws the cache
+// and only what moves (the playhead, the selection, the singing voices).
 #include "ChopPage.h"
 #include "Processor.h"
-#include "Look.h"
-#include "SplashArt.h"
-#include "src/PluginProcessor.h"   // INTERSECT: its per-slice fields
+#include "src/PluginProcessor.h"   // the chop engine's per-slice fields
 #include <cmath>
 
 namespace gv
 {
 namespace
 {
-// SPLASH (build 9): the playhead / loop in the painting's deep cyan, the selection and tools in its orchid; chops cycle its paints
-// build 12: from the look in use (LIGHT / DARK): the playhead + loop colour, the selection + tools colour, the chops' colours
-#define bsGreen (splash::art().play)
-#define bsPurple (splash::art().select)
-juce::Colour chopColour (int i) { static const int order[] { 3, 6, 1, 5, 0, 7, 2, 4 }; const auto& a = splash::art(); return (splash::isDark() ? a.inks : a.paints)[order[((i % 8) + 8) % 8]]; }
 juce::String noteName (int n) { return juce::MidiMessage::getMidiNoteName (n, true, true, 3); }   // C3 = 60, as in FL Studio
 juce::String secs (double s) { return s >= 60 ? juce::String ((int) (s / 60)) + ":" + juce::String (std::fmod (s, 60.0), 2).paddedLeft ('0', 5) : juce::String (s, 2) + " s"; }
+using choir::serif; using choir::display;
+juce::String slicesKey (chop::ChopEngine& e)
+{   // what the chops look like now (for the caches)
+    juce::String k; k << (int) e.keys << ":";
+    const auto sl = e.slices();
+    for (size_t i = 0; i < sl.size(); ++i) k << (int) sl[i].r.a << "-" << (int) sl[i].r.b << "@" << sl[i].note << e.labelFor (i) << ";";
+    return k;
+}
 }
 
 // ================================================================================================ tool buttons (Block Step's)
@@ -30,16 +37,20 @@ struct ChopPage::ToolButton : public juce::Button
     }
     void paintButton (juce::Graphics& g, bool over, bool) override
     {
-        const auto& P = page.pal();
-        auto r = getLocalBounds().toFloat().reduced (1.5f);
+        const auto& P = page.cp();
+        auto r = getLocalBounds().toFloat().reduced (0.5f);
         const bool on = page.tool() == tool;
-        splash::handButton (g, P, getLocalBounds().toFloat(), on, true, over, 300 + (int) tool);   // hand-drawn (build 10)
+        if (on) { juce::ColourGradient gr (P.glass[4], r.getX(), r.getY(), P.glass[1], r.getRight(), r.getBottom(), false); g.setGradientFill (gr); }
+        else { juce::ColourGradient gr (P.card, 0, r.getY(), P.cell, 0, r.getBottom(), false); g.setGradientFill (gr); }
+        g.fillRoundedRectangle (r, 4.0f);
+        g.setColour (over ? P.goldHi : P.edge); g.drawRoundedRectangle (r, 4.0f, over ? 1.4f : 1.0f);
+        auto k = r.removeFromRight (20).reduced (3, 8);
         g.setColour (on ? juce::Colours::white : P.ink);
-        g.setFont (gfont (11.0f)); g.drawText (toolName (tool), r.withTrimmedRight (18), juce::Justification::centred);
-        auto k = r.removeFromRight (18).reduced (2, 6);
-        g.setColour ((on ? juce::Colours::white : P.dim).withAlpha (0.25f)); g.fillRoundedRectangle (k, 3);
-        g.setColour (on ? juce::Colours::white : P.dim); g.setFont (gfont (10.0f));
-        g.drawText (juce::String::charToString (toolKey (tool)).toUpperCase(), k, juce::Justification::centred);
+        const auto n = toolName (tool);
+        g.setFont (choir::fitted (choir::bold, n, r.getWidth() - 6, 13.5f, 9.0f)); g.drawText (n, r.withTrimmedLeft (2), juce::Justification::centred, false);
+        g.setColour ((on ? juce::Colours::white : P.gold).withAlpha (on ? 0.3f : 0.22f)); g.fillRoundedRectangle (k, 3);
+        g.setColour (on ? juce::Colours::white : P.gold); g.setFont (serif (12.0f, choir::bold));
+        g.drawText (juce::String::charToString (toolKey (tool)).toUpperCase(), k, juce::Justification::centred, false);
     }
     ChopPage& page; Tool tool;
 };
@@ -51,10 +62,18 @@ struct ChopPage::DragOut : public juce::Component, public juce::SettableTooltipC
     { setMouseCursor (juce::MouseCursor::DraggingHandCursor); setTooltip ("Drag the selection (or the whole clip) out as a WAV, into FL Studio's playlist or a folder"); }
     void paint (juce::Graphics& g) override
     {
-        const auto& P = page.pal(); auto r = getLocalBounds().toFloat().reduced (1.5f);
-        const bool ok = page.engine().hasClip();
-        splash::handButton (g, P, getLocalBounds().toFloat(), false, ok, false, 404);   // hand-drawn (build 10)
-        g.setColour (ok ? P.ink : P.dim.withAlpha (0.5f)); g.setFont (gfont (11.5f)); g.drawText ("DRAG WAV", r, juce::Justification::centred);
+        const auto& P = page.cp(); auto r = getLocalBounds().toFloat().reduced (0.5f);
+        const bool ok = page.engine().hasClip(); const float a = ok ? 1.0f : 0.38f;
+        juce::ColourGradient gr (P.card.withMultipliedAlpha (a), 0, r.getY(), P.cell.withMultipliedAlpha (a), 0, r.getBottom(), false);
+        g.setGradientFill (gr); g.fillRoundedRectangle (r, 4.0f);
+        g.setColour ((ok ? P.edge : P.faint).withMultipliedAlpha (a)); g.drawRoundedRectangle (r, 4.0f, 1.0f);
+        // a little arrow leaving the box
+        juce::Path ar; const float ax = r.getX() + 13, ay = r.getCentreY();
+        ar.startNewSubPath (ax - 5, ay); ar.lineTo (ax + 5, ay); ar.startNewSubPath (ax + 1, ay - 4); ar.lineTo (ax + 5, ay); ar.lineTo (ax + 1, ay + 4);
+        g.setColour (P.gold.withMultipliedAlpha (a)); g.strokePath (ar, juce::PathStrokeType (1.5f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+        g.setColour (choir::greyInk (P, P.ink, ok ? 1.0f : choir::greyA (P)));
+        g.setFont (choir::fitted (choir::bold, "DRAG WAV", r.getWidth() - 28, 14.0f, 9.0f));
+        g.drawText ("DRAG WAV", r.withTrimmedLeft (22), juce::Justification::centred, false);
     }
     void mouseDrag (const juce::MouseEvent& e) override
     {
@@ -68,15 +87,16 @@ struct ChopPage::DragOut : public juce::Component, public juce::SettableTooltipC
     ChopPage& page; bool dragging = false;
 };
 
-// ================================================================================================ the wave
+// ================================================================================================ the wave: a stained-glass window
 struct ChopPage::Wave : public juce::Component
 {
-    explicit Wave (ChopPage& p) : page (p) { setWantsKeyboardFocus (false); }
+    explicit Wave (ChopPage& p) : page (p) { setWantsKeyboardFocus (false); setOpaque (true); }
     ChopPage& page;
     static constexpr int rulerH = 24, overviewH = 16, bin = 256;
     std::vector<float> peaksMin, peaksMax; const void* peaksFor = nullptr;
     enum class Drag { none, select, loopRuler, overview, playback } drag = Drag::none;
     juce::int64 dragFrom = 0;
+    choir::Cache glass;   // the frame, the ruler, the panes and the wave (everything that only changes with the view / the chops)
 
     juce::Rectangle<int> waveArea() const { return getLocalBounds().withTrimmedTop (rulerH).withTrimmedBottom (overviewH + 2); }
     juce::Rectangle<int> rulerArea() const { return getLocalBounds().removeFromTop (rulerH); }
@@ -113,66 +133,46 @@ struct ChopPage::Wave : public juce::Component
         { const float* s = c.audio.getReadPointer (ch); for (auto i = a; i < e; ++i) { mn = juce::jmin (mn, s[i]); mx = juce::jmax (mx, s[i]); } }
     }
 
-    void paint (juce::Graphics& g) override
-    {
-        const auto& P = page.pal();
+    void paintGlass (juce::Graphics& g, const chop::Clip& c)
+    {   // the static window: ground, ruler + grid, the chops' panes with lead between them, and the wave as light
+        const auto& P = page.cp();
         auto& eng = page.engine();
-        auto all = getLocalBounds().toFloat();
-        { juce::Path b; b.addRoundedRectangle (all.reduced (1), 14); g.setColour (P.waveBg); g.fillPath (b); splash::sketch (g, b, 501, 5, 0.75f, 0.45f); }
-        auto c = eng.clip();
-        if (c == nullptr || c->frames() == 0)
-        {
-            g.setColour (P.ink); g.setFont (gfont (22.0f)); g.drawText ("Drag a WAV in here", all.withTrimmedBottom (all.getHeight() * 0.5f - 6), juce::Justification::centredBottom);
-            g.setColour (P.dim); g.setFont (gfont (13.5f, false));
-            g.drawText ("or press ADD WAV, or REC to record.  Then AUTO CHOP, and play it on the keys.", all.withTrimmedTop (all.getHeight() * 0.5f + 8), juce::Justification::centredTop);
-            return;
-        }
-        if (peaksFor != c.get()) buildPeaks (*c);
-        const auto wa = waveArea().toFloat(), ra = rulerArea().toFloat();
+        const auto all = getLocalBounds().toFloat(), wa = waveArea().toFloat(), ra = rulerArea().toFloat();
+        g.setColour (P.waveBg); g.fillRect (all);
+        juce::ColourGradient gl (P.glass[1].withAlpha (P.dark ? 0.10f : 0.06f), 0, wa.getY(), P.glass[4].withAlpha (P.dark ? 0.06f : 0.04f), 0, wa.getBottom(), false);
+        g.setGradientFill (gl); g.fillRect (wa);
+        // the ruler: a gilded strip with bar numbers
+        g.setColour (P.cell); g.fillRect (ra);
+        g.setColour (P.edgeDim); g.fillRect (ra.getX(), ra.getBottom() - 1, ra.getWidth(), 1.0f);
         const auto det = eng.detected();
-        // the beat grid (from the analysis) or seconds
+        const double beat = det.ready && det.bpm > 0 ? 60.0 / det.bpm * c.rate : 0.0;
+        g.setFont (serif (13.0f, choir::bold));
+        if (beat > 0)
         {
-            g.setColour (P.cell); g.fillRect (ra.withTrimmedLeft (8).withTrimmedRight (8));
-            const double beat = det.ready && det.bpm > 0 ? 60.0 / det.bpm * c->rate : 0.0;
-            g.setFont (gfont (10.0f, false));
-            if (beat > 0)
+            const double first = det.firstBeat * c.rate;
+            int every = 1; while (beat * every / spp() < 18) every *= 2;
+            const auto k0 = (juce::int64) std::floor ((page.viewStart - first) / beat), k1 = (juce::int64) std::ceil ((page.viewStart + page.viewFrames - first) / beat);
+            for (auto k = k0; k <= k1; ++k)
             {
-                const double first = det.firstBeat * c->rate;
-                int every = 1; while (beat * every / spp() < 18) every *= 2;
-                const auto k0 = (juce::int64) std::floor ((page.viewStart - first) / beat), k1 = (juce::int64) std::ceil ((page.viewStart + page.viewFrames - first) / beat);
-                for (auto k = k0; k <= k1; ++k)
-                {
-                    if (k % every != 0) continue;
-                    const float x = xOf (first + (double) k * beat); if (x < 0 || x > (float) getWidth()) continue;
-                    const bool bar = ((k % 4) + 4) % 4 == 0;
-                    g.setColour (P.overlay.withAlpha (bar ? 0.16f : 0.06f)); g.fillRect (x, wa.getY(), 1.0f, wa.getHeight());
-                    if (bar && k >= 0) { g.setColour (P.dim); g.drawText (juce::String (k / 4 + 1), juce::Rectangle<float> (x + 3, ra.getY(), 40, ra.getHeight()), juce::Justification::centredLeft); }
-                }
-            }
-            else
-            {
-                double step = 0.1; while (step * c->rate / spp() < 60) step *= 2;
-                for (double t = std::floor (page.viewStart / c->rate / step) * step; t * c->rate < page.viewStart + page.viewFrames; t += step)
-                {
-                    const float x = xOf (t * c->rate); if (x < 0) continue;
-                    g.setColour (P.overlay.withAlpha (0.08f)); g.fillRect (x, wa.getY(), 1.0f, wa.getHeight());
-                    g.setColour (P.dim); g.drawText (juce::String (t, step < 1 ? 1 : 0) + "s", juce::Rectangle<float> (x + 3, ra.getY(), 50, ra.getHeight()), juce::Justification::centredLeft);
-                }
+                if (k % every != 0) continue;
+                const float x = xOf (first + (double) k * beat); if (x < 0 || x > (float) getWidth()) continue;
+                const bool bar = ((k % 4) + 4) % 4 == 0;
+                g.setColour ((P.dark ? juce::Colours::white : P.lead).withAlpha (bar ? 0.13f : 0.05f)); g.fillRect (x, wa.getY(), 1.0f, wa.getHeight());
+                g.setColour (P.edge.withAlpha (bar ? 0.9f : 0.4f)); g.fillRect (x, ra.getBottom() - (bar ? 8.0f : 4.0f), 1.0f, bar ? 8.0f : 4.0f);
+                if (bar && k >= 0) { g.setColour (P.gold); g.drawText (juce::String (k / 4 + 1), juce::Rectangle<float> (x + 4, ra.getY(), 40, ra.getHeight() - 2), juce::Justification::centredLeft, false); }
             }
         }
-        // the loop (on the ruler, like Block Step's step numbers)
-        if (! page.loop.empty())
+        else
         {
-            const float x0 = juce::jmax (0.0f, xOf ((double) page.loop.a)), x1 = juce::jmin ((float) getWidth(), xOf ((double) page.loop.b));
-            if (x1 > x0)
+            double step = 0.1; while (step * c.rate / spp() < 60) step *= 2;
+            for (double t = std::floor (page.viewStart / c.rate / step) * step; t * c.rate < page.viewStart + page.viewFrames; t += step)
             {
-                const auto lc = page.loopOn ? bsGreen : P.dim;
-                g.setColour (lc.withAlpha (page.loopOn ? 0.35f : 0.18f)); g.fillRect (x0, ra.getY() + 3, x1 - x0, ra.getHeight() - 6);
-                g.setColour (lc); g.fillRect (x0, ra.getY() + 3, 2.0f, ra.getHeight() - 6); g.fillRect (x1 - 2, ra.getY() + 3, 2.0f, ra.getHeight() - 6);
-                if (page.loopOn) { g.setColour (bsGreen.withAlpha (0.05f)); g.fillRect (x0, wa.getY(), x1 - x0, wa.getHeight()); }
+                const float x = xOf (t * c.rate); if (x < 0) continue;
+                g.setColour ((P.dark ? juce::Colours::white : P.lead).withAlpha (0.06f)); g.fillRect (x, wa.getY(), 1.0f, wa.getHeight());
+                g.setColour (P.gold); g.drawText (juce::String (t, step < 1 ? 1 : 0) + "s", juce::Rectangle<float> (x + 4, ra.getY(), 50, ra.getHeight() - 2), juce::Justification::centredLeft, false);
             }
         }
-        // the chops (what INTERSECT holds), one band per key
+        // the panes: one piece of coloured glass per chop (per key), leaded at its edges, with its note on a little plaque
         const auto sl = eng.slices();
         if (eng.keys == chop::KeysMode::chops)
         {
@@ -181,55 +181,166 @@ struct ChopPage::Wave : public juce::Component
                 const auto& s = sl[i];
                 const float x0 = xOf ((double) s.r.a), x1 = xOf ((double) s.r.b);
                 if (x1 < 0 || x0 > (float) getWidth()) continue;
-                const auto cc = chopColour ((int) i);
-                const bool on = eng.noteSounding (s.note);
-                g.setColour (cc.withAlpha (on ? 0.32f : 0.13f)); g.fillRect (x0, wa.getY(), juce::jmax (1.0f, x1 - x0), wa.getHeight());
-                g.setColour (cc.withAlpha (0.9f)); g.fillRect (x0, wa.getY(), 2.0f, wa.getHeight());
-                juce::String txt = noteName (s.note); if (eng.labelFor (i).isNotEmpty()) txt << " " << eng.labelFor (i);
-                const float tw = juce::jmin (ghosty::textWidth (gfont (10.0f), txt) + 10.0f, juce::jmax (0.0f, x1 - x0 - 4));
-                auto tag = juce::Rectangle<float> (x0 + 3, wa.getY() + 3 + (float) (i % 2) * 17.0f, tw, 15);
-                if (x1 - x0 > 14) { g.setColour (cc.withAlpha (0.85f)); g.fillRoundedRectangle (tag, 4);
-                                    g.setColour (juce::Colours::black); g.setFont (gfont (10.0f)); g.drawText (txt, tag, juce::Justification::centred, true); }
-                if (s.index == page.selectedChop) { g.setColour (cc); g.drawRect (juce::Rectangle<float> (x0, wa.getY(), juce::jmax (2.0f, x1 - x0), wa.getHeight()), 2.0f); }
+                const auto cc = P.chop ((int) i);
+                juce::ColourGradient pg (cc.withAlpha (P.dark ? 0.34f : 0.26f), 0, wa.getY(), cc.withAlpha (P.dark ? 0.12f : 0.08f), 0, wa.getBottom(), false);
+                g.setGradientFill (pg); g.fillRect (x0, wa.getY(), juce::jmax (1.0f, x1 - x0), wa.getHeight());
+                g.setColour (cc.withAlpha (0.35f)); g.fillRect (x0 + 3, wa.getY() + 2, juce::jmax (0.0f, x1 - x0 - 6), 2.0f);   // the glint on the glass
+                g.setColour (P.lead.withAlpha (P.dark ? 0.95f : 0.7f)); g.fillRect (x0 - 1.0f, wa.getY(), 3.0f, wa.getHeight());
             }
         }
-        // the waveform
+        // the wave: the light through the glass
         {
-            const float mid = wa.getCentreY(), h = wa.getHeight() * 0.46f;
-            juce::Path p; bool started = false;
-            std::vector<float> lo ((size_t) getWidth()), hi ((size_t) getWidth());
-            for (int x = 0; x < getWidth(); ++x)
+            const float mid = wa.getCentreY() + 10.0f, h = (wa.getHeight() - 30.0f) * 0.44f;
+            juce::Path p;
+            const int W = getWidth();
+            std::vector<float> lo ((size_t) W), hi ((size_t) W);
+            for (int x = 0; x < W; ++x)
             {
-                float mn, mx; minMax (*c, page.viewStart + x * spp(), page.viewStart + (x + 1) * spp(), mn, mx);
+                float mn, mx; minMax (c, page.viewStart + x * spp(), page.viewStart + (x + 1) * spp(), mn, mx);
                 lo[(size_t) x] = mid - mx * h; hi[(size_t) x] = mid - mn * h;
             }
-            for (int x = 0; x < getWidth(); ++x) { if (! started) { p.startNewSubPath ((float) x, lo[(size_t) x]); started = true; } else p.lineTo ((float) x, lo[(size_t) x]); }
-            for (int x = getWidth() - 1; x >= 0; --x) p.lineTo ((float) x, juce::jmax (hi[(size_t) x], lo[(size_t) x] + 1.0f));
+            p.startNewSubPath (0.0f, lo[0]);
+            for (int x = 1; x < W; ++x) p.lineTo ((float) x, lo[(size_t) x]);
+            for (int x = W - 1; x >= 0; --x) p.lineTo ((float) x, juce::jmax (hi[(size_t) x], lo[(size_t) x] + 1.0f));
             p.closeSubPath();
-            juce::ColourGradient gr (splash::art().wave0, 0, wa.getY(), splash::art().wave2, 0, wa.getBottom(), false);
-            gr.addColour (0.5, splash::art().wave1);
-            g.setGradientFill (gr); g.fillPath (p);
-            splash::sketch (g, p, 77, 2, 0.5f, 0.35f);
-            g.setColour (P.overlay.withAlpha (0.12f)); g.fillRect (wa.getX(), mid, wa.getWidth(), 1.0f);
+            if (P.dark) { g.setColour (P.glow.withAlpha (0.10f)); g.strokePath (p, juce::PathStrokeType (5.0f)); }
+            juce::ColourGradient wg (P.waveInk, 0, mid - h, P.waveInk.withMultipliedAlpha (P.dark ? 0.75f : 0.85f), 0, mid, true);
+            g.setGradientFill (wg); g.fillPath (p);
+            g.setColour ((P.dark ? juce::Colours::white : P.lead).withAlpha (0.10f)); g.fillRect (wa.getX(), mid, wa.getWidth(), 1.0f);
+        }
+        // (polish 3) the beats the count left out: the last chop runs on over them, so that stretch is veiled and says so
+        if (const auto cap = page.beatCap(); cap.on)
+        {
+            const float x0 = juce::jmax (0.0f, xOf ((double) cap.tailFrom)), x1 = juce::jmin ((float) getWidth(), xOf ((double) cap.tailTo));
+            if (x1 - x0 > 2.0f)
+            {
+                const auto veil = juce::Rectangle<float> (x0, wa.getY(), x1 - x0, wa.getHeight());
+                g.setColour (P.waveBg.withAlpha (P.dark ? 0.62f : 0.58f)); g.fillRect (veil);
+                {   // fine diagonal hatching
+                    juce::Graphics::ScopedSaveState ss (g);
+                    g.reduceClipRegion (veil.toNearestInt());
+                    g.setColour ((P.dark ? juce::Colours::white : P.lead).withAlpha (P.dark ? 0.07f : 0.10f));
+                    for (float x = x0 - wa.getHeight(); x < x1; x += 9.0f) g.drawLine (x, wa.getBottom(), x + wa.getHeight(), wa.getY(), 1.0f);
+                }
+                g.setColour (P.edge.withAlpha (0.9f)); g.fillRect (x0, wa.getY(), 1.5f, wa.getHeight());
+                const juce::String t1 = "not chopped", t2 = juce::String (cap.unit.substring (0, 1).toUpperCase() + cap.unit.substring (1)) + " " + juce::String (cap.shown + 1) + juce::String (juce::CharPointer_UTF8 ("\xe2\x80\x93")) + juce::String (cap.avail) + " ride on the last chop";
+                auto lr = veil.reduced (10, 0).withTrimmedTop (34).withHeight (40);
+                g.setColour (P.ink); g.setFont (choir::fitted (choir::bold, t1, lr.getWidth(), 15.0f, 10.0f)); g.drawText (t1, lr.removeFromTop (18), juce::Justification::centredLeft, false);
+                g.setColour (P.dim); g.setFont (choir::fitted (choir::italic, t2, lr.getWidth(), 14.0f, 10.0f)); g.drawText (t2, lr.removeFromTop (18), juce::Justification::centredLeft, false);
+            }
+        }
+        // (polish 2) the chops' name chips, drawn over the wave on one top row: a solid chip in the pane's glass with a 1 px outline.
+        // A chop that starts off the left edge keeps its chip at the edge, so a zoomed view still says which chop it is
+        if (eng.keys == chop::KeysMode::chops)
+        {
+            const auto tf = serif (13.0f, choir::bold);
+            for (size_t i = 0; i < sl.size(); ++i)
+            {
+                const auto& s = sl[i];
+                const float x0 = xOf ((double) s.r.a), x1 = juce::jmin ((float) getWidth() - 2.0f, xOf ((double) s.r.b));
+                const float cx = juce::jmax (x0 + 4.0f, 4.0f);
+                if (x1 - cx < 20.0f) continue;
+                juce::String txt = noteName (s.note); if (eng.labelFor (i).isNotEmpty()) txt << "  " << eng.labelFor (i);
+                const float tw = juce::jmin (choir::width (tf, txt) + 12.0f, x1 - cx - 4.0f);
+                auto tag = juce::Rectangle<float> (cx, wa.getY() + 6, tw, 18);
+                const auto cc = P.chop ((int) i);
+                g.setColour (P.dark ? cc.darker (0.15f) : cc); g.fillRoundedRectangle (tag, 3);
+                g.setColour (P.dark ? cc.brighter (0.6f) : P.lead); g.drawRoundedRectangle (tag.reduced (0.5f), 3, 1.0f);
+                g.setColour (juce::Colours::white); g.setFont (tf); g.drawText (txt, tag.reduced (5, 0), juce::Justification::centredLeft, true);
+            }
+        }
+        // the frame: a gilded lead border
+        g.setColour (P.edge); g.drawRect (all, 1.0f);
+        g.setColour (P.lead.withAlpha (0.6f)); g.drawRect (all.reduced (1), 1.0f);
+    }
+
+    void paintEmpty (juce::Graphics& g)
+    {
+        const auto& P = page.cp();
+        const auto all = getLocalBounds().toFloat();
+        g.setColour (P.waveBg); g.fillRect (all);
+        // an empty window: tall lancets of dim glass, and one singer waiting with a shut book
+        const int n = 9; const float lw = all.getWidth() / (float) n;
+        for (int i = 0; i < n; ++i)
+        {
+            auto l = juce::Rectangle<float> (all.getX() + lw * (float) i + 8, all.getY() + 14, lw - 16, all.getHeight() - 28);
+            auto lp = choir::lancet (l, 0.30f);
+            g.setColour (P.glass[(i * 3) % 8].withAlpha (P.dark ? 0.07f : 0.06f)); g.fillPath (lp);
+            g.setColour (P.edgeDim.withMultipliedAlpha (0.6f)); g.strokePath (lp, juce::PathStrokeType (1.0f));
+        }
+        // (fixes) the singer and the two lines as one block, centred in whatever height the window has
+        const float sw = juce::jlimit (28.0f, 46.0f, (all.getHeight() - 16.0f - 62.0f) / 1.4f), block = sw * 1.4f + 62.0f;
+        const float top = all.getY() + juce::jmax (4.0f, (all.getHeight() - block) * 0.5f);
+        choir::singer (g, P, juce::Rectangle<float> (all.getCentreX() - sw * 0.5f, top, sw, sw * 1.4f), P.glass[4], 0.0f, 0.0f, 0.9f);
+        g.setColour (P.ink); g.setFont (display (28.0f));
+        g.drawText ("Drag a WAV in here", all.withTop (top + sw * 1.4f + 2.0f).withHeight (36), juce::Justification::centred, false);
+        g.setColour (P.dim); g.setFont (serif (17.0f, choir::italic));
+        g.drawText ("or press ADD WAV, or REC to record.  Then AUTO CHOP, and play it on the keys.", all.withTop (top + sw * 1.4f + 38.0f).withHeight (24), juce::Justification::centred, false);
+        g.setColour (P.edge); g.drawRect (all, 1.0f);
+    }
+
+    void paint (juce::Graphics& g) override
+    {
+        const auto& P = page.cp();
+        auto& eng = page.engine();
+        auto c = eng.clip();
+        if (c == nullptr || c->frames() == 0) { glass.draw (g, "empty" + juce::String ((int) P.dark), getLocalBounds(), [this] (juce::Graphics& ig, juce::Rectangle<int>) { paintEmpty (ig); }, true); return; }
+        if (peaksFor != c.get()) buildPeaks (*c);
+        juce::String key; key << (juce::pointer_sized_int) c.get() << "|" << page.viewStart << "|" << page.viewFrames << "|" << (int) P.dark << "|" << (eng.detected().ready ? eng.detected().bpm : 0.0) << "|" << slicesKey (eng) << "|" << (int) eng.autoMode << "|" << eng.chopCount;
+        glass.draw (g, key, getLocalBounds(), [this, &c] (juce::Graphics& ig, juce::Rectangle<int>) { paintGlass (ig, *c); }, true);
+        const auto wa = waveArea().toFloat(), ra = rulerArea().toFloat();
+        // the singing panes glow, the picked one is outlined in gold
+        if (eng.keys == chop::KeysMode::chops)
+        {
+            const auto sl = eng.slices();
+            for (size_t i = 0; i < sl.size(); ++i)
+            {
+                const auto& s = sl[i];
+                const float x0 = xOf ((double) s.r.a), x1 = xOf ((double) s.r.b);
+                if (x1 < 0 || x0 > (float) getWidth()) continue;
+                if (eng.noteSounding (s.note) || s.note == page.playingNote()) { g.setColour (P.chop ((int) i).withAlpha (0.30f)); g.fillRect (x0, wa.getY(), juce::jmax (1.0f, x1 - x0), wa.getHeight()); }
+                if (s.index == page.selectedChop) { g.setColour (P.gold); g.drawRect (juce::Rectangle<float> (x0 + 1, wa.getY() + 1, juce::jmax (3.0f, x1 - x0 - 1), wa.getHeight() - 2), 2.0f); }
+            }
+        }
+        // the loop (drawn on the ruler, like Block Step's step numbers)
+        if (! page.loop.empty())
+        {
+            const float x0 = juce::jmax (0.0f, xOf ((double) page.loop.a)), x1 = juce::jmin ((float) getWidth(), xOf ((double) page.loop.b));
+            if (x1 > x0)
+            {
+                const auto lc = page.loopOn ? P.good : P.faint;
+                g.setColour (lc.withAlpha (page.loopOn ? 0.35f : 0.2f)); g.fillRect (x0, ra.getY() + 3, x1 - x0, ra.getHeight() - 6);
+                g.setColour (lc); g.fillRect (x0, ra.getY() + 3, 2.0f, ra.getHeight() - 6); g.fillRect (x1 - 2, ra.getY() + 3, 2.0f, ra.getHeight() - 6);
+                if (page.loopOn) { g.setColour (P.good.withAlpha (0.06f)); g.fillRect (x0, wa.getY(), x1 - x0, wa.getHeight()); }
+            }
         }
         // the selection
         if (! page.selection.empty())
         {
             const float x0 = xOf ((double) page.selection.a), x1 = xOf ((double) page.selection.b);
-            g.setColour (bsPurple.withAlpha (0.14f)); g.fillRect (x0, wa.getY(), x1 - x0, wa.getHeight());
-            g.setColour (bsPurple.withAlpha (0.85f)); g.fillRect (x0, wa.getY(), 1.5f, wa.getHeight()); g.fillRect (x1 - 1.5f, wa.getY(), 1.5f, wa.getHeight());
-            g.setFont (gfont (10.5f, false)); g.setColour (P.ink);
-            g.drawText (secs ((double) page.selection.length() / c->rate), juce::Rectangle<float> (x0 + 4, wa.getBottom() - 18, 90, 16), juce::Justification::centredLeft);
+            g.setColour (P.select.withAlpha (0.18f)); g.fillRect (x0, wa.getY(), x1 - x0, wa.getHeight());
+            g.setColour (P.select); g.fillRect (x0, wa.getY(), 1.5f, wa.getHeight()); g.fillRect (x1 - 1.5f, wa.getY(), 1.5f, wa.getHeight());
+            const auto t = secs ((double) page.selection.length() / c->rate);
+            auto lab = juce::Rectangle<float> (x0 + 4, wa.getBottom() - 22, choir::width (serif (13.0f, choir::bold), t) + 10, 18);
+            g.setColour (P.waveBg.withAlpha (0.85f)); g.fillRoundedRectangle (lab, 3);
+            g.setFont (serif (13.0f, choir::bold)); g.setColour (P.ink); g.drawText (t, lab, juce::Justification::centred, false);
         }
-        // the cursor + the playhead
-        { const float x = xOf ((double) page.cursor); g.setColour (bsPurple.withAlpha (0.9f)); g.fillRect (x, ra.getY(), 1.0f, wa.getBottom() - ra.getY()); }
-        if (eng.isPlaying()) { const float x = xOf ((double) eng.playhead()); g.setColour (bsGreen); g.fillRect (x - 0.5f, ra.getY(), 2.0f, wa.getBottom() - ra.getY()); }
+        // the cursor + the playhead (a candle flame on a thread of light)
+        { const float x = xOf ((double) page.cursor); g.setColour (P.select); g.fillRect (x, ra.getY(), 1.0f, wa.getBottom() - ra.getY()); }
+        if (eng.isPlaying())
+        {
+            const float x = xOf ((double) eng.playhead());
+            g.setColour (P.play.withAlpha (0.25f)); g.fillRect (x - 3.0f, wa.getY(), 6.0f, wa.getHeight());
+            g.setColour (P.play); g.fillRect (x - 0.75f, ra.getY(), 1.5f, wa.getBottom() - ra.getY());
+            choir::diamond (g, { x, ra.getY() + 6 }, 5.0f, P.play);
+        }
         // the overview (what part of the clip is on screen)
         {
-            const auto o = overviewArea().toFloat().reduced (8, 2);
+            const auto o = overviewArea().toFloat().reduced (8, 3);
             g.setColour (P.cell); g.fillRoundedRectangle (o, 4);
             const float a = o.getX() + o.getWidth() * (float) (page.viewStart / (double) c->frames()), w = o.getWidth() * (float) (page.viewFrames / (double) c->frames());
-            g.setColour (bsPurple.withAlpha (0.55f)); g.fillRoundedRectangle (a, o.getY(), juce::jmax (6.0f, w), o.getHeight(), 4);
+            g.setColour (P.gold.withAlpha (0.28f)); g.fillRoundedRectangle (a, o.getY(), juce::jmax (6.0f, w), o.getHeight(), 4);
+            g.setColour (P.gold.withAlpha (0.8f)); g.drawRoundedRectangle (a + 0.5f, o.getY() + 0.5f, juce::jmax (6.0f, w) - 1.0f, o.getHeight() - 1.0f, 4, 1.0f);
         }
     }
 
@@ -322,54 +433,265 @@ struct ChopPage::Keys : public juce::MidiKeyboardComponent
         setOctaveForMiddleC (3);   // C3 = 60, as in FL Studio
         setWantsKeyboardFocus (false); setKeyPressBaseOctave (4);
         clearKeyMappings();
+        setOpaque (true);
     }
     ChopPage& page;
+    std::vector<chop::SliceView> cached;   // refreshed by the page's timer, not per key
     int chopIndexFor (int note) const
     {
-        const auto sl = page.engine().slices();
-        for (size_t i = 0; i < sl.size(); ++i) if (note >= sl[i].note && note <= sl[i].highNote) return (int) i;
+        for (size_t i = 0; i < cached.size(); ++i) if (note >= cached[i].note && note <= cached[i].highNote) return (int) i;
         return -1;
+    }
+    choir::Cache art; bool anyDown = false;
+    void paint (juce::Graphics& g) override
+    {   // the keys at rest are cached; while any key sounds they are drawn live
+        cached = page.engine().slices();
+        anyDown = false;
+        anyDown = page.playingNote() >= 0;
+        for (int n = 0; n < 128 && ! anyDown; ++n) anyDown = page.engine().noteSounding (n) || page.keyState.isNoteOn (1, n);
+        if (anyDown || isMouseOverOrDragging()) { g.fillAll (page.cp().lead); juce::MidiKeyboardComponent::paint (g); return; }
+        juce::String k; k << (int) page.cp().dark << "|" << getLowestVisibleKey() << "|" << getKeyWidth() << "|" << getWidth() << "x" << getHeight() << "|" << (int) page.engine().keys << slicesKey (page.engine());
+        art.draw (g, k, getLocalBounds(), [this] (juce::Graphics& ig, juce::Rectangle<int>) { ig.fillAll (page.cp().lead); juce::MidiKeyboardComponent::paint (ig); }, true);
+    }
+    void mouseExit (const juce::MouseEvent& e) override { juce::MidiKeyboardComponent::mouseExit (e); repaint(); }
+    // (polish 3) JUCE's own scroll buttons lie over the end keys (a sliver of a key showed beside them): they stay hidden, and
+    // the page's own arrows sit in gutters beside the keyboard, so it starts and ends on whole keys
+    void resized() override
+    {
+        juce::MidiKeyboardComponent::resized();
+        for (auto* c : getChildren()) c->setVisible (false);
     }
     void drawWhiteNote (int note, juce::Graphics& g, juce::Rectangle<float> r, bool down, bool over, juce::Colour, juce::Colour) override
     {
-        const auto& P = page.pal();
+        const auto& P = page.cp();
         const int ci = chopIndexFor (note);
         const bool chops = page.engine().keys == chop::KeysMode::chops;
-        auto fill = P.keyWhite;
-        if (ci >= 0 && chops) fill = fill.interpolatedWith (chopColour (ci), 0.55f);
-        if (down || page.engine().noteSounding (note)) fill = bsGreen;
-        else if (over) fill = fill.brighter (0.1f);
-        const auto& kb = splash::handBox (r.reduced (0.8f, 0.5f), 3.0f, note * 17, 0.5f);   // each key inked by hand (build 10)
-        g.setColour (fill); g.fillPath (kb);
-        g.setColour (P.ink.withAlpha (0.55f)); g.strokePath (kb, juce::PathStrokeType (0.9f));
-        if (note % 12 == 0 || (ci >= 0 && chops))
+        const bool sounding = down || page.engine().noteSounding (note) || note == page.playingNote();
+        auto k = r.reduced (0.6f, 0).withTrimmedBottom (1.0f);
+        // (round 3, from the studio entry) a key that holds a chop wears its chop's glass colour, so key and pane match at a glance
+        const auto base = ci >= 0 && chops ? P.keyWhite.interpolatedWith (P.chop (ci), P.dark ? 0.34f : 0.26f) : P.keyWhite;
+        juce::ColourGradient gr (sounding ? P.play.brighter (0.3f) : base, 0, k.getY(), sounding ? P.play : base.darker (over ? 0.05f : 0.14f), 0, k.getBottom(), false);
+        g.setGradientFill (gr); g.fillRoundedRectangle (k, 2.0f);
+        if (ci >= 0 && chops) { g.setColour (P.chop (ci)); g.fillRect (k.getX(), k.getY(), k.getWidth(), 7.0f); }
+        if (! chops && note == 60) { g.setColour (P.gold); g.fillRect (k.getX(), k.getY(), k.getWidth(), 6.0f); }
+        if ((note % 12 == 0 || (ci >= 0 && chops)) && k.getX() >= -0.5f && k.getRight() <= (float) getWidth() + 0.5f)
         {
-            g.setColour (juce::Colours::black.withAlpha (0.7f)); g.setFont (gfont (9.5f, note % 12 == 0));
-            g.drawText (noteName (note), r.withTrimmedTop (r.getHeight() - 16), juce::Justification::centred);
+            // (polish 3) every named key in the same strong ink: a chop's D1 reads as clearly as C1 (C keeps the bold)
+            g.setColour (juce::Colour (0xff2a2017).withAlpha (0.92f)); g.setFont (serif (11.5f, note % 12 == 0 || (ci >= 0 && chops) ? choir::bold : choir::regular));
+            g.drawText (noteName (note), k.withTrimmedTop (k.getHeight() - 17), juce::Justification::centred, false);
         }
     }
     void drawBlackNote (int note, juce::Graphics& g, juce::Rectangle<float> r, bool down, bool over, juce::Colour) override
     {
-        const auto& P = page.pal();
+        const auto& P = page.cp();
         const int ci = chopIndexFor (note);
-        auto fill = P.keyBlack;
-        if (ci >= 0 && page.engine().keys == chop::KeysMode::chops) fill = fill.interpolatedWith (chopColour (ci), 0.6f);
-        if (down || page.engine().noteSounding (note)) fill = bsGreen.darker (0.2f);
-        else if (over) fill = fill.brighter (0.2f);
-        const auto& kb = splash::handBox (r.reduced (0.5f, 0).withTrimmedTop (-3), 2.5f, note * 17, 0.4f);
-        g.setColour (fill); g.fillPath (kb); g.setColour (P.ink.withAlpha (0.8f)); g.strokePath (kb, juce::PathStrokeType (0.8f));
+        const bool sounding = down || page.engine().noteSounding (note) || note == page.playingNote();
+        auto k = r.reduced (0.5f, 0);
+        const bool chopKey = ci >= 0 && page.engine().keys == chop::KeysMode::chops;
+        const auto base = chopKey ? P.keyBlack.interpolatedWith (P.chop (ci), 0.42f) : P.keyBlack;
+        juce::ColourGradient gr (sounding ? P.play : base.brighter (over ? 0.25f : 0.12f), 0, k.getY(), sounding ? P.play.darker (0.3f) : base, 0, k.getBottom(), false);
+        g.setGradientFill (gr); g.fillRoundedRectangle (k, 2.0f);
+        if (ci >= 0 && page.engine().keys == chop::KeysMode::chops) { g.setColour (P.chop (ci)); g.fillRect (k.getX() + 1, k.getY(), k.getWidth() - 2, 5.0f); }
+    }
+    void drawUpDownButton (juce::Graphics& g, int w, int h, bool over, bool, bool movesOctavesUp) override
+    {
+        const auto& P = page.cp();
+        g.fillAll (P.cell);
+        juce::Path ar; const float cx = (float) w * 0.5f, cy = (float) h * 0.5f, d = movesOctavesUp ? 1.0f : -1.0f;
+        ar.startNewSubPath (cx - 3 * d, cy - 6); ar.lineTo (cx + 3 * d, cy); ar.lineTo (cx - 3 * d, cy + 6);
+        g.setColour (over ? P.goldHi : P.gold); g.strokePath (ar, juce::PathStrokeType (2.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
     }
 };
 
+// (polish 3) a scroll arrow for the keyboard, in its own gutter beside the keys: one octave per click
+struct ChopPage::KeyArrow : public juce::Component, public juce::SettableTooltipClient
+{
+    KeyArrow (ChopPage& p, int d) : page (p), dir (d) { setTooltip (d < 0 ? "Show lower keys (one octave down)" : "Show higher keys (one octave up)"); }
+    ChopPage& page; int dir;
+    bool canMove() const
+    {
+        const int lo = page.keys->getLowestVisibleKey();
+        return dir < 0 ? lo > 0 : lo + 12 <= 127 - 16;
+    }
+    void paint (juce::Graphics& g) override
+    {
+        const auto& P = page.cp();
+        const bool on = canMove();
+        g.fillAll (P.cell);
+        g.setColour (P.edgeDim); g.drawRect (getLocalBounds().toFloat(), 1.0f);
+        juce::Path ar; const float cx = (float) getWidth() * 0.5f, cy = (float) getHeight() * 0.5f, d = (float) dir;
+        ar.startNewSubPath (cx - 3 * d, cy - 6); ar.lineTo (cx + 3 * d, cy); ar.lineTo (cx - 3 * d, cy + 6);
+        g.setColour ((isMouseOver() && on ? P.goldHi : P.gold).withMultipliedAlpha (on ? 1.0f : 0.35f));
+        g.strokePath (ar, juce::PathStrokeType (2.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+    }
+    void mouseEnter (const juce::MouseEvent&) override { repaint(); }
+    void mouseExit (const juce::MouseEvent&) override { repaint(); }
+    void mouseDown (const juce::MouseEvent&) override
+    {
+        if (! canMove()) return;
+        page.keys->setLowestVisibleKey (juce::jlimit (0, 127, page.keys->getLowestVisibleKey() + 12 * dir));
+        page.keyLeft->repaint(); page.keyRight->repaint();
+        page.repaintStalls();
+    }
+};
 
-// ================================================================================================ SOUND: one chop's own settings (INTERSECT's per-slice controls)
+// ================================================================================================ the choir stalls over the keys
+// (polish 1) A MAP, not a pile: every key on the keyboard has its own pointed arch straight above it (the arches follow the keys'
+// own centres, so a black key's arch sits over the black key), and a chop's singer stands alone in its key's arch, robed in its pane's
+// glass colour, its note written over its head. All singers are one size, in one row. It opens its mouth and lights up while its key
+// sounds. In WHOLE every arch is tinted with the clip's pale light and one gold singer stands at C3 (the key that plays it as it is);
+// any other key that sounds gets a singer while it sings.
+struct ChopPage::Stalls : public juce::Component
+{
+    explicit Stalls (ChopPage& p) : page (p) { setOpaque (true); setInterceptsMouseClicks (false, false); }
+    ChopPage& page;
+    choir::Cache art;
+    std::array<bool, 128> was {};
+    bool wasPlaying = false;
+    float phase = 0;
+    struct Arch { int note; juce::Rectangle<float> r; };
+    struct Voice { int note; juce::Rectangle<float> r; juce::Colour robe; bool shown; int chop; };
+    std::vector<Arch> arches;
+    std::vector<Voice> voices;
+    float singerW = 20, singerH = 28;
+
+    float centreOf (int note) const { return (float) (page.keys->getX() - getX()) + page.keys->getRectangleForKey (juce::jlimit (0, 127, note)).getCentreX(); }
+    void layoutVoices()
+    {
+        arches.clear(); voices.clear();
+        auto& k = *page.keys;
+        auto& e = page.engine();
+        const auto& P = page.cp();
+        const float H = (float) getHeight(), W = (float) getWidth(), kw = k.getKeyWidth();
+        for (int n = 0; n < 128; ++n)
+        {
+            const float c = centreOf (n);
+            const float l = n > 0 ? (centreOf (n - 1) + c) * 0.5f : c - kw * 0.35f, r = n < 127 ? (c + centreOf (n + 1)) * 0.5f : c + kw * 0.35f;
+            // (polish 3) only over the keys on show: the arrows' gutters keep plain wood
+            const float k0 = (float) (k.getX() - getX()), k1 = k0 + (float) k.getWidth();
+            if (c < k0 || c > k1) continue;
+            const float l2 = juce::jmax (l, k0), r2 = juce::jmin (r, k1);
+            juce::ignoreUnused (W);
+            arches.push_back ({ n, juce::Rectangle<float> (l2 + 1.5f, 5.0f, r2 - l2 - 3.0f, H - 9.0f) });
+        }
+        // one size for every singer: the narrowest arch (a black key's) sets it
+        singerW = juce::jmax (12.0f, kw * 0.5f - 5.0f);
+        singerH = juce::jmin (singerW * 1.4f, H * 0.46f); singerW = singerH / 1.4f;
+        auto voiceIn = [&] (const Arch& a, juce::Colour robe, bool shown, int chopIndex)
+        { voices.push_back ({ a.note, { a.r.getCentreX() - singerW * 0.5f, a.r.getBottom() - 3.0f - singerH, singerW, singerH }, robe, shown, chopIndex }); };
+        const auto sl = e.slices();
+        for (auto& a : arches)
+        {
+            if (e.keys == chop::KeysMode::chops)
+            {
+                for (size_t i = 0; i < sl.size(); ++i)
+                    if (a.note >= sl[i].note && a.note <= sl[i].highNote) { voiceIn (a, P.chop ((int) i), true, (int) i); break; }
+            }
+            else if (e.hasClip()) voiceIn (a, a.note == 60 ? P.gold : P.ghost.interpolatedWith (P.glow, 0.4f), a.note == 60, -1);
+        }
+    }
+    void paintStalls (juce::Graphics& g)
+    {
+        const auto& P = page.cp();
+        auto& e = page.engine();
+        const auto r = getLocalBounds().toFloat();
+        juce::ColourGradient wood (P.dark ? juce::Colour (0xff221a27) : juce::Colour (0xffe2d2b0), 0, 0, P.dark ? juce::Colour (0xff120e17) : juce::Colour (0xffcfb98e), 0, r.getHeight(), false);
+        g.setGradientFill (wood); g.fillRect (r);
+        const bool chops = e.keys == chop::KeysMode::chops, whole = ! chops && e.hasClip();
+        for (auto& a : arches)
+        {
+            const bool black = juce::MidiMessage::isMidiNoteBlack (a.note);
+            auto lp = choir::lancet (a.r, 0.30f);
+            const Voice* v = nullptr; for (auto& x : voices) if (x.note == a.note && (x.shown || ! whole)) { v = &x; break; }
+            // the niche: darker over a black key; a chop's niche glows faintly in its glass, WHOLE's niches in the clip's light
+            juce::Colour fill = (P.dark ? juce::Colours::black : P.lead).withAlpha (black ? (P.dark ? 0.55f : 0.22f) : (P.dark ? 0.30f : 0.08f));
+            g.setColour (fill); g.fillPath (lp);
+            if (v != nullptr && chops) { g.setColour (v->robe.withAlpha (P.dark ? 0.22f : 0.18f)); g.fillPath (lp); }
+            if (whole) { g.setColour ((a.note == 60 ? P.gold : P.glow).withAlpha (a.note == 60 ? 0.26f : (P.dark ? 0.10f : 0.12f))); g.fillPath (lp); }
+            g.setColour (v != nullptr && chops ? v->robe.withAlpha (0.85f) : P.edgeDim.withMultipliedAlpha (0.8f));
+            g.strokePath (lp, juce::PathStrokeType (v != nullptr && chops ? 1.2f : 0.8f));
+            // the note over the singer's head: every chop's key, and C3 in WHOLE
+            if ((v != nullptr && chops) || (whole && a.note == 60))
+            {
+                const auto nm = noteName (a.note);
+                auto lr = juce::Rectangle<float> (a.r.getX() - 2, a.r.getBottom() - 3.0f - singerH - 17.0f, a.r.getWidth() + 4, 15.0f);
+                g.setColour (whole ? P.gold : (P.dark ? v->robe.brighter (0.45f) : v->robe.darker (0.25f)));
+                g.setFont (choir::fitted (choir::bold, nm, lr.getWidth(), 13.0f, 8.0f));
+                g.drawText (nm, lr, juce::Justification::centred, false);
+            }
+        }
+        g.setColour (P.edge.withAlpha (0.8f)); g.fillRect (r.getX(), r.getBottom() - 3, r.getWidth(), 1.0f);
+        g.setColour (P.edgeDim); g.fillRect (r.getX(), 0.0f, r.getWidth(), 1.0f);
+        for (auto& v : voices) if (v.shown) choir::singer (g, P, v.r, v.robe, 0.0f, whole ? 0.4f : 0.0f, 1.0f, singerW >= 18);
+        if (! e.hasClip())
+        {   // no clip yet: the arches wait empty, and a plaque says what will stand in them
+            const juce::String t1 = "The choir waits", t2 = "Load a clip and press AUTO CHOP: each chop gets its own singer, in the arch over the key that plays it.";
+            const float pw = juce::jmin (r.getWidth() - 40, choir::width (choir::serif (15.0f), t2) + 60), ph = 60;
+            auto pl = juce::Rectangle<float> (r.getCentreX() - pw * 0.5f, r.getCentreY() - ph * 0.5f, pw, ph);
+            g.setColour (P.shadow); g.fillRoundedRectangle (pl.translated (0, 2), 6);
+            g.setColour (P.panel); g.fillRoundedRectangle (pl, 6);
+            g.setColour (P.edge); g.drawRoundedRectangle (pl.reduced (0.5f), 6, 1.0f);
+            choir::diamond (g, { pl.getX(), pl.getCentreY() }, 4.0f, P.gold); choir::diamond (g, { pl.getRight(), pl.getCentreY() }, 4.0f, P.gold);
+            g.setColour (P.ink); g.setFont (choir::display (19.0f)); g.drawText (t1, pl.withTrimmedBottom (ph * 0.46f).withTrimmedTop (6), juce::Justification::centred, false);
+            g.setColour (P.dim); g.setFont (choir::fitted (choir::regular, t2, pw - 30, 15.0f, 10.0f)); g.drawText (t2, pl.withTrimmedTop (ph * 0.52f).withTrimmedBottom (6), juce::Justification::centred, false);
+        }
+    }
+    void paint (juce::Graphics& g) override
+    {
+        auto& e = page.engine();
+        const auto& P = page.cp();
+        juce::String key; key << (int) P.dark << "|" << page.keys->getLowestVisibleKey() << "|" << page.keys->getKeyWidth() << "|" << getWidth() << "x" << getHeight() << "|" << (int) e.hasClip() << "|" << (int) e.keys << "|" << slicesKey (e);
+        if (key != art.key) layoutVoices();
+        art.draw (g, key, getLocalBounds(), [this] (juce::Graphics& ig, juce::Rectangle<int>) { paintStalls (ig); }, true);
+        // the voices singing now: their key sounds, or the transport is playing through their chop
+        const int underPlayhead = page.playingNote();
+        for (auto& v : voices)
+        {
+            if (! e.noteSounding (v.note) && ! page.keyState.isNoteOn (1, v.note) && v.note != underPlayhead) continue;
+            for (auto& a : arches)
+                if (a.note == v.note)
+                {   // (polish 2) the singing voice's arch fills with candle light, so you see which one sings from across the room
+                    auto lp = choir::lancet (a.r, 0.30f);
+                    g.setColour (P.play.withAlpha (P.dark ? 0.32f : 0.40f)); g.fillPath (lp);
+                    g.setColour (P.play); g.strokePath (lp, juce::PathStrokeType (1.6f));
+                    const auto nm = noteName (a.note);
+                    auto lr = juce::Rectangle<float> (a.r.getX() - 2, a.r.getBottom() - 3.0f - singerH - 17.0f, a.r.getWidth() + 4, 15.0f);
+                    g.setColour (P.dark ? P.goldHi : P.ink); g.setFont (choir::fitted (choir::bold, nm, lr.getWidth(), 13.0f, 8.0f)); g.drawText (nm, lr, juce::Justification::centred, false);
+                }
+            const float open = 0.65f + 0.35f * std::sin (phase * 7.0f + (float) v.note);
+            choir::singer (g, P, v.r, v.robe, open, 1.0f, 1.0f, singerW >= 18);
+        }
+    }
+    bool tick()
+    {   // repaints only when a voice starts / stops, or while voices sing (their mouths move); true = something started / stopped
+        phase += 1.0f / 30.0f;
+        auto& e = page.engine();
+        bool any = false, changed = false;
+        for (int n = 0; n < 128; ++n)
+        {
+            const bool s = e.noteSounding (n) || page.keyState.isNoteOn (1, n);
+            changed |= s != was[(size_t) n]; was[(size_t) n] = s; any |= s;
+        }
+        if (any || changed || e.isPlaying() || wasPlaying) repaint();
+        wasPlaying = e.isPlaying();
+        return changed;
+    }
+};
+
+// ================================================================================================ SOUND: one chop's own settings, laid out as the chop engine's signal chain
+// The engine's own modules, left to right: TIME/PITCH, FILTER, AMP, PLAYBACK, under its own control names and in its own order
+// (only the controls Ghost Voice wires; each has a plain-words line under it). Above them the engine's context row: SAMPLE | SLICE n
+// and the note it sits on.
 struct ChopPage::Settings : public juce::Component
 {
     using P = IntersectProcessor;
-    struct Row { juce::String name; int field; juce::Slider slider { juce::Slider::LinearHorizontal, juce::Slider::NoTextBox }; std::function<juce::String (double)> text;
+    struct Row { juce::String name; int field; juce::Slider slider { juce::Slider::RotaryHorizontalVerticalDrag, juce::Slider::NoTextBox }; std::function<juce::String (double)> text;
                  std::function<float (double)> toEngine; std::function<double (float)> fromEngine; };
+    // one cell of a module: a knob (row), a picker or a switch, with its engine name and its plain line
+    struct Cell { juce::String name, plain; juce::Component* c = nullptr; Row* knob = nullptr; int module = 0; int row = -1; juce::Rectangle<int> r; };   // row: -1 = the module's full height, 0 / 1 = INTERSECT's upper / lower row
     explicit Settings (ChopPage& p) : page (p)
     {
+        setOpaque (true);
         auto add = [this] (juce::String n, int f, double lo, double hi, double step, std::function<juce::String (double)> t,
                            std::function<float (double)> to = nullptr, std::function<double (float)> from = nullptr, double skewMid = 0)
         {
@@ -377,29 +699,38 @@ struct ChopPage::Settings : public juce::Component
             r->toEngine = to ? to : [] (double v) { return (float) v; }; r->fromEngine = from ? from : [] (float v) { return (double) v; };
             r->slider.setRange (lo, hi, step); if (skewMid > 0) r->slider.setSkewFactorFromMidPoint (skewMid);
             r->slider.setWantsKeyboardFocus (false);
+            r->slider.setMouseDragSensitivity (160);
             auto* row = r.get();
             r->slider.onValueChange = [this, row] { if (! syncing) page.engine().setSliceParam (page.selectedChop, row->field, row->toEngine (row->slider.getValue())); repaint(); };
             r->slider.onDragEnd = [this] { page.refreshControls(); };
             addAndMakeVisible (r->slider); rows.push_back (std::move (r));
         };
         add ("PITCH", P::FieldPitch, -24, 24, 1, [] (double v) { return (v > 0 ? "+" : "") + juce::String ((int) v) + " st"; });
-        add ("FINE", P::FieldCentsDetune, -100, 100, 1, [] (double v) { return (v > 0 ? "+" : "") + juce::String ((int) v) + " c"; });
-        add ("VOLUME", P::FieldVolume, -36, 12, 0.1, [] (double v) { return (v > 0 ? "+" : "") + juce::String (v, 1) + " dB"; });
-        add ("ATTACK", P::FieldAttack, 0, 2000, 1, [] (double v) { return juce::String ((int) v) + " ms"; },
+        add ("TUNE", P::FieldCentsDetune, -100, 100, 1, [] (double v) { return (v > 0 ? "+" : "") + juce::String ((int) v) + " c"; });
+        add ("GAIN", P::FieldVolume, -36, 12, 0.1, [] (double v) { return (v > 0 ? "+" : "") + juce::String (v, 1) + " dB"; });
+        add ("ATK", P::FieldAttack, 0, 2000, 1, [] (double v) { return juce::String ((int) v) + " ms"; },
              [] (double v) { return (float) (v / 1000.0); }, [] (float v) { return (double) v * 1000.0; }, 100);
-        add ("RELEASE", P::FieldRelease, 0, 5000, 1, [] (double v) { return juce::String ((int) v) + " ms"; },
+        add ("REL", P::FieldRelease, 0, 5000, 1, [] (double v) { return juce::String ((int) v) + " ms"; },
              [] (double v) { return (float) (v / 1000.0); }, [] (float v) { return (double) v * 1000.0; }, 300);
-        add ("CUTOFF", P::FieldFilterCutoff, 20, 20000, 1, [] (double v) { return v >= 1000 ? juce::String (v / 1000.0, 1) + " kHz" : juce::String ((int) v) + " Hz"; }, nullptr, nullptr, 1000);
-        add ("RESO", P::FieldFilterReso, 0, 1, 0.01, [] (double v) { return juce::String (juce::roundToInt (v * 100)) + " %"; });
+        add ("CUT", P::FieldFilterCutoff, 20, 20000, 1, [] (double v) { return v >= 1000 ? juce::String (v / 1000.0, 1) + " kHz" : juce::String ((int) v) + " Hz"; }, nullptr, nullptr, 1000);
+        add ("RESO", P::FieldFilterReso, 0, 100, 0.1, [] (double v) { return juce::String (juce::roundToInt (v)) + " %"; });   // (INTERSECT keeps RESO as 0..100 %)
+        rows[0]->slider.setTooltip ("PITCH: transposes the chop, in semitones");
+        rows[1]->slider.setTooltip ("TUNE: fine pitch, in cents");
+        rows[2]->slider.setTooltip ("GAIN: the chop's level");
+        rows[3]->slider.setTooltip ("ATK: the fade-in when the key goes down");
+        rows[4]->slider.setTooltip ("REL: the fade-out after the key is let go");
+        rows[5]->slider.setTooltip ("CUT: the filter's frequency (greyed with the filter OFF)");
+        rows[6]->slider.setTooltip ("RESO: the filter's resonance, a ring at CUT (greyed with the filter OFF)");
         auto combo = [this] (juce::ComboBox& c, juce::StringArray items, int field, juce::String tip)
         {
             c.addItemList (items, 1); c.setWantsKeyboardFocus (false); c.setTooltip (tip); addAndMakeVisible (c);
+        c.setTextWhenNothingSelected (juce::String::fromUTF8 ("\xe2\x80\x94"));
             c.onChange = [this, &c, field] { if (! syncing) page.engine().setSliceParam (page.selectedChop, field, (float) (c.getSelectedId() - 1)); page.refreshControls(); };
         };
         combo (stretch, { "REPITCH", "STRETCH", "SMOOTH" }, P::FieldAlgorithm,
-               "How the chop is pitched: REPITCH speeds it up / slows it down like a sampler; STRETCH and SMOOTH keep its length");
-        combo (loopMode, { "NO LOOP", "LOOP", "PING-PONG" }, P::FieldLoop, "Loop the chop while the key is held");
-        combo (filter, { "NO FILTER", "LOW-PASS", "HIGH-PASS", "BAND-PASS", "NOTCH" }, P::FieldFilterEnabled, "The chop's filter");
+               "ALGO: how the chop is pitched. REPITCH speeds it up / slows it down like a sampler; STRETCH and SMOOTH keep its length");
+        combo (loopMode, { "OFF", "LOOP", "PP" }, P::FieldLoop, "LOOP: loops the chop while the key is held (PP = back and forth)");
+        combo (filter, { "OFF", "LP", "HP", "BP", "NT" }, P::FieldFilterEnabled, "TYPE: the chop's filter. OFF, LP (cuts the highs), HP (cuts the lows), BP (keeps a band), NT (cuts a notch)");
         filter.onChange = [this]
         {
             if (syncing) return;
@@ -413,16 +744,30 @@ struct ChopPage::Settings : public juce::Component
             t.setWantsKeyboardFocus (false); t.setTooltip (tip); addAndMakeVisible (t);
             t.onClick = [this, &t, field] { if (! syncing) page.engine().setSliceParam (page.selectedChop, field, t.getToggleState() ? 1.0f : 0.0f); page.refreshControls(); };
         };
-        toggle (reverse, P::FieldReverse, "Play the chop backwards");
-        toggle (oneShot, P::FieldOneShot, "ONE-SHOT: the chop plays to its end even when you let go of the key");
-        toggle (keepVoice, P::FieldFormantComp, "Keep the voice's character when it's pitched (only with STRETCH or SMOOTH)");
+        toggle (reverse, P::FieldReverse, "REV: plays the chop backwards");
+        toggle (oneShot, P::FieldOneShot, "1SHOT: the chop plays to its end even when you let go of the key");
+        toggle (keepVoice, P::FieldFormantComp, "FMNT C: keeps the voice's character when it's pitched (only with STRETCH: greyed with REPITCH and SMOOTH)");
+        // the engine's order: TIME/PITCH (PITCH, TUNE, ALGO, FMNT C) | FILTER (TYPE, CUT, RESO) | AMP (ATK / REL, GAIN) | PLAYBACK (REV, LOOP / 1SHOT)
+        // (fixes) AMP and PLAYBACK on INTERSECT's own two rows (its upper row: ATK DEC SUS and REV LOOP FADE; its lower row: REL TAIL GAIN
+        // and MUTE 1SHOT OUT), with the controls Ghost Voice has
+        cells = { { "PITCH", "semitones up / down", nullptr, rows[0].get(), 0 }, { "TUNE", "fine pitch, cents", nullptr, rows[1].get(), 0 },
+                  { "ALGO", "how it is pitched", &stretch, nullptr, 0 }, { "FMNT C", "keeps the voice", &keepVoice, nullptr, 0 },
+                  { "TYPE", "the filter's shape", &filter, nullptr, 1 }, { "CUT", "filter frequency", nullptr, rows[5].get(), 1 }, { "RESO", "ring at the cutoff", nullptr, rows[6].get(), 1 },
+                  { "ATK", "fade-in when a key goes down", nullptr, rows[3].get(), 2, 0 }, { "REL", "fade on key-up", nullptr, rows[4].get(), 2, 1 }, { "GAIN", "the chop's level", nullptr, rows[2].get(), 2, 1 },
+                  { "REV", "plays backwards", &reverse, nullptr, 3, 0 }, { "LOOP", "loops while held", &loopMode, nullptr, 3, 0 }, { "1SHOT", "plays to the end, even after the key is let go", &oneShot, nullptr, 3, 1 } };
+        reverse.setButtonText ("REV"); oneShot.setButtonText ("1SHOT"); keepVoice.setButtonText ("FMNT C");
+        for (auto* t : { &reverse, &oneShot, &keepVoice }) t->getProperties().set ("onOff", true);   // the switch shows ON / OFF (its name is over it)
     }
     ChopPage& page;
     std::vector<std::unique_ptr<Row>> rows;
     juce::ComboBox stretch, loopMode, filter;
     juce::ToggleButton reverse { "REVERSE" }, oneShot { "ONE-SHOT" }, keepVoice { "KEEP VOICE" };
     bool syncing = false;
-    juce::Rectangle<int> titleArea;
+    std::vector<Cell> cells;
+    juce::Rectangle<int> contextArea, modArea[4];
+    float plainSize = 13.0f;
+    choir::Cache art;
+    static constexpr const char* modName[4] { "TIME / PITCH", "FILTER", "AMP", "PLAYBACK" };
 
     void sync()
     {   // read the chop's settings back from the engine (unless a control is being dragged)
@@ -432,6 +777,10 @@ struct ChopPage::Settings : public juce::Component
         for (auto& r : rows) if (have && ! r->slider.isMouseButtonDown()) r->slider.setValue (r->fromEngine (e.sliceParam (page.selectedChop, r->field)), juce::dontSendNotification);
         const int algo = have ? (int) e.sliceParam (page.selectedChop, P::FieldAlgorithm) : 0;
         const bool filt = have && e.sliceParam (page.selectedChop, P::FieldFilterEnabled) > 0.5f;
+        if (! have)
+        {   // (polish 2) no clip: the pickers show a dash, not an empty box
+            for (auto* c : { &stretch, &loopMode, &filter }) c->setSelectedId (0, juce::dontSendNotification);
+        }
         if (have)
         {
             stretch.setSelectedId (algo + 1, juce::dontSendNotification);
@@ -445,47 +794,229 @@ struct ChopPage::Settings : public juce::Component
         for (auto& r : rows) r->slider.setEnabled (have && ((r->field != P::FieldFilterCutoff && r->field != P::FieldFilterReso) || filt));
         for (juce::Component* c : { (juce::Component*) &stretch, (juce::Component*) &loopMode, (juce::Component*) &filter, (juce::Component*) &reverse, (juce::Component*) &oneShot })
             c->setEnabled (have);
-        keepVoice.setEnabled (have && algo != 0);
+        keepVoice.setEnabled (have && algo == 1);   // FMNT C only works with the Signalsmith stretch (STRETCH), as in INTERSECT's own panel
         repaint();
     }
     void resized() override
     {
-        auto r = getLocalBounds().reduced (10, 8);
-        titleArea = r.removeFromTop (34);
-        for (auto& row : rows) { auto l = r.removeFromTop (24); l.removeFromLeft (64); l.removeFromRight (56); row->slider.setBounds (l); r.removeFromTop (2); }
+        auto r = getLocalBounds().reduced (10, 6);
+        contextArea = r.removeFromTop (24);
         r.removeFromTop (4);
-        auto c1 = r.removeFromTop (24); stretch.setBounds (c1.removeFromLeft (c1.getWidth() / 2 - 2)); c1.removeFromLeft (4); loopMode.setBounds (c1);
-        r.removeFromTop (4); filter.setBounds (r.removeFromTop (24));
-        r.removeFromTop (4);
-        auto t1 = r.removeFromTop (22); reverse.setBounds (t1.removeFromLeft (t1.getWidth() / 2)); oneShot.setBounds (t1);
-        keepVoice.setBounds (r.removeFromTop (22));
+        // (polish 1) a picker or a switch gets more room than a knob (its words must fit: REPITCH, LP low-pass); the modules follow.
+        // (fixes) a module on two rows is as wide as its wider row; a cell on a row has its value beside the knob, so it is wider
+        auto weight = [] (const Cell& c) { return c.row >= 0 ? 2.0f : (c.knob != nullptr ? 1.0f : 1.7f); };
+        float wsum[4] {}, rowSum[4][2] {}, total = 0;
+        for (auto& c : cells) { if (c.row >= 0) rowSum[c.module][c.row] += weight (c); else wsum[c.module] += weight (c); }
+        for (int m = 0; m < 4; ++m) { twoRows[m] = rowSum[m][0] + rowSum[m][1] > 0; if (twoRows[m]) wsum[m] = juce::jmax (rowSum[m][0], rowSum[m][1]); total += wsum[m]; }
+        const int gap = 8;
+        const int pad = 8;   // each module's inner side margin
+        const float unit = (float) (r.getWidth() - gap * 3 - pad * 2 * 4) / total;
+        int x = r.getX();
+        for (int m = 0; m < 4; ++m)
+        {
+            const int w = m == 3 ? r.getRight() - x : juce::roundToInt (wsum[m] * unit) + pad * 2;
+            modArea[m] = juce::Rectangle<int> (x, r.getY(), w, r.getHeight());
+            x += w + gap;
+        }
+        float at[4] {};
+        int rowAt[4][2] {}, rowCount[4][2] {};
+        for (auto& c : cells) if (c.row >= 0) ++rowCount[c.module][c.row];
+        for (auto& c : cells)
+        {
+            auto ma = modArea[c.module].reduced (pad, 0).withTrimmedTop (20);
+            if (c.row >= 0)
+            {   // one of INTERSECT's two rows: the row's cells share its width evenly
+                auto rr = rowRect (c.module, c.row);
+                const int n = juce::jmax (1, rowCount[c.module][c.row]), i = rowAt[c.module][c.row]++;
+                const int x0 = rr.getX() + rr.getWidth() * i / n, x1 = rr.getX() + rr.getWidth() * (i + 1) / n;
+                c.r = juce::Rectangle<int> (x0, rr.getY(), x1 - x0, rr.getHeight());
+                auto ctl = c.r.reduced (3, 0).withTrimmedTop (rowNameH).withHeight (rowCtlH);
+                if (c.knob != nullptr)
+                {   // the knob, its value beside it (the pair centred in the cell)
+                    const auto vw = rowValueW (c);
+                    const int pairW = rowCtlH + 4 + vw, x0k = ctl.getX() + juce::jmax (0, (ctl.getWidth() - pairW) / 2);
+                    c.knob->slider.setBounds (x0k, ctl.getY(), rowCtlH, rowCtlH);
+                }
+                else c.c->setBounds (ctl.withSizeKeepingCentre (juce::jmin (ctl.getWidth() - 6, 96), 28));
+                continue;
+            }
+            const float k = (float) ma.getWidth() / wsum[c.module];
+            const int x0 = ma.getX() + juce::roundToInt (at[c.module] * k);
+            at[c.module] += weight (c);
+            const int x1 = ma.getX() + juce::roundToInt (at[c.module] * k);
+            // (fixes) the cell's words and control as one block, centred in the module's height
+            const int ch = ctlH (ma.getHeight()), need = 17 + ch + 17 + 30;
+            c.r = juce::Rectangle<int> (x0, ma.getY() + juce::jmax (0, (ma.getHeight() - need) / 2), x1 - x0, juce::jmin (need, ma.getHeight()));
+            auto inner = c.r.reduced (3, 0);
+            // (polish 1) name 17 | control (knobs up to 48 px) | value 17 | plain 16
+            auto ctl = inner.withTrimmedTop (17).withHeight (ctlH (inner.getHeight()));
+            if (c.knob != nullptr) c.knob->slider.setBounds (ctl.withSizeKeepingCentre (ctl.getHeight(), ctl.getHeight()));
+            else c.c->setBounds (ctl.withSizeKeepingCentre (juce::jmin (ctl.getWidth(), 104), 28));
+        }
+        plainSize = 13.5f;
+        // the plain line on a row is one line: one size for every row cell, the largest at which all of them fit
+        rowPlainSize = 13.0f;
+        for (auto& c : cells)
+            if (c.row >= 0)
+                for (const auto& t : plainsFor (c)) rowPlainSize = juce::jmin (rowPlainSize, choir::fit (choir::regular, t, (float) c.r.getWidth() - 6.0f, 13.0f, 11.0f));
+        art.clear();
+    }
+    bool twoRows[4] {};
+    static constexpr int rowNameH = 16, rowCtlH = 34, rowGap = 4;
+    float rowPlainSize = 12.0f;
+    juce::Rectangle<int> rowRect (int m, int row) const
+    {
+        auto body = modArea[m].reduced (8, 0).withTrimmedTop (20).withTrimmedBottom (2);
+        const int h = (body.getHeight() - rowGap) / 2;
+        return row == 0 ? body.withHeight (h) : body.withTrimmedTop (h + rowGap);
+    }
+    int rowValueW (const Cell& c) const
+    {   // the widest value this knob can show
+        int w = 0;
+        for (double v : { c.knob->slider.getMinimum(), c.knob->slider.getMaximum(), c.knob->slider.getValue() })
+            w = juce::jmax (w, (int) std::ceil (choir::width (serif (14.0f, choir::bold), c.knob->text (v))));
+        return w;
+    }
+    juce::StringArray plainsFor (const Cell& c) const
+    {   // every plain line the cell can show (LOOP changes its words with the mode)
+        juce::StringArray a { c.plain };
+        if (c.c == &loopMode) a.add ("ping-pong: to and fro");
+        return a;
+    }
+    static int ctlH (int cellH) { return juce::jlimit (26, 46, cellH - 17 - 17 - 30); }
+    void paintArt (juce::Graphics& g)
+    {
+        const auto& C = page.cp();
+        g.setColour (C.panel); g.fillAll();
+        choir::page (g, C, getLocalBounds().toFloat().reduced (1.0f));
+        for (int m = 0; m < 4; ++m)
+        {
+            auto a = modArea[m].toFloat();
+            g.setColour (C.cell.withAlpha (C.dark ? 0.35f : 0.45f)); g.fillRoundedRectangle (a, 4.0f);
+            g.setColour (C.edgeDim); g.drawRoundedRectangle (a.reduced (0.5f), 4.0f, 1.0f);
+            auto t = a.removeFromTop (18);
+            g.setColour (C.edgeDim.withMultipliedAlpha (0.6f)); g.fillRect (t.getX() + 6, t.getBottom(), t.getWidth() - 12, 1.0f);
+            g.setColour (C.dark ? C.gold : C.edge.darker (0.2f)); g.setFont (display (14.0f)); g.drawText (modName[m], t, juce::Justification::centred, false);
+        }
+        // (fixes) INTERSECT's two rows: a faint rule between them, and between the cells of a row
+        for (int m = 0; m < 4; ++m)
+            if (twoRows[m])
+            {
+                const auto r1 = rowRect (m, 1).toFloat();
+                g.setColour (C.edgeDim.withMultipliedAlpha (0.6f)); g.fillRect (r1.getX() + 4, r1.getY() - (float) rowGap * 0.5f, r1.getWidth() - 8, 1.0f);
+            }
+        for (size_t i = 1; i < cells.size(); ++i)
+            if (cells[i].row >= 0 && cells[i].row == cells[i - 1].row && cells[i].module == cells[i - 1].module)
+            { const auto& c = cells[i]; g.setColour (C.edgeDim.withMultipliedAlpha (0.7f)); g.fillRect ((float) c.r.getX() - 0.5f, (float) c.r.getY() + 4, 1.0f, (float) c.r.getHeight() - 8); }
     }
     void paint (juce::Graphics& g) override
+    {   // the frames, the words and the values together, cached until a value, a state or the chop changes
+        const auto& C = page.cp();
+        auto& e = page.engine();
+        juce::String k; k << (int) C.dark << getWidth() << "x" << getHeight() << "|" << page.selectedChop << (int) e.keys << slicesKey (e);
+        k << filter.getSelectedId() << loopMode.getSelectedId() << stretch.getSelectedId();
+        for (auto& c : cells) k << (int) (c.knob != nullptr ? c.knob->slider.isEnabled() : c.c->isEnabled()) << (c.knob != nullptr ? c.knob->text (c.knob->slider.getValue()) : juce::String());
+        art.draw (g, k, getLocalBounds(), [this] (juce::Graphics& ig, juce::Rectangle<int>) { paintArt (ig); paintWords (ig); }, true);
+    }
+    void paintWords (juce::Graphics& g)
     {
-        const auto& P_ = page.pal();
-        panel (g, P_, getLocalBounds().toFloat(), 10);
+        const auto& C = page.cp();
         auto& e = page.engine();
         const auto sl = e.slices();
-        juce::String title = "SOUND", sub;
+        // the context row: SAMPLE | SLICE n, and the note it is on
+        juce::String where, sub;
+        const bool whole = e.keys == chop::KeysMode::whole;
+        int shownIndex = -1;
         for (size_t i = 0; i < sl.size(); ++i)
             if (sl[i].index == page.selectedChop)
             {
-                if (e.keys == chop::KeysMode::whole) { title = "SOUND - WHOLE CLIP"; sub = "every key, C3 = as it is"; }
-                else { title = "SOUND - CHOP " + juce::String ((int) i + 1); sub = noteName (sl[i].note); if (e.labelFor (i).isNotEmpty()) sub << "  \"" << e.labelFor (i) << "\""; }
+                shownIndex = (int) i;
+                if (whole) { where = "the whole clip"; sub = "every key plays it, C3 = as it is"; }
+                else { where = "chop " + juce::String ((int) i + 1) + " of " + juce::String ((int) sl.size()); sub = "on " + noteName (sl[i].note); if (e.labelFor (i).isNotEmpty()) sub << "  \"" << e.labelFor (i) << "\""; }
             }
-        if (sl.empty()) sub = "load a clip";
-        g.setColour (P_.ink); g.setFont (gfont (13.0f)); g.drawText (title, titleArea.withTrimmedBottom (16), juce::Justification::centredLeft, true);
-        g.setColour (P_.dim); g.setFont (gfont (11.0f, false)); g.drawText (sub, titleArea.withTrimmedTop (18), juce::Justification::centredLeft, true);
-        for (auto& r : rows)
+        // (polish 3) a loaded clip in WHOLE never reads "no clip yet"
+        if (e.hasClip() && (whole || sl.empty())) { where = "whole clip"; sub = "chop it to give each chop its own sound"; }
+        if (! e.hasClip()) { where = "no clip yet"; sub = "load a clip: SOUND is each chop's own sound"; }
+        auto cr = contextArea.toFloat();
+        g.setColour (C.ink); g.setFont (display (17.0f)); g.drawText ("SOUND", cr.removeFromLeft (70), juce::Justification::centredLeft, false);
+        // (fixes) INTERSECT's SAMPLE / SLICE scope, drawn as a label (not a tab): Ghost Voice's SOUND always edits what is on the keys
+        // (the whole clip in WHOLE, the chosen chop in CHOPS), so there is no scope to switch here
         {
-            const auto b = r->slider.getBounds();
-            const float a = r->slider.isEnabled() ? 1.0f : 0.35f;
-            g.setColour (P_.dim.withAlpha (a)); g.setFont (gfont (10.5f));
-            g.drawText (r->name, juce::Rectangle<int> (10, b.getY(), 62, b.getHeight()), juce::Justification::centredLeft);
-            g.setColour (P_.ink.withAlpha (a)); g.setFont (gfont (10.5f, false));
-            g.drawText (r->text (r->slider.getValue()), juce::Rectangle<int> (b.getRight() + 2, b.getY(), 54, b.getHeight()), juce::Justification::centredRight);
+            const juce::String scope = ! e.hasClip() ? juce::String ("SAMPLE") : (whole || shownIndex < 0) ? juce::String ("SAMPLE") : "SLICE " + juce::String (shownIndex + 1);
+            const auto f = display (14.0f);
+            auto b = cr.removeFromLeft (choir::width (f, scope) + 22);
+            choir::diamond (g, { b.getX() + 4.0f, b.getCentreY() }, 3.0f, C.gold);
+            g.setColour (choir::greyInk (C, C.dark ? C.gold : C.edge.darker (0.3f), e.hasClip() ? 1.0f : choir::greyA (C)));
+            g.setFont (f); g.drawText (scope, b.withTrimmedLeft (12), juce::Justification::centredLeft, false);
+        }
+        cr.removeFromLeft (8);
+        g.setColour (C.ink); g.setFont (serif (15.0f, choir::bold));
+        g.drawText (where, cr.removeFromLeft (choir::width (serif (15.0f, choir::bold), where) + 12), juce::Justification::centredLeft, false);
+        g.setColour (C.dim); g.setFont (serif (15.0f, choir::italic)); g.drawText (sub, cr, juce::Justification::centredLeft, true);
+        // each control: the engine's name over it, its value, and what it does in plain words
+        for (auto& c : cells)
+        {
+            const bool en = c.knob != nullptr ? c.knob->slider.isEnabled() : c.c->isEnabled();
+            const float a = en ? 1.0f : choir::greyA (C);
+            auto r = c.r.toFloat().reduced (1, 0);
+            const auto valueInkRow = C.dark ? C.gold : C.edge.darker (0.35f);
+            if (c.row >= 0)
+            {   // (fixes) a cell on one of INTERSECT's rows: the name, the control (a knob with its value beside it), the plain line
+                g.setColour (choir::greyInk (C, C.ink, a)); g.setFont (serif (14.5f, choir::bold)); g.drawText (c.name, r.removeFromTop ((float) rowNameH), juce::Justification::centred, false);
+                auto ctl = r.removeFromTop ((float) rowCtlH);
+                if (c.knob != nullptr)
+                {
+                    const auto kb = c.knob->slider.getBounds().toFloat();
+                    g.setColour (choir::greyInk (C, valueInkRow, a)); g.setFont (serif (14.0f, choir::bold));
+                    g.drawText (c.knob->text (c.knob->slider.getValue()), juce::Rectangle<float> (kb.getRight() + 4, ctl.getY(), ctl.getRight() - kb.getRight() - 4, ctl.getHeight()), juce::Justification::centredLeft, false);
+                }
+                auto plain = c.plain;
+                if (c.c == &loopMode && loopMode.getSelectedId() == 3) plain = "ping-pong: to and fro";
+                g.setColour (choir::greyInk (C, C.dim, a)); g.setFont (serif (rowPlainSize, choir::regular));
+                g.drawText (plain, r.withTrimmedTop (1), juce::Justification::centredTop, false);
+                continue;
+            }
+            g.setColour (choir::greyInk (C, C.ink, a)); g.setFont (serif (15.0f, choir::bold)); g.drawText (c.name, r.removeFromTop (17), juce::Justification::centred, false);
+            r.removeFromTop ((float) ctlH (c.r.getHeight()));
+            const auto valueInk = C.dark ? C.gold : C.edge.darker (0.35f);
+            if (c.knob != nullptr) { g.setColour (choir::greyInk (C, valueInk, a)); g.setFont (serif (14.5f, choir::bold)); g.drawText (c.knob->text (c.knob->slider.getValue()), r.removeFromTop (17), juce::Justification::centred, false); }
+            else r.removeFromTop (17);
+            // the plain-words line: upright, full ink-dim, as big as it can be in its cell (one size per panel: the smallest that fits all)
+            auto plain = c.plain;
+            if (c.c == &filter && filter.getSelectedId() > 1) { static const char* w[] { "", "", "low-pass: cuts the highs", "high-pass: cuts the lows", "band-pass: keeps a band", "notch: cuts a notch" }; plain = w[juce::jlimit (0, 5, filter.getSelectedId())]; }
+            if (c.c == &loopMode && loopMode.getSelectedId() == 3) plain = "ping-pong: back and forth";
+            g.setColour (choir::greyInk (C, C.dim, a)); g.setFont (serif (plainSize, choir::regular));
+            g.drawFittedText (plain, r.removeFromTop (30).toNearestInt(), juce::Justification::centredTop, 2, 0.9f);
         }
     }
+};
+
+// ================================================================================================ the finder's install card (polish 2)
+// When PHRASES or WORDS is picked and its finder is not installed yet: the wave dims and a card in its middle says what is needed,
+// with the INSTALL button in it. Only the card takes the mouse; the rest of the wave stays usable under the dim.
+struct ChopPage::InstallVeil : public juce::Component
+{
+    explicit InstallVeil (ChopPage& p) : page (p) {}
+    ChopPage& page;
+    juce::Rectangle<float> card() const { return getLocalBounds().toFloat().withSizeKeepingCentre (juce::jmin (480.0f, (float) getWidth() - 40), 128.0f); }
+    bool hitTest (int x, int y) override { return card().contains ((float) x, (float) y); }
+    void paint (juce::Graphics& g) override
+    {
+        const auto& P = page.cp();
+        const bool words = page.engine().autoMode == chop::AutoMode::words;
+        g.setColour (P.waveBg.withAlpha (0.72f)); g.fillRect (getLocalBounds());
+        auto c = card();
+        g.setColour (P.shadow); g.fillRoundedRectangle (c.translated (0, 3), 7);
+        choir::page (g, P, c);
+        auto t = c.reduced (20, 14);
+        g.setColour (P.ink); g.setFont (display (20.0f));
+        g.drawText (words ? "WORDS needs its word finder" : "PHRASES needs its phrase finder", t.removeFromTop (26), juce::Justification::centred, false);
+        g.setColour (P.dim); g.setFont (serif (15.0f));
+        g.drawFittedText (words ? "Installed once into Ghost Voice's own folder (about 1.5 GB). Then AUTO CHOP puts one word on each key."
+                                : "Installed once into Ghost Voice's own folder (about 60 MB). Then AUTO CHOP puts one phrase on each key.",
+                          t.removeFromTop (40).toNearestInt(), juce::Justification::centred, 2, 1.0f);
+    }
+    void resized() override { auto c = card().toNearestInt(); page.installB.setBounds (c.withSizeKeepingCentre (290, 32).withY (c.getBottom() - 46)); }
 };
 
 // ================================================================================================ the page
@@ -512,6 +1043,8 @@ juce::juce_wchar ChopPage::toolKey (Tool t) { static const char k[] { 'e', 'c', 
 
 chop::ChopEngine& ChopPage::engine() { return *proc.chopper; }
 
+void ChopPage::repaintStalls() { stalls->repaint(); }
+
 ChopPage::ChopPage (Processor& p, std::function<const ghosty::themes::Palette&()> pl, std::function<void()> lab)
     : proc (p), palette (std::move (pl)), openLab (std::move (lab))
 {
@@ -519,13 +1052,19 @@ ChopPage::ChopPage (Processor& p, std::function<const ghosty::themes::Palette&()
     setOpaque (true);
     wave = std::make_unique<Wave> (*this); addAndMakeVisible (*wave);
     keys = std::make_unique<Keys> (*this, keyState); addAndMakeVisible (*keys);
+    keyLeft = std::make_unique<KeyArrow> (*this, -1); addAndMakeVisible (*keyLeft);
+    keyRight = std::make_unique<KeyArrow> (*this, 1); addAndMakeVisible (*keyRight);
     settings = std::make_unique<Settings> (*this); addAndMakeVisible (*settings);
+    strip = std::make_unique<StatusStrip> (*this);   // (the Editor adds it to the window)
+    stalls = std::make_unique<Stalls> (*this); addAndMakeVisible (*stalls);
+    veil = std::make_unique<InstallVeil> (*this); addChildComponent (*veil);
     keyState.addListener (this);
     for (int i = 0; i < (int) Tool::kTools; ++i) { tools.push_back (std::make_unique<ToolButton> (*this, (Tool) i)); addAndMakeVisible (*tools.back()); }
     dragOut = std::make_unique<DragOut> (*this); addAndMakeVisible (*dragOut);
-    for (auto* b : { &playB, &loopB, &autoB, &minus, &plus, &keysChops, &keysWhole, &convertB, &addB, &recB, &installB, &undoB, &redoB, &cutB, &copyB, &pasteB, &delB, &trimB, &dupB, &clearB })
+    for (auto* b : { &playB, &loopB, &autoB, &minus, &plus, &keysChops, &keysWhole, &convertB, &addB, &recB, &undoB, &redoB, &cutB, &copyB, &pasteB, &delB, &trimB, &dupB, &clearB })
     { addAndMakeVisible (*b); b->setMouseCursor (juce::MouseCursor::PointingHandCursor); b->setWantsKeyboardFocus (false); }
     addAndMakeVisible (autoMode); autoMode.setWantsKeyboardFocus (false);
+    veil->addAndMakeVisible (installB); installB.setMouseCursor (juce::MouseCursor::PointingHandCursor); installB.setWantsKeyboardFocus (false);
     for (int m = 0; m < (int) chop::AutoMode::kModes; ++m) autoMode.addItem (chop::autoModeName ((chop::AutoMode) m), m + 1);
     autoMode.setSelectedId ((int) engine().autoMode + 1, juce::dontSendNotification);
     autoMode.onChange = [this] { engine().autoMode = (chop::AutoMode) (autoMode.getSelectedId() - 1); autoMode.setTooltip (chop::autoModeTip (engine().autoMode)); refreshControls(); };
@@ -594,6 +1133,34 @@ ChopPage::ChopPage (Processor& p, std::function<const ghosty::themes::Palette&()
     showAll();
     refreshControls();
     startTimerHz (30);
+}
+
+// (fixes) the status line's strip: a child of the Editor (so the resize corner sits beside it, not on it); the page paints it
+struct ChopPage::StatusStrip : public juce::Component
+{
+    explicit StatusStrip (ChopPage& p) : page (p) { setOpaque (true); }
+    ChopPage& page;
+    juce::String shown;
+    void paint (juce::Graphics& g) override { page.paintStatus (g, getLocalBounds()); }
+    void mouseDown (const juce::MouseEvent&) override { page.grabKeyboardFocus(); }
+};
+
+juce::Component* ChopPage::statusStrip() { return strip.get(); }
+
+void ChopPage::paintStatus (juce::Graphics& g, juce::Rectangle<int> area)
+{
+    const auto& P = cp();
+    g.setColour (P.panel); g.fillRect (area);
+    g.setColour (P.edgeDim); g.fillRect (area.getX(), area.getY(), area.getWidth(), 1);
+    auto sa = area.withTrimmedTop (1).reduced (16, 0);
+    choir::diamond (g, { (float) sa.getX() + 4, (float) sa.getCentreY() }, 3.5f, P.gold);
+    auto st = status();
+    if (st.isEmpty()) st = stateLine();
+    if (strip != nullptr) strip->shown = st;
+    g.setColour (P.ink); g.setFont (choir::fitted (choir::regular, st, (float) sa.getWidth() - 16, 15.0f, 10.0f));
+    g.drawText (st, sa.withTrimmedLeft (16), juce::Justification::centredLeft, false);
+    if (conv.active)
+    { g.setColour (P.play); g.fillRect (area.getX(), area.getBottom() - 3, (int) ((float) area.getWidth() * juce::jlimit (0.0f, 1.0f, proc.progressValue())), 3); }
 }
 
 ChopPage::~ChopPage()
@@ -684,10 +1251,17 @@ void ChopPage::timerCallback()
         refreshControls();
     }
     if (recording && proc.recordingSlot() < 0) { recording = false; refreshControls(); }
-    if (engine().isPlaying() || conv.active || recording || engine().analysing() || engine().toolBusy()) { wave->repaint(); repaint (statusArea); repaint (infoArea); }
+    if (engine().isPlaying() || conv.active || recording || engine().analysing() || engine().toolBusy()) { wave->repaint(); repaint (tipArea); if (conv.active) strip->repaint(); }
+    if (strip->isVisible())
+    {   // the status line repaints only when its words change
+        auto st = status(); if (st.isEmpty()) st = stateLine();
+        if (st != strip->shown) strip->repaint();
+    }
     if (toolWasBusy != engine().toolBusy()) { toolWasBusy = engine().toolBusy(); refreshControls(); }
     if ((ticks % 10) == 0 && settings != nullptr) settings->sync();
-    if ((++ticks % 4) == 0) keys->repaint();
+    ++ticks;
+    if (stalls->tick()) { keys->repaint(); wave->repaint(); }
+    if (const int pn = playingNote(); pn != lastPlayingNote) { lastPlayingNote = pn; keys->repaint(); stalls->repaint(); }
 }
 
 void ChopPage::refreshControls()
@@ -696,7 +1270,6 @@ void ChopPage::refreshControls()
     const bool clip = e.hasClip(), sel = ! selection.empty();
     playB.setButtonText (e.isPlaying() ? "STOP" : "PLAY");
     loopB.setToggleState (loopOn, juce::dontSendNotification);
-    loopB.setColour (juce::TextButton::buttonOnColourId, bsGreen.darker (0.3f));
     loopB.setClickingTogglesState (false);
     keysChops.setToggleState (e.keys == chop::KeysMode::chops, juce::dontSendNotification);
     keysWhole.setToggleState (e.keys == chop::KeysMode::whole, juce::dontSendNotification);
@@ -712,7 +1285,8 @@ void ChopPage::refreshControls()
     const bool counted = ! chop::usesTool (e.autoMode);   // PHRASES / WORDS take what they find: no count
     minus.setEnabled (clip && counted && e.chopCount > 1); plus.setEnabled (clip && counted && e.chopCount < 64);
     const bool needInstall = ! e.toolReady();
-    installB.setVisible (needInstall);
+    installB.setVisible (true);
+    veil->setVisible (needInstall && clip);
     installB.setEnabled (! e.toolBusy());
     installB.setButtonText (e.toolBusy() ? "INSTALLING..." : e.autoMode == chop::AutoMode::words ? "INSTALL WORD FINDER (1.5 GB)" : "INSTALL PHRASE FINDER");
     installB.setTooltip (e.autoMode == chop::AutoMode::words ? "Downloads the word finder and its models (about 1.5 GB, once) into Ghost Voice's own folder"
@@ -722,10 +1296,88 @@ void ChopPage::refreshControls()
     if (settings != nullptr) settings->sync();
     resized();
     autoMode.setEnabled (clip);
+    autoMode.setSelectedId ((int) e.autoMode + 1, juce::dontSendNotification);   // (UNDER THE HOOD can change the mode too)
     convertB.setEnabled (clip && ! conv.active);
     convertB.setButtonText (conv.active ? "CONVERTING..." : "CONVERT VOICE");
     dragOut->repaint();
     repaint();
+}
+
+int ChopPage::playingNote() const
+{
+    auto& e = const_cast<ChopPage*> (this)->engine();
+    if (! e.isPlaying() || e.keys != chop::KeysMode::chops) return -1;
+    const auto ph = e.playhead();
+    for (const auto& sl : e.slices()) if (ph >= sl.r.a && ph < sl.r.b) return sl.note;
+    return -1;
+}
+
+std::vector<juce::Component*> ChopPage::sideControls() { return { &addB, &recB, dragOut.get(), &convertB }; }
+
+// (polish 1) everything the page holds now, as one line: what is on the keys, what is picked, selected, looped or playing.
+// Read from the engine and the page at paint time, so it is never left over from an earlier step.
+juce::String ChopPage::stateSig() const
+{
+    auto& e = const_cast<ChopPage*> (this)->engine();
+    juce::String k; k << (int) e.autoMode << "|" << (int) e.keys << "|" << (int) e.chops.size() << "|" << (int) e.labels.size() << "|" << (int) e.toolReady() << "|" << e.frames()
+                      << "|" << selection.a << "-" << selection.b << "|" << loop.a << "-" << loop.b << (int) loopOn << "|" << (int) e.isPlaying() << "|" << (int) currentTool
+                      << "|" << selectedChop << "|" << (int) juce::roundToInt (viewFrames);
+    return k;
+}
+
+juce::String ChopPage::stateLine() const
+{
+    auto& e = const_cast<ChopPage*> (this)->engine();
+    if (! e.hasClip()) return "Ready. Drag a WAV in, or press ADD WAV or REC.";
+    const auto dot = juce::String::fromUTF8 ("  \xc2\xb7  ");
+    juce::StringArray parts;
+    if (e.isPlaying()) parts.add (loopOn && ! loop.empty() ? "Playing the loop (" + secs ((double) loop.length() / e.rate()) + ")" : juce::String ("Playing"));
+    if (chop::usesTool (e.autoMode) && ! e.toolReady())
+        parts.add (chop::autoModeName (e.autoMode) + " needs its finder: press " + installB.getButtonText() + " (once)");
+    const auto sl = const_cast<ChopPage*> (this)->engine().slices();
+    if (e.keys == chop::KeysMode::whole) parts.add ("The whole clip is on the keys: C3 plays it as it is");
+    else if (! sl.empty())
+    {
+        const bool words = ! e.labels.empty();
+        parts.add (juce::String ((int) sl.size()) + (words ? " words" : " chops") + " on the keys, " + noteName (sl.front().note) + " to " + noteName (sl.back().highNote));
+        for (size_t i = 0; i < sl.size(); ++i)
+            if (sl[i].index == selectedChop)
+            { auto w = "SOUND: chop " + juce::String ((int) i + 1) + " (" + noteName (sl[i].note) + ")"; if (e.labelFor (i).isNotEmpty()) w << " \"" << e.labelFor (i) << "\""; parts.add (w); break; }
+    }
+    if (! selection.empty()) parts.add ("selected " + secs ((double) selection.length() / e.rate()));
+    if (loopOn && ! loop.empty() && ! e.isPlaying()) parts.add ("LOOP on, " + secs ((double) loop.length() / e.rate()));
+    if (viewFrames > 0 && viewFrames < (double) e.frames() * 0.98) parts.add ("zoomed in to " + juce::String (juce::roundToInt (100.0 * viewFrames / (double) e.frames())) + " %");
+    if (parts.isEmpty()) parts.add ("Ready. Press AUTO CHOP, then play the chops on the keys.");
+    return parts.joinIntoString (dot);
+}
+
+ChopPage::BeatCap ChopPage::beatCap() const
+{
+    BeatCap b;
+    auto& e = const_cast<ChopPage*> (this)->engine();
+    const auto m = e.autoMode;
+    if (m != chop::AutoMode::beats && m != chop::AutoMode::twoBeats && m != chop::AutoMode::bar) return b;
+    if (e.keys != chop::KeysMode::chops || e.chops.empty()) return b;
+    const auto c = e.clip(); if (c == nullptr || c->frames() == 0) return b;
+    const auto det = e.detected(); if (! det.ready || det.bpm <= 0) return b;
+    const double per = m == chop::AutoMode::twoBeats ? 2.0 : m == chop::AutoMode::bar ? 4.0 : 1.0;
+    const double step = 60.0 / det.bpm * per;
+    const int avail = (int) std::floor ((c->seconds() - det.firstBeat) / step + 1e-6);
+    const int shown = (int) e.chops.size();
+    if (shown < juce::jlimit (1, 64, e.chopCount) || avail <= shown) return b;
+    auto last = e.chops.front(); for (auto& r : e.chops) if (r.a > last.a) last = r;
+    const auto tailFrom = last.a + (juce::int64) std::llround (step * c->rate);
+    if (tailFrom >= last.b - (juce::int64) (0.05 * c->rate)) return b;
+    b.on = true; b.shown = shown; b.avail = avail; b.tailFrom = tailFrom; b.tailTo = last.b;
+    b.unit = m == chop::AutoMode::bar ? "bars" : m == chop::AutoMode::twoBeats ? "2-beat steps" : "beats";
+    return b;
+}
+
+juce::String ChopPage::beatCapLine() const
+{
+    const auto b = beatCap();
+    if (! b.on) return {};
+    return juce::String (b.shown) + " of " + juce::String (b.avail) + " " + b.unit + " chopped " + juce::String (juce::CharPointer_UTF8 ("\xe2\x80\x94")) + " raise the count (+) for more";
 }
 
 juce::String ChopPage::status() const
@@ -736,90 +1388,139 @@ juce::String ChopPage::status() const
     if (note.isNotEmpty() && juce::Time::getMillisecondCounterHiRes() - noteTime < 6000) return note;
     if (e.toolBusy()) return e.tools.progress().isNotEmpty() ? uiWords (e.tools.progress()) : juce::String ("Working...");
     if (e.analysing()) return "Listening to the clip (tempo, key, hits)...";
-    return e.message;
+    // the engine's last message stays only while nothing on the page has changed since it was said; then the page says what it holds
+    const auto sig = stateSig();
+    if (e.message != seenMessage) { seenMessage = e.message; seenSig = sig; }
+    const auto cap = beatCapLine();
+    auto withCap = [&cap] (juce::String t) { return cap.isEmpty() ? t : t + "   ·   " + cap; };
+    if (e.message.isNotEmpty() && sig == seenSig) return withCap (e.message);
+    return withCap (stateLine());
 }
 
 void ChopPage::paint (juce::Graphics& g)
 {
-    const auto& P = pal();
-    splash::backdrop (g, getLocalBounds(), getPosition());   // its part of the window's painting
-    {   // a milky deck under the two tool rows and the tip line, so every word on them reads on a calm ground
-        juce::Path deck; deck.addRoundedRectangle (deckArea.toFloat(), 16.0f);
-        g.setColour (P.shadow); g.fillPath (deck, juce::AffineTransform::translation (0, 3));
-        g.setColour (P.panel.withAlpha (0.94f)); g.fillPath (deck);
-        splash::sketch (g, deck, 1313, 6, 0.75f, 0.42f);
-    }
+    const auto& P = cp();
     auto& e = engine();
-    // info: the clip, what the analysis found
-    g.setFont (gfont (12.5f, false));
+    back.draw (g, juce::String ((int) P.dark) + "|" + juce::String (getWidth()) + "x" + juce::String (getHeight()) + "|" + deckArea.toString() + waveFrame.toString() + choirFrame.toString(), getLocalBounds(),
+               [this, &P] (juce::Graphics& ig, juce::Rectangle<int> r)
+               {
+                   choir::nave (ig, P, r, getPosition());
+                   // the lectern: a dark-oak (or limestone) deck under the two rows of tools and the tip line
+                   auto d = deckArea.toFloat();
+                   choir::page (ig, P, d);
+                   ig.setColour (P.edgeDim.withMultipliedAlpha (0.6f)); ig.fillRect (d.getX() + 14, (float) tipArea.getY() - 3, d.getWidth() - 28, 1.0f);
+                   // the frames round the window, the stalls and the keys
+                   for (auto fr : { waveFrame, choirFrame })
+                   {
+                       auto f = fr.toFloat();
+                       ig.setColour (P.shadow); ig.fillRect (f.translated (0, 3));
+                       ig.setColour (P.edge); ig.drawRect (f, 1.0f);
+                       for (auto c : { f.getTopLeft(), f.getTopRight(), f.getBottomLeft(), f.getBottomRight() }) choir::diamond (ig, c, 4.0f, P.gold);
+                   }
+               }, true);
+    // the clip info (right of the tip line): its name, length, and the tempo and key that were found
+    juce::String info;
     if (auto c = e.clip())
     {
-        g.setColour (P.ink);
         const auto det = e.detected();
-        juce::String s = c->name + "   " + secs (c->seconds());
-        if (det.ready) s << "   " << det.summary();
-        else if (e.analysing()) s << "   listening...";
-        g.drawText (s, infoArea, juce::Justification::centredRight, true);
+        info = c->name + "   " + secs (c->seconds());
+        if (det.ready) info << "   " << det.summary();
+        else if (e.analysing()) info << "   listening...";
     }
-    // the chop count between - and +
-    g.setColour (P.ink); g.setFont (gfont (14.0f)); g.drawText (juce::String (e.chopCount), countArea, juce::Justification::centred);
-    g.setColour (P.dim); g.setFont (gfont (10.0f)); g.drawText ("KEYS", keysLabelArea, juce::Justification::centredRight);
-    // Block Step's tip line: the tool and what it does
+    auto t = tipArea.toFloat();
+    if (info.isNotEmpty())
     {
-        auto t = tipArea.toFloat();
-        g.setColour (bsPurple); g.setFont (gfont (12.0f)); const auto n = toolName (currentTool);
-        g.drawText (n, t, juce::Justification::centredLeft);
-        g.setColour (P.dim); g.setFont (gfont (12.0f, false));
-        g.drawText (toolTip (currentTool), t.withTrimmedLeft (ghosty::textWidth (gfont (12.0f), n) + 8), juce::Justification::centredLeft, true);
+        const auto f = serif (15.0f, choir::bold);
+        const float iw = juce::jmin (choir::width (f, info) + 8, t.getWidth() * 0.42f);
+        auto ir = t.removeFromRight (iw);
+        g.setColour (P.gold); g.setFont (choir::fitted (choir::bold, info, ir.getWidth(), 15.0f, 10.0f)); g.drawText (info, ir, juce::Justification::centredRight, false);
+        t.removeFromRight (12);
     }
-    // the status line
-    g.setColour (P.panel); g.fillRect (statusArea);
-    { juce::Path rule; rule.startNewSubPath ((float) statusArea.getX(), statusArea.getY() + 0.5f); rule.lineTo ((float) statusArea.getRight(), statusArea.getY() + 0.5f); splash::sketch (g, rule, 9, 3, 0.7f, 0.5f); }
-    statusArea.removeFromTop (1);
-    g.setColour (P.ink); g.setFont (gfont (12.5f, false));
-    g.drawText (status(), statusArea.reduced (16, 0), juce::Justification::centredLeft, true);
-    if (conv.active)
-    { g.setColour (bsGreen); g.fillRect (statusArea.getX(), statusArea.getBottom() - 3, (int) ((float) statusArea.getWidth() * juce::jlimit (0.0f, 1.0f, proc.progressValue())), 3); }
+    // the tip line: the tool and what it does (Block Step's)
+    {
+        const auto n = toolName (currentTool);
+        const auto nf = serif (15.0f, choir::bold);
+        g.setColour (P.select); g.setFont (nf); g.drawText (n, t, juce::Justification::centredLeft, false);
+        auto rest = t.withTrimmedLeft (choir::width (nf, n) + 10);
+        const auto tip = toolTip (currentTool);
+        g.setColour (P.dim); g.setFont (choir::fitted (choir::italic, tip, rest.getWidth(), 15.0f, 10.0f));
+        g.drawText (tip, rest, juce::Justification::centredLeft, false);
+    }
+    // the chop count between - and +, and the KEYS word
+    // (polish 1) PHRASES / WORDS take what they find: the count shows how many chops are on the keys, not a number nobody asked for
+    const bool found = chop::usesTool (e.autoMode);
+    const juce::String count = ! found ? juce::String (e.chopCount) : (e.keys == chop::KeysMode::chops && ! e.chops.empty() ? juce::String ((int) e.chops.size()) : juce::String ("-"));
+    g.setColour (minus.isEnabled() || plus.isEnabled() ? P.ink : choir::greyInk (P, P.ink, choir::greyA (P))); g.setFont (display (18.0f)); g.drawText (count, countArea, juce::Justification::centred, false);
+    g.setColour (P.gold); g.setFont (display (13.5f)); g.drawText ("KEYS", keysLabelArea, juce::Justification::centredRight, false);
 }
 
 void ChopPage::resized()
 {
-    auto r = getLocalBounds();
-    statusArea = r.removeFromBottom (26);
-    r = r.reduced (16, 10);
-    {   // row 1: transport, tools, AUTO CHOP, KEYS, CONVERT VOICE, load / record / drag out
-        auto row = r.removeFromTop (34);
-        playB.setBounds (row.removeFromLeft (70)); row.removeFromLeft (6);
-        loopB.setBounds (row.removeFromLeft (62)); row.removeFromLeft (14);
-        for (auto& t : tools) { t->setBounds (row.removeFromLeft (86)); row.removeFromLeft (3); }
-        row.removeFromLeft (11);
-        autoB.setBounds (row.removeFromLeft (96)); row.removeFromLeft (4);
-        autoMode.setBounds (row.removeFromLeft (128).reduced (0, 2)); row.removeFromLeft (4);
-        minus.setBounds (row.removeFromLeft (26)); countArea = row.removeFromLeft (30); plus.setBounds (row.removeFromLeft (26));
-        dragOut->setBounds (row.removeFromRight (92)); row.removeFromRight (6);
-        recB.setBounds (row.removeFromRight (78)); row.removeFromRight (6);
-        addB.setBounds (row.removeFromRight (82));
+    auto r = getLocalBounds();   // (fixes) the status strip is under the page, in the Editor's hands
+    r = r.reduced (14, 8);
+    auto deck = r;
+    {   // row 1: transport, the five tools, AUTO CHOP with its mode and count (ADD WAV / REC / DRAG WAV / CONVERT stand in the left column)
+        auto row = r.removeFromTop (32).reduced (10, 0).translated (0, 8);
+        const int fixed = 60 + 4 + 56 + 10 + 4 * 4 + 10 + 98 + 4 + 128 + 4 + 26 + 30 + 26;
+        const int tw = juce::jlimit (70, 110, (row.getWidth() - fixed) / 5);
+        playB.setBounds (row.removeFromLeft (60)); row.removeFromLeft (4);
+        loopB.setBounds (row.removeFromLeft (56)); row.removeFromLeft (10);
+        for (auto& t : tools) { t->setBounds (row.removeFromLeft (tw)); row.removeFromLeft (4); }
+        row.removeFromLeft (6);
+        plus.setBounds (row.removeFromRight (26)); countArea = row.removeFromRight (30); minus.setBounds (row.removeFromRight (26)); row.removeFromRight (4);
+        autoMode.setBounds (row.removeFromRight (128)); row.removeFromRight (4);
+        autoB.setBounds (row.removeFromRight (juce::jmin (110, row.getWidth())));
     }
-    r.removeFromTop (8);
-    {   // row 2: KEYS, CONVERT VOICE, the edits, the clip info
-        auto row = r.removeFromTop (30);
-        keysLabelArea = row.removeFromLeft (34); row.removeFromLeft (6);
-        keysChops.setBounds (row.removeFromLeft (70)); row.removeFromLeft (3); keysWhole.setBounds (row.removeFromLeft (70)); row.removeFromLeft (14);
-        convertB.setBounds (row.removeFromLeft (132)); row.removeFromLeft (14);
-        for (auto* b : { &undoB, &redoB, &cutB, &copyB, &pasteB, &delB, &trimB, &dupB, &clearB })
-        { b->setBounds (row.removeFromLeft (b == &clearB ? 96 : b == &dupB ? 84 : 58)); row.removeFromLeft (3); }
-        if (installB.isVisible()) { installB.setBounds (row.removeFromLeft (juce::jmin (232, row.getWidth()))); row.removeFromLeft (6); }
-        infoArea = row.withTrimmedLeft (8);
+    r.removeFromTop (14);
+    {   // row 2: KEYS, then the edits: every button the same width and the same type size (polish 1)
+        auto row = r.removeFromTop (30).reduced (10, 0);
+        keysLabelArea = row.removeFromLeft (40); row.removeFromLeft (6);
+        keysChops.setBounds (row.removeFromLeft (72)); row.removeFromLeft (4); keysWhole.setBounds (row.removeFromLeft (72)); row.removeFromLeft (12);
+        // one type size for the whole row, the largest at which every word has the same room round it (14 px of air each side);
+        // each button is its words plus that same air, plus an equal share of what is left, so the row ends flush at the right
+        juce::TextButton* eds[] { &undoB, &redoB, &cutB, &copyB, &pasteB, &delB, &trimB, &dupB, &clearB };
+        const int n = (int) std::size (eds), gap = 4, room = row.getWidth() - gap * (n - 1);
+        float fh = 14.0f;
+        auto wordsAt = [&] (float h) { float t = 0; for (auto* b : eds) t += choir::width (serif (h, choir::bold), b->getButtonText()); return t; };
+        while (fh > 10.0f && wordsAt (fh) + (float) n * 28.0f > (float) room) fh -= 0.5f;
+        for (auto* b : { &keysChops, &keysWhole }) fh = juce::jmin (fh, choir::fit (choir::bold, b->getButtonText(), 58.0f, 14.0f, 9.0f));
+        const float share = ((float) room - wordsAt (fh)) / (float) n;
+        float x = (float) row.getX();
+        for (int i = 0; i < n; ++i)
+        {
+            const float w = choir::width (serif (fh, choir::bold), eds[i]->getButtonText()) + share;
+            const int x0 = juce::roundToInt (x), x1 = i == n - 1 ? row.getRight() : juce::roundToInt (x + w);
+            eds[i]->setBounds (x0, row.getY(), x1 - x0, row.getHeight()); x += w + (float) gap;
+        }
+        for (auto* b : std::initializer_list<juce::TextButton*> { &undoB, &redoB, &cutB, &copyB, &pasteB, &delB, &trimB, &dupB, &clearB, &keysChops, &keysWhole })
+            b->getProperties().set ("fontH", fh);
+        infoArea = {};
     }
-    r.removeFromTop (4);
-    tipArea = r.removeFromTop (22);
-    deckArea = getLocalBounds().reduced (6, 0).withTop (2).withBottom (tipArea.getBottom() + 4);
-    r.removeFromTop (4);
-    keys->setBounds (r.removeFromBottom (92));
-    keys->setKeyWidth (juce::jmax (14.0f, (float) keys->getWidth() / 52.0f));
+    r.removeFromTop (6);
+    tipArea = r.removeFromTop (22).reduced (12, 0);
+    deckArea = deck.withBottom (tipArea.getBottom() + 4);
+    r.removeFromTop (12);
+    // under the lectern: the window (wave), SOUND, then the choir stalls on the keys
+    auto stallsAndKeys = r.removeFromBottom (156);
+    choirFrame = stallsAndKeys;
     r.removeFromBottom (8);
-    settings->setBounds (r.removeFromRight (250)); r.removeFromRight (8);
-    wave->setBounds (r);
+    soundFrame = r.removeFromBottom (196);   // (fixes) AMP and PLAYBACK on two rows, as INTERSECT has them
+    settings->setBounds (soundFrame);
+    r.removeFromBottom (10);
+    waveFrame = r;
+    wave->setBounds (r.reduced (1));
+    // (polish 1) the finder's INSTALL button floats over the wave's top right corner, under the ruler: the edit row keeps its widths
+    veil->setBounds (wave->getBounds()); veil->toFront (false);
+    auto sk = stallsAndKeys.reduced (1);
+    {   // (polish 3) the arrows in their own 18 px gutters; the keys between them show 17 whole white keys, C1 to E3 (no slivers)
+        auto kr = sk.removeFromBottom (70);
+        keyLeft->setBounds (kr.removeFromLeft (18)); keyRight->setBounds (kr.removeFromRight (18));
+        keys->setBounds (kr);
+        keys->setScrollButtonWidth (18);
+        keys->setKeyWidth (juce::jmax (18.0f, (float) kr.getWidth() / 17.0f));
+        if (! keysPlaced && keys->getWidth() > 0) { keys->setLowestVisibleKey (36); keysPlaced = true; }   // C1, where the chops start
+    }
+    stalls->setBounds (sk);
 }
 
 bool ChopPage::isInterestedInFileDrag (const juce::StringArray& files)

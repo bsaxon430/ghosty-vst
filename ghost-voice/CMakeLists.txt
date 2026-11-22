@@ -49,7 +49,7 @@ set(GV_SOURCES
   Source/Fusion/VoiceEngine.cpp Source/Fusion/VoiceFusion.cpp Source/Fusion/VoiceFusionClear.cpp Source/Fusion/VoiceFusionNatural.cpp
   Source/Terrain/TerrainModel.cpp Source/Terrain/TerrainMapping.cpp Source/Terrain/TerrainFeatures.cpp Source/Terrain/TerrainSerial.cpp
   Source/Terrain/TerrainInteraction.cpp Source/Terrain/TerrainDsp.cpp Source/Terrain/TerrainView.cpp
-  Source/Plugin/Processor.cpp Source/Plugin/Editor.cpp Source/Plugin/UnderTheHood.cpp Source/Engine/SeedVcOptions.cpp
+  Source/Plugin/Processor.cpp Source/Plugin/Editor.cpp Source/Plugin/UnderTheHood.cpp Source/UI/HoodOriginals.cpp Source/Engine/SeedVcOptions.cpp
   Source/Chop/ChopEngine.cpp Source/Chop/ChopPage.cpp Source/Chop/ChopTools.cpp ${GV_INTERSECT_SOURCES})
 set(GV_INCLUDES Source/Engine Source/Plugin Source/Shared Source/Terrain Source/UI Source/Chop ${GV_INTERSECT_INCLUDES})
 set(GV_DEFS JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0 JUCE_DISPLAY_SPLASH_SCREEN=0 JUCE_USE_MP3AUDIOFORMAT=1
@@ -88,4 +88,23 @@ if(GHOSTVOICE_BUILD_TESTS)
   target_compile_definitions(GhostVoiceTests PRIVATE ${GV_DEFS} JUCE_STANDALONE_APPLICATION=1 JUCE_MODAL_LOOPS_PERMITTED=1 JucePlugin_VersionString="${GHOSTVOICE_VERSION}" JucePlugin_Name="Ghost Voice"
     GHOSTVOICE_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
   target_link_libraries(GhostVoiceTests PRIVATE ${GV_LIBS} PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
+endif()
+
+# ---- Design studio (round 0): the headless SNAPSHOT HARNESS (studio/SNAPSHOTS.md). Off by default; UI-only work builds just this.
+# Every path-valued define stays off the shared compile line (only VoiceEngine.cpp gets GHOSTVOICE_DEV_HELPER_DIR), so ccache with
+# base_dir=/home/claude can share objects between designers' worktrees.
+option(GHOSTVOICE_BUILD_SNAPSHOTS "Build GhostVoiceSnapshots (the design studio's screenshot harness)" OFF)
+if(GHOSTVOICE_BUILD_SNAPSHOTS)
+  set(GV_SNAP_DEFS ${GV_DEFS})
+  list(FILTER GV_SNAP_DEFS EXCLUDE REGEX "^GHOSTVOICE_DEV_HELPER_DIR=")
+  juce_add_console_app(GhostVoiceSnapshots PRODUCT_NAME "GhostVoiceSnapshots")
+  target_sources(GhostVoiceSnapshots PRIVATE studio/harness/Snapshots.cpp ${GV_SOURCES})
+  target_include_directories(GhostVoiceSnapshots PRIVATE ${GV_INCLUDES})
+  target_compile_definitions(GhostVoiceSnapshots PRIVATE ${GV_SNAP_DEFS} JUCE_STANDALONE_APPLICATION=1 JUCE_MODAL_LOOPS_PERMITTED=1
+    JucePlugin_VersionString="${GHOSTVOICE_VERSION}" JucePlugin_Name="Ghost Voice")
+  set_property(SOURCE Source/Engine/VoiceEngine.cpp TARGET_DIRECTORY GhostVoiceSnapshots APPEND PROPERTY COMPILE_DEFINITIONS
+    GHOSTVOICE_DEV_HELPER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/helper")
+  set_property(SOURCE studio/harness/Snapshots.cpp TARGET_DIRECTORY GhostVoiceSnapshots APPEND PROPERTY COMPILE_DEFINITIONS
+    GV_SNAP_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+  target_link_libraries(GhostVoiceSnapshots PRIVATE ${GV_LIBS} PUBLIC juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
 endif()

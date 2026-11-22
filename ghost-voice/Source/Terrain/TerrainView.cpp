@@ -27,7 +27,7 @@ constexpr float kWobble = 0.22f;                     // a mountain's radius brea
 constexpr float kReachSize = 1.24f, kReachFalloff = 1.05f, kReachSat = 0.15f;   // the lit region: the mountain's own shape, wider
 constexpr float kDim = 0.7f;                         // a chosen mountain dims the rest to 30 %
 constexpr double kSpringSeconds = 0.35, kGrowInMs = 700, kGrowOutMs = 500, kTintMs = 180;
-constexpr double kOpenDelayMs = 300, kOpenMs = 1800;
+constexpr double kOpenDelayMs = 0, kOpenMs = 260;      // (Ghost Voice polish 3) a quick rise: the page shows the land as it rests
 constexpr float kStemPx = 150.0f;                    // the dot stands this far above the summit
 constexpr float kDotR = 3.0f;
 constexpr float kTagSize = 14.0f, kTagPad = 5.0f, kTagRadius = 7.5f;
@@ -260,7 +260,10 @@ float TerrainView::uiScale() const { return juce::jlimit (0.72f, 1.0f, (float) g
 void TerrainView::updateCamera()
 {
     const float W = (float) juce::jmax (40, getWidth()), H = (float) juce::jmax (40, getHeight());
-    tiltNow = kTilt * openT;
+    // (Ghost Voice polish 3, drawing only) the camera always stands where the opening ends: the land is rendered once into the
+    // cache and the opening is drawn as a cheap transform of that image (paint), so the tilt-up never re-renders the land per frame
+    const float camT = 1.0f;
+    tiltNow = kTilt * camT;
     const float s = juce::degreesToRadians (tiltNow), c = juce::degreesToRadians (kTurn);
     const float cl = std::cos (s), sl = std::sin (s), d = std::cos (c), f = std::sin (c);
     // the reference's fit: the ground (a disc of radius min(w, h) / 2) and a full mountain fit inside a margin
@@ -276,8 +279,8 @@ void TerrainView::updateCamera()
     m11 = d; m12 = -f; m21 = f * cl; m22 = d * cl;   // per island radius, times K
     rise = K * sl;
     heightUnits = kHeight;
-    ax = W * 0.5f - viewOffX * openT;
-    ay = H * 0.5f - viewOffY * openT - (g + under) * 0.5f * b;
+    ax = W * 0.5f - viewOffX * camT;
+    ay = H * 0.5f - viewOffY * camT - (g + under) * 0.5f * b;
     interaction.pixelsPerUnitHeight = juce::jmax (20.0f, liftPx (1.0f));
     interaction.pixelsPerUnitSize = juce::jmax (20.0f, K * std::hypot (m11, m12));
 }
@@ -1341,8 +1344,23 @@ void TerrainView::paint (juce::Graphics& g)
     double tm = nowMs();
     g.setImageResamplingQuality (juce::Graphics::lowResamplingQuality);
     g.setOpacity (1.0f);
-    if (cacheScale == 1.0f) g.drawImageAt (cache, 0, 0);
+    // (polish 3) the opening: the cached land rises from a flat map (stretched to the top-down view) and fades up. One image
+    // transform per frame instead of a full re-render
+    const bool opening = openT < 1.0f;
+    juce::AffineTransform openXf;
+    if (opening)
+    {
+        const float flat = 1.0f / juce::jmax (0.3f, std::cos (juce::degreesToRadians (kTilt)));
+        const float sy = flat + (1.0f - flat) * openT;
+        openXf = juce::AffineTransform::scale (1.0f, sy, ax, ay);
+        g.fillAll (palette.ground);
+        g.saveState();
+        g.addTransform (openXf);
+        g.setOpacity (0.35f + 0.65f * openT);
+    }
+    if (cacheScale == 1.0f && ! opening) g.drawImageAt (cache, 0, 0);
     else g.drawImageTransformed (cache, juce::AffineTransform::scale (1.0f / cacheScale));
+    if (opening) { g.restoreState(); g.setOpacity (1.0f); }
     profileMs[3] = juce::jmin (profileMs[3], nowMs() - tm); tm = nowMs();
     drawOverlays (g);
     // the ring labels
@@ -1388,7 +1406,9 @@ void TerrainView::paint (juce::Graphics& g)
         }
     }
     profileMs[4] = juce::jmin (profileMs[4], nowMs() - tm); tm = nowMs();
+    if (opening) { g.saveState(); g.addTransform (openXf); }
     drawHandles (g);
+    if (opening) g.restoreState();
     profileMs[5] = juce::jmin (profileMs[5], nowMs() - tm); tm = nowMs();
     drawMeters (g);
     if (toolbarOn) drawToolbar (g);
@@ -2021,7 +2041,8 @@ void TerrainView::timerCallback()
     {
         const float u = juce::jlimit (0.0f, 1.0f, (float) ((now - openStart - kOpenDelayMs) / kOpenMs));
         openT = u >= 1.0f ? 1.0f : bezierEase (u, 0.65f, 0.0f, 0.35f, 1.0f);
-        markDirty();
+        // (polish 3) the land itself doesn't change while it opens: only the drawing does. One re-render at the end (the dots open)
+        if (openT >= 1.0f) markDirty(); else repaint();
     }
     else if (openStart > 1.0 && now - openStart < kOpenDelayMs + kOpenMs + 1200.0) repaint (toolbarBounds().expanded (400.0f, 50.0f).toNearestInt());   // (the toolbar rising in)
     // the drawn land follows the model

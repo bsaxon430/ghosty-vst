@@ -1,18 +1,18 @@
 // Ghost Voice - AGPL-3.0-only (see LICENSE, NOTICE.md).
 //
-// The window, after Brandon's mockup (2026-11-05): GHOST VOICE header with the six tabs (IDENTITY LAB, VOICE LIBRARY, SING
+// THE GHOST CHOIR look (design studio, 2026-11-22). The window, after Brandon's mockup (2026-11-05): GHOST VOICE header with the six tabs (IDENTITY LAB, VOICE LIBRARY, SING
 // ENGINE, TOOLS, SETTINGS, UNDER THE HOOD = the neural engine's own full option list), the left list, the page, and the VOICE LIBRARY strip with the status pill at the bottom.
 // Every number on screen is real: file lengths, the settings, and what the voice-print meter measured on the rendered voice. Nothing is
 // drawn as a meter unless it was measured; the UNIQUE IDENTITY badge only shows when the measurement passes its rule.
 #pragma once
 #include "Processor.h"
-#include "SplashArt.h"
+#include "Choir.h"
 
 namespace gv
 {
 class HoodPage;
 class ChopPage;
-class Editor : public juce::AudioProcessorEditor, public juce::DragAndDropContainer, private juce::Timer
+class Editor : public juce::AudioProcessorEditor, public juce::DragAndDropContainer, public juce::FileDragAndDropTarget, private juce::Timer
 {
 public:
     explicit Editor (Processor&);
@@ -27,6 +27,11 @@ public:
     ~Editor() override;
     void paint (juce::Graphics&) override;
     void resized() override;
+    // (fixes) on CHOP a WAV dropped anywhere in the window (the left column, its buttons, the status strip) loads, the same way a
+    // drop on the page does; the page's own drop targets still take theirs first
+    bool isInterestedInFileDrag (const juce::StringArray&) override;
+    void filesDropped (const juce::StringArray&, int, int) override;
+    juce::Rectangle<int> cornerBox() const { return { getWidth() - 18, getHeight() - 18, 18, 18 }; }   // the resize corner's own place
     enum Page { lab = 0, library = 1, sing = 2, tools = 3, prefs = 4, hood = 5, chop = 6, kPages = 7 };   // CHOP (build 8) opens first
     void showPage (int);
     HoodPage* hoodPage();                   // the UNDER THE HOOD page (tests drive its controls)
@@ -35,10 +40,11 @@ public:
     int page() const { return pageIndex; }
     void refresh();                         // follow the session
     Processor& proc;
-    const ghosty::themes::Palette& pal() const
-    {   // build 12: LIGHT = SPLASH (Brandon's painting), DARK = his dark reference; the art follows (splash::art())
-        splash::darkFlag() = proc.theme != ghosty::themes::Theme::Light; return splash::palette();
-    }
+    // THE GHOST CHOIR (studio round 1): DARK = Vespers (night stone, gold leaf, candle-lit glass), LIGHT = Matins (limestone,
+    // parchment, sunlit glass). pal() = the GhostBlock theme tokens made from ours (the shared Spirit Board reads them); cp() = ours.
+    bool dark() const { return proc.theme != ghosty::themes::Theme::Light; }
+    const ghosty::themes::Palette& pal() const { return choir::themePal (dark()); }
+    const choir::Pal& cp() const { return choir::pal (dark()); }
     void applyTheme();
     juce::String statusText() const;        // the pill at the bottom right
     struct Parts;
@@ -50,6 +56,15 @@ public:
     juce::Rectangle<int> knobRow, toggleArea;    // where the engine's knobs / switches go (IDENTITY LAB)
     void layoutEngineControls();
     float clock = 0;                        // seconds, for the glows
+    choir::Cache chrome;                    // the window's static art for the page shown (stone, header, list, strip, panels)
+    juce::Rectangle<int> logoSlot;          // the reserved place for the GHOST VOICE logo (a temporary mark is drawn there)
+    juce::Rectangle<int> contentArea;
+    juce::Rectangle<int> terrainRows, terrainHow;       // TOOLS: where the "what the land moves" rows go       // the page's area (right of the list, above the strip)
+    void paintChrome (juce::Graphics&);
+    bool hasStrip() const;                   // (polish 2) the Voice Library shelf: only on IDENTITY LAB and SING ENGINE
+    void paintSide (juce::Graphics&);        // (polish 2) the left column: the page's own facts and tools (the tabs are the one nav)
+    juce::Rectangle<int> boardLine() const;
+    bool boardSings() const { return proc.isPlaying(); }   // (fixes) the Spirit Board's singers move only while something plays   // SING ENGINE: the line under the Spirit Board (the balance, now)
 private:
     void timerCallback() override;
     int pageIndex = chop;

@@ -32,7 +32,9 @@ public:
 
     // message thread; onDone runs on the message thread
     bool install (Kind, std::function<void (bool ok)> onDone);
-    bool run (Kind, const juce::File& wav, std::function<void (bool ok, std::vector<ToolChop>)> onDone);
+    bool run (Kind, const juce::File& wav, std::function<void (bool ok, std::vector<ToolChop>)> onDone, const juce::StringArray& extra = {});
+    // the exact command run() starts (extra = OpenVPI's own options for PHRASES; empty = the command it has always been)
+    juce::StringArray commandFor (Kind, const juce::String& python, const juce::File& wav, const juce::File& out, const juce::StringArray& extra = {}) const;
     void cancel();
 
 private:

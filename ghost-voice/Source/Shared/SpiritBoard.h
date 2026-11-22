@@ -592,6 +592,7 @@ public:
     // the puck the view shows (set by every paint and by syncLive); a host timer calls syncLive() to follow the audio's puck: it repaints
     // only when the puck or the weights moved, and works whether or not the host reports the window as showing
     juce::Point<float> shownPuck { 0.5f, 0.5f };
+    bool fillBehind = true;   // fill round the board with the panel colour (off when the host draws the frame round it)
     bool syncLive()
     {
         auto pk = livePuck ? livePuck() : juce::Point<float> { board.puckX, board.puckY };
@@ -625,7 +626,7 @@ public:
     void paintBoard (juce::Graphics& g)
     {
         const auto& P = palette();
-        g.fillAll (P.panel);
+        if (fillBehind) g.fillAll (P.panel);   // (drawing only) a host that frames the board itself turns this off
         const auto a = area();
         if (a.getWidth() < 4.0f || a.getHeight() < 4.0f) return;   // too small to draw a board (the host has not laid us out yet)
         g.setColour (P.waveBg); g.fillRoundedRectangle (a, 10.0f);
@@ -657,9 +658,37 @@ public:
             g.setColour (P.cell); g.fillEllipse (gp.x - gr, gp.y - gr, 2 * gr, 2 * gr);
             auto look = ghosty::lookFor (gh.icon); look.slime = c; look.pupil = c;
             ghosty::drawGhost (g, look, gp.x, gp.y - gr * 0.1f, gr * 1.5f, 0.0f, false, 0.45f + 0.55f * juce::jmax (0.15f, wk));
-            g.setColour (c); g.setFont (ghosty::font (juce::jmax (11.0f, gr * 0.62f)));
-            g.drawText (gh.label, juce::Rectangle<float> (gp.x - 40, gp.y + gr + 2, 80, 16), juce::Justification::centred);
-            if (wk > 0.005f) { g.setColour (P.dim); g.setFont (ghosty::font (10.0f, false)); g.drawText (juce::String (juce::roundToInt (wk * 100)) + "%", juce::Rectangle<float> (gp.x - 40, gp.y + gr + 16, 80, 13), juce::Justification::centred); }
+            // (drawing only) the name and weight sit on the side of the ghost AWAY from the puck's line: under it, unless the line
+            // leaves downwards, then over it; beside it when the line leaves straight up or down. The line never crosses them.
+            const auto d = pp - gp; const float len = juce::jmax (1.0f, d.getDistanceFromOrigin());
+            const float ux = d.x / len, uy = d.y / len;
+            juce::Rectangle<float> lab;
+            const float lh = 31.0f, lw = 52.0f;
+            const float ring = gr + 4 + 10 * wk;
+            const juce::Rectangle<float> under { gp.x - lw * 0.5f, gp.y + ring, lw, lh }, over { gp.x - lw * 0.5f, gp.y - ring - lh, lw, lh },
+                                         left { gp.x - ring - 10 - lw, gp.y - lh * 0.5f, lw, lh }, right { gp.x + ring + 10, gp.y - lh * 0.5f, lw, lh };
+            if (uy < 0.55f) lab = under;                                   // the line goes up or sideways: under
+            else if (std::abs (ux) > 0.35f) lab = over;                    // it goes down and aside: over
+            else lab = ux >= 0 ? left : right;                             // straight down: beside
+            {   // (drawing only) never under the puck (its glow is 20 px round) and never off the board: try the other sides in turn
+                const auto puckBox = juce::Rectangle<float> (pp.x - 22.0f, pp.y - 22.0f, 44.0f, 44.0f);
+                auto fine = [&] (const juce::Rectangle<float>& r)
+                {
+                    if (r.intersects (puckBox) || ! getLocalBounds().toFloat().contains (r)) return false;
+                    // (and not crossed by the line to the puck)
+                    juce::Line<float> ln (gp, pp); juce::Point<float> ip;
+                    for (auto e : { juce::Line<float> (r.getTopLeft(), r.getTopRight()), juce::Line<float> (r.getBottomLeft(), r.getBottomRight()),
+                                    juce::Line<float> (r.getTopLeft(), r.getBottomLeft()), juce::Line<float> (r.getTopRight(), r.getBottomRight()) })
+                        if (ln.intersects (e, ip)) return false;
+                    return true;
+                };
+                if (! fine (lab))
+                    for (const auto& alt : { under, over, ux >= 0 ? left : right, ux >= 0 ? right : left })
+                        if (fine (alt)) { lab = alt; break; }
+            }
+            g.setColour (c); g.setFont (ghosty::font (juce::jmax (12.0f, gr * 0.62f)));
+            g.drawText (gh.label, lab.withHeight (17.0f), juce::Justification::centred);
+            if (wk > 0.005f) { g.setColour (P.ink.withAlpha (0.8f)); g.setFont (ghosty::font (12.0f, false)); g.drawText (juce::String (juce::roundToInt (wk * 100)) + "%", lab.withTrimmedTop (17.0f), juce::Justification::centred); }
         }
         // the puck (glow + solid core)
         const auto pc = P.isLight ? P.violet : P.accent1;

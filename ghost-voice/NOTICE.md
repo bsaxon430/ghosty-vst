@@ -25,6 +25,7 @@ source.zip`). None of this code may be copied into GhostBlock's paid plug-ins.
 | **OpenVPI audio-slicer** (openvpi/audio-slicer @ 9958eed, `slicer2.py`): CHOP's PHRASES (a vocal split at its silences). An untouched copy, run by `helper/chop_tools.py` in a separate Python process | `helper/third_party/openvpi-audio-slicer` | MIT, Team OpenVPI (`packaging/licenses/OPENVPI-AUDIO-SLICER-MIT.txt`) |
 | **WhisperX 3.3.1** (m-bain/whisperX) with faster-whisper "small" and the wav2vec2 word aligner: CHOP's WORDS. NOT inside the plug-in: the optional installer downloads it into the chop-tools folder and Ghost Voice runs it as a separate helper | downloaded by `helper/install-chop-tools.sh` | BSD-2-Clause (WhisperX), MIT (faster-whisper, Whisper), torchaudio's wav2vec2 model (MIT, fairseq) |
 | JUCE 8.0.14 (build 8; INTERSECT's pin) | fetched at build time | AGPLv3 option |
+| **Crimson Pro** and **Gloock** fonts: the type of THE GHOST CHOIR look (embedded in the plug-in) | `Source/UI/ChoirFonts.h` | SIL Open Font License 1.1, The Crimson Pro Project Authors / The Gloock Project Authors (`packaging/licenses/OFL-CrimsonPro.txt`, `OFL-Gloock.txt`) |
 | TERRAIN, the Spirit Board, the ghost art, the themes (snapshots of GhostBlock's shared code, see `Source/*/SNAPSHOT.txt`), the window, MOTION, everything else | `Source/`, `tests/` | GhostBlock's own code, released here under the AGPL-3.0 |
 
 ## Ideas we learned from

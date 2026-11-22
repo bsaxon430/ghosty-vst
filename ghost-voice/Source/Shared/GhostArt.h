@@ -1,6 +1,7 @@
 #pragma once
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "HandDraw.h"   // Ghost Voice build 10: the ghosts are drawn by hand
+#include <functional>
 
 // GhostBlock ghost art + palette, shared by both plugins.
 namespace ghosty
@@ -63,8 +64,25 @@ inline GhostLook lookFor (int index)
     return L;
 }
 
+// a host can draw the ghosts its own way (Ghost Voice: THE GHOST CHOIR's hooded singers). It gets the ghost's look, the
+// transform from the ghost's 280-unit drawing space (body about x 70..190, y 34..178) and returns true when it drew.
+inline std::function<bool (juce::Graphics&, const GhostLook&, const juce::AffineTransform&, bool, float)>& ghostPainter()
+{ static std::function<bool (juce::Graphics&, const GhostLook&, const juce::AffineTransform&, bool, float)> f; return f; }
+using GhostPainterFn = std::function<bool (juce::Graphics&, const GhostLook&, const juce::AffineTransform&, bool, float)>;
+// the hook is set only for the length of one paint (message thread), so each window draws its ghosts its own way and two windows
+// never share or clear each other's: swap the window's own painter in, swap it back out (no copy, no allocation)
+struct ScopedGhostPainter
+{
+    explicit ScopedGhostPainter (GhostPainterFn& own) : fn (own) { std::swap (ghostPainter(), fn); }
+    ~ScopedGhostPainter() { std::swap (ghostPainter(), fn); }
+    GhostPainterFn& fn;
+    ScopedGhostPainter (const ScopedGhostPainter&) = delete;
+    ScopedGhostPainter& operator= (const ScopedGhostPainter&) = delete;
+};
+
 inline void drawGhostRaw (juce::Graphics& g, const GhostLook& L, const juce::AffineTransform& t, bool locked, float alpha)
 {
+    if (auto& gp = ghostPainter(); gp && gp (g, L, t, locked, alpha)) return;
     const bool dark = L.body.getBrightness() < 0.3f;
     const auto ink = dark ? col::white : col::bg;
     auto P = [&] (const juce::Path& p) { auto q = p; q.applyTransform (t); return q; };

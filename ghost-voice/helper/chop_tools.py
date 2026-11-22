@@ -1,6 +1,8 @@
 # Ghost Voice CHOP tools (AGPL-3.0-only, like Ghost Voice; see ../NOTICE.md). Build 9.
-#   chop_tools.py phrases WAV OUT.json   -> PHRASES: OpenVPI's audio-slicer (slicer2.py, MIT, untouched copy in
-#                                           third_party/openvpi-audio-slicer) splits a vocal at its silences
+#   chop_tools.py phrases WAV OUT.json [--db_thresh DB] [--min_length MS] [--min_interval MS] [--hop_size MS] [--max_sil_kept MS]
+#                                        -> PHRASES: OpenVPI's audio-slicer (slicer2.py, MIT, untouched copy in
+#                                           third_party/openvpi-audio-slicer) splits a vocal at its silences. The options are
+#                                           slicer2.py's own (UNDER THE HOOD); left out, they are Ghost Voice's values below
 #   chop_tools.py words WAV OUT.json     -> WORDS: WhisperX (m-bain/whisperX 3.3.1, BSD-2) finds every word and when it starts / ends
 #   chop_tools.py status                 -> which of the two can run here
 # OUT.json: {"ok": true, "chops": [{"a": seconds, "b": seconds, "text": "..."}], "language": ".."} or {"ok": false, "error": ".."}
@@ -80,6 +82,22 @@ def status():
     return have
 
 
+# slicer2.py's own CLI option names -> phrases()'s arguments (UNDER THE HOOD's OpenVPI page passes them)
+PHRASE_OPTIONS = {"--db_thresh": ("db", float), "--min_length": ("min_length", int), "--min_interval": ("min_interval", int),
+                  "--hop_size": ("hop", int), "--max_sil_kept": ("max_sil_kept", int)}
+
+
+def phrase_options(argv):
+    opts = {}
+    i = 0
+    while i + 1 < len(argv):
+        if argv[i] in PHRASE_OPTIONS:
+            name, kind = PHRASE_OPTIONS[argv[i]]
+            opts[name] = kind(argv[i + 1])
+        i += 2
+    return opts
+
+
 def main():
     if len(sys.argv) >= 2 and sys.argv[1] == "status":
         print(json.dumps(status()))
@@ -90,7 +108,7 @@ def main():
     cmd, wav, out = sys.argv[1], sys.argv[2], sys.argv[3]
     try:
         print("GV_STEP 1/2 listening", flush=True)
-        r = phrases(wav) if cmd == "phrases" else words(wav, os.environ.get("GHOSTVOICE_WORDS_MODEL", "small"),
+        r = phrases(wav, **phrase_options(sys.argv[4:])) if cmd == "phrases" else words(wav, os.environ.get("GHOSTVOICE_WORDS_MODEL", "small"),
                                                           os.environ.get("GHOSTVOICE_WORDS_LANGUAGE") or None)
     except Exception as e:  # noqa: BLE001
         r = {"ok": False, "error": "%s: %s" % (type(e).__name__, e)}

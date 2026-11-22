@@ -608,9 +608,12 @@ static juce::String overlapsIn (juce::Component& ed)
         if (c->isVisible() && ! c->getBounds().isEmpty() && dynamic_cast<BubbleFx*> (c) == nullptr) cs.push_back (c);
     for (auto* c : cs)
         if (! ed.getLocalBounds().contains (c->getBounds())) bad << " [" << c->getName() << c->getBounds().toString() << " outside]";
+    // an intended overlay (marked "overlay" and passing every click through, itself and its children) may sit over another part;
+    // it still has to stay inside the window
+    auto overlay = [] (juce::Component* c) { bool self = true, kids = true; c->getInterceptsMouseClicks (self, kids); return ! self && ! kids && (bool) c->getProperties()["overlay"]; };
     for (size_t i = 0; i < cs.size(); ++i)
         for (size_t j = i + 1; j < cs.size(); ++j)
-            if (cs[i]->getBounds().intersects (cs[j]->getBounds()))
+            if (! overlay (cs[i]) && ! overlay (cs[j]) && cs[i]->getBounds().intersects (cs[j]->getBounds()))
             {
                 auto nm = [] (juce::Component* c) { auto* b = dynamic_cast<juce::Button*> (c); return (b != nullptr ? b->getButtonText() : juce::String (typeid (*c).name())) + " " + c->getBounds().toString(); };
                 bad << " [" << nm (cs[i]) << " x " << nm (cs[j]) << "]";
@@ -683,16 +686,45 @@ static void windowAndFreshStartTests()
         }
         check (cut.isEmpty(), "no text is cut off: every tab and every button's words fit whole" + cut);
         // ONE about / credits item, and it names the open-source parts (the window itself does not)
-        ed->setSize (1200, 760); ed->showPage (Editor::lab);
-        int abouts = 0; for (auto* k : ed->getChildren()) if (auto* b = dynamic_cast<juce::Button*> (k)) if (b->getButtonText().containsIgnoreCase ("credits") && b->isVisible()) ++abouts;
-        check (abouts == 1, "exactly one ABOUT / CREDITS item in the window");
+        // (fix-blur round, Brandon 2026-11-22: "remove the credits, hide them somewhere else") it is no longer in the left column on
+        // any page; it is one small entry at the foot of Settings
+        ed->setSize (1200, 760);
+        auto countAbouts = [&]
+        {
+            int n = 0;
+            std::function<void (juce::Component&)> walk = [&] (juce::Component& c)
+            {
+                for (auto* k : c.getChildren())
+                {
+                    if (! k->isVisible()) continue;
+                    if (auto* b = dynamic_cast<juce::Button*> (k)) if (b->getButtonText().containsIgnoreCase ("credits")) ++n;
+                    walk (*k);
+                }
+            };
+            walk (*ed);
+            return n;
+        };
+        juce::String inColumn;
+        for (int pg = 0; pg < Editor::kPages; ++pg)
+            if (pg != Editor::prefs) { ed->showPage (pg); if (countAbouts() != 0) inColumn << " page " << pg; }
+        check (inColumn.isEmpty(), "no ABOUT / CREDITS item in the main window's left column (only Settings has it)" + inColumn);
+        ed->showPage (Editor::prefs);
+        int abouts = 0; juce::Button* about = nullptr;
+        for (auto* k : ed->getChildren()) if (auto* b = dynamic_cast<juce::Button*> (k)) if (b->getButtonText().containsIgnoreCase ("credits") && b->isVisible()) { ++abouts; about = b; }
+        check (abouts == 1 && countAbouts() == 1, "exactly one ABOUT / CREDITS item in the window (in Settings)");
+        check (about != nullptr && about->getX() >= 206 && about->getBottom() <= ed->getHeight() && about->getBottom() >= ed->getHeight() - 80,
+               "the ABOUT / CREDITS item sits at the foot of the Settings page, not in the left column");
+        if (about != nullptr) { about->triggerClick(); juce::MessageManager::getInstance()->runDispatchLoopUntil (20); }
+        check (ed->creditsShown(), "the Settings entry opens the ABOUT / CREDITS page");
+        ed->showCredits (false);
         const auto cr = Editor::creditsText();
         check (cr.contains ("Seed-VC") && cr.contains ("GPL-3.0") && cr.contains ("https://github.com/Plachtaa/seed-vc") && cr.contains ("WORLD") && cr.contains ("JUCE") && cr.contains ("AGPL")
                && cr.contains ("INTERSECT") && cr.contains ("https://github.com/tucktuckg00se/INTERSECT") && cr.contains ("Flayr Chop") && cr.contains ("https://github.com/FlayrLabs/flayr-chop"),
                "ABOUT / CREDITS names each project, its licence and its source link");
         ed->showCredits (true); check (ed->creditsShown(), "ABOUT / CREDITS opens"); ed->showCredits (false); check (! ed->creditsShown(), "and closes");
     }
-    {   // NAMES: no open-source project names on the window, any page, any engine (only ABOUT / CREDITS has them)
+    {   // NAMES: no open-source project names on the window, any page, any engine (only ABOUT / CREDITS has them, and UNDER THE HOOD,
+        // which is explicitly the ORIGINAL CONTROLS page: its sub-tab titles and the engines' own option names are the projects')
         const char* names[] { "Seed-VC", "SEED-VC", "seed-vc", "CAMPPlus", "Whisper", "BigVGAN", "RMVPE", "Plachtaa", "VocalSet", "Bencho", "Crypta",
                               "INTERSECT", "Intersect", "Flayr", "Signalsmith", "Bungee", "VelociLoops", "WhisperX", "whisperx", "OpenVPI" };
         int scanned = 0, seen = 0;
@@ -703,6 +735,7 @@ static void windowAndFreshStartTests()
             {
                 juce::StringArray texts;
                 if (&c != &root && ! c.isVisible()) return;   // (the window itself is not on a screen here)
+                if (dynamic_cast<HoodPage*> (&c) != nullptr) return;   // (the one exemption: UNDER THE HOOD's own page; everything around it is checked)
                 if (auto* b = dynamic_cast<juce::Button*> (&c)) texts.add (b->getButtonText());
                 if (auto* t = dynamic_cast<juce::SettableTooltipClient*> (&c)) texts.add (t->getTooltip());
                 if (auto* cb = dynamic_cast<juce::ComboBox*> (&c)) for (int i = 0; i < cb->getNumItems(); ++i) texts.add (cb->getItemText (i));
@@ -728,7 +761,14 @@ static void windowAndFreshStartTests()
         // from the helper's messages, which pass through uiWords:
         check (uiWords ("measuring with CAMPPlus: Seed-VC's Whisper / BigVGAN / RMVPE").containsIgnoreCase ("seed") == false
                && ! uiWords ("SEED-VC: loading Seed-VC").contains ("SEED"), "helper / installer messages are shown in plain words");
-        check (hits.isEmpty() && seen > 300, "no open-source project names on any page, button, tooltip, menu or status line (only in ABOUT / CREDITS; "
+        {   // the exemption is UNDER THE HOOD's page only: it is not empty, and nothing else in the window is a HoodPage
+            ed->showPage (Editor::hood);
+            int hoods = 0; std::function<void (juce::Component&)> count = [&] (juce::Component& c) { if (dynamic_cast<HoodPage*> (&c) != nullptr) ++hoods; for (auto* k : c.getChildren()) count (*k); };
+            count (*ed);
+            check (hoods == 1 && ed->hoodPage() != nullptr && ed->hoodPage()->tabTitle (HoodPage::intersectSound).contains ("INTERSECT"),
+                   "the names exemption covers exactly one component, UNDER THE HOOD's page (its sub-tabs carry the projects' names)");
+        }
+        check (hits.isEmpty() && seen > 300, "no open-source project names on any page outside UNDER THE HOOD, button, tooltip, menu or status line (only there and in ABOUT / CREDITS; "
                + juce::String (seen) + " texts on " + juce::String (scanned) + " page views checked)" + hits);
     }
     {   // FRESH START: two instances in one process; changing one leaves the other at factory defaults; destroy + recreate = defaults
@@ -1166,6 +1206,198 @@ static void chopTests (const juce::File& shots)
     }
 }
 
+// UNDER THE HOOD = the ORIGINAL CONTROLS page of every open-source engine (Brandon 2026-11-22)
+static void hoodOriginalsTests()
+{
+    using IP = IntersectProcessor;
+    Processor p; p.prepareToPlay (44100, 512);
+    auto& c = *p.chopper;
+    juce::String why;
+    check (c.loadFile (makeBeat ("hoodBeat.wav", 120.0, 4), why) && pumpUntil (p, [&] { return c.engineLoaded() && c.detected().ready; }), "HOOD: a clip is in");
+    c.autoMode = chop::AutoMode::even; c.chopCount = 4; c.autoChop(); pumpUntil (p, [&] { return (int) c.slices().size() == 4; });
+    std::unique_ptr<Editor> ed (dynamic_cast<Editor*> (p.createEditor()));
+    ed->showPage (Editor::hood);
+    auto* h = ed->hoodPage();
+    // 1. a sub-tab per engine
+    {
+        const juce::StringArray want { "SEED-VC", "INTERSECT  SOUND", "INTERSECT  AUTO CHOP", "OPENVPI  PHRASES", "FLAYR CHOP" };
+        bool ok = HoodPage::kTabs == 5;
+        for (int i = 0; i < HoodPage::kTabs; ++i)
+        {
+            h->showTab (i);
+            ok = ok && h->tab() == i && h->tabTitle (i) == want[i] && (i == 0 ? h->panel (i) == nullptr : (h->panel (i) != nullptr && h->panel (i)->isVisible()));
+            for (int k = 1; k < HoodPage::kTabs; ++k) if (k != i) ok = ok && ! h->panel (k)->isVisible();
+        }
+        check (ok, "UNDER THE HOOD has a sub-tab per engine: SEED-VC, INTERSECT SOUND, INTERSECT AUTO CHOP, OPENVPI PHRASES, FLAYR CHOP");
+        h->showTab (HoodPage::seedvc);
+        check (h->shownRows() == 14 && h->subLine().contains ("neural engine"), "the SEED-VC sub-tab is the same 14-option page");
+    }
+    // 2. every INTERSECT field of its SignalChainBar has its control, under INTERSECT's own name
+    h->showTab (HoodPage::intersectSound);
+    auto* snd = h->panel (HoodPage::intersectSound);
+    {
+        const std::pair<int, const char*> want[] {
+            { IP::FieldBpm, "BPM" }, { IP::FieldPitch, "PITCH" }, { IP::FieldCentsDetune, "TUNE" }, { IP::FieldStretchEnabled, "STRETCH" }, { IP::FieldAlgorithm, "ALGO" },
+            { IP::FieldRepitchMode, "MODE" }, { IP::FieldTonality, "TONAL" }, { IP::FieldFormant, "FMNT" }, { IP::FieldFormantComp, "FMNT C" }, { IP::FieldGrainMode, "GRAIN" },
+            { IP::FieldFilterType, "TYPE" }, { IP::FieldFilterSlope, "SLOPE" }, { IP::FieldFilterCutoff, "CUT" }, { IP::FieldFilterReso, "RESO" }, { IP::FieldFilterDrive, "DRIVE" },
+            { IP::FieldFilterAsym, "ASYM" }, { IP::FieldFilterKeyTrack, "KEY" }, { IP::FieldFilterEnvAmount, "AMT" }, { IP::FieldFilterEnvAttack, "ATK" }, { IP::FieldFilterEnvDecay, "DEC" },
+            { IP::FieldFilterEnvSustain, "SUS" }, { IP::FieldFilterEnvRelease, "REL" }, { IP::FieldAttack, "ATK" }, { IP::FieldDecay, "DEC" }, { IP::FieldSustain, "SUS" },
+            { IP::FieldRelease, "REL" }, { IP::FieldReleaseTail, "TAIL" }, { IP::FieldVolume, "GAIN" }, { IP::FieldReverse, "REV" }, { IP::FieldLoop, "LOOP" },
+            { IP::FieldCrossfade, "FADE" }, { IP::FieldMuteGroup, "MUTE" }, { IP::FieldOneShot, "1SHOT" }, { IP::FieldOutputBus, "OUT" } };
+        juce::String missing;
+        for (auto& [f, n] : want) { auto* cell = snd->find (f); if (cell == nullptr || cell->name != n || cell->plain.isEmpty()) missing << " " << n; }
+        for (int id : { (int) IP::FieldFilterEnabled, (int) hoodui::idSetBpm, (int) hoodui::idVoices, (int) hoodui::idRoot, (int) hoodui::idSlices, (int) hoodui::idNote })
+            if (! snd->hasControl (id)) missing << " #" << id;
+        check (missing.isEmpty(), "INTERSECT SOUND has all 34 of its SignalChainBar controls under its own names, each with a plain line, plus FILTER ON/OFF, SET BPM, "
+                                  "and the context row's NOTE, SLICES, ROOT and VOICES" + missing);
+        auto* algo = snd->find (IP::FieldAlgorithm); auto* loop = snd->find (IP::FieldLoop); auto* type = snd->find (IP::FieldFilterType);
+        check (algo != nullptr && algo->choices == juce::StringArray { "Repitch", "Signalsmith", "Bungee" } && loop->choices == juce::StringArray { "Off", "Loop", "PP" }
+               && type->choices == juce::StringArray { "LP", "HP", "BP", "NT" }, "its choices are INTERSECT's own option names (ALGO Repitch / Signalsmith / Bungee ...)");
+    }
+    // 3. the same values as CHOP's SOUND panel
+    {
+        snd->setScope (true);
+        ed->chopPage()->selectChop (2); snd->sync();
+        auto soundSlider = [&] (const juce::String& name) -> juce::Slider*
+        {
+            juce::Slider* found = nullptr;
+            std::function<void (juce::Component&)> walk = [&] (juce::Component& k) { if (auto* sl = dynamic_cast<juce::Slider*> (&k)) if (sl->getTooltip().startsWith (name + ":")) found = sl; for (auto* x : k.getChildren()) walk (*x); };
+            walk (*ed->chopPage()); return found;
+        };
+        check (snd->touch (IP::FieldPitch, 5.0f) && snd->touch (IP::FieldAttack, 250.0f) && snd->touch (IP::FieldFilterEnabled, 1.0f), "HOOD: PITCH, ATK and the filter are set on chop 3");
+        pump (p, 120); snd->sync();
+        check (snd->touch (IP::FieldFilterReso, 40.0f), "and RESO (the filter is on now)");
+        pump (p, 120);
+        ed->chopPage()->selectChop (2);
+        auto *pitch = soundSlider ("PITCH"), *atk = soundSlider ("ATK"), *reso = soundSlider ("RESO");
+        check (near (c.sliceParam (2, IP::FieldPitch), 5.0, 1e-4) && near (c.sliceParam (2, IP::FieldAttack), 0.25, 1e-4) && near (c.sliceParam (2, IP::FieldFilterReso), 40.0, 1e-3),
+               "a control on UNDER THE HOOD writes INTERSECT's own value (PITCH +5 st, ATK 250 ms, RESO 40 %)");
+        check (pitch != nullptr && atk != nullptr && reso != nullptr && near (pitch->getValue(), 5.0, 1e-4) && near (atk->getValue(), 250.0, 0.5) && near (reso->getValue(), 40.0, 0.05),
+               "CHOP's SOUND panel shows the same values (PITCH +5, ATK 250 ms, RESO 40 %)");
+        c.setSliceParam (2, IP::FieldVolume, -6.0f); pump (p, 120); snd->sync();
+        check (near (snd->find (IP::FieldVolume)->value, -6.0, 1e-4) && snd->find (IP::FieldVolume)->own, "and the other way: GAIN set from CHOP shows on UNDER THE HOOD (as the chop's own)");
+        check (! snd->find (IP::FieldFormantComp)->on && ! snd->find (IP::FieldGrainMode)->on && snd->find (IP::FieldRepitchMode)->on && ! snd->find (IP::FieldOutputBus)->on
+               && ! snd->find (IP::FieldBpm)->on && ! snd->find (IP::FieldCrossfade)->on,
+               "greyed when they do nothing: FMNT C / GRAIN on Repitch, BPM with STRETCH off, FADE with LOOP off, OUT (one output)");
+        // SAMPLE: the clip's own value reaches every chop that doesn't set its own
+        snd->setScope (false); snd->sync();
+        check (snd->touch (IP::FieldVolume, -3.0f), "HOOD SAMPLE tab: GAIN -3 dB for the clip");
+        pump (p, 120); snd->sync();
+        check (near (c.sampleParam (IP::FieldVolume), -3.0, 1e-4) && near (c.sliceParam (1, IP::FieldVolume), -3.0, 1e-4) && near (c.sliceParam (2, IP::FieldVolume), -6.0, 1e-4),
+               "SAMPLE sets the clip's own level: chop 2 follows it, chop 3 keeps its own");
+        snd->setScope (true);
+    }
+    // 4. INTERSECT's AUTO CHOP: SPLIT EQUAL (DIV) and SPLIT TRANSIENTS make chops, with undo
+    {
+        h->showTab (HoodPage::intersectAutoChop);
+        auto* ac = h->panel (HoodPage::intersectAutoChop);
+        check (ac->hasControl (hoodui::idSens) && ac->hasControl (hoodui::idMin) && ac->hasControl (hoodui::idDiv) && ac->find (hoodui::idSens)->value == 50.0f
+               && ac->find (hoodui::idMin)->value == 100.0f && ac->find (hoodui::idDiv)->value == 16.0f, "INTERSECT AUTO CHOP: SENS 50, MIN 100 ms, DIV 16 (its own defaults)");
+        ed->chopPage()->selectChop (1); ac->sync();
+        check (ac->touch (hoodui::idDiv, 3.0f) && c.split.div == 3, "DIV writes the setting");
+        const auto before = c.chops;
+        check (ac->pressButton ("SPLIT EQUAL") && c.chops.size() == before.size() + 2 && c.chops[1].a == before[1].a && c.chops[3].b == before[1].b, "SPLIT EQUAL: chop 2 becomes 3 equal chops");
+        check (pumpUntil (p, [&] { return (int) c.slices().size() == (int) c.chops.size(); }), "and they are on the keys");
+        check (c.undo() && c.chops == before, "Cmd+Z takes the split back");
+        pumpUntil (p, [&] { return (int) c.slices().size() == (int) c.chops.size(); });
+        c.setKeys (chop::KeysMode::whole); c.clearChops(); pumpUntil (p, [&] { return c.slices().size() == 1; });
+        ed->chopPage()->selectChop (0); ac->sync();
+        const auto pts = c.transientPoints (0, 50.0f, 100.0f);
+        check (pts.size() >= 8, "SPLIT TRANSIENTS finds the beat's hits with INTERSECT's own finder (" + juce::String ((int) pts.size()) + ")");
+        check (ac->pressButton ("SPLIT TRANSIENTS") && c.chops.size() == pts.size() + 1 && c.keys == chop::KeysMode::chops, "SPLIT TRANSIENTS chops the whole clip at them");
+        check (pumpUntil (p, [&] { return (int) c.slices().size() == (int) c.chops.size(); }), "and they play from C1");
+    }
+    // 5. OpenVPI's options: untouched, the helper's command line is exactly what it always was
+    {
+        const chop::Tools t;
+        const juce::File wav ("/x/clip.wav"), out ("/x/out.json");
+        const juce::StringArray old { "/usr/bin/env", "HF_HOME=" + chop::Tools::dir().getChildFile ("hf").getFullPathName(), "TORCH_HOME=" + chop::Tools::dir().getChildFile ("torch").getFullPathName(),
+                                      "PYTHONNOUSERSITE=1", "py", chop::Tools::script().getFullPathName(), "phrases", wav.getFullPathName(), out.getFullPathName() };
+        const chop::ChopEngine::PhraseSettings d;
+        check (d.isDefault() && d.db == -40.0f && d.minLength == 500 && d.minInterval == 150 && d.hop == 10 && d.maxSilKept == 200 && d.args().isEmpty()
+               && t.commandFor (chop::Tools::Kind::phrases, "py", wav, out, c.phrase.args()) == old, "untouched OpenVPI options: the exact same helper command line as before");
+        h->showTab (HoodPage::phrases);
+        auto* ph = h->panel (HoodPage::phrases);
+        c.autoMode = chop::AutoMode::hits; ph->sync();
+        check (ph->find (hoodui::idDb) != nullptr && ! ph->find (hoodui::idDb)->on, "OPENVPI PHRASES: greyed while AUTO CHOP isn't on PHRASES");
+        check (ph->pressButton ("USE PHRASES") && c.autoMode == chop::AutoMode::phrases && ph->find (hoodui::idDb)->on, "USE PHRASES switches AUTO CHOP to PHRASES");
+        check (ph->touch (hoodui::idDb, -35.0f) && ph->touch (hoodui::idMinLength, 400.0f), "db_thresh and min_length change");
+        const auto cmd = t.commandFor (chop::Tools::Kind::phrases, "py", wav, out, c.phrase.args());
+        check (cmd.joinIntoString (" ").endsWith ("--db_thresh -35.0 --min_length 400 --min_interval 150 --hop_size 10 --max_sil_kept 200"), "and go to the helper under slicer2.py's own names: " + cmd.joinIntoString (" ").fromLastOccurrenceOf ("out.json", false, false));
+        const auto py = juce::SystemStats::getEnvironmentVariable ("GHOSTVOICE_TEST_PHRASES_PYTHON", {});
+        if (py.isNotEmpty())
+        {   // the helper reads them: defaults given out loud = nothing given; changed ones change the result
+            std::vector<float> x; for (int k = 0; k < 3; ++k) { for (int i = 0; i < 30000; ++i) x.push_back (0.5f * (float) std::sin (0.05 * i)); x.insert (x.end(), 9000, 0.0f); }
+            auto f = tmp.getChildFile ("hoodPhrases.wav"); writeWav (f, x, 44100, 24);
+            auto run = [&] (juce::StringArray extra) -> juce::String
+            {
+                auto o = tmp.getChildFile ("hoodPhrases.json"); o.deleteFile();
+                juce::StringArray a { py, chop::Tools::script().getFullPathName(), "phrases", f.getFullPathName(), o.getFullPathName() }; a.addArray (extra);
+                juce::ChildProcess cp; if (! cp.start (a)) return "no start"; cp.readAllProcessOutput(); cp.waitForProcessToFinish (30000);
+                return o.loadFileAsString();
+            };
+            const auto plain = run ({}), spelled = run ({ "--db_thresh", "-40.0", "--min_length", "500", "--min_interval", "150", "--hop_size", "10", "--max_sil_kept", "200" }),
+                       longer = run ({ "--db_thresh", "-40.0", "--min_length", "500", "--min_interval", "300", "--hop_size", "10", "--max_sil_kept", "200" });
+            check (plain.contains ("\"ok\": true") && plain == spelled, "the helper with no options = with Ghost Voice's values spelled out (the same phrases)");
+            check (longer.contains ("\"ok\": true") && longer != plain, "and min_interval 300 ms (longer than the 204 ms gaps) changes what it finds");
+        }
+        else std::cout << "skip  the helper's own reading of the options (set GHOSTVOICE_TEST_PHRASES_PYTHON)" << std::endl;
+        check (ph->pressButton ("GHOST VOICE START") && c.phrase.isDefault(), "GHOST VOICE START puts them back");
+    }
+    // 6. FLAYR CHOP: its modes, the ones Ghost Voice has are live
+    {
+        h->showTab (HoodPage::flayr);
+        auto* fl = h->panel (HoodPage::flayr);
+        check (fl->touch (hoodui::idFlayrMode, 1.0f) && c.autoMode == chop::AutoMode::beats && fl->touch (hoodui::idFlayrPads, 8.0f) && c.chopCount == 8, "FLAYR CHOP: Every beat, 8 pads = EVERY BEAT, 8 chops");
+        check (! fl->touch (hoodui::idFlayrMode, 6.0f) && c.autoMode == chop::AutoMode::beats, "its Random (Flayr Chop's player tool) is greyed");
+        check (fl->pressButton ("CHOP") && c.chops.size() >= 4 && c.chops.size() <= 8, "CHOP chops the clip (" + juce::String ((int) c.chops.size()) + ")");
+    }
+    // 7. state: the new settings persist; an old project (without them) loads with today's values
+    {
+        c.phrase.db = -30.0f; c.phrase.minInterval = 200; c.split.sens = 70.0f; c.split.div = 8;
+        auto t = c.toTree();
+        chop::ChopEngine d; d.fromTree (t);
+        check (d.phrase.db == -30.0f && d.phrase.minInterval == 200 && d.split.sens == 70.0f && d.split.div == 8, "the OpenVPI and auto-chop settings are saved with the project");
+        auto old = t.createCopy();
+        for (auto k : { "phraseDb", "phraseMinLength", "phraseMinInterval", "phraseHop", "phraseMaxSilKept", "splitSens", "splitMinMs", "splitDiv" }) old.removeProperty (k, nullptr);
+        chop::ChopEngine o; o.phrase.db = -12.0f; o.split.div = 99; o.fromTree (old);
+        const chop::ChopEngine::SplitSettings sd;
+        check (o.phrase.isDefault() && o.split.sens == sd.sens && o.split.minMs == sd.minMs && o.split.div == sd.div && o.autoMode == c.autoMode && o.chopCount == c.chopCount
+               && o.chops == c.chops && o.keys == c.keys, "an old project (no new keys) loads with identical values: today's PHRASES and auto-chop settings, its chops and keys");
+        juce::StringArray oldKeys; for (int i = 0; i < old.getNumProperties(); ++i) oldKeys.add (old.getPropertyName (i).toString());
+        auto again = o.toTree(); bool same = true;
+        for (auto& k : oldKeys) same = same && (k == "engine" || again.getProperty (k) == old.getProperty (k));
+        check (same, "and every key it had keeps its meaning (saved again, each old key has the same value)");
+    }
+    // 8. the window: every sub-tab fills the page, nothing overlaps, DARK and LIGHT
+    {
+        juce::String bad;
+        for (auto th : { ghosty::themes::Theme::Dark, ghosty::themes::Theme::Light })
+        {
+            p.theme = th; ed->applyTheme();
+            for (int i = 0; i < HoodPage::kTabs; ++i)
+            {
+                h->showTab (i); ed->resized();
+                if (! ed->getLocalBounds().contains (h->getBounds())) bad << " page" << i;
+                if (auto* pn = h->panel (i))
+                {
+                    if (pn->getBounds() != h->getLocalBounds().withTrimmedTop (42)) bad << " fill" << i;
+                    const auto cs = pn->cells();
+                    for (int a = 0; a < cs.size(); ++a)
+                        for (int b = a + 1; b < cs.size(); ++b)
+                            if (cs[a]->isVisible() && cs[b]->isVisible() && cs[a]->getParentComponent() == cs[b]->getParentComponent() && cs[a]->getBounds().intersects (cs[b]->getBounds()))
+                                bad << " overlap" << i << ":" << cs[a]->name << "/" << cs[b]->name;
+                }
+                auto img = ed->createComponentSnapshot (ed->getLocalBounds(), true, 1.0f);
+                if (! img.isValid()) bad << " paint" << i;
+            }
+        }
+        p.theme = ghosty::themes::Theme::Dark; ed->applyTheme();
+        check (bad.isEmpty(), "every UNDER THE HOOD sub-tab fills the page with no overlapping controls, DARK and LIGHT" + bad);
+    }
+    ed = nullptr;
+}
+
 int main (int argc, char** argv)
 {
     juce::ScopedJuceInitialiser_GUI gui;
@@ -1206,6 +1438,7 @@ int main (int argc, char** argv)
     flowTests (shots);
     shotsAndEditor (shots);
     chopTests (shots);
+    hoodOriginalsTests();
     tmp.deleteRecursively();
     std::cout << (checks - fails) << " / " << checks << " checks passed" << std::endl;
     return fails;
