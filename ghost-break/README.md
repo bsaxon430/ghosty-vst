@@ -16,3 +16,9 @@ Built from `phantom-fx/CMakeLists.txt` with `-DPHANTOM_WITH_GHOST_BREAK=ON` (see
 Tests: `GhostBreakTests` (all checks), `GhostBreakTests breaks <folder>` (every file of a break pack loads and plays), `GhostBreakTests shot out.png [fxSlot]` (paints the screen).
 
 Built-in breaks and drums come from Mr. Mickens' own synthesised library (`ghosty-pro/Mickens/BreakLib.h`, `MkDrumKit.h`); Mr. Mickens itself is untouched.
+
+## NUDGE LINK (0.1.30)
+Every step, Ghost Break sends each bay's NUDGE move (in host quarter notes) to any Phantom FX in the same project
+(src/NudgeLink.h, identical to Phantom FX's src/rhythm/NudgeLink.h). A Phantom FX whose HAUNT EDIT has FOLLOW GHOST BREAK on
+moves its own audio earlier by the followed bay's move, with look-ahead FL Studio compensates. Live NUDGE moves and played-back
+automation both go out (Ghost Break reads the parameter at each step). Nothing about Ghost Break's own sound changes.

@@ -55,8 +55,36 @@ bool sameSeq (const Pattern& a, const Pattern& b, int bay) { for (int s = 0; s <
     return x == y || (x && y && x->user && y->user && x->family == y->family); }   // a file break is decoded again by each copy: the same file counts
 void soloBay (Processor& p, bool drumsOn) { for (int d = 0; d < kDrums; ++d) set (p, juce::String (drumPrefix (d)) + "level", drumsOn ? 0.75f : 0.0f); }
 
+// NUDGE LINK: what a Phantom FX in the project hears of each bay's NUDGE (live moves and automation both reach Ghost Break as the
+// parameter, read at each step), and nothing while the host is stopped
+void nudgeLink()
+{
+    using namespace ghostlink;
+    Processor p; p.prepareToPlay (48000.0, 512); Head head; head.bpm = 120;
+    set (p, "a_nudge", 3); set (p, "a_grid", 2); set (p, "b_nudge", 5); set (p, "b_grid", 1);   // A: 3 x 1/16, B: 5 x 1/8
+    render (p, 2.0, &head);
+    Receiver rx; double a = -1, b = -1; const double at = head.ppq - 1.0;   // a step a beat before the end
+    const bool gotA = rx.shiftAt (0, at, a), gotB = rx.shiftAt (1, at, b);
+    const int totA = (p.engine.patternNow() != nullptr && p.engine.patternNow()->brk[0] ? p.engine.patternNow()->brk[0]->slices : 32) * 4;
+    const int totB = (p.engine.patternNow() != nullptr && p.engine.patternNow()->brk[1] ? p.engine.patternNow()->brk[1]->slices : 32) * 4;
+    const double wantA = ((3 * 4) % totA) / 16.0, wantB = ((5 * 8) % totB) / 16.0;
+    check (gotA && gotB && std::abs (a - wantA) < 1.0e-9 && std::abs (b - wantB) < 1.0e-9,
+           "NUDGE LINK: each bay's move reaches the link (A " + juce::String (a, 4) + " / " + juce::String (wantA, 4) + " QN, B " + juce::String (b, 4) + " / " + juce::String (wantB, 4) + " QN)");
+    check (std::abs (rx.maxShift (0) - (totA - 1) / 16.0) < 1.0e-9, "NUDGE LINK: the longest move is the bay's break less a 64th (" + juce::String (rx.maxShift (0), 4) + " QN)");
+    // a live move: the next steps carry it, the earlier ones keep theirs
+    const double before = head.ppq; set (p, "a_nudge", 7);
+    { juce::AudioBuffer<float> buf (2, 512); juce::MidiBuffer m; for (int i = 0; i < 100; ++i) { buf.clear(); p.processBlock (buf, m); head.ppq += 512 / 48000.0 * 2.0; } }
+    double late = -1, early = -1; rx.shiftAt (0, head.ppq - 0.5, late); rx.shiftAt (0, before - 0.5, early);
+    check (std::abs (late - ((7 * 4) % totA) / 16.0) < 1.0e-9 && std::abs (early - wantA) < 1.0e-9, "NUDGE LINK: a live NUDGE move is sent from the next step on (" + juce::String (early, 4) + " -> " + juce::String (late, 4) + " QN)");
+    // TEMPO 2x: the beat runs twice as fast, so the same NUDGE is half the host's quarter notes
+    set (p, "tempo_mul", 2); { juce::AudioBuffer<float> buf (2, 512); juce::MidiBuffer m; for (int i = 0; i < 100; ++i) { buf.clear(); p.processBlock (buf, m); head.ppq += 512 / 48000.0 * 2.0; } }
+    double fast = -1; rx.shiftAt (0, head.ppq - 0.5, fast);
+    check (std::abs (fast - ((7 * 4) % totA) / 32.0) < 1.0e-9, "NUDGE LINK: at TEMPO 2x the move is in the beat's own time (" + juce::String (fast, 4) + " QN)");
+}
+
 void runAll()
 {
+    nudgeLink();
     Head head;
     { // 1. it plays: sound, no NaN, never over the limiter's ceiling
         Processor p; p.prepareToPlay (48000.0, 512); set (p, "play", 1);

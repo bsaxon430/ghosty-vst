@@ -19,6 +19,7 @@
 #include "Duck.h"
 #include "SoftClip.h"
 #include "Crush.h"
+#include "NudgeLink.h"
 #include <array>
 #include <atomic>
 #include <memory>
@@ -91,6 +92,7 @@ public:
         for (int k = 0; k < 3; ++k) { dslots[(size_t) k] = std::make_unique<phantom::EffectSlot> (phantom::makeEffect (slotUnit (sStutter + k))); dslots[(size_t) k]->setPolicy (phantom::OversamplingPolicy::X2); }
         for (int b = 0; b < kBays; ++b) { dfilt[(size_t) b] = std::make_unique<phantom::EffectSlot> (makeSlotEffect (filterSlot (b))); dfilt[(size_t) b]->setPolicy (phantom::OversamplingPolicy::X2); }
     }
+    const Pattern* patternNow() const noexcept { return pat.load(); }   // the pattern playing (tests)
     phantom::EffectSlot& slot (int s) noexcept { return *slots[(size_t) juce::jlimit (0, kNumSlots - 1, s)]; }
     phantom::EffectSlot& drumSlot (int k) noexcept { return *dslots[(size_t) juce::jlimit (0, 2, k)]; }
     phantom::EffectSlot& drumFilter (int b) noexcept { return *dfilt[(size_t) juce::jlimit (0, kBays - 1, b)]; }   // FILTER +DRUMS: a bay's filter, on the drums   // the drums' stutter, its filter, its gate
@@ -178,6 +180,9 @@ public:
         if (std::abs (mul - lastMul) > 1.0e-9) { lastMul = mul; nPend = 0; lastB0 = -1.0e9; }   // TEMPO moved: start clean on the new grid
         const double b0 = c0 * mul;
         if (b0 < lastB0 - 0.01) nPend = 0;   // the transport jumped back: drop what was scheduled
+        // NUDGE LINK: a Phantom FX in the project (HAUNT EDIT, FOLLOW GHOST BREAK) moves its own audio by each bay's NUDGE
+        hostRun = hostPlaying; link.beat (hostPlaying, mul);
+        for (int b = 0; b < kBays; ++b) link.setMaxShift (b, (breakTotal64 (P, b) - 1) / 16.0 / mul);
         // MIDI: drum notes fire on their sample; F2 holds the stutter
         for (const auto md : midi)
         {
@@ -266,6 +271,21 @@ private:
         }
     }
 
+    // NUDGE LINK. A bay's break in 64th notes (an empty bay counts as the 32-slice default)
+    static int breakTotal64 (const Pattern* P, int b) noexcept { const mk::Break* br = P != nullptr ? P->brk[(size_t) b].get() : nullptr; return (br != nullptr ? juce::jmax (1, br->slices) : 32) * 4; }
+    // at step s (host quarter note ppq): how far each bay's NUDGE moves its break, as startPos64 applies it. A tied or resting step
+    // keeps the move of the slice before it (Ghost Break keeps playing that slice), so a Phantom FX following the bay does the same
+    void sendNudges (const Pattern* P, const std::array<BayP, kBays>& B, long s, double ppq) noexcept
+    {
+        const int st = (int) (((s % kSteps) + kSteps) % kSteps);
+        for (int b = 0; b < kBays; ++b)
+        {
+            const auto& q = B[(size_t) b]; const int total = breakTotal64 (P, b);
+            if (P == nullptr || P->seq[(size_t) b][(size_t) st].kind == kPlay || nudgeSent[b] < 0)
+                nudgeSent[b] = ((q.nudge * gridUnit64 (q.grid)) % total + total) % total;
+            link.step (b, (long long) s, ppq, nudgeSent[b] / 16.0 / lastMul);
+        }
+    }
     void chunk (float* outL, float* outR, float* const* aux, int n, const Pattern* P, const std::array<BayP, kBays>& B, const std::array<DrumP, kDrums>& D, const Globals& G,
                 double bpm, double spb, double b0, bool run, double fitBpm) noexcept
     {
@@ -283,7 +303,7 @@ private:
             for (long s = (long) std::floor (b0 * 4.0) - 1; s <= (long) std::ceil (b1 * 4.0); ++s)
             {
                 const double t = s * 0.25 + ((s & 1) ? sw : 0.0);
-                if (t >= b0 - 1.0e-9 && t < b1 - 1.0e-9) step (P, B, D, s, absPos + juce::jlimit (0, n - 1, (int) ((t - b0) * spb)), spb, fitBpm);   // the breaks keep their pitch at 1/2x and 2x
+                if (t >= b0 - 1.0e-9 && t < b1 - 1.0e-9) { step (P, B, D, s, absPos + juce::jlimit (0, n - 1, (int) ((t - b0) * spb)), spb, fitBpm); if (hostRun) sendNudges (P, B, s, t / lastMul); }   // the breaks keep their pitch at 1/2x and 2x
             }
         }
         else if (! run) uiStep.store (-1);
@@ -473,6 +493,7 @@ private:
         }
     }
 
+    ghostlink::Sender link; int nudgeSent[kBays] { -1, -1, -1, -1 }; bool hostRun = false;   // NUDGE LINK
     double sr = 48000, clock = 0, lastB0 = -1.0e9, lastMul = 1.0; long long absPos = 0; int fade = 72, latency = 0; bool first = true, stutNote = false;
     std::atomic<const Pattern*> pat { nullptr }; const Pattern* lastPat = nullptr; std::atomic<bool> restartFlag { false };
     std::array<std::unique_ptr<phantom::EffectSlot>, kNumSlots> slots;
