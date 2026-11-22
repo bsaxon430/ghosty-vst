@@ -591,6 +591,13 @@ struct StepEditor : juce::Component {
 // ---------------- the step grid: tracks are rows, time runs left -> right, 16 columns per page
 struct StepGrid : juce::Component {
     Ed& ed; bool painting = false, erasing = false; uint8_t paintVel = 0; int lastT = -1, lastS = -1;
+    // FL-style note editing (Brandon 2026-11-21): click a note = select it (cmd-click adds more); drag = move them; shift-drag = copy them;
+    // cmd+C / cmd+V copies and pastes at the spot you clicked; right-click (or right-drag) deletes; delete / backspace deletes the selection
+    std::vector<std::pair<int, int>> sel;                                       // selected notes (track, step)
+    struct Clip { int dt, ds; gb::Step st; }; static inline std::vector<Clip> clip;   // what cmd+C copied (shared by every Ghosty Beats grid)
+    bool dragging = false, dragCopy = false, dragMoved = false; int downT = -1, downS = -1, dragDT = 0, dragDS = 0; gb::Pattern dragOrig; const gb::Pattern* selPat = nullptr;
+    bool isSel(int t, int s) const { for (auto& q : sel) if (q.first == t && q.second == s) return true; return false; }
+    void validateSel() { if (selPat != &ed.pat()) { sel.clear(); selPat = &ed.pat(); } }   // another pattern: nothing selected
     int curT = 0, curS = 0;   // keyboard cursor
     gb::Pattern previewBuf; bool previewing = false;
     explicit StepGrid(Ed& e) : ed(e) { setWantsKeyboardFocus(true); }
@@ -646,9 +653,10 @@ struct StepGrid : juce::Component {
                     if (st.flam) { g.setColour(BG); g.drawVerticalLine((int) r.getX() + 3, r.getY() + 3, r.getBottom() - 3); g.drawVerticalLine((int) r.getX() + 5, r.getY() + 3, r.getBottom() - 3); }
                     if (st.pitch) { g.setColour(BG); g.setFont(font(8.5f)); g.drawText((st.pitch > 0 ? "+" : "") + juce::String(st.pitch), r.reduced(2, 1), juce::Justification::bottomRight); }
                 }
-                if (st.locked() || ed.proc.protectedStep(P, t, s)) { g.setColour((st.locked() ? AMBER : CYAN).withAlpha(0.9f)); g.drawRoundedRectangle(r.reduced(0.5f), 3, 1.0f); }   // amber = step lock, cyan = phrase / motif lock
+                if (st.locked() || ed.proc.protectedStep(P, t, s)) { g.setColour((st.locked() ? AMBER : CYAN).withAlpha(st.vel ? 0.9f : 0.3f)); g.drawRoundedRectangle(r.reduced(0.5f), 3, 1.0f); }   // (a locked empty step: faint)   // amber = step lock, cyan = phrase / motif lock
                 if (s == now) { if (SUMI) { g.setColour(RED.withAlpha(0.12f)); g.fillRoundedRectangle(r, 2); g.setColour(RED.withAlpha(0.9f)); g.drawRoundedRectangle(r, 2, 1.7f); } else if (NEON) { g.setColour(AMBER.withAlpha(0.18f)); g.fillRoundedRectangle(r.expanded(1.5f), 4); g.setColour(AMBER.withAlpha(0.85f)); g.drawRoundedRectangle(r, 3, 1.6f); } else { g.setColour(INK.withAlpha(0.65f)); g.drawRoundedRectangle(r, 3, 1.6f); } }
                 if (hasKeyboardFocus(false) && t == curT && s == curS) { g.setColour(GREEN); g.drawRoundedRectangle(r.expanded(1), 4, 1.4f); }
+                if (selPat == &P && isSel(t, s)) { g.setColour(INK.withAlpha(0.25f)); g.fillRoundedRectangle(r, 3); g.setColour(INK); g.drawRoundedRectangle(r.expanded(1.5f), 4, 2.2f); }   // selected
             }
         }
         for (int c = 0; c <= 16; c += 4) { g.setColour(INK.withAlpha(0.16f)); g.drawVerticalLine((int) (c * cw), 0, (float) getHeight()); }
@@ -663,14 +671,35 @@ struct StepGrid : juce::Component {
     bool cellAt(juce::Point<float> p, int& t, int& s) { t = (int) (p.y / rowH()); const int c = (int) (p.x / colW()); s = ed.stepPage * 16 + c; return t >= 0 && t < gb::kTracks && c >= 0 && c < 16 && s < ed.pat().lenOf(t); }
     void select(int t) { if (t != ed.track) { ed.track = t; if (ed.refresh) ed.refresh(); } }
     void mouseDown(const juce::MouseEvent& e) override {
-        grabKeyboardFocus(); int t, s; if (!cellAt(e.position, t, s)) return;
-        select(t); curT = t; curS = s;
+        grabKeyboardFocus(); validateSel(); int t, s; if (!cellAt(e.position, t, s)) return;
+        select(t); curT = t; curS = s; dragging = false; painting = false;
         auto& st = ed.pat().steps[(size_t) t][(size_t) s];
-        if (e.mods.isAltDown() || e.mods.isCommandDown()) { StepEditor::open(ed, t, s, *this, localAreaToGlobal(juce::Rectangle<int>((int) (s % 16 * colW()), (int) (t * rowH()), (int) colW(), (int) rowH()))); return; }
+        if (e.mods.isAltDown()) { StepEditor::open(ed, t, s, *this, localAreaToGlobal(juce::Rectangle<int>((int) (s % 16 * colW()), (int) (t * rowH()), (int) colW(), (int) rowH()))); return; }
+        if (e.mods.isRightButtonDown()) {   // right-click / right-drag deletes
+            ed.proc.pushUndo(); erasing = true; painting = true; paintVel = 0; lastT = t; lastS = s;
+            sel.erase(std::remove_if(sel.begin(), sel.end(), [&](auto& q) { return q.first == t && q.second == s; }), sel.end()); apply(t, s); return; }
+        if (st.vel) {   // a note: select it (cmd = add / remove), then a drag moves the selection (shift-drag copies it)
+            if (e.mods.isCommandDown()) { if (isSel(t, s)) sel.erase(std::remove_if(sel.begin(), sel.end(), [&](auto& q) { return q.first == t && q.second == s; }), sel.end()); else sel.push_back({ t, s }); repaint(); return; }
+            if (! isSel(t, s)) sel = { { t, s } };
+            dragging = true; dragCopy = e.mods.isShiftDown(); dragMoved = false; downT = t; downS = s; dragDT = dragDS = 0; dragOrig = ed.pat();
+            ed.proc.auditionTrack(t, st.vel / 127.0f); repaint(); return;
+        }
+        if (! sel.empty() && ! e.mods.isCommandDown()) { sel.clear(); repaint(); return; }   // with notes selected, a click on an empty spot just deselects (and marks where cmd+V goes)
         ed.proc.pushUndo();
-        erasing = e.mods.isRightButtonDown(); painting = true; lastT = t; lastS = s;
-        paintVel = erasing ? 0 : (st.vel && !e.mods.isShiftDown() ? 0 : (uint8_t) (e.mods.isShiftDown() ? 127 : 100));   // click toggles; shift = accent; right-drag erases
+        erasing = false; painting = true; lastT = t; lastS = s;
+        paintVel = (uint8_t) (e.mods.isShiftDown() ? 127 : 100);   // click / drag on empty cells draws notes; shift = accent
         apply(t, s);
+    }
+    void dragTo(int t, int s) {   // move (or copy) the selection by the mouse's offset in cells; the pattern is rebuilt from where the drag started
+        int dt = t - downT, ds = s - downS;
+        for (auto& q : sel) { dt = juce::jlimit(-q.first, gb::kTracks - 1 - q.first, dt); }
+        for (auto& q : sel) { const int len = ed.pat().lenOf(juce::jlimit(0, gb::kTracks - 1, q.first + dt)); ds = juce::jlimit(-q.second, len - 1 - q.second, ds); }
+        if (dt == dragDT && ds == dragDS) return;
+        if (! dragMoved) { ed.proc.pushUndo(); dragMoved = true; }
+        dragDT = dt; dragDS = ds; auto& P = ed.pat(); P.steps = dragOrig.steps;
+        if (! dragCopy) for (auto& q : sel) { auto& o = P.steps[(size_t) q.first][(size_t) q.second]; const auto fl = o.flags; o = gb::Step(); o.flags = (uint8_t) (fl & 2); }
+        for (auto& q : sel) P.steps[(size_t) (q.first + dt)][(size_t) (q.second + ds)] = dragOrig.steps[(size_t) q.first][(size_t) q.second];
+        ed.live(); repaint();
     }
     void apply(int t, int s) {
         auto& st = ed.pat().steps[(size_t) t][(size_t) s];
@@ -678,11 +707,36 @@ struct StepGrid : juce::Component {
         else { if (st.vel == paintVel) return; if (!st.vel) { const auto fl = st.flags; st = gb::Step(); st.flags = fl; } st.vel = paintVel; ed.proc.auditionTrack(t, paintVel / 127.0f); }
         ed.live();
     }
-    void mouseDrag(const juce::MouseEvent& e) override { if (!painting) return; int t, s; if (cellAt(e.position, t, s) && t == lastT && s != lastS) { lastS = s; apply(t, s); } }
-    void mouseUp(const juce::MouseEvent&) override { painting = false; }
+    void mouseDrag(const juce::MouseEvent& e) override {
+        int t, s;
+        if (dragging) { const int c = juce::jlimit(0, 15, (int) (e.position.x / colW())); t = juce::jlimit(0, gb::kTracks - 1, (int) (e.position.y / rowH())); dragTo(t, ed.stepPage * 16 + c); return; }
+        if (!painting) return; if (cellAt(e.position, t, s) && t == lastT && s != lastS) { lastS = s; apply(t, s); } }
+    void mouseUp(const juce::MouseEvent&) override {
+        painting = false;
+        if (dragging) { dragging = false; if (dragMoved) { for (auto& q : sel) { q.first += dragDT; q.second += dragDS; } curT = sel.front().first; curS = sel.front().second; select(curT);
+                                                       if (ed.say) ed.say(juce::String(dragCopy ? "Copied " : "Moved ") + juce::String((int) sel.size()) + (sel.size() == 1 ? " note." : " notes.")); }
+                        repaint(); }
+    }
     void mouseDoubleClick(const juce::MouseEvent& e) override { int t, s; if (cellAt(e.position, t, s)) { auto& st = ed.pat().steps[(size_t) t][(size_t) s]; if (!st.vel) ed.edit([&] { st.vel = 100; }); StepEditor::open(ed, t, s, *this, localAreaToGlobal(juce::Rectangle<int>((int) (s % 16 * colW()), (int) (t * rowH()), (int) colW(), (int) rowH()))); } }
     bool keyPressed(const juce::KeyPress& k) override {
-        auto& P = ed.pat();
+        auto& P = ed.pat(); validateSel();
+        const bool cmd = k.getModifiers().isCommandDown(); const auto ch = juce::CharacterFunctions::toLowerCase(k.getTextCharacter() ? k.getTextCharacter() : (juce::juce_wchar) k.getKeyCode());
+        if (cmd && (ch == 'c' || ch == 'x')) {   // copy / cut the selected notes (or the one under the cursor)
+            auto from = sel; if (from.empty() && P.steps[(size_t) curT][(size_t) curS].vel) from = { { curT, curS } };
+            if (from.empty()) return true;
+            int t0 = gb::kTracks, s0 = gb::kMaxSteps; for (auto& q : from) { t0 = juce::jmin(t0, q.first); s0 = juce::jmin(s0, q.second); }
+            clip.clear(); for (auto& q : from) clip.push_back({ q.first - t0, q.second - s0, P.steps[(size_t) q.first][(size_t) q.second] });
+            if (ch == 'x') { ed.edit([&] { for (auto& q : from) { auto& o = P.steps[(size_t) q.first][(size_t) q.second]; const auto fl = o.flags; o = gb::Step(); o.flags = (uint8_t) (fl & 2); } }); sel.clear(); }
+            if (ed.say) ed.say(juce::String(ch == 'x' ? "Cut " : "Copied ") + juce::String((int) clip.size()) + (clip.size() == 1 ? " note" : " notes") + ": click a spot and press cmd+V.");
+            repaint(); return true; }
+        if (cmd && ch == 'v') {   // paste: the copied notes' top-left lands on the spot you clicked
+            if (clip.empty()) return true; std::vector<std::pair<int, int>> put;
+            ed.edit([&] { for (auto& c : clip) { const int t = curT + c.dt, s = curS + c.ds; if (t < gb::kTracks && s < P.lenOf(juce::jmin(t, gb::kTracks - 1))) { P.steps[(size_t) t][(size_t) s] = c.st; put.push_back({ t, s }); } } });
+            sel = put; if (ed.say) ed.say("Pasted " + juce::String((int) put.size()) + (put.size() == 1 ? " note." : " notes.")); repaint(); return true; }
+        if (cmd && ch == 'a') { sel.clear(); for (int t = 0; t < gb::kTracks; ++t) for (int s = 0; s < P.lenOf(t); ++s) if (P.steps[(size_t) t][(size_t) s].vel) sel.push_back({ t, s }); repaint(); return true; }
+        if (k == juce::KeyPress::escapeKey && ! sel.empty()) { sel.clear(); repaint(); return true; }
+        if ((k == juce::KeyPress::deleteKey || k == juce::KeyPress::backspaceKey) && ! sel.empty()) {
+            ed.edit([&] { for (auto& q : sel) { auto& o = P.steps[(size_t) q.first][(size_t) q.second]; const auto fl = o.flags; o = gb::Step(); o.flags = (uint8_t) (fl & 2); } }); sel.clear(); repaint(); return true; }
         if (k == juce::KeyPress::leftKey) curS = juce::jmax(0, curS - 1); else if (k == juce::KeyPress::rightKey) curS = juce::jmin(P.lenOf(curT) - 1, curS + 1);
         else if (k == juce::KeyPress::upKey) curT = juce::jmax(0, curT - 1); else if (k == juce::KeyPress::downKey) curT = juce::jmin(gb::kTracks - 1, curT + 1);
         else if (k == juce::KeyPress::returnKey) { auto& st = P.steps[(size_t) curT][(size_t) curS]; ed.edit([&] { if (st.vel) st = gb::Step(); else st.vel = 100; }); }

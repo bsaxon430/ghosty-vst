@@ -119,6 +119,7 @@ BeatsXProcessor::BeatsXProcessor()
     }
     rescanShared();
     applyKit(0, true);
+    loadDefaultTrap();   // Brandon's own Trap default, if he set one (a project the DAW restores replaces it, as always)
 }
 void BeatsXProcessor::saveSettings() {
     settings->setValue("favourites", favourites.joinIntoString("|")); settings->setValue("normalise", normaliseSamples); settings->setValue("midich", midiChannel);
@@ -366,6 +367,12 @@ void BeatsXProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiB
     if (own) { bpm = T.bpm; ppq = T.ppq; playing = T.playing; if (engine.internalPlay) engine.internalPlay = false; }
     else if (pos) { if (auto b = pos->getBpm()) bpm = *b; ppq = pos->getPpqPosition().orFallback(0.0); playing = pos->getIsPlaying(); }
     hostPresent.store(pos.hasValue(), std::memory_order_relaxed);
+    // SYNC: DAW (Brandon 2026-11-21): the DAW's transport is the boss. When it starts, Beats' own PLAY hands over to it; when it stops, Beats
+    // stops too, own PLAY included, and every ringing voice is cut (before, a beat started with Beats' PLAY kept going after STOP in FL).
+    if (! own && pos) {
+        if (playing && ! wasHostPlaying) engine.internalPlay = false;
+        else if (! playing && wasHostPlaying) { engine.internalPlay = false; engine.panic(); }
+    }
     if (!own && bpm > 0) hostBpm.store(bpm);   // the project tempo, even while the host is stopped (used for drag-out too)
     if (const double tf = tempoFactor(); tf != 1.0) { bpm *= tf; ppq *= tf; }   // TEMPO ½x / 2x: the clock runs at the multiple, still on the DAW's bars (ppq 0 = bar 1 for both)
     auto P = readParams(liveBpm()); if (!playing) bpm = P.bpm;

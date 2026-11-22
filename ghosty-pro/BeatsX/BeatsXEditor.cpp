@@ -102,22 +102,29 @@ struct PatternChip : juce::Component {
 };
 
 // SCRIPTS: the modules of this beat (click = edit, the box = on / off)
-struct ScriptList : juce::Component {
-    Ed& ed; int sel = 0; std::function<void(int)> onSelect;
+struct ScriptList : juce::Component {   // row 0: THIS BEAT (the pattern as a script, live); then the modules
+    Ed& ed; int sel = 0; bool live = true; std::function<void(int)> onSelect;
     explicit ScriptList(Ed& e) : ed(e) {}
+    void row(juce::Graphics& g, juce::Rectangle<float> r, bool on) {
+        if (GLASS) { glassui::sprites().draw(g, r, 7.0f, glassui::Row); if (on) { g.setColour(PURPLE.withAlpha(0.22f)); g.fillRoundedRectangle(r, 7.0f); } }
+        else { g.setColour(on ? PURPLE.withAlpha(0.45f) : CARD2); g.fillRoundedRectangle(r, 6); }
+    }
     void paint(juce::Graphics& g) override {
         auto& sc = ed.proc.model.scripts;
-        for (int i = 0; i < (int) sc.size(); ++i) { auto r = juce::Rectangle<float>(0, i * 32.0f, (float) getWidth(), 29);
-            if (GLASS) { glassui::sprites().draw(g, r, 7.0f, glassui::Row); if (i == sel) { g.setColour(PURPLE.withAlpha(0.22f)); g.fillRoundedRectangle(r, 7.0f); } }
-            else { g.setColour(i == sel ? PURPLE.withAlpha(0.45f) : CARD2); g.fillRoundedRectangle(r, 6); }
+        { auto r = juce::Rectangle<float>(0, 0, (float) getWidth(), 29); row(g, r, live);
+          auto dot = r.removeFromLeft(26).reduced(8); g.setColour(RED); g.fillEllipse(dot);
+          g.setColour(INK); g.setFont(font(12.0f)); g.drawText("THIS BEAT (live)", r.reduced(4, 0), juce::Justification::centredLeft, true); }
+        for (int i = 0; i < (int) sc.size(); ++i) { auto r = juce::Rectangle<float>(0, (i + 1) * 32.0f, (float) getWidth(), 29); row(g, r, ! live && i == sel);
             auto box = r.removeFromLeft(26).reduced(6); g.setColour(sc[(size_t) i].on ? GREEN : DIM); g.fillRoundedRectangle(box, 3);
             g.setColour(INK); g.setFont(font(12.0f)); g.drawText(sc[(size_t) i].name, r.reduced(4, 0), juce::Justification::centredLeft, true); }
-        if (sc.empty()) { g.setColour(GREY); g.setFont(font(11.5f, false)); g.drawFittedText("No modules yet. NEW starts one, LOAD MODULE has 6 examples.", getLocalBounds().reduced(6).withHeight(60), juce::Justification::topLeft, 3); }
+        if (sc.empty()) { g.setColour(GREY); g.setFont(font(11.5f, false)); g.drawFittedText("No modules yet. NEW starts one, LOAD MODULE has 6 examples.", getLocalBounds().reduced(6).withTrimmedTop(32).withHeight(60), juce::Justification::topLeft, 3); }
     }
     void mouseDown(const juce::MouseEvent& e) override {
-        auto& sc = ed.proc.model.scripts; const int i = e.y / 32; if (!juce::isPositiveAndBelow(i, (int) sc.size())) return;
+        auto& sc = ed.proc.model.scripts; const int r = e.y / 32;
+        if (r == 0) { live = true; if (onSelect) onSelect(-1); repaint(); return; }
+        const int i = r - 1; if (!juce::isPositiveAndBelow(i, (int) sc.size())) return;
         if (e.x < 26) { ed.edit([&] { sc[(size_t) i].on = !sc[(size_t) i].on; }); repaint(); return; }
-        sel = i; if (onSelect) onSelect(i); repaint();
+        live = false; sel = i; if (onSelect) onSelect(i); repaint();
     }
 };
 
@@ -208,6 +215,22 @@ struct BeatsXEditor::Content : juce::Component {
     MixPage mix { ed };
     MelodyTrackerView melView; DragOut melOut { "DRAG MELODY MIDI", false }, melBoth { "DRAG BEAT + MELODY MIDI", false }; juce::Label melHelp;   // MELODIC TRACKER (MelodyTracker.h)
     // scripts
+    // FOLLOW (Brandon 2026-11-21): while the song plays, the letters + the grid follow it (A, then B, C, D...); on a pattern longer
+    // than 16 steps the grid turns its page with the playhead (not while the mouse is on the grid, so editing isn't yanked away)
+    bool followHeld = false;
+    void followPlayback() {
+        const double b = proc.engine.uiBeat.load();
+        if (b < 0) { followHeld = false; return; }
+        const bool song = proc.apvts.getRawParameterValue("songmode")->load() > 0.5f && ! proc.model.song.empty();
+        if (song && ! followHeld) { const int up = proc.engine.uiPattern.load();
+            if (up != ed.patIdx() && juce::isPositiveAndBelow(up, gb::kPatterns)) { if (auto* pp = proc.apvts.getParameter("pattern")) pp->setValueNotifyingHost(pp->convertTo0to1((float) (up + 1))); ed.stepPage = 0; refreshAll(); } }
+        if (page != 0 || grid.isMouseOverOrDragging() || proc.engine.uiPattern.load() != ed.patIdx()) return;
+        const auto& P = ed.pat(); if (maxTrackLen() <= 16) return;
+        const long st = (long) std::floor((b - proc.engine.uiOrigin.load()) / gb::stepBeats(P.res) + 1e-9); if (st < 0) return;
+        const int pg = (int) ((st % juce::jmax(1, P.length)) / 16);
+        if (pg != ed.stepPage && pg <= (maxTrackLen() - 1) / 16) { ed.stepPage = pg; refreshAll(); }
+    }
+    int liveTick = 0, liveQuiet = 0; bool liveDirty = false, settingLive = false;
     ScriptList scriptList { ed }; juce::TextEditor scriptName, scriptCode; juce::Label scriptErr, scriptHelp;
     juce::TextButton scrNew { "NEW" }, scrApply { "APPLY" }, scrDel { "DELETE" }, scrSave { "SAVE MODULE" }, scrLoad { "LOAD MODULE" };
     // large layout extras
@@ -258,6 +281,9 @@ struct BeatsXEditor::Content : juce::Component {
         for (auto& k : gb::allKits()) kitBox.addItem(juce::String(k.name) + " kit", kitBox.getNumItems() + 1);
         kitBox.setSelectedItemIndex(proc.currentKit, juce::dontSendNotification);
         kitBox.onChange = [this] { if (proc.kitSource != "stock" && ! proc.builtinBanksLoaded) ed.say("Loading the banks...");
+            if (kitBox.getSelectedItemIndex() == 0 && proc.defaultTrapFile().existsAsFile()) {   // the Trap kit = Brandon's own default, when he set one
+                bool ok = false; ed.edit([&] { ok = proc.loadDefaultTrap(); }); refreshAll(); updGenBtn();
+                if (ok) { kitBox.setSelectedItemIndex(0, juce::dontSendNotification); ed.say("Loaded your Trap default."); return; } }
             ed.edit([&] { proc.applyKit(kitBox.getSelectedItemIndex(), true); proc.applySource(); }); refreshAll(); updGenBtn();
             ed.say("Loaded the " + kitBox.getText() + ": patterns A and B are a starter beat. Sounds from " + proc.sourceLabel() + "."); };
         add(-1, kitBox);
@@ -307,7 +333,8 @@ struct BeatsXEditor::Content : juce::Component {
         chBtn.onClick = [this] { proc.midiChannel = proc.midiChannel == 10 ? 1 : 10; proc.saveSettings(); subs(); }; add(-1, chBtn);
         for (int i = 0; i < gb::kPatterns; ++i) {
             auto* b = patBtns.add(new juce::TextButton(patName(i))); b->getProperties().set("tint", (juce::int64) patColour(i).getARGB());
-            b->onClick = [this, i] { if (auto* pp = proc.apvts.getParameter("pattern")) pp->setValueNotifyingHost(pp->convertTo0to1((float) (i + 1))); ed.stepPage = 0; refreshAll(); };
+            b->onClick = [this, i] { if (proc.engine.uiBeat.load() >= 0) followHeld = true;   // picked by hand while it plays: stop following until playback stops
+                                     if (auto* pp = proc.apvts.getParameter("pattern")) pp->setValueNotifyingHost(pp->convertTo0to1((float) (i + 1))); ed.stepPage = 0; refreshAll(); };
             add(-1, *b);
         }
         for (int i = 1; i <= gb::kMaxSteps; ++i) lenBox.addItem(juce::String(i) + " steps", i);
@@ -316,7 +343,20 @@ struct BeatsXEditor::Content : juce::Component {
         add(-1, lenBox); add(-1, resBox);
         copyPat.onClick = [this] { copiedPattern = ed.patIdx(); ed.say("Copied pattern " + patName(copiedPattern) + ". Pick another letter and PASTE."); };
         pastePat.onClick = [this] { if (copiedPattern < 0) return; ed.edit([&] { proc.model.patterns[(size_t) ed.patIdx()] = proc.model.patterns[(size_t) copiedPattern]; }); ed.say("Pasted into " + patName(ed.patIdx()) + "."); };
-        clearPat.onClick = [this] { ed.edit([&] { auto& pt = ed.pat(); for (int t = 0; t < gb::kTracks; ++t) if (!proc.model.tracks[(size_t) t].lock) for (auto& st : pt.steps[(size_t) t]) if (!st.locked()) st = gb::Step(); }); };
+        clearPat.onClick = [this] {   // CLEAR (the pattern): locked notes (BAKE, step LOCK, a LOCKed track) are asked about first (Brandon 2026-11-21)
+            auto& pt = ed.pat(); int locked = 0;
+            for (int t = 0; t < gb::kTracks; ++t) for (int s = 0; s < gb::kMaxSteps; ++s) { const auto& st = pt.steps[(size_t) t][(size_t) s]; if (st.vel && (st.locked() || proc.model.tracks[(size_t) t].lock)) ++locked; }
+            const auto name = juce::String::charToString((juce::juce_wchar) ('A' + ed.patIdx()));
+            auto clearAll = [this](bool lockedToo) { ed.edit([&] { auto& q = ed.pat(); for (int t = 0; t < gb::kTracks; ++t) if (lockedToo || !proc.model.tracks[(size_t) t].lock) for (auto& st : q.steps[(size_t) t]) if (lockedToo || !st.locked()) st = gb::Step(); }); refreshAll(); };
+            if (locked == 0) { clearAll(false); ed.say("Cleared pattern " + name + "."); return; }
+            juce::Component::SafePointer<Content> safe(this);
+            juce::AlertWindow::showAsync(juce::MessageBoxOptions().withIconType(juce::MessageBoxIconType::QuestionIcon).withTitle("Clear pattern " + name)
+                .withMessage("Pattern " + name + " has " + juce::String(locked) + " locked note" + (locked == 1 ? "" : "s") + " (from BAKE or LOCK).\nDelete the locked notes too?")
+                .withButton("YES, CLEAR EVERYTHING").withButton("KEEP THE LOCKED ONES").withButton("CANCEL").withAssociatedComponent(this),
+                [safe, clearAll, name, locked](int r) { if (!safe) return;
+                    if (r == 1) { clearAll(true); safe->ed.say("Cleared pattern " + name + ", locked notes too."); }
+                    else if (r == 2) { clearAll(false); safe->ed.say("Cleared pattern " + name + "; kept " + juce::String(locked) + " locked notes."); } });
+        };
         add(-1, copyPat); add(-1, pastePat); add(-1, clearPat);
         const char* pages[] = { "SEQUENCER", "SOUNDS", "PROCESS", "TRACKER", "RHYTHM LAB", "PADS", "SONG", "SCRIPTS", "MIX", "MELODY" };
         for (int i = 0; i < kPages; ++i) { auto* b = pageBtns.add(new juce::TextButton(pages[i])); b->onClick = [this, i] { setPage(i); }; add(-1, *b); }
@@ -344,7 +384,10 @@ struct BeatsXEditor::Content : juce::Component {
         prevSnd.onClick = [this] { stepSound(-1); }; nextSnd.onClick = [this] { stepSound(1); }; browseBtn.onClick = [this] { setPage(1); };
         loadSmp.getProperties().set("accent", true); loadSmp.onClick = [this] { pickFile(ed.track); };
         revBtn.setClickingTogglesState(true); revBtn.onClick = [this] { ed.edit([&] { ed.tr().reverse = revBtn.getToggleState(); }); };
-        lockBtn.setClickingTogglesState(true); lockBtn.getProperties().set("tint", (juce::int64) AMBER.getARGB()); lockBtn.onClick = [this] { ed.edit([&] { ed.tr().lock = lockBtn.getToggleState(); }); };
+        lockBtn.setClickingTogglesState(true); lockBtn.getProperties().set("tint", (juce::int64) AMBER.getARGB()); lockBtn.onClick = [this] {   // LOCK (the track). Lit too when the track has locked steps in this pattern (BAKE, the step editor); turning it off unlocks those as well
+            const bool on = lockBtn.getToggleState();
+            ed.edit([&] { ed.tr().lock = on; if (! on) for (auto& st : ed.pat().steps[(size_t) ed.track]) st.flags = (uint8_t) (st.flags & ~2); });
+            ed.say(on ? "Track locked: generators, FILL / RANDOM and CLEAR leave it alone." : "Track unlocked (its locked steps in this pattern too)."); refreshAll(); };
         chopBtn.onClick = [this] { ed.edit([&] { proc.chopTrack(ed.track, (float) chopSens.getValue() / 100.0f, true); }); ed.say("Chopped into " + juce::String((int) ed.tr().slices.size()) + " slices, laid on the track."); };
         rearrBtn.onClick = [this] { if (ed.tr().slices.empty()) { ed.say("CHOP the track first."); return; } ed.edit([&] { proc.rearrangeTrack(ed.track); }); ed.say("New slice order, same groove."); };
         chopSens.setRange(0, 100, 1); chopSens.setValue(50); chopSens.setDoubleClickReturnValue(true, 50); chopSens.setTextValueSuffix(" % sens"); chopSens.setColour(juce::Slider::trackColourId, CYAN.withAlpha(0.4f));
@@ -483,15 +526,16 @@ struct BeatsXEditor::Content : juce::Component {
         scriptName.setFont(font(13.0f)); scriptName.setTextToShowWhenEmpty("module name", GREY); add(7, scriptName);
         scriptCode.setMultiLine(true, false); scriptCode.setReturnKeyStartsNewLine(true); scriptCode.setTabKeyUsedAsCharacter(true); scriptCode.setFont(mono(13.5f));
         scriptCode.setScrollbarsShown(true); add(7, scriptCode);
+        scriptCode.onTextChange = [this] { if (scriptList.live && ! settingLive) { liveDirty = true; liveQuiet = 0; } };   // THIS BEAT: typing changes the beat (after a short pause)
         scriptErr.setFont(mono(12.0f)); scriptErr.setJustificationType(juce::Justification::topLeft); add(7, scriptErr);
         scriptHelp.setFont(mono(11.0f)); scriptHelp.setColour(juce::Label::textColourId, GREY); scriptHelp.setJustificationType(juce::Justification::topLeft);
         scriptHelp.setText("RULES, one per line:\n  if <condition> then <actions>\n  [else <actions>]\n\nVALUES\n  bar step pos beat track role\n  hit vel pitch prev_hit next_hit\n  density len seed\n  role: 1 kick 2 snare 3 hat\n        4 perc 5 808 6 open 7 break\n  + - * / %  == != < <= > >=\n  and or not  ( )\n  chance(p) rand() min max abs\n  floor every(n)\n\nACTIONS (comma between)\n  hit(vel) mute() vel(v)\n  accent(x) pitch(semis)\n  retrig(n, rate=16, accel=0,\n         ramp=0, vramp=0)\n  reverse() offset(%) cut(%)\n  nudge(%) prob(%) flam(ms)\n  decay(%) slice(n) destroy(%)\n  freeze(ms) frev(mask)\n\nSafe: no loops, no files,\nseeded (same beat = same\nresult), runs every step.", juce::dontSendNotification);
         add(7, scriptHelp);
         scrNew.onClick = [this] { if ((int) proc.model.scripts.size() >= gb::kScripts) { ed.say("8 modules at most."); return; }
             ed.edit([&] { proc.model.scripts.push_back({ "Module " + juce::String((int) proc.model.scripts.size() + 1), "# if bar % 4 == 3 and step > 12 then retrig(4, accel=0.3)\n", true }); });
-            scriptList.sel = (int) proc.model.scripts.size() - 1; loadScriptEditor(); };
+            scriptList.live = false; scriptList.sel = (int) proc.model.scripts.size() - 1; loadScriptEditor(); };
         scrApply.getProperties().set("accent", true); scrApply.onClick = [this] { applyScript(); };
-        scrDel.onClick = [this] { auto& sc = proc.model.scripts; if (!juce::isPositiveAndBelow(scriptList.sel, (int) sc.size())) return; ed.edit([&] { sc.erase(sc.begin() + scriptList.sel); }); scriptList.sel = juce::jmax(0, scriptList.sel - 1); loadScriptEditor(); };
+        scrDel.onClick = [this] { auto& sc = proc.model.scripts; if (scriptList.live || !juce::isPositiveAndBelow(scriptList.sel, (int) sc.size())) return; ed.edit([&] { sc.erase(sc.begin() + scriptList.sel); }); scriptList.sel = juce::jmax(0, scriptList.sel - 1); if (sc.empty()) scriptList.live = true; loadScriptEditor(); };
         scrSave.onClick = [this] { auto n = juce::File::createLegalFileName(scriptName.getText().trim()); if (n.isEmpty()) n = "Module"; auto d = scriptsDir();
             ed.say(d.getChildFile(n + ".ghostscript").replaceWithText(scriptCode.getText()) ? "Saved \"" + n + "\" in Documents/Ghosty/Ghosty Beats/Scripts (use it in any beat with LOAD MODULE)." : "Couldn't save."); };
         scrLoad.onClick = [this] {
@@ -505,7 +549,7 @@ struct BeatsXEditor::Content : juce::Component {
                 if (r >= 1 && r <= (int) gb::script::examples().size()) { name = gb::script::examples()[(size_t) r - 1].name; code = gb::script::examples()[(size_t) r - 1].code; }
                 else if (r >= 100) { name = files[r - 100].getFileNameWithoutExtension(); code = files[r - 100].loadFileAsString(); } else return;
                 if ((int) proc.model.scripts.size() >= gb::kScripts) { ed.say("8 modules at most."); return; }
-                ed.edit([&] { proc.model.scripts.push_back({ name, code, true }); }); scriptList.sel = (int) proc.model.scripts.size() - 1; self->loadScriptEditor(); self->applyScript(); });
+                ed.edit([&] { proc.model.scripts.push_back({ name, code, true }); }); scriptList.live = false; scriptList.sel = (int) proc.model.scripts.size() - 1; self->loadScriptEditor(); self->applyScript(); });
         };
         for (auto* b : { &scrNew, &scrApply, &scrDel, &scrSave, &scrLoad }) add(7, *b);
         // ---------------- PADS
@@ -549,8 +593,13 @@ struct BeatsXEditor::Content : juce::Component {
             juce::PopupMenu m; auto files = proc.beatsDir().findChildFiles(juce::File::findFiles, false, "*.ghostbeat"); files.sort();
             for (int i = 0; i < files.size(); ++i) m.addItem(i + 1, files[i].getFileNameWithoutExtension());
             if (files.isEmpty()) m.addItem(-1, "No saved beats yet (use SAVE BEAT)", false);
+            m.addSeparator(); m.addItem(9001, "Make this beat my Trap default (opens with Ghosty Beats + the Trap kit)");
+            if (proc.defaultTrapFile().existsAsFile()) m.addItem(9002, "Go back to the stock Trap kit default");
             juce::Component::SafePointer<Content> safe(this);
-            m.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(&loadBeatBtn), [safe, files](int r) { if (!safe) return; if (r > 0 && safe->proc.loadBeat(files[r - 1])) { safe->refreshAll(); safe->ed.say("Loaded \"" + files[r - 1].getFileNameWithoutExtension() + "\"."); } });
+            m.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(&loadBeatBtn), [safe, files](int r) { if (!safe) return;
+                if (r == 9001) { safe->ed.say(safe->proc.saveDefaultTrap() ? "This beat is now your Trap default." : "Couldn't save the default."); return; }
+                if (r == 9002) { safe->proc.defaultTrapFile().moveFileTo(safe->proc.beatsDir().getChildFile("Old Trap default.ghostbeat").getNonexistentSibling()); safe->ed.say("Back to the stock Trap default (yours is kept as \"Old Trap default\")."); return; }
+                if (r > 0 && safe->proc.loadBeat(files[r - 1])) { safe->refreshAll(); safe->ed.say("Loaded \"" + files[r - 1].getFileNameWithoutExtension() + "\"."); } });
         };
         // ghosts drifting through the header, like the Ghosty synth
         juce::Random r(7);
@@ -666,8 +715,13 @@ struct BeatsXEditor::Content : juce::Component {
         for (auto* b : perf) b->getProperties().set("tint", (juce::int64) PINK.getARGB());
         if (proc.look() != look) { proc.setLook(look); proc.saveSettings(); }
         repaint(); for (auto* c : getChildren()) c->repaint();
+        if (page == 7) loadScriptEditor();   // the script text takes the new look's ink
     }
     void tickGhosts() {
+        if (page == 7 && scriptList.live) {   // SCRIPTS: THIS BEAT follows the pattern (5 x a second); what you type goes into the pattern half a second after you stop
+            if (liveDirty) { if (++liveQuiet >= 15) applyLiveScript(false); }
+            else if (++liveTick % 6 == 0) refreshLiveScript();
+        }
         phase += 1.0f / 30.0f; uint32_t sum = 0; for (int t = 0; t < gb::kTracks; ++t) sum += proc.engine.trig[t].load();
         if (sum != lastTrig) { lastTrig = sum; bounce = 1.0f; } bounce *= 0.82f;
         for (auto& q : bgGhosts) q.a += q.sp * (1.0f + bounce * 3.0f);
@@ -761,7 +815,7 @@ struct BeatsXEditor::Content : juce::Component {
             layerKnobs[l * 3]->s.setValue(L.level, juce::dontSendNotification); layerKnobs[l * 3 + 1]->s.setValue(L.pitch, juce::dontSendNotification); layerKnobs[l * 3 + 2]->s.setValue(L.offset, juce::dontSendNotification); }
         scBox.setSelectedId(proc.model.scTrack < 0 ? 100 : proc.model.scTrack + 1, juce::dontSendNotification);
         for (int r = 0; r < 4; ++r) { const auto& R = tr.rules[(size_t) r]; ruleType[r]->setSelectedItemIndex(R.type, juce::dontSendNotification); fillRuleSrc(*ruleSrc[r], R.type); ruleSrc[r]->setSelectedId(R.src + 1, juce::dontSendNotification); ruleN[r]->setSelectedId(juce::jmax(1, (int) R.n), juce::dontSendNotification); rulePct[r]->setValue(R.pct, juce::dontSendNotification); }
-        revBtn.setToggleState(tr.reverse, juce::dontSendNotification); lockBtn.setToggleState(tr.lock, juce::dontSendNotification); chokeBox.setSelectedItemIndex(tr.choke, juce::dontSendNotification);
+        revBtn.setToggleState(tr.reverse, juce::dontSendNotification); { bool stepLocks = false; for (auto& st : ed.pat().steps[(size_t) ed.track]) if (st.locked()) { stepLocks = true; break; } lockBtn.setToggleState(tr.lock || stepLocks, juce::dontSendNotification); } chokeBox.setSelectedItemIndex(tr.choke, juce::dontSendNotification);
         tLenBox.setSelectedId(P.trackLen[(size_t) ed.track] == 0 ? 100 : P.trackLen[(size_t) ed.track], juce::dontSendNotification);
         bank1.setToggleState(tracker.bank == 0, juce::dontSendNotification); bank2.setToggleState(tracker.bank == 1, juce::dontSendNotification);
         kitBox.setSelectedItemIndex(proc.currentKit, juce::dontSendNotification);
@@ -770,8 +824,20 @@ struct BeatsXEditor::Content : juce::Component {
         for (auto* c : std::initializer_list<juce::Component*> { &grid, &lanes, &tl0, &tl1, &tl2, &tracker, &pads, &lane, &slices, &lanesVel, &trackerMini, &scriptList, &mix, &melView }) c->repaint();
     }
     static juce::File scriptsDir() { auto d = juce::File::getSpecialLocation(juce::File::userDocumentsDirectory).getChildFile("Ghosty").getChildFile("Ghosty Beats").getChildFile("Scripts"); d.createDirectory(); return d; }
+    juce::String liveText() { return gb::script::beatAsScript(proc.model, ed.patIdx(), juce::String::charToString((juce::juce_wchar) ('A' + ed.patIdx()))); }
+    void refreshLiveScript() {   // THIS BEAT follows the pattern: rewritten only when it changed (the cursor stays where it was); never while you're typing in it
+        if (liveDirty || scriptCode.hasKeyboardFocus(true)) return;
+        const auto t = liveText(); if (t == scriptCode.getText()) return;
+        const juce::ScopedValueSetter<bool> svs(settingLive, true);
+        const int caret = scriptCode.getCaretPosition(); scriptCode.setText(t, false); scriptCode.applyColourToAllText(INK); scriptCode.setCaretPosition(juce::jmin(caret, t.length()));
+    }
     void loadScriptEditor() {
         auto& sc = proc.model.scripts; scriptList.repaint();
+        scriptName.applyColourToAllText(INK); scriptCode.applyColourToAllText(INK);   // (a look change leaves old text in the old look's colour)
+        const bool live = scriptList.live; scriptName.setReadOnly(live); scriptCode.setReadOnly(false); scrDel.setEnabled(! live);   // (THIS BEAT can't be deleted or renamed)
+        if (live) { { const juce::ScopedValueSetter<bool> svs(settingLive, true); scriptName.setText("THIS BEAT (live)", false); scriptCode.setText(liveText(), false); }
+            liveDirty = false; scriptName.applyColourToAllText(INK); scriptCode.applyColourToAllText(INK);
+            scriptErr.setColour(juce::Label::textColourId, GREY); scriptErr.setText("The beat on the SEQUENCER as a script, both ways: change the pattern and this changes; edit this (a picture or a rule) and the pattern changes.", juce::dontSendNotification); return; }
         if (juce::isPositiveAndBelow(scriptList.sel, (int) sc.size())) { scriptName.setText(sc[(size_t) scriptList.sel].name, false); scriptCode.setText(sc[(size_t) scriptList.sel].code, false); checkScript(false); }
         else { scriptName.clear(); scriptCode.clear(); scriptErr.setText("", juce::dontSendNotification); }
     }
@@ -786,7 +852,18 @@ struct BeatsXEditor::Content : juce::Component {
         scriptErr.setColour(juce::Label::textColourId, GREEN); scriptErr.setText("OK: " + juce::String((int) prog->code.size()) + " operations, runs on every step of every track.", juce::dontSendNotification);
         return true;
     }
+    void applyLiveScript(bool loud) {   // THIS BEAT -> the pattern (an error leaves the pattern as it was and says where)
+        liveDirty = false; liveQuiet = 0;
+        auto pt = ed.pat(); juce::String err;
+        if (! gb::script::beatFromScript(scriptCode.getText(), pt, proc.roles(), err)) { scriptErr.setColour(juce::Label::textColourId, RED); scriptErr.setText(err + "  (the beat is unchanged until this is fixed)", juce::dontSendNotification); return; }
+        bool same = true; for (int t = 0; t < gb::kTracks && same; ++t) for (int i = 0; i < gb::kMaxSteps && same; ++i) same = std::memcmp(&pt.steps[(size_t) t][(size_t) i], &ed.pat().steps[(size_t) t][(size_t) i], sizeof(gb::Step)) == 0;
+        scriptErr.setColour(juce::Label::textColourId, GREEN);
+        if (same) { scriptErr.setText("OK: the script matches the beat.", juce::dontSendNotification); return; }
+        ed.edit([&] { ed.pat().steps = pt.steps; });
+        scriptErr.setText("Beat updated from the script (UNDO takes it back).", juce::dontSendNotification); if (loud) ed.say("Beat updated from the script.");
+    }
     void applyScript() {
+        if (scriptList.live) { applyLiveScript(true); return; }
         if (!checkScript(true)) return;
         auto& sc = proc.model.scripts; const auto nm = scriptName.getText().trim().isEmpty() ? juce::String("Module") : scriptName.getText().trim();
         ed.edit([&] { if (!juce::isPositiveAndBelow(scriptList.sel, (int) sc.size())) { if ((int) sc.size() >= gb::kScripts) return; sc.push_back({ nm, scriptCode.getText(), true }); scriptList.sel = (int) sc.size() - 1; }
@@ -1314,6 +1391,7 @@ void BeatsXEditor::timerCallback() {
     if (c.page == 1 && ++sharedTick >= 60) { sharedTick = 0; if (proc.rescanShared() > 0) { c.fillSounds(); c.ed.say("New shared sound(s) found in Documents/Ghosty/Shared Sounds (SHARED folder)."); } c.rescanIfNeeded(); }   // every 2 s while the browser is open
     c.updateSyncUi(); if (proc.playMode.load() != c.padHelpMode) c.updatePadHelp();
     { const bool on = proc.ownClock() ? proc.sync.isOwnPlaying() : proc.engine.internalPlay; if (c.playBtn.getToggleState() != on) c.playBtn.setToggleState(on, juce::dontSendNotification); }
+    c.followPlayback();
     const int pi = c.ed.patIdx(); if (!c.patBtns[pi]->getToggleState()) c.refreshAll();   // pattern changed by automation
     if (c.undoBtn.isEnabled() != proc.canUndo() || c.redoBtn.isEnabled() != proc.canRedo()) { c.undoBtn.setEnabled(proc.canUndo()); c.redoBtn.setEnabled(proc.canRedo()); }
 }

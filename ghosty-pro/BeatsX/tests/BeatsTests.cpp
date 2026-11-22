@@ -447,7 +447,10 @@ static void testRhythm(BeatsXProcessor& p) {
     std::printf("  %d evolving bars: export vs live (random host block sizes) max diff %.2e (24-bit quantisation ~6e-8)\n", bars, md);
     CHECK(bars == 16 && md < 1e-5, "export matches live");
     p.pushUndo(); const int made = p.bakePerformance(16); auto spec2 = p.makeSpec({ true, false, -1 }); auto baked = render(*spec2.snap, spec2.P, bars * 4 * 60.0 / spec.P.bpm, 512);
-    double mb = 0; for (int c = 0; c < 2; ++c) for (int i = 0; i < baked.getNumSamples(); ++i) mb = std::max(mb, (double) std::abs(live.getSample(c, i) - baked.getSample(c, i)));
+    // (the song loops now: the next pass's first hits can start a hair before bar 17 (swing / nudge / human) -- compared up to the last 16th)
+    const int cmpN = baked.getNumSamples() - (int) std::lround(0.25 * 60.0 / spec.P.bpm * 48000.0);
+    double mb = 0; int mbAt = -1; for (int c = 0; c < 2; ++c) for (int i = 0; i < cmpN; ++i) { const double d = std::abs(live.getSample(c, i) - baked.getSample(c, i)); if (d > mb) { mb = d; mbAt = i; } }
+    std::printf("  (worst diff at sample %d of %d)\n", mbAt, baked.getNumSamples());
     std::printf("  baked into %d patterns + song: max diff vs live %.2e\n", made, mb); CHECK(made >= 2 && mb < 1e-5, "bake == live");   // (128-step patterns: 8 bars of 1/16 each)
     p.undo();
 }
@@ -569,6 +572,73 @@ static void testDestruction2(BeatsXProcessor& p) {
 }
 
 // ---------------------------------------------------------------- scripts
+
+// (a look inside a saved beat: GHOSTY_BEAT=file.ghostbeat BeatsTests test showbeat prints patterns A..C as scripts)
+static void testShowBeat() {
+    const char* f = std::getenv("GHOSTY_BEAT"); if (! f) return; BeatsXProcessor p; juce::MemoryBlock mb; juce::File(juce::String::fromUTF8(f)).loadFileAsData(mb);
+    p.restoreState(mb.getData(), (int) mb.getSize(), true);
+    for (int i = 0; i < 3; ++i) std::printf("%s\n", gb::script::beatAsScript(p.model, i, juce::String::charToString((juce::juce_wchar) ('A' + i))).toRawUTF8());
+}
+
+// the grid edits like FL (Brandon 2026-11-21): a click selects a note (never deletes it); drag moves; shift-drag copies; cmd+C / cmd+V; right-click deletes
+static void testGridEdit() {
+    std::printf("[gridedit]\n");
+    BeatsXProcessor p; p.applyKit(0, true); std::unique_ptr<juce::AudioProcessorEditor> e(p.createEditor()); e->setSize(1200, 760); e->setVisible(true);
+    for (int i = 0; i < 3; ++i) juce::MessageManager::getInstance()->runDispatchLoopUntil(20);
+    bx::StepGrid* g = nullptr; std::function<void(juce::Component&)> find = [&](juce::Component& c) { if (auto* x = dynamic_cast<bx::StepGrid*>(&c)) g = x; for (auto* ch : c.getChildren()) find(*ch); }; find(*e);
+    CHECK(g != nullptr, "found the grid"); if (! g) return;
+    if (g->getWidth() < 100) g->setBounds(0, 0, 640, 320);
+    auto& P = g->ed.pat(); for (auto& row : P.steps) for (auto& st : row) st = gb::Step(); P.length = 16; for (auto& l : P.trackLen) l = 0; p.publish();
+    auto at = [&](int t, int s) { return juce::Point<float>((s % 16 + 0.5f) * g->colW(), (t + 0.5f) * g->rowH()); };
+    auto src = juce::Desktop::getInstance().getMainMouseSource(); const auto now = juce::Time::getCurrentTime();
+    auto ev = [&](juce::Point<float> pos, juce::Point<float> down, juce::ModifierKeys m) { return juce::MouseEvent(src, pos, m, 1.0f, 0, 0, 0, 0, g, g, now, down, now, 1, pos != down); };
+    auto click = [&](int t, int s, juce::ModifierKeys m) { auto q = at(t, s); g->mouseDown(ev(q, q, m)); g->mouseUp(ev(q, q, m)); };
+    auto drag = [&](int t, int s, int t2, int s2, juce::ModifierKeys m) { auto a = at(t, s), b = at(t2, s2); g->mouseDown(ev(a, a, m)); g->mouseDrag(ev(b, a, m)); g->mouseUp(ev(b, a, m)); };
+    const auto L = juce::ModifierKeys(juce::ModifierKeys::leftButtonModifier);
+    click(1, 0, L); CHECK(P.steps[1][0].vel == 100, "a click on an empty cell draws a note");
+    click(1, 0, L); CHECK(P.steps[1][0].vel == 100 && g->sel.size() == 1, "a click on a note selects it (and keeps it)");
+    drag(1, 0, 2, 3, L); CHECK(P.steps[1][0].vel == 0 && P.steps[2][3].vel == 100, "dragging a note moves it (down a track and along)");
+    drag(2, 3, 2, 6, juce::ModifierKeys(juce::ModifierKeys::leftButtonModifier | juce::ModifierKeys::shiftModifier)); CHECK(P.steps[2][3].vel == 100 && P.steps[2][6].vel == 100, "shift-drag copies it");
+    click(2, 3, juce::ModifierKeys(juce::ModifierKeys::leftButtonModifier | juce::ModifierKeys::commandModifier));
+    CHECK(g->sel.size() == 2, "cmd-click adds a second note to the selection (%d)", (int) g->sel.size());
+    g->keyPressed(juce::KeyPress('c', juce::ModifierKeys::commandModifier, 'c'));
+    click(5, 8, L); CHECK(g->sel.empty() && P.steps[5][8].vel == 0, "with notes selected, a click on an empty spot only deselects (and marks the paste spot)");
+    g->keyPressed(juce::KeyPress('v', juce::ModifierKeys::commandModifier, 'v'));
+    CHECK(P.steps[5][8].vel == 100 && P.steps[5][11].vel == 100, "cmd+V pastes the copied notes at the clicked spot, same spacing");
+    click(5, 8, juce::ModifierKeys(juce::ModifierKeys::rightButtonModifier)); CHECK(P.steps[5][8].vel == 0, "right-click deletes a note");
+    g->sel = { { 5, 11 } }; g->keyPressed(juce::KeyPress(juce::KeyPress::backspaceKey)); CHECK(P.steps[5][11].vel == 0, "backspace deletes the selection");
+    p.undo(); CHECK(P.steps[5][11].vel == 100, "UNDO brings it back");
+}
+
+// SCRIPTS: THIS BEAT (Brandon 2026-11-21): the pattern -> script -> pattern round trip is exact, and edits to a picture or a rule land in the pattern
+static void testScriptBeat() {
+    std::printf("[scriptbeat]\n");
+    BeatsXProcessor p; int kits = 0;
+    for (int k = 0; k < 8; ++k) {
+        p.applyKit(k, true); auto& pt = p.model.patterns[0];
+        if (k == 1) { pt.steps[2][3].roll = 3; pt.steps[2][3].rate = 8; pt.steps[2][3].accel = 30; pt.steps[2][3].vel = 90; pt.steps[1][5].vel = 70; pt.steps[1][5].pitch = -5; pt.steps[1][5].prob = 60; pt.steps[1][5].decay = 40; pt.steps[1][5].freeze = 12; pt.steps[1][5].flags = 1; pt.trackLen[3] = 12; }
+        const auto txt = gb::script::beatAsScript(p.model, 0, "A");
+        auto copy = pt; juce::String err; const bool ok = gb::script::beatFromScript(txt, copy, p.roles(), err);
+        CHECK(ok, "kit %d: the generated script reads back (%s)", k, err.toRawUTF8());
+        int diff = 0; for (int t = 0; t < gb::kTracks; ++t) for (int i = 0; i < gb::kMaxSteps; ++i) if (std::memcmp(&copy.steps[(size_t) t][(size_t) i], &pt.steps[(size_t) t][(size_t) i], sizeof(gb::Step)) != 0) ++diff;
+        CHECK(diff == 0, "kit %d: round trip changes %d steps", k, diff); ++kits;
+    }
+    // edits: a picture change adds a hit; a rule change sets a velocity; a deleted rule removes hits
+    p.applyKit(0, true); auto& pt = p.model.patterns[0]; for (auto& row : pt.steps) for (auto& st : row) st = gb::Step(); pt.length = 16;
+    pt.steps[0][0].vel = 110; pt.steps[0][8].vel = 110; pt.steps[1][4].vel = 100;
+    auto txt = gb::script::beatAsScript(p.model, 0, "A");
+    auto edited = txt.replace("#   x . . . | . . . . | x . . .", "#   x . x . | . . . . | x . . .");   // kick picture: a hit on step 2
+    CHECK(edited != txt, "the kick picture is where the test expects it");
+    edited = edited.replace("if track == 2 and step == 4 then hit(100)", "if track == 2 and step == 4 then hit(50)");
+    auto copy = pt; juce::String err; CHECK(gb::script::beatFromScript(edited, copy, p.roles(), err), "edited script reads (%s)", err.toRawUTF8());
+    CHECK(copy.steps[0][2].vel == 100 && copy.steps[0][0].vel == 110 && copy.steps[0][8].vel == 110, "picture x -> a new hit, the others stay");
+    CHECK(copy.steps[1][4].vel == 50, "a rule's hit(50) sets the velocity (picture left alone)");
+    auto cleared = pt; CHECK(gb::script::beatFromScript("if track == 1 and step % 4 == 0 then hit(90)\n", cleared, p.roles(), err), "a hand-written rule reads");
+    CHECK(cleared.steps[0][4].vel == 90 && cleared.steps[0][12].vel == 90 && cleared.steps[1][4].vel == 0, "a rule written by hand makes the beat; tracks it leaves out go quiet");
+    auto bad = pt; CHECK(! gb::script::beatFromScript("if track == then hit(1)\n", bad, p.roles(), err) && bad.steps[0][0].vel == 110, "an error leaves the beat as it was");
+    std::printf("  %d kits round-tripped\n", kits);
+}
+
 static void testScripts(BeatsXProcessor& p) {
     section("SCRIPTS");
     for (auto& ex : gb::script::examples()) { auto pr = gb::script::Compiler::compile(ex.code); CHECK(pr->ok(), "example %s: %s", ex.name, pr->error.toRawUTF8()); }
@@ -675,6 +745,60 @@ static juce::AudioBuffer<float> runProc(BeatsXProcessor& p, double sr, int block
 }
 static double zcFreq(const float* x, int a, int n, double sr) { int z = 0; for (int i = a + 1; i < a + n; ++i) if ((x[i - 1] < 0) != (x[i] < 0)) ++z; return z * sr / (2.0 * n); }
 struct FakeHead : juce::AudioPlayHead { double bpm = 120, ppq = 0; bool playing = true, haveBpm = true; juce::Optional<PositionInfo> getPosition() const override { PositionInfo i; if (haveBpm) i.setBpm(bpm); i.setPpqPosition(ppq); i.setIsPlaying(playing); return i; } };
+// STOP in the DAW stops Beats, even a beat started with Beats' own PLAY (Brandon 2026-11-21)
+static void testDawStop() {
+    std::printf("[dawstop]\n");
+    BeatsXProcessor p; p.applyKit(0, true); p.prepareToPlay(48000, 512); FakeHead h; h.playing = false; p.setPlayHead(&h);
+    juce::AudioBuffer<float> b(2, 512); juce::MidiBuffer m;
+    auto rms = [&](int blocks) { double e = 0; for (int i = 0; i < blocks; ++i) { b.clear(); p.processBlock(b, m); if (h.playing) h.ppq += 512.0 / 48000.0 * h.bpm / 60.0; e += b.getRMSLevel(0, 0, 512); } return e / blocks; };
+    rms(4); p.engine.internalPlay = true; const double own = rms(40);
+    CHECK(own > 0.001, "Beats' own PLAY makes sound while the DAW is stopped (%.4f)", own);
+    h.playing = true; rms(40); CHECK(! p.engine.internalPlay, "the DAW starting takes over from Beats' own PLAY");
+    h.playing = false; rms(2); const double after = rms(60);
+    CHECK(after < 1e-4 && ! p.engine.internalPlay, "after STOP in the DAW, Beats is silent (%.6f)", after);
+    p.engine.internalPlay = true; rms(10); h.playing = true; rms(10); h.playing = false; rms(2);
+    CHECK(rms(40) < 1e-4, "own PLAY, then DAW play + stop: silent");
+    p.setPlayHead(nullptr);
+}
+// FOLLOW (Brandon 2026-11-21): while the song plays, the letters and the grid follow it; a 32-step pattern turns its page with the playhead
+static void setParam(BeatsXProcessor& p, const char* id, float v);
+// (Brandon's Trap default, 2026-11-21: GHOSTY_BEAT=in GHOSTY_OUT=out BeatsTests test makedefault -- patterns A..D one 16-step page each, LINEAR off, nothing
+//  past step 16, no EVOLVE / FILL surprises, no CONVERGE; his song (A B C D A B C D, it loops) and every sound / setting kept as saved)
+static void testMakeDefault() {
+    const char* in = std::getenv("GHOSTY_BEAT"); const char* out = std::getenv("GHOSTY_OUT"); if (! in || ! out) return;
+    BeatsXProcessor p; juce::MemoryBlock mb; juce::File(juce::String::fromUTF8(in)).loadFileAsData(mb); p.restoreState(mb.getData(), (int) mb.getSize(), true);
+    for (int i = 0; i < 4; ++i) { auto& pt = p.model.patterns[(size_t) i]; pt.length = 16; for (auto& l : pt.trackLen) l = 0; pt.evolve = 0; pt.fillEvery = 0;
+        for (auto& row : pt.steps) for (int s = 16; s < gb::kMaxSteps; ++s) row[(size_t) s] = gb::Step();
+        for (auto& row : pt.steps) for (auto& st : row) st.flags = (uint8_t) (st.flags & ~2); }
+    p.model.converge = 0; p.model.linear.on = false; setParam(p, "pattern", 1); setParam(p, "songmode", 1); setParam(p, "bypass", 0); p.publish();
+    juce::MemoryBlock o; p.getStateInformation(o); juce::File(juce::String::fromUTF8(out)).replaceWithData(o.getData(), o.getSize());
+    for (int i = 0; i < 4; ++i) std::printf("%s\n", gb::script::beatAsScript(p.model, i, juce::String::charToString((juce::juce_wchar) ('A' + i))).toRawUTF8());
+    std::printf("song:"); for (auto& b : p.model.song) std::printf(" %c@%d", 'A' + b.pattern, b.startBar); std::printf("\n");
+}
+
+static void setParam(BeatsXProcessor& p, const char* id, float v);
+static void testFollow() {
+    std::printf("[follow]\n");
+    BeatsXProcessor p; p.applyKit(0, true);
+    for (int i = 0; i < 4; ++i) { auto& pt = p.model.patterns[(size_t) i]; pt.length = 32; pt.res = 1; pt.steps[1][0].vel = 100; }
+    p.model.song.clear(); for (int i = 0; i < 4; ++i) p.model.song.push_back({ i, i * 2, 2 });
+    setParam(p, "songmode", 1); setParam(p, "pattern", 1); p.publish(); p.prepareToPlay(48000, 512);
+    FakeHead h; h.playing = true; h.bpm = 120; p.setPlayHead(&h);
+    std::unique_ptr<juce::AudioProcessorEditor> e(p.createEditor()); e->setSize(1200, 760); e->setVisible(true);
+    bx::StepGrid* g = nullptr; std::function<void(juce::Component&)> find = [&](juce::Component& c) { if (auto* x = dynamic_cast<bx::StepGrid*>(&c)) g = x; for (auto* ch : c.getChildren()) find(*ch); }; find(*e);
+    juce::AudioBuffer<float> b(2, 512); juce::MidiBuffer m;
+    auto at = [&](double beat) { h.ppq = beat; b.clear(); p.processBlock(b, m); for (int i = 0; i < 12; ++i) juce::MessageManager::getInstance()->runDispatchLoopUntil(20); };
+    at(1.0);  CHECK(p.currentPattern() == 0, "bar 1: A");
+    at(9.0);  CHECK(p.currentPattern() == 1, "bar 3: the letters follow to B (%d)", p.currentPattern());
+    at(17.0); CHECK(p.currentPattern() == 2, "bar 5: C");
+    at(29.0); CHECK(p.currentPattern() == 3 && g && g->ed.stepPage == 1, "bar 8: D, and the grid shows steps 17-32 (page %d)", g ? g->ed.stepPage : -1);
+    at(25.0); CHECK(g && g->ed.stepPage == 0, "back on D's first bar: steps 1-16");
+    at(33.0); CHECK(p.currentPattern() == 0, "bar 9: the song loops back to A (%d)", p.currentPattern());
+    at(41.0); CHECK(p.currentPattern() == 1, "bar 11: B again");
+    e.reset(); p.setPlayHead(nullptr);
+}
+
+
 
 static int kitIndexOf(const char* n);
 static void setParam(BeatsXProcessor& p, const char* id, float v);
@@ -1758,6 +1882,7 @@ static void testSoundDrag() {
 }
 
 int main(int argc, char** argv) {
+    BeatsXProcessor::useUserDefault = false;   // (the tests never pick up a default beat saved on the Mac)
     std::setvbuf(stdout, nullptr, _IONBF, 0);
 #if JUCE_LINUX
     ignoreXErrors();
@@ -1838,7 +1963,7 @@ int main(int argc, char** argv) {
     if (want("lib")) testLibrary(); if (want("timing")) testTiming();
     { BeatsXProcessor p; if (want("midi")) testMidi(p); if (want("audio")) testAudioExport(p); if (want("undo")) testUndo(p); if (want("rhythm")) testRhythm(p); }
     if (want("samples")) testSamples(); if (want("compat")) testBackCompat();
-    { BeatsXProcessor p; if (want("locks")) testLocks(p); if (want("destruct")) testDestruction2(p); if (want("scripts")) testScripts(p); if (want("meters")) testLevelsSharedTheme(p); }
+    { BeatsXProcessor p; if (want("locks")) testLocks(p); if (want("destruct")) testDestruction2(p); if (want("scripts")) testScripts(p); if (want("scriptbeat")) testScriptBeat(); if (want("gridedit")) testGridEdit(); if (want("follow")) testFollow(); if (want("makedefault")) testMakeDefault(); if (want("dawstop")) testDawStop(); if (want("showbeat")) testShowBeat(); if (want("meters")) testLevelsSharedTheme(p); }
     if (want("gate")) testPunchList();
     if (want("linmel")) testLinearMelody();
     if (want("playnotes")) testPlayOnNotes();

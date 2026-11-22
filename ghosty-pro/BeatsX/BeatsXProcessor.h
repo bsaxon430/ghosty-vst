@@ -146,6 +146,14 @@ public:
     // whole beats (kit, your samples, all 16 patterns, the song, the mixer) in Documents/Ghosty/Beats
     juce::File beatsDir() const { auto d = juce::File::getSpecialLocation(juce::File::userDocumentsDirectory).getChildFile("Ghosty").getChildFile("Beats"); d.createDirectory(); return d; }
     bool saveBeat(const juce::String& name) { juce::MemoryBlock mb; getStateInformation(mb); return beatsDir().getChildFile(juce::File::createLegalFileName(name) + ".ghostbeat").replaceWithData(mb.getData(), mb.getSize()); }   // NOT-EXPORT: .ghostbeat, the plugin's own project format
+    // Brandon's own Trap default (2026-11-21): a saved beat on HIS Mac (Documents/Ghosty/Beats/Default Trap.ghostbeat) opens with a new
+    // Ghosty Beats and comes up when the Trap kit is picked. It lives only on his Mac, never inside the plugin (its sounds are from his own
+    // packs); without the file everything is as before. BYPASS is never taken from it. (The test runs switch it off: useUserDefault.)
+    static inline bool useUserDefault = true;
+    juce::File defaultTrapFile() const { return beatsDir().getChildFile("Default Trap.ghostbeat"); }
+    bool loadDefaultTrap() { if (! useUserDefault) return false; const auto f = defaultTrapFile(); juce::MemoryBlock mb;
+        if (! f.existsAsFile() || ! f.loadFileAsData(mb) || mb.getSize() == 0) return false; restoreState(mb.getData(), (int) mb.getSize(), true); return true; }
+    bool saveDefaultTrap() { juce::MemoryBlock mb; getStateInformation(mb); return defaultTrapFile().replaceWithData(mb.getData(), mb.getSize()); }
     bool loadBeat(const juce::File& f) { juce::MemoryBlock mb; if (!f.loadFileAsData(mb) || mb.getSize() == 0) return false; pushUndo(); restoreState(mb.getData(), (int) mb.getSize(), true); return true; }   // (a beat never changes BYPASS)
     bool savePattern(int pattern, const juce::String& name);
     bool loadPattern(const juce::File& f, int pattern);

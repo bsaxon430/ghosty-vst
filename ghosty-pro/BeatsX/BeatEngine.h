@@ -164,10 +164,13 @@ struct EventCtx {
     }
 };
 
+// the arrangement's length in bars (where its last block ends; at least 1)
+inline long songLength(const Snapshot& S) { long e = 1; for (int i = 0; i < S.songCount; ++i) e = juce::jmax(e, (long) (S.song[(size_t) i].startBar + S.song[(size_t) i].bars)); return e; }
 // emit(track, beat, velocity 0..~1.4, EvInfo) for every hit with beat in [b0, b1). Playback, offline renders,
 // MIDI export and the tests all come through here.
 template <class F>
 inline void collectEvents(const Snapshot& S, const EngineParams& P, double bpm, double b0, double b1, F&& emit) {
+    long shiftBars = 0;   // SONG LOOP: which pass of the arrangement this region belongs to (in bars)
     auto region = [&](int pat, double origin, long nSteps) {
         const auto& p = S.patterns[(size_t) juce::jlimit(0, kPatterns - 1, pat)];
         const EventCtx C(S, P, p, origin, bpm);
@@ -178,8 +181,8 @@ inline void collectEvents(const Snapshot& S, const EngineParams& P, double bpm, 
         bool anyRules = S.nProgs > 0; for (auto& tr : S.tracks) for (auto& r : tr.rules) if (r.type) anyRules = true;
         for (long s = sLo; s <= sHi; ++s) {
             if (nSteps != LONG_MAX) {   // song: the first block that covers this bar wins (as before)
-                const long bar = C.barOf(s); bool mine = false;
-                for (int i = 0; i < S.songCount; ++i) { const auto& b = S.song[(size_t) i]; if (bar >= b.startBar && bar < b.startBar + b.bars) { mine = std::abs(b.startBar * 4.0 - origin) < 1e-9 && b.pattern == pat; break; } }
+                const long bar = C.barOf(s) - shiftBars; bool mine = false;
+                for (int i = 0; i < S.songCount; ++i) { const auto& b = S.song[(size_t) i]; if (bar >= b.startBar && bar < b.startBar + b.bars) { mine = std::abs((b.startBar + shiftBars) * 4.0 - origin) < 1e-9 && b.pattern == pat; break; } }
                 if (!mine) continue;
             }
             const long sAbs = C.originSteps + s;
@@ -253,13 +256,18 @@ inline void collectEvents(const Snapshot& S, const EngineParams& P, double bpm, 
         }
     };
     if (P.songMode && S.songCount > 0) {
-        for (int i = 0; i < S.songCount; ++i) {
-            const auto& b = S.song[(size_t) i]; const double o = b.startBar * 4.0, e = o + b.bars * 4.0;
-            if (e + 1.0 < b0 || o - 1.0 > b1) continue;
-            bool dup = false; for (int j = 0; j < i; ++j) if (S.song[(size_t) j].startBar == b.startBar && S.song[(size_t) j].pattern == b.pattern) dup = true;
-            if (dup) continue;
-            const auto& p = S.patterns[(size_t) juce::jlimit(0, kPatterns - 1, b.pattern)];
-            region(b.pattern, o, (long) std::floor(b.bars * 4.0 / stepBeats(p.res) + 1e-9));
+        // SONG LOOP (Brandon 2026-11-21): the arrangement starts over when it ends (A B C D A B C D ...), for as long as the DAW plays
+        const long len = songLength(S); const long k0 = juce::jmax(0L, (long) std::floor((b0 - 1.0) / (len * 4.0))), k1 = (long) std::floor((b1 + 1.0) / (len * 4.0));
+        for (long k = k0; k <= k1; ++k) {
+            shiftBars = k * len;
+            for (int i = 0; i < S.songCount; ++i) {
+                const auto& b = S.song[(size_t) i]; const double o = (b.startBar + shiftBars) * 4.0, e = o + b.bars * 4.0;
+                if (e + 1.0 < b0 || o - 1.0 > b1) continue;
+                bool dup = false; for (int j = 0; j < i; ++j) if (S.song[(size_t) j].startBar == b.startBar && S.song[(size_t) j].pattern == b.pattern) dup = true;
+                if (dup) continue;
+                const auto& p = S.patterns[(size_t) juce::jlimit(0, kPatterns - 1, b.pattern)];
+                region(b.pattern, o, (long) std::floor(b.bars * 4.0 / stepBeats(p.res) + 1e-9));
+            }
         }
     } else region(P.pattern, 0.0, LONG_MAX);
 }
@@ -268,8 +276,8 @@ inline void collectEvents(const Snapshot& S, const EngineParams& P, double bpm, 
 inline bool locate(const Snapshot& S, const EngineParams& P, double beat, int& pat, double& origin) {
     if (beat < 0) return false;
     if (P.songMode && S.songCount > 0) {
-        const long bar = (long) std::floor(beat / 4.0);
-        for (int i = 0; i < S.songCount; ++i) { const auto& b = S.song[(size_t) i]; if (bar >= b.startBar && bar < b.startBar + b.bars) { pat = juce::jlimit(0, kPatterns - 1, b.pattern); origin = b.startBar * 4.0; return true; } }
+        const long len = songLength(S), bar0 = (long) std::floor(beat / 4.0), pass = bar0 / len, bar = bar0 % len;   // (the song loops)
+        for (int i = 0; i < S.songCount; ++i) { const auto& b = S.song[(size_t) i]; if (bar >= b.startBar && bar < b.startBar + b.bars) { pat = juce::jlimit(0, kPatterns - 1, b.pattern); origin = (b.startBar + pass * len) * 4.0; return true; } }
         return false;
     }
     pat = juce::jlimit(0, kPatterns - 1, P.pattern); origin = 0; return true;

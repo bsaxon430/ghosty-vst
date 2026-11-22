@@ -94,7 +94,7 @@ endfunction()
 
 # ---------------- Ghosty Beats (drum machine) ----------------
 juce_add_plugin(GhostyBeats
-  VERSION 3.3.3
+  VERSION 3.3.9
   COMPANY_NAME "GhostBlock"
   BUNDLE_ID "io.ghostblock.ghostybeats"
   PLUGIN_MANUFACTURER_CODE Ghbk

@@ -248,4 +248,101 @@ inline const std::vector<Module>& examples() {
     return m;
 }
 
+// THIS BEAT (Brandon 2026-11-21): the pattern on the SEQUENCER written out as a script, so the SCRIPTS page shows the beat that's playing.
+// Every track gets a picture of its steps (X accent, x hit, - soft, . rest, | every beat) and the rules that play exactly those hits:
+// steps with the same settings share one line. (step counts from 0, track from 1, like everywhere in the script language.)
+inline juce::String beatAsScript(const Model& m, int patIndex, const juce::String& patName) {
+    const auto& p = m.patterns[(size_t) juce::jlimit(0, kPatterns - 1, patIndex)];
+    juce::String out; int used = 0;
+    out << "# THIS BEAT: pattern " << patName << ", " << p.length << " steps, " << resNames()[juce::jlimit(0, resNames().size() - 1, p.res)] << "\n"
+        << "# the beat on the SEQUENCER as a script: change the pattern and this changes; change this and the pattern changes\n"
+        << "# edit a picture (X accent  x hit  - soft  . rest  | beat) or the rules; step counts from 0\n";
+    for (int t = 0; t < kTracks; ++t) {
+        const int len = p.lenOf(t); const auto& row = p.steps[(size_t) t];
+        int hits = 0; for (int i = 0; i < len; ++i) if (row[(size_t) i].vel) ++hits;
+        const auto& tr = m.tracks[(size_t) t];
+        if (hits == 0 && tr.sound.isEmpty()) continue; if (hits) ++used;
+        out << "\n# " << juce::String(t + 1).paddedLeft('0', 2) << " " << (tr.sound.isNotEmpty() ? tr.sound : juce::String("(empty)"))
+            << (len != p.length ? "  [" + juce::String(len) + " steps]" : juce::String()) << (tr.mute ? "  (muted)" : "") << "\n";
+        for (int a = 0; a < len; a += 16) {   // the picture, 16 steps a line
+            juce::String pic; for (int i = a; i < juce::jmin(len, a + 16); ++i) { if (i > a && i % 4 == 0) pic << "| ";
+                const int v = row[(size_t) i].vel; pic << (v == 0 ? "." : v >= 120 ? "X" : v < 60 ? "-" : "x") << " "; }
+            out << "#   " << pic.trimEnd() << "\n";
+        }
+        std::vector<std::pair<juce::String, juce::Array<int>>> groups;   // same actions -> one rule
+        for (int i = 0; i < len; ++i) {
+            const auto& st = row[(size_t) i]; if (! st.vel) continue;
+            juce::String act; act << "hit(" << (int) st.vel << ")";
+            if (st.prob < 100) act << ", prob(" << (int) st.prob << ")";
+            if (st.pitch != 0) act << ", pitch(" << (int) st.pitch << ")";
+            if (st.roll > 1 || st.rate || st.accel || st.pitchRamp || st.velRamp) { act << ", retrig(" << (int) st.roll << ", rate=" << (int) st.rate;
+                if (st.accel) act << ", accel=" << juce::String(st.accel / 100.0, 2); if (st.pitchRamp) act << ", ramp=" << (int) st.pitchRamp; if (st.velRamp) act << ", vramp=" << (int) st.velRamp; act << ")"; }
+            if (st.flam) act << ", flam(" << (int) st.flam << ")";
+            if (st.nudge) act << ", nudge(" << (int) st.nudge << ")";
+            if (st.offset) act << ", offset(" << (int) st.offset << ")";
+            if (st.cut) act << ", cut(" << (int) st.cut << ")";
+            if (st.decay != 100) act << ", decay(" << (int) st.decay << ")";
+            if (st.slice) act << ", slice(" << (int) st.slice << ")";
+            if (st.destroy) act << ", destroy(" << (int) st.destroy << ")";
+            if (st.freeze) act << ", freeze(" << (int) st.freeze * 10 << ")";
+            if (st.frev) act << ", frev(" << (int) st.frev << ")";
+            if (st.flags & 1) act << ", reverse()";
+            bool found = false; for (auto& g : groups) if (g.first == act) { g.second.add(i); found = true; break; }
+            if (! found) groups.push_back({ act, juce::Array<int> { i } });
+        }
+        for (auto& g : groups)
+            for (int a = 0; a < g.second.size(); a += 4) {   // 4 steps a line, so every line fits on the page
+                juce::String cond; const int n = juce::jmin(4, g.second.size() - a);
+                for (int k = 0; k < n; ++k) cond << (k ? " or " : "") << "step == " << g.second[a + k];
+                out << "if track == " << (t + 1) << " and " << (n > 1 ? "(" + cond + ")" : cond) << " then " << g.first << "\n";
+            }
+    }
+    if (used == 0) out << "\n# (no hits yet: type x's into a picture above, or put steps in on the SEQUENCER)\n";
+    return out;
+}
+
+// ...and back (Brandon 2026-11-21: edit the beat in the script and the SEQUENCER follows). The script is run on an empty pattern
+// (every track, every step) and what it hits becomes the pattern; then any picture line you changed wins over the rules for those steps.
+// Settings a script can't write (fine pitch, LOCKs) stay on steps that are still hits. Returns false (pattern untouched) on an error.
+inline bool beatFromScript(const juce::String& text, Pattern& p, const std::array<uint8_t, kTracks>& roles, juce::String& err) {
+    auto prog = Compiler::compile(text);
+    if (! prog->ok()) { err = "line " + juce::String(prog->errLine) + ": " + prog->error; return false; }
+    std::array<std::array<Step, kMaxSteps>, kTracks> res {};
+    const double sb = stepBeats(p.res);
+    for (int t = 0; t < kTracks; ++t) for (int i = 0; i < p.lenOf(t); ++i) {
+        Env e; e.seed = (uint32_t) p.seed; e.sAbs = i; e.track = t; const double q = std::fmod(i * sb, 4.0);
+        e.var[VBar] = std::floor(i * sb / 4.0); e.var[VStep] = i; e.var[VPos] = std::floor(q / 0.25 + 1e-9); e.var[VBeat] = std::floor(q + 1e-9);
+        e.var[VTrack] = t + 1; e.var[VRole] = roles[(size_t) t]; e.var[VLen] = p.lenOf(t); e.var[VSeed] = p.seed;
+        Step st; if (! run(*prog, e, st)) { err = "the script is too long to run"; return false; }
+        res[(size_t) t][(size_t) i] = st;
+    }
+    // pictures: "# NN name" then "#   x . . . | ..." lines
+    auto cls = [](int v) { return v == 0 ? '.' : v >= 120 ? 'X' : v < 60 ? '-' : 'x'; };
+    int cur = -1; juce::String pic; std::vector<std::pair<int, juce::String>> pics;
+    auto flush = [&] { if (cur >= 0 && pic.isNotEmpty()) pics.push_back({ cur, pic }); pic.clear(); };
+    for (auto line : juce::StringArray::fromLines(text)) {
+        line = line.trimEnd(); if (! line.startsWith("#")) { flush(); cur = -1; continue; }
+        const auto body = line.substring(1);
+        const auto head = body.trimStart();
+        if (body.startsWith(" ") && head.length() >= 2 && juce::CharacterFunctions::isDigit(head[0]) && juce::CharacterFunctions::isDigit(head[1]) && (head.length() == 2 || head[2] == ' ')) {
+            flush(); cur = head.substring(0, 2).getIntValue() - 1; if (! juce::isPositiveAndBelow(cur, kTracks)) cur = -1; continue; }
+        if (cur >= 0 && body.startsWith("   ") && head.isNotEmpty() && head.containsOnly("Xx-.| ")) { pic << head.removeCharacters("| "); continue; }
+        flush(); cur = -1;
+    }
+    flush();
+    for (auto& [t, pc] : pics) for (int i = 0; i < juce::jmin(pc.length(), p.lenOf(t)); ++i) {
+        auto& st = res[(size_t) t][(size_t) i]; const auto& old = p.steps[(size_t) t][(size_t) i]; const auto c = (char) pc[i];
+        if (c == cls(old.vel) || c == cls(st.vel)) continue;   // the picture wasn't changed here (or says what the rules say): the rules win
+        if (c == '.') st = Step();
+        else { if (! st.vel) st = old.vel ? old : Step();
+               if (cls(st.vel) != c) st.vel = (uint8_t) (c == 'X' ? 127 : c == '-' ? 40 : 100); }
+    }
+    for (int t = 0; t < kTracks; ++t) for (int i = 0; i < p.lenOf(t); ++i) {
+        auto& old = p.steps[(size_t) t][(size_t) i]; auto st = res[(size_t) t][(size_t) i];
+        if (st.vel) { st.cents = old.vel ? old.cents : 0; st.flags = (uint8_t) ((st.flags & 1) | (old.vel ? (old.flags & ~1) : 0)); }
+        old = st.vel ? st : Step();
+    }
+    return true;
+}
+
 } // namespace gb::script
