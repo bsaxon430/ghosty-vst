@@ -48,6 +48,11 @@ BlockStepEditor::BlockStepEditor(BlockStepProcessor& p)
     target.setColour(juce::TextButton::buttonColourId, juce::Colour(0x2260a5fa)); target.setColour(juce::TextButton::textColourOffId, kInk);
     target.onClick = [this] { auto P = proc.getUiPattern(); const int n = P ? P->ch : 1; dragCh = dragCh == -1 || dragCh == -3 ? -2 : dragCh == -2 ? 0 : (dragCh + 1 >= n ? -1 : dragCh + 1); updTarget(); };   // ALL -> PAGE -> CH1..n
     addAndMakeVisible(target); updTarget();
+    byDrum.setButtonText(juce::String::fromUTF8("\xe2\x87\xa3 BY DRUM"));
+    byDrum.setTooltip("Drag out every kick, every snare, every hat... on its own, as WAV or MIDI, whatever channel the hits are in");
+    byDrum.setColour(juce::TextButton::buttonColourId, juce::Colour(0x2200ff88)); byDrum.setColour(juce::TextButton::textColourOffId, kInk);
+    byDrum.onClick = [this] { if (! pageReady) return; auto* o = new juce::DynamicObject(); o->setProperty("open", true); web.emitEventIfBrowserIsVisible("bs_xdrag", juce::var(o)); };
+    addAndMakeVisible(byDrum);
     status.setFont(juce::FontOptions(12.5f, juce::Font::bold));
     status.setColour(juce::Label::textColourId, kGrey);
     status.setJustificationType(juce::Justification::centred);
@@ -72,6 +77,7 @@ BlockStepEditor::BlockStepEditor(BlockStepProcessor& p)
     addAndMakeVisible(web);
     addAndMakeVisible(edges);
     sgrip.make = [this] { if (! proc.license.isUnlocked()) { if (unlock) unlock->nudge(); return juce::File(); }   // demo: export is off
+        if (sgripSnd.hasProperty("xi")) return writeInst((int) sgripSnd["xi"], sgripSnd["xk"].toString() != "midi");   // ⇣ BY DRUM
         const juce::File f = writeSound(sgripSnd);
         if (! f.existsAsFile() && pageReady) { auto* o = new juce::DynamicObject(); o->setProperty("text", "Could not make the WAV for that sound"); web.emitEventIfBrowserIsVisible("bs_toast", juce::var(o)); }
         return f; };
@@ -111,10 +117,11 @@ void BlockStepEditor::resized() {
     proc.uiW = getWidth(); proc.uiH = getHeight();
     auto r = getLocalBounds();
     auto top = r.removeFromTop(kStrip).reduced(6, 4);
-    drag.setBounds(top.removeFromLeft(84)); top.removeFromLeft(4); dragWav.setBounds(top.removeFromLeft(84)); top.removeFromLeft(4); target.setBounds(top.removeFromLeft(62));
+    drag.setBounds(top.removeFromLeft(84)); top.removeFromLeft(4); dragWav.setBounds(top.removeFromLeft(84)); top.removeFromLeft(4); target.setBounds(top.removeFromLeft(62)); top.removeFromLeft(4); byDrum.setBounds(top.removeFromLeft(92));
     bypassBtn->setBounds(top.removeFromRight(96)); top.removeFromRight(6);
     if (unlock->isVisible()) { unlock->setBounds(top.removeFromRight(92)); top.removeFromRight(6); }
-    ghoBtn.setBounds(top.removeFromRight(178)); top.removeFromRight(6);
+    { const bool sh = top.getWidth() < 178 + 6 + 34 + 60; if (sh != ghoShort) { ghoShort = sh; updGho(); } }   // (a narrow window: the short label, so nothing overlaps)
+    ghoBtn.setBounds(top.removeFromRight(ghoShort ? 112 : 178)); top.removeFromRight(6);
     infoBtn.setBounds(top.removeFromRight(28)); top.removeFromRight(6);   // About / Credits   // left of LICENSED
     status.setBounds(top);
     {   // lockedlayout (owner 2026-11-13): the page ALWAYS keeps its one desktop layout, at any window size or shape. It sits
@@ -136,7 +143,7 @@ void BlockStepEditor::resized() {
 void BlockStepEditor::stripCheck() {
     const char* path = std::getenv("BLOCKSTEP_STRIPCHECK"); if (path == nullptr || *path == 0) return;
     juce::StringArray bad; juce::Array<juce::Component*> kids;
-    for (auto* c : { (juce::Component*) &drag, (juce::Component*) &dragWav, (juce::Component*) &target, (juce::Component*) &status, (juce::Component*) unlock.get(), (juce::Component*) &ghoBtn, (juce::Component*) &infoBtn, (juce::Component*) bypassBtn.get() })
+    for (auto* c : { (juce::Component*) &drag, (juce::Component*) &dragWav, (juce::Component*) &target, (juce::Component*) &byDrum, (juce::Component*) &status, (juce::Component*) unlock.get(), (juce::Component*) &ghoBtn, (juce::Component*) &infoBtn, (juce::Component*) bypassBtn.get() })
         if (c != nullptr && c->isVisible()) kids.add(c);
     const auto strip = getLocalBounds().removeFromTop(kStrip);
     for (auto* c : kids) { if (c->getWidth() < 8 || c->getHeight() < 8) bad.add("too small: " + c->getBounds().toString()); if (! strip.contains(c->getBounds())) bad.add("outside: " + c->getBounds().toString()); }
@@ -239,6 +246,41 @@ juce::File BlockStepEditor::writeWav(int onlyCh) const {
     return f;
 }
 
+// ⇣ BY DRUM (owner 2026-11-21): every hit of ONE drum (all the kicks, all the snares...), whatever channel each hit is in, so a
+// roll that spilled into another channel still comes out with its drum. Taken from the layer that holds that drum (the page on
+// screen, or a layer playing along with it); everything else in that layer is left out. Muted channels count (like CH);
+// muted notes stay muted. WAV = as heard, MIDI = the same notes as ⇣ MIDI gives them.
+juce::File BlockStepEditor::writeInst(int inst, bool wav) {
+    static const char* const names[bstep::kInst] = { "KICK", "SNARE", "CLAP", "HAT", "OPEN HAT", "PERC", "RIM", "CRASH", "SUB", "FX", "PIANO", "ACID" };
+    auto P = proc.getUiPattern(); if (P == nullptr || P->rows <= 0 || inst < 0 || inst >= bstep::kInst) return {};
+    auto has = [inst](const bstep::Pattern& Q) { for (int r = 0; r < Q.rows; ++r) for (int c = 0; c < Q.ch; ++c) if (Q.at(r, c).i == inst) return true; return false; };
+    const bstep::Pattern* src = has(*P) ? P.get() : nullptr;
+    if (src == nullptr) for (auto& a : P->along) if (a && has(*a)) { src = a.get(); break; }
+    auto say = [this](const juce::String& t) { if (! pageReady) return; auto* o = new juce::DynamicObject(); o->setProperty("text", t); web.emitEventIfBrowserIsVisible("bs_toast", juce::var(o)); };
+    if (src == nullptr) { say(juce::String("No ") + names[inst] + " in the beat to drag out"); return {}; }
+    auto Q = std::make_shared<bstep::Pattern>(*src);
+    for (auto& x : Q->cells) if (x.i != inst) x = bstep::Cell {};
+    Q->chOn.fill(true); Q->along.clear(); Q->selfMuted = false;
+    const double bpm = baseBpmFor(*P);
+    static int n = 0;
+    auto dir = juce::File::getSpecialLocation(juce::File::userMusicDirectory).getChildFile("Block Step Exports");
+    if (! dir.createDirectory()) dir = juce::File::getSpecialLocation(juce::File::tempDirectory);
+    const double eb = bpm * Q->mul;
+    const juce::File f = dir.getNonexistentChildFile(juce::String("Block Step ") + names[inst] + " (every hit) " + juce::String(eb, std::abs(eb - std::round(eb)) < 0.01 ? 0 : 1) + " BPM "
+                                                     + juce::Time::getCurrentTime().formatted("%Y-%m-%d %H-%M-%S") + " " + juce::String(++n), wav ? ".wav" : ".mid", false);
+    f.deleteFile();
+    if (! wav) { auto mf = bstep::midiClip(*Q, -2, 0, bpm); juce::FileOutputStream out(f); if (! out.openedOk()) return {}; mf.writeTo(out); out.flush(); return f; }
+    const double sr = proc.getSampleRate() > 0 ? proc.getSampleRate() : 44100.0;
+    auto buf = bstep::Engine::bounce(proc.kitStore(), proc.kitSynth(), *Q, sr, bpm, -2);
+    if (buf.getNumSamples() <= 0) return {};
+    std::unique_ptr<juce::OutputStream> os = f.createOutputStream(); if (os == nullptr) return {};
+    juce::WavAudioFormat wavFmt;
+    std::unique_ptr<juce::AudioFormatWriter> w(wavFmt.createWriterFor(os.get(), sr, 2, 24, {}, 0)); if (w == nullptr) return {};
+    os.release();
+    w->writeFromAudioSampleBuffer(buf, 0, buf.getNumSamples()); w.reset();
+    return f;
+}
+
 juce::File BlockStepEditor::writeMidi(int onlyCh) const {
     auto P = proc.getUiPattern(); if (P == nullptr || P->rows <= 0) return {};
     auto mf = bstep::midiClip(*P, onlyCh, dragMask, baseBpmFor(*P));
@@ -251,7 +293,7 @@ juce::File BlockStepEditor::writeMidi(int onlyCh) const {
 }
 
 void BlockStepEditor::updGho() {
-    ghoBtn.setButtonText(ghostsOff ? "GHOST ANIMATION: OFF" : "GHOST ANIMATION: ON");
+    ghoBtn.setButtonText(ghoShort ? (ghostsOff ? "GHOSTS: OFF" : "GHOSTS: ON") : (ghostsOff ? "GHOST ANIMATION: OFF" : "GHOST ANIMATION: ON"));
     ghoBtn.setColour(juce::TextButton::buttonColourId, ghostsOff ? juce::Colour(0xff3a3d44) : juce::Colour(0xff16a34a));   // green ON, grey OFF
     ghoBtn.setColour(juce::TextButton::textColourOffId, ghostsOff ? juce::Colour(0xffc4c7cc) : juce::Colour(0xffffffff));
     ghoBtn.setColour(juce::ComboBox::outlineColourId, ghostsOff ? juce::Colour(0xff6b7280) : juce::Colour(0xff4ade80));
@@ -262,6 +304,8 @@ void BlockStepEditor::sndHover(const juce::var& v) {
     if (! (bool) v["on"]) { sgrip.setVisible(false); return; }
     if (! sgrip.attach(*this)) return;
     sgripSnd = v;
+    sgrip.setTooltip(v.hasProperty("xi") ? juce::String::fromUTF8("drag \xe2\x87\xa3 into your DAW: ") + v["n"].toString() + (v["xk"].toString() == "midi" ? " as MIDI" : " as a WAV")
+                                       : juce::String::fromUTF8("drag \xe2\x87\xa3 into your DAW for the WAV"));
     sgrip.place(ghosty::sounddrag::pageToEditor(web.getBounds(), zoomNow > 0 ? zoomNow : 1.0, (double) v["x"], (double) v["y"], (double) v["w"], (double) v["h"]));
     if (sgrip.isVisible()) sgrip.toFront(false);
 }

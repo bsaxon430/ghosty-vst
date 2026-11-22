@@ -30,6 +30,7 @@ private:
     std::optional<juce::WebBrowserComponent::Resource> resource(const juce::String& url) const;
     juce::File writeMidi(int onlyCh) const;
     juce::File writeWav(int onlyCh) const;
+    juce::File writeInst(int inst, bool wav);   // ⇣ BY DRUM (owner 2026-11-21): every hit of one drum, whatever channel it is in
     juce::String chNames() const;
     void updTarget();
     // the tempo the export is made at: the DAW's (the base; the page's own when there is no DAW tempo) and x the TEMPO multiple
@@ -41,6 +42,8 @@ private:
     BlockStepProcessor& proc;
     DragOut drag { *this, false }, dragWav { *this, true };
     juce::TextButton target;
+    juce::TextButton byDrum;   // ⇣ BY DRUM: opens the page's panel (every kick, every snare... as WAV or MIDI)
+    bool ghoShort = false;     // a narrow window: GHOST ANIMATION's button says GHOSTS
     juce::uint32 dragMask = 0;   // dragCh -3: these channels (the CH panel with several picked)
     int dragCh = -1;          // -1 = the whole beat, else one channel (set here or by opening a channel's panel in the page)
     double hostBpm = 0;       // the DAW's tempo, once it has played

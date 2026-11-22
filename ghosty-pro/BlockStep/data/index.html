@@ -843,6 +843,17 @@ body.sgrip-on .sgrip{flex:none;display:inline-grid;place-items:center;width:22px
 body.sgrip-on .sgrip:hover{background:rgba(0,255,136,.2);border-color:#00ff88;color:#fff}
 .splist .spi .sgrip{position:absolute;right:5px;bottom:5px;width:20px;height:20px;font-size:12px;opacity:.55}
 .splist .spi:hover .sgrip,.splist .spi.on .sgrip{opacity:1}
+/* ⇣ BY DRUM (owner 2026-11-21) */
+.xdhelp{margin:2px 2px 10px;font:600 12px/1.4 var(--disp);color:var(--grey)}
+.xdrow{display:flex;align-items:center;gap:8px;padding:5px 4px;border-top:1px solid rgba(255,255,255,.06)}
+.xdrow>i{width:11px;height:11px;border-radius:3px;background:var(--c);box-shadow:0 0 8px var(--c);flex:none}
+.xdrow>span{flex:1;font:700 13px/1 var(--disp);letter-spacing:.1em;color:var(--ink)}
+.xdrow>small{font:600 11px/1 var(--disp);color:var(--grey);min-width:62px;text-align:right}
+.xdrow .xgrip{flex:none;display:inline-grid;place-items:center;height:28px;padding:0 12px;border-radius:8px;border:1px solid rgba(0,255,136,.5);background:rgba(0,255,136,.08);color:#d9ffe9;font:700 12px/1 var(--disp);letter-spacing:.06em;cursor:grab;user-select:none}
+.xdrow .xgrip:hover{background:rgba(0,255,136,.25);border-color:#00ff88;color:#fff}
+.xdrow.none{opacity:.38}.xdrow.none .xgrip{pointer-events:none;cursor:default}
+body.sc-anime:not(.hack) .xdrow .xgrip{background:#fffaf0;border-color:#2b1d14;color:#2b1d14;box-shadow:0 2px 0 #2b1d14}
+body.sc-anime:not(.hack) .xdrow>span,body.sc-anime:not(.hack) .xdhelp{color:#2b1d14}
 .splist .spi.on .sgrip{background:rgba(5,4,10,.35);border-color:rgba(5,4,10,.5);color:#05040a}
 .splist .spi:has(.sgrip) small{padding-right:22px;box-sizing:border-box}
 .splist .spi:has(.sgrip) b{padding-right:2px}
@@ -1274,6 +1285,11 @@ body.sc-city.noglass:not(.hack) .lab,body.sc-city.noglass:not(.hack) .englab{tex
       <div class="shd"><b>🎚 MIX</b><small>EVERY KICK, EVERY HAT, EVERY…</small><button type="button" class="btn small ghost icon" id="mixClose" aria-label="Close mix">✕</button></div>
       <div id="mixList"></div>
       <div class="qb"><button type="button" class="btn small ghost" id="mixReset">ALL BACK TO 100%</button></div>
+    </div>
+    <div class="glass sheet ontop off" id="xdPanel" aria-label="Drag out by drum">
+      <div class="shd"><b>⇣ BY DRUM</b><small>EVERY KICK, EVERY SNARE… WHATEVER CHANNEL</small><button type="button" class="btn small ghost icon" id="xdClose" aria-label="Close">✕</button></div>
+      <p class="xdhelp">Grab <b>⇣ WAV</b> or <b>⇣ MIDI</b> and drop it in your DAW. You get every hit of that drum in the beat, even the ones that spilled into other channels.</p>
+      <div id="xdList"></div>
     </div>
     <div class="glass sheet ontop off" id="keyPanel" aria-label="Key">
       <div class="shd"><b>♪ KEY</b><small id="keyInfo">OFF</small><button type="button" class="btn small ghost icon" id="keyClose" aria-label="Close key">✕</button></div>
@@ -7444,9 +7460,11 @@ apxApply = function () {   // after GENERATE / VAR / SONG: remember the plain be
 var SGRIP = '<span class="sgrip" title="drag ⇣ into your DAW for the WAV" aria-label="Drag into your DAW as a WAV">⇣</span>';
 function sgripAdd(x, cat, s, i, name) {                         // a SOUND picker tile: which sound + the grip (plugin only)
   x.dataset.cat = cat; x.dataset.s = s; x.dataset.inst = i; x.dataset.n = name; if (HOST) x.insertAdjacentHTML('beforeend', SGRIP); }
-function sgripTap() { toast('drag ⇣ into your DAW for the WAV'); }
+function sgripTap() { toast(SG.el && SG.el.dataset.xk ? `drag ⇣ ${SG.el.dataset.xk === 'midi' ? 'MIDI' : 'WAV'} into your DAW: every ${INST[+SG.el.dataset.xi].name}` : 'drag ⇣ into your DAW for the WAV'); }
 var SG = {el: null, key: '', raf: 0, t: 0, ready: false};
-function sgripOf(t) { const el = t && t.closest ? t.closest('.spi[data-cat], .bksnd[data-cat]') : null; return el && el.querySelector('.sgrip') ? el : null; }
+function sgripOf(t) { const x = t && t.closest ? t.closest('.xgrip[data-xi]') : null; if (x) return x;   // ⇣ BY DRUM
+  const el = t && t.closest ? t.closest('.spi[data-cat], .bksnd[data-cat]') : null; return el && el.querySelector('.sgrip') ? el : null; }
+const sgripEl = el => el.classList.contains('xgrip') ? el : el.querySelector('.sgrip');
 function sgripVisible(g) {                                      // the grip, cut to what its scrolling list shows (null = not on screen)
   let r = g.getBoundingClientRect(); if (!r.width || !r.height) return null; let x0 = r.left, y0 = r.top, x1 = r.right, y1 = r.bottom;
   for (let p = g.parentElement; p && p !== document.body; p = p.parentElement) { const cs = getComputedStyle(p);
@@ -7458,7 +7476,9 @@ function sgripVisible(g) {                                      // the grip, cut
 function sgripClear() { if (SG.key) { SG.key = ''; hostSend('bs_sndhover', {on: false}); } }
 function sgripSend() {
   const el = SG.el; if (!el || !el.isConnected) { SG.el = null; sgripClear(); return; }
-  const g = el.querySelector('.sgrip'), r = g && sgripVisible(g); if (!r) { sgripClear(); return; }
+  const g = sgripEl(el), r = g && sgripVisible(g); if (!r) { sgripClear(); return; }
+  if (el.dataset.xi != null) { const xi = +el.dataset.xi, xk = el.dataset.xk, key = ['x', xi, xk, Math.round(r.x), Math.round(r.y), Math.round(r.w), Math.round(r.h)].join(); if (key === SG.key) return; SG.key = key;
+    hostSend('bs_sndhover', {on: true, x: r.x, y: r.y, w: r.w, h: r.h, xi, xk, n: INST[xi].name}); return; }
   const d = el.dataset, s = +d.s, i = d.inst != null ? +d.inst : INST.findIndex(x => x.kit === d.cat), n = d.n || d.full || '';
   const key = [d.cat, s, i, Math.round(r.x), Math.round(r.y), Math.round(r.w), Math.round(r.h)].join(); if (key === SG.key) return; SG.key = key;
   hostSend('bs_sndhover', {on: true, x: r.x, y: r.y, w: r.w, h: r.h, cat: d.cat, s, i, n});
@@ -7469,9 +7489,23 @@ if (HOST) {
     SG.raf = setTimeout(() => { SG.raf = 0; SG.t = performance.now(); sgripSend(); }, wait); }, true);
   addEventListener('scroll', () => { SG.el = null; sgripClear(); }, true);   // the list moved: the next move puts it back
   // (no clear on leaving the page: over the plugin's native grab area the page sees the mouse leave, and the grab area must stay)
-  setInterval(() => { if (SG.key && (!SG.el || !SG.el.isConnected || !sgripVisible(SG.el.querySelector('.sgrip') || document.body))) { SG.el = null; sgripClear(); } }, 250);   // closed / re-drawn
+  setInterval(() => { if (SG.key && (!SG.el || !SG.el.isConnected || !sgripVisible(sgripEl(SG.el) || document.body))) { SG.el = null; sgripClear(); } }, 250);   // closed / re-drawn
   HOSTB.addEventListener('bs_sndgrip', e => { if (!e) return; if (e.ready) { SG.ready = true; document.body.classList.add('sgrip-on'); } if (e.gone) SG.key = ''; if (e.tap) sgripTap(); });   // ready: this plugin build has the native grab area (older builds: no grips)
 }
+/* ---------- ⇣ BY DRUM (owner 2026-11-21): every kick, every snare... as WAV or MIDI, whatever channel each hit is in (plugin only:
+   opened from the ⇣ BY DRUM button in the plugin's top strip). The plugin makes the file (the editor's writeInst). ---------- */
+function xdRows(n) { const S = pst(); if (n === S.page) return P().rows; const st = S.store[n]; return st && st.pats && st.pats[st.cur] ? st.pats[st.cur].rows : []; }
+function renderXd() {
+  const el = $('xdList'); if (!el) return; el.innerHTML = ''; const S = pst(), cnt = INST.map(() => 0);
+  PAGES.forEach(n => { if (n !== S.page && !(S.lay && S.lay[n])) return; for (const row of xdRows(n) || []) for (const c of row || []) if (c && c.i >= 0 && !c.m) cnt[c.i]++; });   // the layers you hear
+  INST.forEach((ins, i) => { const r = document.createElement('div'); r.className = 'xdrow' + (cnt[i] ? '' : ' none'); r.style.setProperty('--c', ins.c);
+    r.innerHTML = `<i></i><span>${ins.name}</span><small>${cnt[i] ? cnt[i] + ' HIT' + (cnt[i] === 1 ? '' : 'S') : 'NONE'}</small><span class="xgrip" data-xi="${i}" data-xk="wav" title="Drag into your DAW: every ${ins.name} as a WAV">⇣ WAV</span><span class="xgrip" data-xi="${i}" data-xk="midi" title="Drag into your DAW: every ${ins.name} as MIDI">⇣ MIDI</span>`;
+    el.appendChild(r); });
+}
+function xdOpen(open) { const pn = $('xdPanel'); if (!pn) return; if (open) { ['chPanel', 'brPanel', 'sndPanel', 'mixPanel'].forEach(id => $(id) && $(id).classList.add('off')); renderXd(); pn.classList.remove('off'); } else { pn.classList.add('off'); SG.el = null; sgripClear(); } }
+$('xdClose').onclick = () => xdOpen(false);
+if (HOST) { HOSTB.addEventListener('bs_xdrag', e => { if (e && e.open) xdOpen($('xdPanel').classList.contains('off')); });
+  setInterval(() => { if ($('xdPanel').classList.contains('off') || (SG.el && SG.el.classList.contains('xgrip'))) return; if (performance.now() - (xdOpen.t || 0) > 1000) { xdOpen.t = performance.now(); renderXd(); } }, 500); }   // the counts follow the beat (not while a chip is under the mouse)
 function selPickTitle() { const n = selNotes().length; return `SOUND · ${n} NOTE${n === 1 ? '' : 'S'} SELECTED`; }
 function selPickBank(cat, s) {                                  // the bank chip it opens on: the one the sound is in (the banks that are on, if it is there)
   if (s === -2) return 'synth'; if (cat === 'piano') return bank;
