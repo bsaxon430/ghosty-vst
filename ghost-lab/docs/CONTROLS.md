@@ -1,3 +1,20 @@
+# SPECTRE (build 17): the page Ghost Lab opens on
+
+SPECTRE listens to the sound, finds up to 1,024 of its sine-wave partials, and plays it back from a bank of oscillators, so each partial can be bent on the way out. It is live: in **Ghost Lab FX**, **LIVE ON THIS TRACK** runs the track's own audio through it as FL plays (the plug-in reports SPECTRE's latency, about 32 ms, so FL lines the track up). In **Ghost Lab** (the instrument), **LISTEN** plays your sound round and round through it. **PRINT IT** renders the whole sound through it into the lab's history (UNDO takes it back; printing again replaces the last print). **RESET** puts every control back. Double-click any control for its start value; hold shift while dragging for fine moves.
+
+| Control | Range | What it does |
+|---|---|---|
+| PHASE (pad, across) | -100 .. +100 | left locks every partial's phase together (a robot buzz); right scatters them (a whisper) |
+| CEPSTRUM (pad, up / down) | -100 .. +100 | up keeps only the body of the sound (its spectral envelope: the vowel, the formants); down keeps only the fine detail (all partials equal, bright and raw) |
+| SHIFT | -1000 .. +1000 Hz | slides every partial by the same number of Hz: inharmonic, metallic |
+| TRANSPOSE | -24 .. +24 st | moves the notes; the body stays where it was, so a voice still sounds like a voice |
+| CLOUD | 0 .. 100% | partials ring on (up to ~6 s) and drift apart (up to 30 cents): a wash |
+| SMOOTH | 0 .. 100% | every change glides (up to ~1 s) |
+| MID / SIDE | 0 .. 100% | how much of the middle / the stereo sides is rebuilt (the rest is the dry sound, lined up). SIDE is greyed on a mono sound |
+| INF | 0 .. 100% | hold: the higher, the less of each new moment gets in; at the top the sound freezes forever (CLOUD and SMOOTH grey out: nothing moves) |
+| PARTIALS | 16 .. 1024 | how many sine waves rebuild it (the loudest ones are kept) |
+| OUTPUT | -24 .. +12 dB | the level; a safety limiter keeps it under 0 dBFS |
+
 # Ghost Lab UNDER THE HOOD: every CDP control, and where it is now
 
 Ghost Lab runs the real CDP8 programs (`pvoc stretch strange focus blur modify combine morph`, plus `repitch formants envel` for the data files combine make / make2 need, all unmodified, pinned at commit 28bc42c7, see `cdp/CDP-PINNED.txt`), plus CDP's own `cdparams` program: the one CDP's own front end (the Sound Loom) asks for the parameter page of a process. UNDER THE HOOD lists every process of those programs, grouped the way CDP groups them (by program), and shows each one's **ORIGINAL page**: every control exactly as cdparams defines it for that process and mode (CDP's own control name, its kind: slider / number box / check button / data file, its range, its default, the slider's starting sub-range, whether it may be time-varying), in our colours, with our plain words printed small under CDP's name. What you set goes to the program exactly as it is: no scaling, no clamping, no hidden processing. RUN shows the command line(s) that ran and CDP's own words. The result is the processed sound (CDP's output as it is: no gain, no fades), and UNDO brings back the sound before it.

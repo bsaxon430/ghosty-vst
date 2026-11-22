@@ -199,8 +199,8 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/../ghosty-pro/Shared/Terrain/Terrain.cmake)
 set(GHOSTLAB_SOURCES
   ${GHOST_TERRAIN_SOURCES}
   Source/Core/Cdp.cpp Source/Core/AudioTools.cpp Source/Core/Actions.cpp Source/Core/Hood.cpp Source/Core/LabTerrainMap.cpp Source/Core/Engine.cpp
-  Source/Core/Rooms.cpp
-  Source/Plugin/Player.cpp Source/Plugin/Processor.cpp Source/Plugin/SoundBody.cpp Source/Plugin/Editor.cpp Source/Plugin/RoomPage.cpp
+  Source/Core/Rooms.cpp Source/Core/Spectre.cpp
+  Source/Plugin/Player.cpp Source/Plugin/Processor.cpp Source/Plugin/SoundBody.cpp Source/Plugin/Editor.cpp Source/Plugin/RoomPage.cpp Source/Plugin/SpectrePage.cpp
   ${GHOSTLAB_ROOM_SOURCES})
 set(GHOSTLAB_DEFS JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0 JUCE_DISPLAY_SPLASH_SCREEN=0 JUCE_USE_MP3AUDIOFORMAT=1
   GHOSTLAB_VERSION="${GHOSTLAB_VERSION}" PS_USE_PFFFT=1 GHOSTMATTER_DDSP=$<BOOL:${GHOSTLAB_DDSP}>)

@@ -6,6 +6,7 @@
 #include "StretchStage.h"
 #include "Ddsp.h"
 #include "Space.h"
+#include "Spectre.h"
 #include "Hood.h"   // (Source/Matter/Hood: the engines' own control tables)
 #include <juce_dsp/juce_dsp.h>
 
@@ -21,6 +22,8 @@ static const RoomInfo kRooms[] = {
       "Best on one clear voice or melody (humming, a lead, a bass line). Chords confuse it.", "DDSP" },
     { Room::Space, Op::Space, "SPACE", "Put the sound somewhere around your head: left, right, near, far, in a room.",
       "Best in headphones. Works on anything.", "Pertylizer" },
+    { Room::Spectre, Op::Spectre, "SPECTRE", "Rebuilds your sound from up to 1,024 sine waves, so you can bend every one of them live.",
+      "Works on anything. Voices, pads, basses and guitars turn to glass; drums turn to tuned metal.", "Ghost Lab's own resynthesis" },
 };
 
 const RoomInfo& info (Room r) { return kRooms[juce::jlimit (0, (int) Room::Count - 1, (int) r)]; }
@@ -229,6 +232,17 @@ juce::String describe (const Step& s)
             const float x = val (s, "panner.x"), d = val (s, "panner.distance");
             return juce::String ("SPACE ") + (x < -0.2f ? "left" : x > 0.2f ? "right" : "middle") + (d > 0.7f ? ", far" : d < 0.3f ? ", close" : "");
         }
+        case Op::Spectre:
+        {
+            juce::StringArray bits;
+            const float tr = s.get ("transpose"), sh = s.get ("shift"), x = s.get ("phase"), y = s.get ("cepstrum");
+            if (std::abs (tr) >= 0.05f) bits.add ((tr > 0 ? "+" : "") + juce::String (tr, 1) + " st");
+            if (std::abs (sh) >= 1.0f) bits.add ((sh > 0 ? "+" : "") + juce::String (juce::roundToInt (sh)) + " Hz");
+            if (x < -0.25f) bits.add ("robot"); else if (x > 0.25f) bits.add ("whisper");
+            if (y > 0.25f) bits.add ("body"); else if (y < -0.25f) bits.add ("raw");
+            if (s.get ("inf") > 0.6f) bits.add ("frozen"); else if (s.get ("cloud") > 0.4f) bits.add ("cloud");
+            return "SPECTRE " + (bits.isEmpty() ? juce::String ("rebuilt") : bits.joinIntoString (", "));   // (always "SPECTRE ...": printing again replaces the last print)
+        }
         default: break;
     }
     return {};
@@ -336,6 +350,20 @@ static RenderResult space (const Step& s, const Audio& in)
     return res;
 }
 
+static RenderResult spectreRender (const Step& s, const Audio& in, const std::atomic<bool>* cancel)
+{
+    RenderResult res;
+    spectre::Params p;
+    for (int i = 0; i < spectre::kParams; ++i) p.v[(size_t) i] = s.get (spectre::param (i).key);
+    auto out = spectre::renderOffline (in.buf, in.sampleRate, p, cancel);
+    if (out.getNumSamples() < 2) { res.error = "Stopped."; return res; }
+    res.audio = asAudio (out, in.sampleRate, in.sampleRate);
+    juce::String line;
+    for (int i = 0; i < spectre::kParams; ++i) line << spectre::param (i).key << " " << juce::String (p[i], 2) << "  ";
+    res.commands.add (line);
+    return res;
+}
+
 RenderResult render (const Step& s, const Audio& in, const std::atomic<bool>* cancel)
 {
     RenderResult res;
@@ -344,6 +372,7 @@ RenderResult render (const Step& s, const Audio& in, const std::atomic<bool>* ca
         case Op::XStretch: res = stretch (s, in, cancel); break;
         case Op::Reborn:   res = reborn (s, in, cancel); break;
         case Op::Space:    res = space (s, in); break;
+        case Op::Spectre:  res = spectreRender (s, in, cancel); break;
         default: res.error = "That is not a room."; return res;
     }
     if (res.audio == nullptr) return res;

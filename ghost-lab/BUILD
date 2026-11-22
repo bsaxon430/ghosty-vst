@@ -1,2 +1,2 @@
-16
-TRIM: drag the ends of ORIGINAL (the kept part becomes the new original) or PROCESSED (the result only); undoable
+17
+SPECTRE: a real-time resynthesis room (up to 1,024 sine-wave partials; PHASE / CEPSTRUM pad, SHIFT, TRANSPOSE, CLOUD, SMOOTH, MID, SIDE, INF), and the page Ghost Lab opens on

@@ -1435,6 +1435,7 @@ static void testBodyLive (const std::shared_ptr<Audio>& voice)
     const juce::String who = Processor::isFx ? "FX" : "instrument";
     const int bs = 256, ins = Processor::isFx ? 2 : 0;
     Processor p;
+    p.setSpectreLive (false);   // (FX: the track dry, so only the body's live chain is heard)
     p.setPlayConfigDetails (ins, 2, 48000.0, bs);
     p.prepareToPlay (48000.0, bs);
     p.engine.setSpecimen (voice, "voice");
@@ -1594,6 +1595,7 @@ static void testPlugin (const std::shared_ptr<Audio>& voice)
 {
     const juce::String who = Processor::isFx ? "FX" : "instrument";
     Processor p;
+    p.setSpectreLive (false);   // (FX: with SPECTRE's LIVE off the track plays dry, as in a session from before build 17; SPECTRE's own tests cover LIVE)
     juce::AudioProcessor::BusesLayout stereo, mono;
     stereo.outputBuses.add (juce::AudioChannelSet::stereo()); mono.outputBuses.add (juce::AudioChannelSet::mono());
     if (Processor::isFx) { stereo.inputBuses.add (juce::AudioChannelSet::stereo()); mono.inputBuses.add (juce::AudioChannelSet::mono()); }
@@ -2510,7 +2512,7 @@ static void testRoomPages (const std::shared_ptr<Audio>& voice)
             noGrow = noGrow && RouteBar::roomAt (i) != Room::Grow;
         }
         check (ok, "every chip on the strip opens its room (and THE LAB goes back)");
-        check (noGrow && RouteBar::kChips == 4, "GROW is gone from the strip (THE LAB, STRETCH, REBORN, SPACE)");
+        check (noGrow && RouteBar::kChips == 5, "GROW is gone from the strip (SPECTRE, THE LAB, STRETCH, REBORN, SPACE)");
     }
     // STRETCH, laid out like the original: its own names, its groups, its module switches
     p.engine.setSpecimen (voice, "voice");
@@ -2732,12 +2734,202 @@ static void testTrim (const std::shared_ptr<Audio>& voice)
     }
 }
 
+
+// ------------------------------------------------------------------------------------------------ SPECTRE (build 17)
+static float zcFreq (const float* x, int n, double sr)
+{
+    int first = -1, last = -1, count = 0;
+    for (int i = 1; i < n; ++i) if (x[i - 1] <= 0.0f && x[i] > 0.0f) { if (first < 0) first = i; last = i; ++count; }
+    return count > 1 ? (float) ((count - 1) * sr / (last - first)) : 0.0f;
+}
+static float rmsOf (const float* x, int n) { double e = 0; for (int i = 0; i < n; ++i) e += (double) x[i] * x[i]; return (float) std::sqrt (e / juce::jmax (1, n)); }
+
+static void testSpectre (const std::shared_ptr<Audio>& voice)
+{
+    using namespace spectre;
+    const double sr = 48000.0;
+    // ---- the engine: a sine comes back as itself; TRANSPOSE / SHIFT move it; INF holds it after it has stopped
+    auto runSine = [&] (Params p, float hz, int stopAt, std::function<void (Params&, int)> during = nullptr)
+    {
+        spectre::Engine e; e.prepare (sr, 256);
+        const int n = (int) sr * 2;
+        std::vector<float> L ((size_t) n), R ((size_t) n);
+        for (int i = 0; i < n; ++i) L[(size_t) i] = R[(size_t) i] = i < stopAt ? 0.3f * (float) std::sin (2.0 * juce::MathConstants<double>::pi * hz * i / sr) : 0.0f;
+        for (int i = 0; i < n; i += 256) { if (during) during (p, i); e.process (L.data() + i, R.data() + i, juce::jmin (256, n - i), p); }
+        return L;
+    };
+    const int n = (int) sr * 2;
+    {
+        auto out = runSine ({}, 440.0f, n);
+        const float f = zcFreq (out.data() + 40000, 40000, sr), r = rmsOf (out.data() + 40000, 40000);
+        check (std::abs (f - 440.0f) < 2.0f && std::abs (juce::Decibels::gainToDecibels (r / 0.2121f)) < 1.0f,
+               "SPECTRE: a 440 Hz sine comes back at 440 Hz, same level (" + juce::String (f, 1) + " Hz, " + juce::String (juce::Decibels::gainToDecibels (r / 0.2121f), 2) + " dB)");
+    }
+    { Params p; p.v[Transpose] = 12.0f; auto out = runSine (p, 220.0f, n); const float f = zcFreq (out.data() + 40000, 40000, sr);
+      check (std::abs (f - 440.0f) < 3.0f, "SPECTRE: TRANSPOSE +12 puts 220 Hz at 440 Hz (" + juce::String (f, 1) + ")"); }
+    { Params p; p.v[Shift] = 100.0f; auto out = runSine (p, 220.0f, n); const float f = zcFreq (out.data() + 40000, 40000, sr);
+      check (std::abs (f - 320.0f) < 3.0f, "SPECTRE: SHIFT +100 Hz puts 220 Hz at 320 Hz (" + juce::String (f, 1) + ")"); }
+    {
+        auto out = runSine ({}, 330.0f, (int) sr, [] (Params& p, int i) { if (i > 43000) p.v[Inf] = 1.0f; });
+        const float r = rmsOf (out.data() + 72000, 20000);
+        check (r > 0.15f, "SPECTRE: INF at the top holds the sound after it stops (rms " + juce::String (r, 3) + " a half second later)");
+        auto out2 = runSine ({}, 330.0f, (int) sr);
+        check (rmsOf (out2.data() + 72000, 20000) < 1e-3f, "SPECTRE: with INF at 0 it stops when the sound stops");
+    }
+    {
+        // every control, swept to its ends at random on noise and a chord: never a NaN, never louder than +24 dB
+        spectre::Engine e; e.prepare (sr, 512);
+        juce::Random rnd (7);
+        bool finite = true; float peak = 0;
+        Params p;
+        for (int blk = 0; blk < 600; ++blk)
+        {
+            if (blk % 20 == 0) for (int k = 0; k < kParams; ++k) { const auto& in = param (k); p.v[(size_t) k] = rnd.nextBool() ? (rnd.nextBool() ? in.lo : in.hi) : in.lo + rnd.nextFloat() * (in.hi - in.lo); }
+            float L[512], R[512];
+            for (int i = 0; i < 512; ++i) { L[i] = 0.2f * (rnd.nextFloat() - 0.5f) + 0.2f * (float) std::sin (0.05 * (blk * 512 + i)); R[i] = 0.2f * (rnd.nextFloat() - 0.5f); }
+            e.process (L, R, 512, p);
+            for (int i = 0; i < 512; ++i) { finite = finite && std::isfinite (L[i]) && std::isfinite (R[i]); peak = juce::jmax (peak, std::abs (L[i]), std::abs (R[i])); }
+            const int live = e.mid.activeCount.load();
+            finite = finite && live <= kMaxOscs;
+        }
+        check (finite && peak <= 1.0f, "SPECTRE: every control swept to its ends: no NaN, never past 0 dBFS (peak " + juce::String (peak, 3) + ")");
+    }
+    {
+        Params p; p.v[Partials] = 16.0f;
+        spectre::Engine e; e.prepare (sr, 512);
+        std::vector<float> L (48000), R (48000);
+        for (int i = 0; i < 48000; ++i) { float v = 0; for (int h = 1; h <= 40; ++h) v += 0.02f * (float) std::sin (2.0 * juce::MathConstants<double>::pi * 110.0 * h * i / sr); L[(size_t) i] = R[(size_t) i] = v; }
+        for (int i = 0; i < 48000; i += 512) e.process (L.data() + i, R.data() + i, juce::jmin (512, 48000 - i), p);
+        check (e.mid.activeCount.load() <= 24, "SPECTRE: PARTIALS 16 rebuilds a 40-harmonic tone from about 16 sine waves (" + juce::String (e.mid.activeCount.load()) + " live)");
+    }
+    // ---- PRINT IT: the offline render through the lab's history
+    {
+        Step s; s.op = Op::Spectre; s.values["transpose"] = 7.0f; s.values["phase"] = -0.6f;
+        auto res = rooms::render (s, *voice);
+        check (res.audio != nullptr && std::abs (res.audio->seconds() - voice->seconds()) < 0.5 && rms (*res.audio) > 0.01f,
+               "SPECTRE: PRINT IT renders the whole sound (" + juce::String (res.audio ? res.audio->seconds() : 0.0, 2) + " s from " + juce::String (voice->seconds(), 2) + " s)");
+        check (rooms::describe (s) == "SPECTRE +7.0 st, robot", "SPECTRE: the history says what it did (" + rooms::describe (s) + ")");
+        check (rooms::roomOf (Op::Spectre) == rooms::Room::Spectre && rooms::isRoomOp (Op::Spectre), "SPECTRE is a room of the lab");
+    }
+    // ---- the plug-in: LISTEN (both builds), LIVE (FX), saved with the session, nothing allocated or locked on the audio thread
+    {
+        Processor p;
+        p.setRateAndBufferSizeDetails (48000.0, 512);
+        p.prepareToPlay (48000.0, 512);
+        p.engine.setSpecimen (voice, "voice"); p.syncPlayer();
+        if (Processor::isFx)
+        {
+            check (p.spectreLiveOn() && p.getLatencySamples() == p.spectreShown().latency(), "FX: a new Ghost Lab FX plays the track through SPECTRE, and reports its latency (" + juce::String (p.getLatencySamples()) + ")");
+            p.setSpectreLive (false);
+            check (p.getLatencySamples() == 0, "FX: LIVE off: no latency");
+            p.setSpectreLive (true);
+        }
+        p.setSpectreParam (Transpose, 5.0f);
+        p.setSpectreListening (true, p.engine.processedAudio());
+        juce::AudioBuffer<float> buf (2, 512); juce::MidiBuffer midi;
+        double e = 0; gAudioAllocs = 0; gAudioLocks = 0;
+        for (int blk = 0; blk < 120; ++blk)
+        {
+            for (int c = 0; c < 2; ++c) for (int i = 0; i < 512; ++i) buf.setSample (c, i, Processor::isFx ? 0.1f * (float) std::sin (0.07 * (blk * 512 + i)) : 0.0f);
+            tlAudio = true; p.processBlock (buf, midi); tlAudio = false;
+            if (blk > 10) e += buf.getRMSLevel (0, 0, 512);
+        }
+        check (p.spectreListening() && e > 0.5, "SPECTRE: LISTEN plays the sound round and round through it (" + juce::String (e, 2) + ")");
+        check (gAudioAllocs.load() == 0 && gAudioLocks.load() == 0, "SPECTRE: nothing allocated or locked on the audio thread (" + juce::String (gAudioAllocs.load()) + " / " + juce::String (gAudioLocks.load()) + ")");
+        p.setSpectreListening (false);
+        p.processBlock (buf, midi);   // (the player takes the stop at the next block)
+        check (! p.spectreListening(), "SPECTRE: LISTEN again stops it");
+        // saved and restored with the session
+        juce::MemoryBlock mb; p.refreshState(); p.getStateInformation (mb);
+        Processor q; q.setStateInformation (mb.getData(), (int) mb.getSize());
+        juce::MessageManager::getInstance()->runDispatchLoopUntil (400);
+        check (std::abs (q.spectreParam (Transpose) - 5.0f) < 1e-4f && q.spectreLiveOn() == Processor::isFx, "SPECTRE: its controls (and LIVE) come back with the session");
+        if (Processor::isFx)
+        {
+            // a session saved before build 17 (no SPECTRE in it): the track still plays dry
+            auto t = p.engine.saveState(); juce::MemoryBlock old;
+            if (auto x = t.createXml()) juce::AudioProcessor::copyXmlToBinary (*x, old);
+            Processor r; r.setStateInformation (old.getData(), (int) old.getSize());
+            juce::MessageManager::getInstance()->runDispatchLoopUntil (400);
+            check (! r.spectreLiveOn(), "FX: a session from before SPECTRE opens with LIVE off (the track plays as it always did)");
+        }
+    }
+    // ---- the page
+    {
+        Editor::opensOnSpectre = true;
+        Processor p;
+        p.engine.setSpecimen (voice, "voice"); p.syncPlayer();
+        std::unique_ptr<Editor> ed (dynamic_cast<Editor*> (p.createEditor()));
+        ed->setSize (Editor::kW, Editor::kH); ed->refresh();
+        Editor::opensOnSpectre = false;
+        check (ed->roomNow() == rooms::Room::Spectre && ed->spectrePage().isVisible() && ! ed->roomPage().isVisible(), "SPECTRE: Ghost Lab opens on SPECTRE's page");
+        check (RouteBar::roomAt (0) == rooms::Room::Spectre && RouteBar::roomAt (1) == rooms::Room::Lab, "SPECTRE: it is first on the strip of rooms, THE LAB next");
+        auto& pg = ed->spectrePage();
+        const bool mono = isEffectivelyMono (*voice) || voice->channels() == 1;
+        check (pg.controlEnabled (spectre::Transpose) && pg.controlEnabled (spectre::Cloud) && pg.controlEnabled (spectre::Side) == ! mono,
+               "SPECTRE: with a sound, its controls are live; SIDE is greyed on a mono sound");
+        pg.setValue (spectre::Inf, 1.0f);
+        check (! pg.controlEnabled (spectre::Cloud) && ! pg.controlEnabled (spectre::Smooth), "SPECTRE: CLOUD and SMOOTH grey out while INF holds everything");
+        pg.setValue (spectre::Inf, 0.0f);
+        pg.setValue (spectre::Transpose, -5.0f);
+        check (std::abs (p.spectreParam (spectre::Transpose) + 5.0f) < 1e-4f, "SPECTRE: the page sets the engine's controls");
+        const int before = p.engine.historySize();
+        pg.pressPrint();
+        for (int i = 0; i < 400 && p.engine.busy(); ++i) juce::MessageManager::getInstance()->runDispatchLoopUntil (50);
+        juce::MessageManager::getInstance()->runDispatchLoopUntil (100);
+        check (p.engine.historySize() == before + 1 && p.engine.current().label.startsWith ("SPECTRE -5.0 st"), "SPECTRE: PRINT IT adds one step to the history (" + p.engine.current().label + ")");
+        pg.setValue (spectre::Transpose, 3.0f);
+        pg.pressPrint();
+        for (int i = 0; i < 400 && p.engine.busy(); ++i) juce::MessageManager::getInstance()->runDispatchLoopUntil (50);
+        juce::MessageManager::getInstance()->runDispatchLoopUntil (100);
+        check (p.engine.historySize() == before + 1 && p.engine.current().label.startsWith ("SPECTRE +3.0 st"), "SPECTRE: printing again replaces the last print (nothing stacks)");
+        pg.pressReset();
+        check (std::abs (p.spectreParam (spectre::Transpose)) < 1e-6f && std::abs (p.spectreParam (spectre::Partials) - 512.0f) < 1e-3f, "SPECTRE: RESET puts every control back");
+        ed->setRoom (rooms::Room::Lab);
+        check (! ed->spectrePage().isVisible() && ed->body().isVisible(), "SPECTRE: THE LAB is one tap away");
+        ed->setRoom (rooms::Room::Stretch);
+        check (ed->roomPage().isVisible() && ! ed->spectrePage().isVisible(), "SPECTRE: the other rooms still open their own pages");
+    }
+}
+
+static void spectreShots (const juce::File& dir)
+{
+    dir.createDirectory();
+    auto voice = synthVoice();
+    if (auto v = demoSource ("voice")) voice = v;
+    Editor::opensOnSpectre = true;
+    Processor p;
+    p.setRateAndBufferSizeDetails (48000.0, 512); p.prepareToPlay (48000.0, 512);
+    p.engine.setSpecimen (voice, "voice"); p.syncPlayer();
+    std::unique_ptr<Editor> ed (dynamic_cast<Editor*> (p.createEditor()));
+    auto pump = [&] (int blocks)
+    {
+        juce::AudioBuffer<float> buf (2, 512); juce::MidiBuffer midi;
+        for (int b = 0; b < blocks; ++b) { buf.clear(); for (int c = 0; c < 2; ++c) for (int i = 0; i < 512; ++i) buf.setSample (c, i, Processor::isFx ? voice->buf.getSample (0, (b * 512 + i) % voice->length()) * 0.8f : 0.0f); p.processBlock (buf, midi); }
+        juce::MessageManager::getInstance()->runDispatchLoopUntil (120);
+    };
+    auto shot = [&] (const juce::String& name, int w, int h) { ed->setSize (w, h); ed->hideToast(); ed->refresh(); juce::MessageManager::getInstance()->runDispatchLoopUntil (80); savePng (*ed, dir.getChildFile ("ghostlab-spectre-" + name + ".png")); };
+    ed->setSize (Editor::kW, Editor::kH);
+    ed->spectrePage().pressListen();
+    pump (90);
+    shot ("1-open", Editor::kW, Editor::kH);
+    ed->spectrePage().setValue (spectre::PhaseX, -0.55f); ed->spectrePage().setValue (spectre::CepstrumY, 0.4f);
+    ed->spectrePage().setValue (spectre::Transpose, 7.0f); ed->spectrePage().setValue (spectre::Cloud, 0.6f); ed->spectrePage().setValue (spectre::Inf, 0.35f);
+    pump (90);
+    shot ("2-moved", Editor::kW, Editor::kH);
+    shot ("3-big", 1600, 1000);
+    shot ("4-narrow", 420, 900);
+    Editor::opensOnSpectre = false;
+}
+
 int main (int argc, char** argv)
 {
+    Editor::opensOnSpectre = false;   // (these tests drive THE LAB; SPECTRE's own tests open it themselves)
     juce::ScopedJuceInitialiser_GUI gui;
     const juce::String mode = argc > 1 ? argv[1] : "";
     if (mode == "demos") { demos (juce::File (argc > 2 ? argv[2] : "demos")); return 0; }
     if (mode == "shots") { shots (juce::File (argc > 2 ? argv[2] : "shots")); return 0; }
+    if (mode == "spectreshots") { spectreShots (juce::File (argc > 2 ? argv[2] : "spectreshots")); return 0; }
     if (mode == "roomshots") { roomShots (juce::File (argc > 2 ? argv[2] : "roomshots")); return 0; }
     if (mode == "bodyshots") { bodyShots (juce::File (argc > 2 ? argv[2] : "bodyshots")); return 0; }
     if (mode == "bodydemos") { bodyDemos (juce::File (argc > 2 ? argv[2] : "bodydemos")); return 0; }
@@ -2749,6 +2941,7 @@ int main (int argc, char** argv)
     testOpenSize();
     testFreshStart (synthVoice());
     testNoUpstreamNames();
+    testSpectre (synthVoice());
     std::printf ("\n%d passed, %d failed\n", passes, failures);
     return failures == 0 ? 0 : 1;
    #endif
@@ -2782,6 +2975,7 @@ int main (int argc, char** argv)
     if (only.isEmpty() || only == "names") testNoUpstreamNames();
     if (only.isEmpty() || only == "rooms" || only == "roompages") testRoomPages (voice);
     if (only.isEmpty() || only == "trim") testTrim (voice);
+    if (only.isEmpty() || only == "spectre") testSpectre (voice);
     e.sessionFolder().deleteRecursively();
     std::printf ("\n%d passed, %d failed\n", passes, failures);
     return failures == 0 ? 0 : 1;

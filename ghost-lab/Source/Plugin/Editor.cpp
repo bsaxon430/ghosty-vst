@@ -588,6 +588,8 @@ public:
         route.onPick = [this] (rooms::Room r) { ed.setRoom (r); };
         roomPage = std::make_unique<RoomPage> (ed);
         addChildComponent (*roomPage);
+        spectrePage = std::make_unique<SpectrePage> (ed);
+        addChildComponent (*spectrePage);
         cardView.setScrollBarsShown (false, false, false, true);
         cardView.setViewedComponent (&strip, false);
         addAndMakeVisible (cardView);
@@ -933,6 +935,7 @@ public:
             // UNDER THE HOOD: everything between the pills and the waveforms
             hoodPage->setBounds ((int) m, (int) top, (int) (W - 2 * m), (int) (wavesR.getY() - 10 - top));
             roomPage->setBounds (hoodPage->getBounds());
+            spectrePage->setBounds (hoodPage->getBounds());
             showPage();
             setSize (width, (int) H);
             return;
@@ -972,6 +975,7 @@ public:
         {
             const int th = 940;
             roomPage->setBounds ((int) m, (int) y, (int) (W - 2 * m), th);
+            spectrePage->setBounds (roomPage->getBounds());
             y += (float) th + 16;
             wavesR = { m, y, W - 2 * m, 230 };
             original.setBounds (wavesR.withHeight (110).toNearestInt());
@@ -1045,7 +1049,9 @@ public:
         const bool t = ed.terrainPageOn() && ! h && ! rm;
         hoodPage->setVisible (h);
         terrain->setVisible (t);
-        roomPage->setVisible (rm);
+        const bool sp = ed.roomNow() == rooms::Room::Spectre;
+        roomPage->setVisible (rm && ! sp);
+        spectrePage->setVisible (sp);
         route.current = ed.roomNow(); route.repaint();
         body.setVisible (! t && ! h && ! rm);
         cardView.setVisible (! t && ! h && ! rm);
@@ -1067,6 +1073,7 @@ public:
     Pill pill1, pill2, deepPill, capturePill, terrainPill, hoodPill, aboutPill;
     std::unique_ptr<HoodPage> hoodPage;
     std::unique_ptr<RoomPage> roomPage;
+    std::unique_ptr<SpectrePage> spectrePage;
     RouteBar route;
     std::unique_ptr<ghost::terrain::TerrainView> terrain;
     juce::Rectangle<float> terrainHintR;
@@ -1137,6 +1144,7 @@ Editor::~Editor()
 HoodPage& Editor::hood() { return *content->hoodPage; }
 
 RoomPage& Editor::roomPage() { return *content->roomPage; }
+SpectrePage& Editor::spectrePage() { return *content->spectrePage; }
 RouteBar& Editor::routeBar() { return content->route; }
 
 void Editor::setRoom (rooms::Room r)
@@ -1151,7 +1159,7 @@ void Editor::setRoom (rooms::Room r)
     }
     proc.setSpaceListening (false);
     roomOn = r;
-    if (r != rooms::Room::Lab) content->roomPage->setRoom (r);
+    if (r != rooms::Room::Lab && r != rooms::Room::Spectre) content->roomPage->setRoom (r);
     resized();
     refresh();
 }
@@ -1357,7 +1365,8 @@ void Editor::refresh()
     c.body.setEmpty (! has);
     if (has) c.body.setProfile (engine.current().profile);
     c.body.setBusy (engine.busy());
-    if (roomOn != rooms::Room::Lab) c.roomPage->soundChanged();
+    if (roomOn == rooms::Room::Spectre) c.spectrePage->soundChanged();
+    else if (roomOn != rooms::Room::Lab) c.roomPage->soundChanged();
     if (hoodPage && ! engine.busy()) c.hoodPage->soundChanged();   // the ORIGINAL page's ranges follow the sound (asked once per sound)
     c.pill1.label = has ? "SPECIMEN " + juce::String (juce::jmax (1, engine.specimenNumber)).paddedLeft ('0', 3) : juce::String ("+ LOAD SOUND");
     c.pill1.dashed = ! has;
@@ -1644,6 +1653,9 @@ juce::String Editor::creditsText()
     return juce::String ("GHOST LAB v1 beta") + "  by GhostBlock\n"
         "Free and open-source software: GNU Affero General Public License, version 3 only (AGPL-3.0). The complete source of\n"
         "this build is in the download (Licenses/Ghost Lab source.zip). The full notices are in NOTICE.md there.\n\n"
+        "SPECTRE\n"
+        "GhostBlock's own resynthesis engine (no third-party code): the sinusoidal model of McAulay & Quatieri and cepstral\n"
+        "smoothing, played back by up to 1,024 oscillators. JUCE's FFT does the transforms.\n\n"
         "THE LAB'S ENGINE\n"
         "The CDP System, Release 8 (Composers Desktop Project). Copyright (c) 2022 Composers Desktop Project; programs by\n"
         "Trevor Wishart and the CDP authors. Licence: LGPL-2.1 or later. Source: https://github.com/ComposersDesktop/CDP8\n"

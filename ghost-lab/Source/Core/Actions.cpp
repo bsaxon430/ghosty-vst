@@ -4,6 +4,7 @@
 #include "TerrainSerial.h"
 #include "LabTerrainMap.h"
 #include "Hood.h"
+#include "Spectre.h"
 #include <cmath>
 
 namespace glab
@@ -68,6 +69,16 @@ static std::vector<OpInfo> makeCatalogue()
     v.push_back ({ Op::Space, "space", "SPACE", "Place it around your head", "the binaural panner and reverb engine",
         { { "x", "Left / right", 0, 1, 0.5f, "", false }, { "y", "Near / far", 0, 1, 0.3f, "", false }, { "room", "Room", 0, 1, 0.3f, "", false },
           { "tail", "Tail", 0, 1, 0.25f, "", false }, { "width", "Width", 0, 1.5f, 1, "", false } } });
+    {
+        // SPECTRE (build 17): the controls are the engine's own (Spectre.h), under its own keys
+        std::vector<Control> cs;
+        for (int i = 0; i < spectre::kParams; ++i)
+        {
+            const auto& p = spectre::param (i);
+            cs.push_back ({ p.key, p.name, p.lo, p.hi, p.def, p.unit, false });
+        }
+        v.push_back ({ Op::Spectre, "spectre", "SPECTRE", "Rebuilt from up to 1,024 sine waves", "our own real-time resynthesis engine", cs });
+    }
 return v;
 }
 
@@ -367,7 +378,7 @@ juce::File renderMono (const Step& s, const Audio& in, const Audio* partner, Job
             j.run ({ "morph", "morph", "2", x.getFileName(), y.getFileName(), o.getFileName(), "0", num (dur), "0", num (dur), num (e), num (e) }, o);
             return j.failed() ? juce::File() : j.synth (o);
         }
-        case Op::Terrain: case Op::Hood: case Op::Grow: case Op::XStretch: case Op::Reborn: case Op::Space: case Op::Count: break;
+        case Op::Terrain: case Op::Hood: case Op::Grow: case Op::XStretch: case Op::Reborn: case Op::Space: case Op::Spectre: case Op::Count: break;
     }
     j.error = "Unknown action.";
     return {};

@@ -4,6 +4,7 @@
 #include "TerrainView.h"
 #include "Theme.h"
 #include "RoomPage.h"
+#include "SpectrePage.h"
 
 namespace glab
 {
@@ -63,6 +64,8 @@ public:
     void setRoom (rooms::Room r);            // Room::Lab = back to the lab
     rooms::Room roomNow() const { return roomOn; }
     RoomPage& roomPage();
+    SpectrePage& spectrePage();            // build 17: SPECTRE, the page Ghost Lab opens on
+    static inline bool opensOnSpectre = true;   // (the tests that drive THE LAB open there instead)
     RouteBar& routeBar();
     void runRoom (Op op);                    // STRETCH / REBORN / SPACE on the sound (running the same room again replaces its last run)
     void growRoom (bool asSecond);           // GROW: a new SPECIMEN 001 (or the second sound)
@@ -93,7 +96,7 @@ private:
     std::unique_ptr<juce::FileChooser> chooser;
     std::map<Op, Step> settings;
     Op selected = Op::Pull;
-    rooms::Room roomOn = rooms::Room::Lab;
+    rooms::Room roomOn = opensOnSpectre ? rooms::Room::Spectre : rooms::Room::Lab;
     bool deep = false, narrow = false, terrainPage = false, hoodPage = false, terrainPending = false;
     juce::uint32 seed = 1;
     friend class Content;

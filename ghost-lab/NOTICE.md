@@ -26,6 +26,13 @@ open source. None of this code may be copied into GhostBlock's paid plug-ins.
 | Poppins font (embedded, unmodified) | `fonts/` | SIL Open Font License 1.1 |
 | The lab, THE LIVING SOUND, TERRAIN, the rooms' pages and pictures, the glue to each engine (`Source/`, `tests/`), and the banner art | `Source/`, `art/` | GhostBlock's own code and Brandon's own artwork, released here under the AGPL-3.0 |
 
+## SPECTRE (build 17): our own engine
+SPECTRE, the room Ghost Lab opens on, is GhostBlock's own code (`Source/Core/Spectre.*`, `Source/Plugin/SpectrePage.*`), no
+third-party DSP: a short-time Fourier analysis with peak picking and partial tracking (the textbook sinusoidal model of
+McAulay & Quatieri, 1986), cepstral smoothing of the log spectrum for the body / detail split, and a bank of up to 1,024
+oscillators that plays the partials back. Its page is laid out our own way (it copies no other plug-in's window). JUCE's FFT
+does the transforms.
+
 ## Ours, on top of the engines (they only set the engines' own controls)
 - GROW's LOUD / BRIGHT / ROUGH / SHAPE, STRETCH's START FROM chips, SPACE's pad and chips, REBORN's AUTO (it sets DDSP's own
   Pitch Shift by whole octaves), CHAOS / SWAP / FEED BACK (they move DDSP's own controls, switch its model, or feed its

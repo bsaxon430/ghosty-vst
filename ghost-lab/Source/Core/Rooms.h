@@ -4,6 +4,7 @@
 //   STRETCH  the extreme stretch: PaulXStretch (essej/paulxstretch, GPL-3), its own offline render chain
 //   REBORN   your sound played back by a neural instrument: Magenta's DDSP-VST (Apache-2.0), its own processor
 //   SPACE    where the sound sits around your head: Pertylizer (pertyjons/pertylizer, MIT), its own Rust crates
+//   SPECTRE  (build 17) the sound rebuilt from up to 1,024 sine waves, bent live: our own engine (Spectre.h)
 // Every engine runs unmodified (Source/Matter is the glue Ghost Matter already used; third_party/ is the upstream code).
 // Our controls only set the engines' own controls. Each run is one step in the lab's history, like any card.
 // This file is AGPL-3.0-only with the rest of Ghost Lab from build 12 on (see LICENSE, NOTICE.md).
@@ -13,7 +14,7 @@
 
 namespace glab::rooms
 {
-enum class Room { Lab = 0, Grow, Stretch, Reborn, Space, Count };
+enum class Room { Lab = 0, Grow, Stretch, Reborn, Space, Spectre, Count };   // (Spectre, build 17: the page Ghost Lab opens on)
 struct RoomInfo
 {
     Room room;

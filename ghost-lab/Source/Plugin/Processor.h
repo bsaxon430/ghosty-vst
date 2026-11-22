@@ -6,6 +6,7 @@
 #include "TerrainDsp.h"
 #include "../Core/LabTerrainMap.h"
 #include "Space.h"   // (Source/Matter/Engine: the SPACE room's engine glue)
+#include "../Core/Spectre.h"
 
 namespace glab
 {
@@ -105,7 +106,27 @@ public:
     }
     float spaceMeter (int ch) const { return spaceLevel[juce::jlimit (0, 1, ch)].load(); }   // what each ear is getting (0..1)
 
+    // ---- SPECTRE (build 17): the resynthesis room, live. Its controls live here (saved with the session); the page and
+    // the audio thread share them through plain atomics.
+    //   Ghost Lab FX: LIVE runs the track's own audio through SPECTRE as it plays (the plug-in then reports SPECTRE's
+    //   latency so the host lines it up). Ghost Lab (the instrument): LISTEN plays your sound round and round through it.
+    void setSpectreParam (int p, float v);                     // message thread
+    float spectreParam (int p) const { return spectreV[(size_t) juce::jlimit (0, spectre::kParams - 1, p)].load(); }
+    spectre::Params spectreParams() const;
+    void setSpectreLive (bool on);                              // message thread (FX only)
+    bool spectreLiveOn() const { return isFx && spectreOn.load(); }
+    void setSpectreListening (bool on, AudioPtr base = nullptr);   // message thread
+    bool spectreListening() const { return player.playingSlot() == Player::Room && roomEngine.load() == 1; }
+    // what the page draws: the engine the sound is going through right now (the listen loop if it plays, else the track)
+    const spectre::Engine& spectreShown() const { return spectreListening() || ! spectreLiveOn() ? spectreLoop : spectreTrack; }
+
 private:
+    spectre::Engine spectreTrack, spectreLoop;                  // audio thread only (made in prepareToPlay)
+    std::array<std::atomic<float>, spectre::kParams> spectreV;
+    std::atomic<bool> spectreOn { isFx }, spectreDirty { false };
+    std::atomic<int> roomEngine { 0 };                          // what the Room slot's loop goes through: 0 SPACE, 1 SPECTRE
+    bool spectreWasLive = false;                                // audio thread
+    juce::AudioBuffer<float> monoBuf;
     matter::Space liveSpace;                            // audio thread only (made in prepareToPlay)
     std::atomic<float> spaceV[rooms::kSpaceControls] {};
     std::atomic<float> spaceLevel[2] { 0.0f, 0.0f };

@@ -1,6 +1,7 @@
 // Ghost Lab - AGPL-3.0-only from build 12 (see LICENSE, NOTICE.md). The rooms' pages (RoomPage.h).
 #include "RoomPage.h"
 #include "Editor.h"
+#include "SpectrePage.h"
 #include "jcdp_envelope.h"
 #include "envelope_component.h"   // PaulXStretch's own free-filter curve editor (third_party/paulxstretch, unmodified but for marked colour shims)
 
@@ -17,6 +18,7 @@ juce::Colour RoomPage::colourOf (Room r)
         case Room::Stretch: return purple;
         case Room::Reborn: return pink;
         case Room::Space: return cyan;
+        case Room::Spectre: return SpectrePage::accent();
         default: return green;
     }
 }
@@ -32,7 +34,7 @@ static juce::String noteName (int midi)
 // ================================================================================================ the strip of rooms
 Room RouteBar::roomAt (int i)
 {
-    static const Room order[] = { Room::Lab, Room::Stretch, Room::Reborn, Room::Space };
+    static const Room order[] = { Room::Spectre, Room::Lab, Room::Stretch, Room::Reborn, Room::Space };
     return order[juce::jlimit (0, kChips - 1, i)];
 }
 

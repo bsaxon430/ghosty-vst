@@ -24,8 +24,8 @@ public:
     void mouseExit (const juce::MouseEvent&) override;
     void mouseUp (const juce::MouseEvent&) override;
     juce::Rectangle<float> chip (int i) const;       // (tests)
-    static constexpr int kChips = 4;
-    static rooms::Room roomAt (int i);                // the order on the strip: THE LAB, STRETCH, REBORN, SPACE
+    static constexpr int kChips = 5;
+    static rooms::Room roomAt (int i);                // the order on the strip: SPECTRE, THE LAB, STRETCH, REBORN, SPACE
 private:
     int hover = -1;
 };

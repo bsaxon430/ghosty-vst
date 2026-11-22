@@ -16,6 +16,7 @@ juce::AudioProcessor::BusesProperties Processor::buses()
 
 Processor::Processor() : juce::AudioProcessor (buses())
 {
+    { const spectre::Params d; for (int i = 0; i < spectre::kParams; ++i) spectreV[(size_t) i].store (d[i]); }
     engine.onChange = [this] { syncPlayer(); refreshState(); };
     terrain.onChange = [this]
     {
@@ -52,7 +53,7 @@ bool Processor::isBusesLayoutSupported (const BusesLayout& l) const
 
 void Processor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    setLatencySamples (0);   // all processing is offline: nothing is added to the live signal path
+    setLatencySamples (0);   // the lab's processing is offline; only SPECTRE's LIVE (FX) adds latency (set below)
     player.prepare (sampleRate);
     terrainBank.prepare (sampleRate, 2);
     terrainLive.prepare (sampleRate, 2); terrainLive.setSeed (7);
@@ -64,6 +65,11 @@ void Processor::prepareToPlay (double sampleRate, int samplesPerBlock)
     liveSpace.prepare (sampleRate, spaceBlock);
     { float v[rooms::kSpaceControls] {}; Step st; st.op = Op::Space; rooms::spacePins (st, v); (void) rooms::livePinsFor (v); if (spaceV[8].load() == 0.0f && spaceV[5].load() == 0.0f) setSpaceLive (v); }   // (the tables are built here, never on the audio thread; a fresh instance starts at the originals' defaults)
     exactBuf.setSize (2, juce::jmax (8192, samplesPerBlock * 2));
+    spectreTrack.prepare (sampleRate, juce::jmax (64, samplesPerBlock));
+    spectreLoop.prepare (sampleRate, juce::jmax (64, samplesPerBlock));
+    monoBuf.setSize (1, juce::jmax (8192, samplesPerBlock * 2));
+    spectreWasLive = false;
+    setLatencySamples (spectreLiveOn() ? spectreTrack.latency() : 0);
     const juce::ScopedLock l (captureLock);
     if (isFx && (captureBuf.getNumSamples() == 0 || std::abs (captureRate - sampleRate) > 0.5))
     {
@@ -87,7 +93,20 @@ void Processor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer
         captureLen.store (len + juce::jmax (0, take));
         if (take < n) captureOn = false;   // full
     }
-    // the input passes through untouched; the preview plays on top
+    // the input passes through untouched (or through SPECTRE when its LIVE is on); the preview plays on top
+    if (spectreOn.load() && n > 0)
+    {
+        const auto p = spectreParams();
+        if (buffer.getNumChannels() >= 2) spectreTrack.process (buffer.getWritePointer (0), buffer.getWritePointer (1), n, p);
+        else if (n <= monoBuf.getNumSamples())
+        {
+            monoBuf.copyFrom (0, 0, buffer, 0, 0, n);
+            spectreTrack.process (buffer.getWritePointer (0), monoBuf.getWritePointer (0), n, p);
+            buffer.addFrom (0, 0, monoBuf, 0, 0, n); buffer.applyGain (0, 0, n, 0.5f);
+        }
+        spectreWasLive = true;
+    }
+    else if (spectreWasLive) { spectreTrack.reset(); spectreWasLive = false; }
    #else
     buffer.clear();
    #endif
@@ -149,12 +168,17 @@ void Processor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer
         previewBuf.clear (0, n);
         juce::AudioBuffer<float> pv (previewBuf.getArrayOfWritePointers(), 2, n);
         renderPlayer (pv, midi, n);
-        matter::SpaceParams sp; sp.tail = 0.0f; sp.width = 0.0f;   // (every control of both modules comes from the page)
-        float v[rooms::kSpaceControls];
-        for (int i = 0; i < rooms::kSpaceControls; ++i) v[i] = spaceV[i].load();
-        const auto pins = rooms::livePinsFor (v);
-        for (int i = 0; i < n; i += spaceBlock)
-            liveSpace.process (pv.getWritePointer (0) + i, pv.getWritePointer (1) + i, juce::jmin (spaceBlock, n - i), sp, &pins);
+        if (roomEngine.load() == 1)
+            spectreLoop.process (pv.getWritePointer (0), pv.getWritePointer (1), n, spectreParams());   // SPECTRE's LISTEN
+        else
+        {
+            matter::SpaceParams sp; sp.tail = 0.0f; sp.width = 0.0f;   // (every control of both modules comes from the page)
+            float v[rooms::kSpaceControls];
+            for (int i = 0; i < rooms::kSpaceControls; ++i) v[i] = spaceV[i].load();
+            const auto pins = rooms::livePinsFor (v);
+            for (int i = 0; i < n; i += spaceBlock)
+                liveSpace.process (pv.getWritePointer (0) + i, pv.getWritePointer (1) + i, juce::jmin (spaceBlock, n - i), sp, &pins);
+        }
         for (int c = 0; c < 2; ++c)
         {
             buffer.addFrom (c, 0, pv, c, 0, n);
@@ -221,6 +245,41 @@ void Processor::setSpaceListening (bool on, AudioPtr base)
 {
     if (! on) { if (spaceListening()) player.stop(); return; }
     if (base == nullptr) return;
+    roomEngine.store (0);
+    player.set (Player::Room, base);
+    player.setLoop (Player::Room, true);
+    player.play (Player::Room, 0.0);
+}
+
+// ---- SPECTRE
+spectre::Params Processor::spectreParams() const
+{
+    spectre::Params p;
+    for (int i = 0; i < spectre::kParams; ++i) p.v[(size_t) i] = spectreV[(size_t) i].load (std::memory_order_relaxed);
+    return p;
+}
+
+void Processor::setSpectreParam (int p, float v)
+{
+    if (p < 0 || p >= spectre::kParams) return;
+    const auto& in = spectre::param (p);
+    spectreV[(size_t) p].store (juce::jlimit (in.lo, in.hi, v));
+    spectreDirty = true;   // (saved by the timer, not on every drag step)
+}
+
+void Processor::setSpectreLive (bool on)
+{
+    if (! isFx) return;
+    spectreOn = on;
+    setLatencySamples (on ? spectreTrack.latency() : 0);   // the host lines the track up again
+    spectreDirty = true;
+}
+
+void Processor::setSpectreListening (bool on, AudioPtr base)
+{
+    if (! on) { if (spectreListening()) player.stop(); return; }
+    if (base == nullptr) return;
+    roomEngine.store (1);
     player.set (Player::Room, base);
     player.setLoop (Player::Room, true);
     player.play (Player::Room, 0.0);
@@ -342,6 +401,7 @@ void Processor::timerCallback()
         if (it == exactOwners.end()) break;
         exactOwners.erase (it);   // (the oldest one nobody plays; four are kept, so a block that just picked one up is never left holding a freed one)
     }
+    if (spectreDirty.exchange (false)) refreshState();
     // a drag's speed fades (the WOBBLE settles when your hand is still)
     if (terrain.motion() > 0.001f || landNow.live.wobble > 0.001f) applyLand();
 }
@@ -359,6 +419,12 @@ void Processor::refreshState()
 {
     auto t = engine.saveState();
     t.setProperty ("terrain", juce::JSON::toString (terrain.stateToVar(), true), nullptr);
+    {
+        auto* o = new juce::DynamicObject();
+        for (int i = 0; i < spectre::kParams; ++i) o->setProperty (spectre::param (i).key, spectreV[(size_t) i].load());
+        o->setProperty ("live", spectreOn.load());
+        t.setProperty ("spectre", juce::JSON::toString (juce::var (o), true), nullptr);
+    }
     juce::MemoryBlock mb;
     if (auto xml = t.createXml()) copyXmlToBinary (*xml, mb);
     const juce::ScopedLock l (stateLock);
@@ -384,6 +450,12 @@ void Processor::setStateInformation (const void* data, int size)
             engine.restoreState (t);
             juce::var tv = juce::JSON::parse (t["terrain"].toString());
             if (tv.isObject()) terrain.stateFromVar (tv);
+            // SPECTRE's controls; a session from before build 17 has none: its track plays as it always did (LIVE off)
+            juce::var sv = juce::JSON::parse (t["spectre"].toString());
+            const spectre::Params d;
+            for (int i = 0; i < spectre::kParams; ++i)
+                spectreV[(size_t) i].store (sv.isObject() && sv.hasProperty (spectre::param (i).key) ? (float) sv[spectre::param (i).key] : d[i]);
+            if (isFx) setSpectreLive (sv.isObject() && (bool) sv["live"]);
             syncPlayer(); refreshState();
         }
     });

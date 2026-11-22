@@ -14,6 +14,7 @@ enum class Op
     Hood,                                                   // UNDER THE HOOD: one real CDP process with all its own parameters (Step.data = the request)
     Terrain,                                                // the TERRAIN page: the landscape as a spectral sculpt (our own, no CDP)
     Grow, XStretch, Reborn, Space,                          // the rooms (build 12, Rooms.h): the engines that moved in from Ghost Matter
+    Spectre,                                                // build 17: SPECTRE, the resynthesis room (Spectre.h), our own engine
     Count
 };
 
