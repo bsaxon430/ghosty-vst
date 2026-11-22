@@ -1,3 +1,4 @@
+build 13 (Ghost Voice b16 new UI, Ghost Lab build 17 SPECTRE)
 build 12 (latest from Brandon's Mac 2026-11-22: Ghosty Beats 3.3.9 song mode, Ghost Mosaic THE RIVER, Block Step / Ghost House drag by drum, Phantom FX + Ghost Break nudge link, Ghosty Pro Ghost Set, Ghosty Pro 2 preset list)
 build 11 (Ghost Graph v1 beta: delete notes, fast dragging, redo, TI 84 first)
 build 10 (Ghost Graph: TI 84 first, hover tips, redo)
