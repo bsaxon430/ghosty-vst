@@ -123,7 +123,9 @@ public:
     bool spectreListening() const { return player.playingSlot() == Player::Room && roomEngine.load() == 1; }
     // build 17: on the SPECTRE and SPACE pages, the notes you play (a held key) go through that room live, and keep going
     // round while the key is held, so moving a control is heard at once. 0: no room, 1: SPACE, 2: SPECTRE.
-    void setLiveRoom (int which) { liveRoom.store (which); player.setHoldLoops (which != 0); }
+    void setLiveRoom (int which) { liveRoom.store (which); }
+    // something is sounding that a live re-render should land in: a held key, or the result playing
+    bool hearingResult() const { return player.keyHeld() || player.playingSlot() == Player::Processed; }
     int liveRoomNow() const { return liveRoom.load(); }
     // the WAVETABLE the partials play: a built-in one by name, or one cycle from a file (empty cycle: plain sines)
     void setSpectreTable (const juce::String& name, const std::vector<float>& cycle);   // message thread

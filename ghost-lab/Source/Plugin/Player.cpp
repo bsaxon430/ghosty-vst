@@ -44,7 +44,7 @@ const Audio* Player::acquire (int slot)
 void Player::noteOn (int note, float velocity)
 {
     juce::ignoreUnused (velocity);
-    heldNote = note;
+    heldNote = note; heldNow.store (true);
     speed = std::pow (2.0, (note - 60) / 12.0);
     pendingSlot = midiSlot.load(); pendingFrom = 0.0;
     gainTarget = 0.0f;   // (fades out whatever plays, then starts from the top)
@@ -52,7 +52,7 @@ void Player::noteOn (int note, float velocity)
 
 void Player::noteOff (int note)
 {
-    if (note == heldNote) { gainTarget = 0.0f; heldNote = -1; }
+    if (note == heldNote || note < 0) { gainTarget = 0.0f; heldNote = -1; heldNow.store (false); }
 }
 
 void Player::render (juce::AudioBuffer<float>& out, int start, int num, float gain)

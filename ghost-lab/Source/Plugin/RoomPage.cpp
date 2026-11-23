@@ -752,6 +752,7 @@ void RoomPage::setValue (const juce::String& id, float v)
     if (now == Room::Space) { pushSpace(); if (pad != nullptr) pad->repaint(); }
     if (now == Room::Reborn) { if (rangeBox != nullptr) rangeBox->repaint(); repaint (noteR.toNearestInt()); }
     if (now == Room::Stretch) { picture->repaint(); repaint (infoR.toNearestInt()); if (id == "pxs.bypass_stretch0" || id == "pxs.binauralbeats") refreshEnabled(); }
+    if (now == Room::Stretch || now == Room::Reborn) ed.liveEdit (op());   // (heard at once if a key is held / it is playing)
 }
 
 void RoomPage::setModule (int m, bool on)
@@ -761,6 +762,7 @@ void RoomPage::setModule (int m, bool on)
     refreshEnabled();
     if (groups != nullptr) groups->repaint();
     if (chain != nullptr) chain->repaint();
+    ed.liveEdit (op());
 }
 
 juce::Array<int> RoomPage::chainOrder() const
@@ -783,6 +785,7 @@ void RoomPage::moveInChain (int from, int to)
     order.move (from, to);
     for (int i = 0; i < 9; ++i) step().values["pxs.order" + juce::String (i)] = (float) order[i];
     if (chain != nullptr) chain->repaint();
+    ed.liveEdit (op());
 }
 
 void RoomPage::addFreeFilterNode (double x, double y)
@@ -808,6 +811,7 @@ void RoomPage::pickInstrument (int index)
     if (modelList != nullptr) modelList->setSelectedId (index + 1, juce::dontSendNotification);
     pressAuto();   // a new instrument: the tune is moved to where that instrument is at home (Pitch Shift shows by how much)
     soundChanged();
+    ed.liveEdit (op());
 }
 
 juce::StringArray RoomPage::controlIds() const

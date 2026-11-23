@@ -509,7 +509,7 @@ public:
             s->setColour (juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
             s->setColour (juce::Slider::textBoxTextColourId, sub);
             const auto id = c.id;
-            s->onValueChange = [this, s, id] { ed.settingsFor (op).values[id] = (float) s->getValue(); };
+            s->onValueChange = [this, s, id] { ed.settingsFor (op).values[id] = (float) s->getValue(); ed.liveEdit (op); };
             addAndMakeVisible (s);
             auto* l = labels.add (new juce::Label ({}, c.label + (c.deep ? "  (deep)" : "")));
             l->setFont (font (13.0f)); l->setColour (juce::Label::textColourId, c.deep ? purple.brighter (0.3f) : text);
@@ -1185,6 +1185,36 @@ void Editor::runRoom (Op op)
     };
     if (again) engine.applyReplacingLast (s, done); else engine.apply (s, done);
     refresh();
+}
+
+void Editor::liveEdit (Op op)
+{
+    if (! engine.hasSpecimen() || ! proc.hearingResult()) return;
+    const int gen = ++liveGen;
+    juce::Timer::callAfterDelay (250, [safe = juce::Component::SafePointer<Editor> (this), op, gen] { if (safe != nullptr) safe->liveRender (op, gen); });
+}
+
+void Editor::liveRender (Op op, int gen)
+{
+    if (gen != liveGen) return;   // (the hand moved again: a newer one is coming)
+    if (engine.busy())            // (the last one is still rendering: try again when it lands)
+    {
+        juce::Timer::callAfterDelay (120, [safe = juce::Component::SafePointer<Editor> (this), op, gen] { if (safe != nullptr) safe->liveRender (op, gen); });
+        return;
+    }
+    Step s = settingsFor (op);
+    s.op = op;
+    const bool again = liveStepOp == op && liveStepAt == engine.historyCursor() && engine.historyCursor() > 0;
+    if (! again) liveSeed = ++seed * 2654435761u;   // (a random effect keeps its dice while you tweak it)
+    if (op == Op::Mutate || op == Op::GrainCloud || op == Op::Shatter) s.seed = liveSeed;
+    auto done = [safe = juce::Component::SafePointer<Editor> (this), op] (bool ok, const juce::String& m)
+    {
+        if (safe == nullptr) return;
+        if (ok) { safe->liveStepOp = op; safe->liveStepAt = safe->engine.historyCursor(); }
+        else safe->toast (m, true);
+        safe->refresh();   // (the player already has the new sound: what you hear changed in place)
+    };
+    if (again) engine.applyReplacingLast (s, done); else engine.apply (s, done);
 }
 
 void Editor::growRoom (bool asSecond)

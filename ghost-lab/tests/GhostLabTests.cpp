@@ -2963,6 +2963,32 @@ static void testSpectre (const std::shared_ptr<Audio>& voice)
             p.setSpectreParam (spectre::Transpose, 0.0f);
         }
     }
+    // ---- THE LAB / STRETCH / REBORN: a control moved while a key is held re-renders by itself, and what you hear changes
+    {
+        Processor p;
+        p.setRateAndBufferSizeDetails (48000.0, 512); p.prepareToPlay (48000.0, 512); p.setSpectreLive (false);
+        p.engine.setSpecimen (voice, "voice"); p.syncPlayer();
+        std::unique_ptr<Editor> ed (dynamic_cast<Editor*> (p.createEditor()));
+        ed->setSize (Editor::kW, Editor::kH); ed->refresh();
+        juce::AudioBuffer<float> buf (2, 512); juce::MidiBuffer midi;
+        auto pump = [&] (int ms) { for (int t = 0; t < ms; t += 20) { buf.clear(); p.processBlock (buf, midi); midi.clear(); juce::MessageManager::getInstance()->runDispatchLoopUntil (20); } };
+        auto settle = [&] { for (int i = 0; i < 600 && (p.engine.busy() || true); ++i) { pump (40); if (! p.engine.busy() && i > 12) break; } };
+        const int h0 = p.engine.historySize();
+        ed->settingsFor (Op::Twist).values["bend"] = -0.4f; ed->liveEdit (Op::Twist); settle();
+        check (p.engine.historySize() == h0, "LIVE EDIT: with nothing held or playing, moving a control renders nothing");
+        midi.addEvent (juce::MidiMessage::noteOn (1, 60, 0.9f), 0); pump (100);
+        const auto before = p.engine.processedAudio();
+        ed->settingsFor (Op::Twist).values["bend"] = 0.8f; ed->liveEdit (Op::Twist); settle();
+        const auto first = p.engine.processedAudio();
+        check (p.engine.historySize() == h0 + 1 && first != before && p.player.keyHeld(), "LIVE EDIT: a key held, a moved control re-renders by itself (the held note keeps going)");
+        ed->settingsFor (Op::Twist).values["bend"] = -0.8f; ed->liveEdit (Op::Twist);
+        ed->settingsFor (Op::Twist).values["bend"] = -0.9f; ed->liveEdit (Op::Twist); settle();
+        check (p.engine.historySize() == h0 + 1 && p.engine.processedAudio() != first, "LIVE EDIT: more tweaks replace that result (one step in the history, not a pile)");
+        double e = 0; for (int i = 0; i < 40; ++i) { buf.clear(); p.processBlock (buf, midi); e += buf.getRMSLevel (0, 0, 512); }
+        check (e > 0.2 && p.player.playingSlot() == Player::Processed, "LIVE EDIT: the held note plays the new sound (" + juce::String (e, 2) + ")");
+        midi.addEvent (juce::MidiMessage::noteOff (1, 60), 0); pump (100);
+        check (! p.player.keyHeld(), "LIVE EDIT: letting go of the key is seen");
+    }
     // ---- the page
     {
         Editor::opensOnSpectre = true;

@@ -25,7 +25,11 @@ public:
 
     // ---- actions (also what the tests press)
     void card (Op op);                       // a card was tapped
-    void run (const Step& s, bool fromBody = false);   // process the sound (fromBody: a gesture on THE LIVING SOUND - its result plays when it lands)
+    void run (const Step& s, bool fromBody = false);
+    // build 17: a control of THE LAB's DEEP panel, STRETCH or REBORN moved while you hear the result (a held key, or it
+    // playing): it re-renders a moment after your hand stops and the new sound takes over what you hear (one history step
+    // per edit run: each re-render replaces the last)
+    void liveEdit (Op op);   // process the sound (fromBody: a gesture on THE LIVING SOUND - its result plays when it lands)
     void bodyFeel (const SoundBody::Feel& f);          // a hand on THE LIVING SOUND: the sound changes live while it moves
     void generate();                         // GENERATE MUTATION
     void breed();                            // SPECIMEN 002 dropped on the body
@@ -96,6 +100,8 @@ private:
     std::unique_ptr<juce::FileChooser> chooser;
     std::map<Op, Step> settings;
     Op selected = Op::Pull;
+    int liveGen = 0, liveStepAt = -1; Op liveStepOp = Op::Count; juce::uint32 liveSeed = 0;
+    void liveRender (Op op, int gen);
     rooms::Room roomOn = opensOnSpectre ? rooms::Room::Spectre : rooms::Room::Lab;
     bool deep = false, narrow = false, terrainPage = false, hoodPage = false, terrainPending = false;
     juce::uint32 seed = 1;
