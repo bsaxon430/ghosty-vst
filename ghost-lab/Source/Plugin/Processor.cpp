@@ -181,23 +181,8 @@ void Processor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer
         previewBuf.clear (0, n);
         juce::AudioBuffer<float> pv (previewBuf.getArrayOfWritePointers(), 2, n);
         renderPlayer (pv, midi, n);
-        if (roomEngine.load() == 1)
-            spectreLoop.process (pv.getWritePointer (0), pv.getWritePointer (1), n, spectreParams());   // SPECTRE's LISTEN
-        else
-        {
-            matter::SpaceParams sp; sp.tail = 0.0f; sp.width = 0.0f;   // (every control of both modules comes from the page)
-            float v[rooms::kSpaceControls];
-            for (int i = 0; i < rooms::kSpaceControls; ++i) v[i] = spaceV[i].load();
-            const auto pins = rooms::livePinsFor (v);
-            for (int i = 0; i < n; i += spaceBlock)
-                liveSpace.process (pv.getWritePointer (0) + i, pv.getWritePointer (1) + i, juce::jmin (spaceBlock, n - i), sp, &pins);
-        }
-        for (int c = 0; c < 2; ++c)
-        {
-            buffer.addFrom (c, 0, pv, c, 0, n);
-            const float lv = pv.getRMSLevel (c, 0, n);
-            spaceLevel[c].store (juce::jmax (lv, spaceLevel[c].load() * 0.9f));
-        }
+        throughRoom (pv, roomEngine.load() == 1, n);
+        for (int c = 0; c < 2; ++c) buffer.addFrom (c, 0, pv, c, 0, n);
         spaceWasLive = true;
         exactInUse.store (nullptr, std::memory_order_release);
     }
@@ -216,6 +201,17 @@ void Processor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer
         touchWasLive = true;
         exactInUse.store (nullptr, std::memory_order_release);
     }
+    else if (liveRoom.load() != 0 && n <= previewBuf.getNumSamples() && nch == 2)
+    {
+        // on the SPECTRE / SPACE page: the notes you play go through that room as its controls are now (and its tail rings
+        // on after you let go)
+        previewBuf.clear (0, n);
+        juce::AudioBuffer<float> pv (previewBuf.getArrayOfWritePointers(), 2, n);
+        renderPlayer (pv, midi, n);
+        throughRoom (pv, liveRoom.load() == 2, n);
+        for (int c = 0; c < 2; ++c) buffer.addFrom (c, 0, pv, c, 0, n);
+        exactInUse.store (nullptr, std::memory_order_release);
+    }
     else
     {
         renderPlayer (buffer, midi, n);
@@ -229,6 +225,26 @@ void Processor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer
         exactInUse.store (nullptr, std::memory_order_release);
     }
     midi.clear();
+}
+
+void Processor::throughRoom (juce::AudioBuffer<float>& pv, bool spectre, int n)
+{
+    if (spectre) spectreLoop.process (pv.getWritePointer (0), pv.getWritePointer (1), n, spectreParams());
+    else
+    {
+        matter::SpaceParams sp; sp.tail = 0.0f; sp.width = 0.0f;   // (every control of both modules comes from the page)
+        float v[rooms::kSpaceControls];
+        for (int i = 0; i < rooms::kSpaceControls; ++i) v[i] = spaceV[i].load();
+        const auto pins = rooms::livePinsFor (v);
+        for (int i = 0; i < n; i += spaceBlock)
+            liveSpace.process (pv.getWritePointer (0) + i, pv.getWritePointer (1) + i, juce::jmin (spaceBlock, n - i), sp, &pins);
+    }
+    for (int c = 0; c < 2; ++c)
+    {
+        const float lv = pv.getRMSLevel (c, 0, n);
+        spaceLevel[c].store (juce::jmax (lv, spaceLevel[c].load() * 0.9f));
+    }
+    spaceWasLive = true;
 }
 
 void Processor::renderPlayer (juce::AudioBuffer<float>& dst, juce::MidiBuffer& midi, int n)

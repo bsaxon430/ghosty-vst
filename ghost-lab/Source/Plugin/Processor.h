@@ -121,6 +121,10 @@ public:
     bool spectreLiveOn() const { return isFx && spectreOn.load(); }
     void setSpectreListening (bool on, AudioPtr base = nullptr);   // message thread
     bool spectreListening() const { return player.playingSlot() == Player::Room && roomEngine.load() == 1; }
+    // build 17: on the SPECTRE and SPACE pages, the notes you play (a held key) go through that room live, and keep going
+    // round while the key is held, so moving a control is heard at once. 0: no room, 1: SPACE, 2: SPECTRE.
+    void setLiveRoom (int which) { liveRoom.store (which); player.setHoldLoops (which != 0); }
+    int liveRoomNow() const { return liveRoom.load(); }
     // the WAVETABLE the partials play: a built-in one by name, or one cycle from a file (empty cycle: plain sines)
     void setSpectreTable (const juce::String& name, const std::vector<float>& cycle);   // message thread
     const juce::String& spectreTableName() const { return tableName; }
@@ -135,7 +139,8 @@ private:
     juce::String tableName { "SINE" };
     std::vector<float> tableCycle;
     std::atomic<bool> spectreOn { isFx }, spectreDirty { false };
-    std::atomic<int> roomEngine { 0 };                          // what the Room slot's loop goes through: 0 SPACE, 1 SPECTRE
+    std::atomic<int> roomEngine { 0 };
+    std::atomic<int> liveRoom { 0 };                          // what the Room slot's loop goes through: 0 SPACE, 1 SPECTRE
     bool spectreWasLive = false;                                // audio thread
     juce::AudioBuffer<float> monoBuf;
     matter::Space liveSpace;                            // audio thread only (made in prepareToPlay)
@@ -169,6 +174,7 @@ private:
     float exactMix = 0.0f;                              // audio thread
     juce::AudioBuffer<float> exactBuf;
     int previewBlock = 512;
+    void throughRoom (juce::AudioBuffer<float>& pv, bool spectre, int n);   // audio thread: SPECTRE's or SPACE's live engine
     void renderPlayer (juce::AudioBuffer<float>& dst, juce::MidiBuffer& midi, int n);
     double captureRate = 44100.0;
     std::atomic<bool> captureOn { false };

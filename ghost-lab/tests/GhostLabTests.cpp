@@ -2917,6 +2917,52 @@ static void testSpectre (const std::shared_ptr<Audio>& voice)
             check (! r.spectreLiveOn(), "FX: a session from before SPECTRE opens with LIVE off (the track plays as it always did)");
         }
     }
+    // ---- a held key on the SPECTRE / SPACE page plays through that room live, round and round while it is held
+    for (int which : { 2, 1 })
+    {
+        Processor p;
+        p.setRateAndBufferSizeDetails (48000.0, 512);
+        p.prepareToPlay (48000.0, 512);
+        p.setSpectreLive (false);
+        p.engine.setSpecimen (voice, "voice"); p.syncPlayer();
+        p.setLiveRoom (which);
+        juce::AudioBuffer<float> buf (2, 512); juce::MidiBuffer midi;
+        const int soundBlocks = (int) (voice->seconds() * 48000.0 / 512.0);
+        double held = 0, after = 0; gAudioAllocs = 0; gAudioLocks = 0;
+        for (int blk = 0; blk < soundBlocks * 2 + 400; ++blk)
+        {
+            midi.clear();
+            if (blk == 0) midi.addEvent (juce::MidiMessage::noteOn (1, 60, 0.9f), 0);
+            if (blk == soundBlocks * 2) midi.addEvent (juce::MidiMessage::noteOff (1, 60), 0);
+            buf.clear();
+            tlAudio = true; p.processBlock (buf, midi); tlAudio = false;
+            if (blk > soundBlocks + 10 && blk < soundBlocks * 2) held += buf.getRMSLevel (0, 0, 512);
+            if (blk > soundBlocks * 2 + 350) after += buf.getRMSLevel (0, 0, 512);
+        }
+        const juce::String room = which == 2 ? "SPECTRE" : "SPACE";
+        check (held > 0.2, room + ": a held key keeps playing the sound through it, past the sound's end (" + juce::String (held, 2) + ")");
+        check (after < 0.05, room + ": let go of the key and it rings out to silence (" + juce::String (after, 4) + ")");
+        check (gAudioAllocs.load() == 0 && gAudioLocks.load() == 0, room + ": held-key live play allocates and locks nothing on the audio thread");
+        // and SPECTRE's controls are heard at once: TRANSPOSE +12 moves the held note up an octave
+        if (which == 2)
+        {
+            auto tone = std::make_shared<Audio>(); tone->sampleRate = 48000.0; tone->buf.setSize (1, 96000);
+            for (int i = 0; i < 96000; ++i) tone->buf.setSample (0, i, 0.4f * (float) std::sin (2.0 * juce::MathConstants<double>::pi * 220.0 * i / 48000.0));
+            p.engine.setSpecimen (tone, "tone"); p.syncPlayer();
+            auto pitchOf = [&] (float tr)
+            {
+                p.setSpectreParam (spectre::Transpose, tr);
+                midi.clear(); midi.addEvent (juce::MidiMessage::noteOn (1, 60, 0.9f), 0);
+                std::vector<float> got;
+                for (int blk = 0; blk < 200; ++blk) { buf.clear(); p.processBlock (buf, midi); midi.clear(); if (blk > 60) got.insert (got.end(), buf.getReadPointer (0), buf.getReadPointer (0) + 512); }
+                midi.addEvent (juce::MidiMessage::noteOff (1, 60), 0); buf.clear(); p.processBlock (buf, midi);
+                return zcFreq (got.data() + 2000, (int) got.size() - 2000, 48000.0);
+            };
+            const float f0 = pitchOf (0.0f), f12 = pitchOf (12.0f);
+            check (std::abs (f0 - 220.0f) < 4.0f && std::abs (f12 - 440.0f) < 6.0f, "SPECTRE: moving TRANSPOSE while the key is held is heard at once (" + juce::String (f0, 0) + " Hz -> " + juce::String (f12, 0) + " Hz)");
+            p.setSpectreParam (spectre::Transpose, 0.0f);
+        }
+    }
     // ---- the page
     {
         Editor::opensOnSpectre = true;
@@ -2955,10 +3001,13 @@ static void testSpectre (const std::shared_ptr<Audio>& voice)
         pg.setValue (spectre::Inf, 1.0f);
         check (! pg.controlEnabled (spectre::Transient), "SPECTRE: TRANSIENT greys out while INF holds everything");
         pg.setValue (spectre::Inf, 0.0f);
+        check (p.liveRoomNow() == 2, "SPECTRE: while its page is open, held keys play through it");
         ed->setRoom (rooms::Room::Lab);
-        check (! ed->spectrePage().isVisible() && ed->body().isVisible(), "SPECTRE: THE LAB is one tap away");
+        check (! ed->spectrePage().isVisible() && ed->body().isVisible() && p.liveRoomNow() == 0, "SPECTRE: THE LAB is one tap away (and keys play the plain sound there)");
         ed->setRoom (rooms::Room::Stretch);
         check (ed->roomPage().isVisible() && ! ed->spectrePage().isVisible(), "SPECTRE: the other rooms still open their own pages");
+        ed->setRoom (rooms::Room::Space);
+        check (p.liveRoomNow() == 1, "SPACE: while its page is open, held keys play through it live too");
     }
 }
 

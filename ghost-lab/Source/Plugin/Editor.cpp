@@ -1100,6 +1100,7 @@ Editor::Editor (Processor& p) : juce::AudioProcessorEditor (p), proc (p), engine
     setOpaque (true);
     setLookAndFeel (&look.get());   // our colours on every menu, list, box and dialog too (not JUCE's own)
     content = std::make_unique<Content> (*this);
+    proc.setLiveRoom (roomOn == rooms::Room::Spectre ? 2 : (roomOn == rooms::Room::Space ? 1 : 0));   // (Ghost Lab opens on SPECTRE: held keys play through it)
     viewport = std::make_unique<juce::Viewport>();
     viewport->setViewedComponent (content.get(), false);
     viewport->setScrollBarThickness (6);
@@ -1159,6 +1160,7 @@ void Editor::setRoom (rooms::Room r)
     }
     proc.setSpaceListening (false);
     roomOn = r;
+    proc.setLiveRoom (r == rooms::Room::Spectre ? 2 : (r == rooms::Room::Space ? 1 : 0));   // (a held key plays through it live)
     if (r != rooms::Room::Lab && r != rooms::Room::Spectre) content->roomPage->setRoom (r);
     resized();
     refresh();

@@ -27,6 +27,7 @@ public:
     void noteOn (int note, float velocity);
     void noteOff (int note);
     void setMidiSlot (int slot) { midiSlot.store (slot); }
+    void setHoldLoops (bool on) { holdLoops.store (on); }   // a held key plays the sound round and round (SPECTRE / SPACE)
     void render (juce::AudioBuffer<float>& out, int start, int num, float gain);   // adds into out
 
     std::atomic<int> debugAudioThreadAllocs { 0 };
@@ -42,6 +43,7 @@ private:
     std::atomic<double> cmdFrom { -1.0 };
     std::atomic<int> midiSlot { Processed };
     std::atomic<int> loopSlot { -1 };
+    std::atomic<bool> holdLoops { false };
 
     // audio-thread state
     double rate = 44100.0, pos = 0.0, speed = 1.0;

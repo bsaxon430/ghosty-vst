@@ -21,7 +21,7 @@ static const RoomInfo kRooms[] = {
     { Room::Reborn, Op::Reborn, "REBORN", "A neural instrument listens to the tune and the loudness of your sound, then plays it back as itself.",
       "Best on one clear voice or melody (humming, a lead, a bass line). Chords confuse it.", "DDSP" },
     { Room::Space, Op::Space, "SPACE", "Put the sound somewhere around your head: left, right, near, far, in a room.",
-      "Best in headphones. Works on anything.", "Pertylizer" },
+      "Best in headphones. Hold a key on your keyboard (or press LISTEN) and move anything: you hear it live.", "Pertylizer" },
     { Room::Spectre, Op::Spectre, "SPECTRE", "Rebuilds your sound from up to 1,024 sine waves, so you can bend every one of them live.",
       "Works on anything: voices, pads, basses, guitars and drums. Turn NOISE down for the glassy, all-sine-wave sound.", "Ghost Lab's own resynthesis" },
 };

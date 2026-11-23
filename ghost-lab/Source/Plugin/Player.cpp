@@ -92,7 +92,7 @@ void Player::render (juce::AudioBuffer<float>& out, int start, int num, float ga
         int i0 = (int) pos;
         if (i0 >= n - 1)
         {
-            if (loopSlot.load() == slotNow) { pos = 0.0; i0 = 0; }   // round again
+            if (loopSlot.load() == slotNow || (heldNote >= 0 && holdLoops.load())) { pos = 0.0; i0 = 0; }   // round again (or a key still held)
             else { slotNow = -1; gainNow = 0.0f; gainTarget = 0.0f; break; }   // the sound's own fade-out ends it
         }
         const float fr = (float) (pos - i0);

@@ -1,5 +1,9 @@
 // Ghost Matter - AGPL-3.0-only (see LICENSE, NOTICE.md). Starts the CDP8 programs (Cdp.h).
 #include "Cdp.h"
+#include <atomic>
+#if JUCE_MAC
+ #include <sys/xattr.h>
+#endif
 #include <juce_audio_formats/juce_audio_formats.h>
 
 namespace matter::cdp
@@ -14,7 +18,35 @@ void clearRecentCommands() { const juce::ScopedLock l (recentLock); recent.clear
 
 static bool hasPvoc (const juce::File& d) { return d.getChildFile ("pvoc").existsAsFile(); }
 
+// The programs must be runnable, whatever copied the plug-in onto this Mac: a copy that lost their "may run" flag, or
+// that macOS marked as downloaded (quarantine), leaves every CDP step failing. So the plug-in puts both right itself,
+// once per run (it only touches its own Helpers folder).
+static void readyPrograms (const juce::File& dir)
+{
+    static std::atomic<bool> done { false };
+    if (dir == juce::File() || done.exchange (true)) return;
+    for (const auto& f : dir.findChildFiles (juce::File::findFiles, false))
+    {
+        if (! f.hasReadAccess()) continue;
+        f.setExecutePermission (true);
+       #if JUCE_MAC
+        removexattr (f.getFullPathName().toRawUTF8(), "com.apple.quarantine", 0);
+       #endif
+    }
+   #if JUCE_MAC
+    removexattr (dir.getFullPathName().toRawUTF8(), "com.apple.quarantine", 0);
+   #endif
+}
+
+static juce::File programsDirRaw();
 juce::File programsDir()
+{
+    auto d = programsDirRaw();
+    readyPrograms (d);
+    return d;
+}
+
+static juce::File programsDirRaw()
 {
     auto env = juce::SystemStats::getEnvironmentVariable ("GHOSTMATTER_CDP_DIR", {});
     if (env.isNotEmpty() && hasPvoc (juce::File (env))) return juce::File (env);

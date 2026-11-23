@@ -563,7 +563,8 @@ void SpectrePage::setHover (int p)
     {
         if (Processor::isFx && ed.proc.spectreLiveOn()) captionText = "LIVE: this track plays through SPECTRE as you play it in FL. Move anything and you hear it at once.";
         else if (! ed.engine.hasSpecimen()) captionText = Processor::isFx ? "Turn on LIVE to run this track through SPECTRE, or CAPTURE a sound and press LISTEN." : "Load a sound (the button top left), then press LISTEN and move the pad.";
-        else captionText = juce::String (room.bestOn) + "  Press LISTEN and move anything; PRINT IT keeps it.";
+        else captionText = Processor::isFx ? juce::String (room.bestOn) + "  Press LISTEN and move anything; PRINT IT keeps it."
+                                           : "Hold a key on your keyboard (or press LISTEN) and move anything: you hear it change as you go. PRINT IT keeps it.";
     }
     else if (p == kWaveHover)
         captionText = "WAVETABLE: each partial plays this shape instead of a plain sine wave. Arrows: the built-in ones. Folder (or drop a WAV here): your own; a wavetable file gives its first frame.";
