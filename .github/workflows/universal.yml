@@ -105,6 +105,9 @@ jobs:
         env: { GH_TOKEN: "${{ github.token }}" }
         run: |
           mkdir -p rel all; cat arts/*/BUILT.txt | tee BUILT.txt
+          # (the artifact hand-off drops every file's run permission: give the programs inside each plug-in theirs back,
+          # or a plug-in's helper programs - Ghost Lab's CDP - can't start on the Mac it is installed on)
+          find arts \( -path "*.vst3/Contents/MacOS/*" -o -path "*.vst3/Contents/Helpers/*" \) -type f -exec chmod 755 {} +
           for d in arts/*/; do for v in "$d"*.vst3; do [ -d "$v" ] || continue; n=$(basename "$v" .vst3); ditto -c -k --keepParent "$v" "rel/${n// /-}-mac-universal.zip"; ditto "$v" "all/$(basename "$v")"; done; done
           ditto -c -k --keepParent all "rel/GhostBlock-All-Plugins-mac-universal.zip"; mv rel/GhostBlock-All-Plugins-mac-universal.zip rel/GhostBlock-All-Plugins-mac-universal.zip
           ls -la rel

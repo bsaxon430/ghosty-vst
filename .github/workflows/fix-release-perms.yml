@@ -1,0 +1,41 @@
+# One-off repair: the newest plugins release, with every program inside every plug-in allowed to run again (the release
+# build's artifact hand-off had dropped the permission; universal.yml now puts it back before zipping).
+name: Repair run permissions in the newest release
+on:
+  push:
+    branches: [ builds ]
+    paths: [ FIXPERMS ]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repack every zip of the newest release with run permissions
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: |
+          set -eu
+          R="${{ github.repository }}"
+          T=$(gh api "repos/$R/releases/latest" --jq .tag_name); echo "release $T"
+          gh release download "$T" --repo "$R" --dir in --pattern '*.zip'
+          mkdir out
+          python3 - <<'PY'
+          import zipfile, os
+          r = lambda n: ('/Contents/MacOS/' in n or '/Contents/Helpers/' in n) and not n.endswith('/')
+          for f in sorted(os.listdir('in')):
+              src = zipfile.ZipFile('in/' + f); out = zipfile.ZipFile('out/' + f, 'w', zipfile.ZIP_DEFLATED, compresslevel=6); fixed = 0
+              for i in src.infolist():
+                  zi = zipfile.ZipInfo(i.filename, i.date_time); zi.create_system = 3
+                  d = i.filename.endswith('/'); zi.compress_type = zipfile.ZIP_STORED if d else zipfile.ZIP_DEFLATED
+                  mode = (i.external_attr >> 16) or (0o40755 if d else 0o100644)
+                  if r(i.filename) and not (mode & 0o100): mode = (mode & ~0o777) | 0o755; fixed += 1
+                  zi.external_attr = (mode << 16) | (0x10 if d else 0)
+                  out.writestr(zi, b'' if d else src.read(i))
+              out.close()
+              z = zipfile.ZipFile('out/' + f)
+              assert z.testzip() is None and not [i for i in z.infolist() if r(i.filename) and not ((i.external_attr >> 16) & 0o100)]
+              print(f, 'run permission restored on', fixed, 'files')
+          PY
+          for f in out/*.zip; do gh release upload "$T" "$f" --repo "$R" --clobber; done
+          echo done

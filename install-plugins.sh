@@ -19,6 +19,7 @@ while IFS= read -r -d '' v; do
   if [ -e "$DEST/$name" ]; then mkdir -p "$OLD"; mv "$DEST/$name" "$OLD/"; fi
   ditto "$v" "$DEST/$name"
   xattr -dr com.apple.quarantine "$DEST/$name" 2>/dev/null || true
+  find "$DEST/$name" \( -path "*/Contents/MacOS/*" -o -path "*/Contents/Helpers/*" \) -type f -exec chmod 755 {} + 2>/dev/null || true   # (the programs inside must be allowed to run)
   echo "  installed $name"; n=$((n+1))
 done < <(find "$TMP/x" -maxdepth 3 -name "*.vst3" -type d -prune -print0)
 echo
