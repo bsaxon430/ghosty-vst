@@ -10,6 +10,7 @@
 #include "GraphTracks.h"
 #include "GraphGen.h"
 #include "GraphFamous.h"
+#include "GraphStems.h"
 
 class GraphProcessor : public juce::AudioProcessor
 {
@@ -58,6 +59,15 @@ public:
     // EXPERIMENT: a song from a famous equation (which: from gg::Experiment::list(), -1 any; wild: 1 raw, 0 musical, -1 decide)
     void generateExperiment (uint32_t seed, int which = -1, int wild = -1);
     std::unique_ptr<gg::Experiment> lastExperiment;
+
+    // ---- KEY: the key the song is in. keyRoot: its home note in semitones above A, with TUNE at 0 (-1: no key);
+    // keyScale: as gg::scaleName. Known for GENERATE / EXPERIMENT songs, found by listening for the rest.
+    std::atomic<int> keyRoot { 0 }, keyScale { 1 };
+    void findKey();                       // listen to the song (message thread)
+    int shownScale() const;               // the scale it plays in now (the "mode" choice, or as written)
+    int shownRoot() const { return keyRoot.load() < 0 ? -1 : ((keyRoot.load() + (int) std::lround (pTune->load())) % 12 + 12) % 12; }
+    void keyForNewSong (int& root, int& scale) const;
+    void songWrittenIn (int scale);
     bool canUndoGenerate() const { return ! beforeGenerate.empty(); }
     void undoGenerate();
     std::atomic<int> scenesVersion { 0 };                 // bumps when scenes are added / removed / loaded

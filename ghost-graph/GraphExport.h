@@ -557,3 +557,118 @@ private:
         if (std::abs (s - lastShown) > 0.01 || f != lastFollow) { lastShown = s; lastFollow = f; repaint(); }
     }
 };
+
+// ---- the key, on the main page: which note is home and which scale. Click it to choose: the root moves the song (it
+// changes TUNE), the scale moves its notes step for step (minor -> major raises the 3rd, 6th and 7th). "New songs in
+// this key" makes GENERATE and EXPERIMENT write in it. With no tune to listen to (only drums) it shows "no key" and
+// only "Listen again" does anything (the rest is greyed out).
+class KeyBox : public juce::Component, public juce::SettableTooltipClient, private juce::Timer
+{
+public:
+    const ggui::Theme* theme = &ggui::theme (0);
+    std::function<void()> onChanged;   // after a choice (the editor repaints, the graph stays as written)
+
+    explicit KeyBox (GraphProcessor& p) : proc (p)
+    {
+        setMouseCursor (juce::MouseCursor::PointingHandCursor);
+        setTooltip ("The key: click to choose the home note and the scale (and whether new songs use it)");
+        startTimerHz (6);
+    }
+
+    juce::String text() const
+    {
+        const int r = proc.shownRoot(), s = proc.shownScale();
+        if (r < 0 || s < 0) return "no key";
+        return juce::String::fromUTF8 (gg::rootName (r)) + " " + juce::String::fromUTF8 (gg::scaleName (s));
+    }
+
+    void paint (juce::Graphics& g) override
+    {
+        using namespace ggui;
+        curTheme() = theme;
+        auto r = getLocalBounds().toFloat();
+        const float h = r.getHeight();
+        const juce::Font small = serif (h * 0.38f);
+        g.setFont (small);
+        g.setColour (th().amber.withAlpha (0.6f));
+        juce::GlyphArrangement gk; gk.addLineOfText (small, "KEY", 0, 0);
+        const float kw = gk.getBoundingBox (0, -1, true).getWidth() + 6.f;
+        g.drawText ("KEY", r.removeFromLeft (kw), juce::Justification::centredLeft);
+        // the key itself, as big as fits
+        const juce::String t = text();
+        float size = h * (th().lcd ? 0.62f : 0.72f);
+        juce::Font f = serif (size, true);
+        for (int i = 0; i < 12; ++i)
+        {
+            juce::GlyphArrangement ga; ga.addLineOfText (f, t, 0, 0);
+            if (ga.getBoundingBox (0, -1, true).getWidth() <= r.getWidth() - 12.f) break;
+            size *= 0.9f; f = serif (size, true);
+        }
+        g.setFont (f);
+        const bool remapped = (int) std::lround (proc.apvts.getRawParameterValue ("mode")->load()) > 0;
+        g.setColour (th().amber.withAlpha (proc.shownRoot() < 0 ? 0.45f : 1.0f));
+        g.drawText (t, r.withTrimmedRight (12.f), juce::Justification::centredLeft);
+        // a small arrow just after it: there is a menu; a dot when the notes are moved to another scale
+        juce::GlyphArrangement gt; gt.addLineOfText (f, t, 0, 0);
+        const float tw = gt.getBoundingBox (0, -1, true).getWidth();
+        juce::Path a; const float cx = juce::jmin (r.getRight() - 6.f, r.getX() + tw + 9.f), cy = r.getCentreY();
+        a.addTriangle (cx - 4.f, cy - 2.f, cx + 4.f, cy - 2.f, cx, cy + 3.f);
+        g.fillPath (a);
+        if (remapped) g.fillEllipse (cx - 2.f, cy - 10.f, 4.f, 4.f);
+    }
+
+    void mouseUp (const juce::MouseEvent& e) override { if (e.mouseWasClicked()) showMenu(); }
+
+    void showMenu()
+    {
+        const int root = proc.shownRoot();
+        const int written = proc.keyScale.load();
+        const int mode = (int) std::lround (proc.apvts.getRawParameterValue ("mode")->load());
+        const bool known = root >= 0 && written >= 0;
+        juce::PopupMenu m;
+        m.addSectionHeader ("Home note");
+        static const int order[12] = { 3, 4, 5, 6, 7, 8, 9, 10, 11, 0, 1, 2 };   // C to B
+        for (int i = 0; i < 12; ++i)
+            m.addItem (1 + order[i], juce::String::fromUTF8 (gg::rootName (order[i])), known, root == order[i]);
+        m.addColumnBreak();
+        m.addSectionHeader ("Scale");
+        m.addItem (100, juce::String::fromUTF8 ("as written (") + juce::String::fromUTF8 (known ? gg::scaleName (written) : "none") + ")", known, mode == 0);
+        for (int s = 0; s < 7; ++s)
+            m.addItem (101 + s, juce::String::fromUTF8 (gg::scaleName (s)), known, mode == s + 1);
+        m.addSeparator();
+        m.addItem (200, "New songs (GENERATE, EXPERIMENT) in this key", true, proc.apvts.getRawParameterValue ("genkey")->load() > 0.5f);
+        m.addItem (201, "Listen again (find the key)");
+        juce::Component::SafePointer<KeyBox> safe (this);
+        m.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (this), [safe] (int r) { if (safe != nullptr) safe->choose (r); });
+    }
+
+    void choose (int r)
+    {
+        auto set = [this] (const char* id, float v) { if (auto* p = proc.apvts.getParameter (id)) p->setValueNotifyingHost (p->convertTo0to1 (v)); };
+        if (r >= 1 && r <= 12 && proc.shownRoot() >= 0)
+        {   // a new home note: the whole song moves (TUNE), the shortest way
+            const int want = r - 1, now = proc.shownRoot();
+            const int move = ((want - now + 18) % 12) - 6;
+            float tune = proc.apvts.getRawParameterValue ("tune")->load() + (float) move;
+            if (tune > 24.f) tune -= 12.f;
+            if (tune < -24.f) tune += 12.f;
+            set ("tune", tune);
+        }
+        else if (r == 100) set ("mode", 0.f);
+        else if (r >= 101 && r <= 107)
+        {
+            const int s = r - 101;
+            set ("mode", s == proc.keyScale.load() ? 0.f : (float) (s + 1));   // its own scale: as written
+        }
+        else if (r == 200) set ("genkey", proc.apvts.getRawParameterValue ("genkey")->load() > 0.5f ? 0.f : 1.f);
+        else if (r == 201) { proc.findKey(); set ("mode", 0.f); }
+        if (r >= 1 && r <= 107 && r != 100) set ("genkey", 1.f);   // choosing a key: new songs follow it
+        repaint();
+        if (onChanged) onChanged();
+    }
+
+private:
+    GraphProcessor& proc;
+    juce::String last;
+    void timerCallback() override { const auto t = text(); if (t != last) { last = t; repaint(); } }
+};

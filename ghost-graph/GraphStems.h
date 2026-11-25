@@ -240,4 +240,92 @@ inline std::vector<uint16_t> stemMask (const Stem& s, int numScenes)
     for (auto& pt : s.parts) if (pt.scene >= 0 && pt.scene < numScenes && pt.voice < 16) m[(size_t) pt.scene] |= (uint16_t) (1u << pt.voice);
     return m;
 }
+// ---- the key: which note is home, and which scale the notes come from
+// Scales (semitones above the root, one per step of the scale): the order KEY lists them in.
+inline const char* scaleName (int s)
+{
+    static const char* n[] = { "major", "minor", "dorian", "phrygian", "lydian", "mixolydian", "harmonic minor" };
+    return s >= 0 && s < 7 ? n[s] : "";
+}
+inline const int* scaleSteps (int s)
+{
+    static const int d[7][7] = { { 0, 2, 4, 5, 7, 9, 11 }, { 0, 2, 3, 5, 7, 8, 10 }, { 0, 2, 3, 5, 7, 9, 10 }, { 0, 1, 3, 5, 7, 8, 10 },
+                                 { 0, 2, 4, 6, 7, 9, 11 }, { 0, 2, 4, 5, 7, 9, 10 }, { 0, 2, 3, 5, 7, 8, 11 } };
+    return d[std::clamp (s, 0, 6)];
+}
+// A note's name, root counted in semitones above A (0 = A, 3 = C ...)
+inline const char* rootName (int aboveA)
+{
+    static const char* n[] = { "A", "B\xe2\x99\xad", "B", "C", "C\xe2\x99\xaf", "D", "E\xe2\x99\xad", "E", "F", "F\xe2\x99\xaf", "G", "A\xe2\x99\xad" };
+    return n[((aboveA % 12) + 12) % 12];
+}
+// the semitones to move a note (pc semitones above the root) to go from scale `from` to scale `to`: a note on step k of
+// the first scale goes to step k of the second (minor -> major raises the 3rd, 6th and 7th); notes outside it stay
+inline int scaleShift (int from, int to, int pc)
+{
+    if (from < 0 || to < 0 || from == to) return 0;
+    pc = ((pc % 12) + 12) % 12;
+    const int* a = scaleSteps (from); const int* b = scaleSteps (to);
+    for (int k = 0; k < 7; ++k) if (a[k] == pc) return b[k] - a[k];
+    return 0;
+}
+
+struct SongKey { int root = -1; int scale = -1; };   // root: semitones above A (with TUNE at 0); -1: no tune to it
+
+// Listens to the tones (not the drums) of every scene that plays and finds the key: which notes they spend the most
+// time on, matched to the Krumhansl key profiles (how much each note of a key is heard in real music), then the mode
+// whose notes fit best.
+inline SongKey findKey (const std::vector<Scene>& scenes, const SongPlan& plan)
+{
+    using namespace stems_detail;
+    double w[12] = {};
+    double total = 0;
+    SongPlan p0 = plan; p0.tune = 0;
+    for (auto& st : findStems (scenes, p0))
+    {
+        if (st.drum) continue;
+        for (auto& pt : st.parts)
+        {
+            auto pr = Program::compile (scenes[(size_t) pt.scene].text);
+            if (! pr->ok()) continue;
+            const Listen L = listen (*pr, pt.voice, plan.pitches[(size_t) pt.scene], 0);
+            for (double m : L.midi)
+            {
+                if (! std::isfinite (m)) continue;
+                const double r = std::round (m);
+                if (std::abs (m - r) > 0.25) continue;      // a glide between notes
+                const int pc = (((int) r - 57) % 12 + 12) % 12;
+                w[pc] += 1; total += 1;
+            }
+        }
+    }
+    SongKey k;
+    if (total < 16) return k;
+    static const double maj[12] = { 6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88 };
+    static const double mnr[12] = { 6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17 };
+    auto corr = [&] (const double* prof, int root)
+    {
+        double mx = 0, my = 0;
+        for (int i = 0; i < 12; ++i) { mx += w[(i + root) % 12]; my += prof[i]; }
+        mx /= 12; my /= 12;
+        double sxy = 0, sxx = 0, syy = 0;
+        for (int i = 0; i < 12; ++i) { const double a = w[(i + root) % 12] - mx, b = prof[i] - my; sxy += a * b; sxx += a * a; syy += b * b; }
+        return sxy / std::sqrt (std::max (1e-12, sxx * syy));
+    };
+    double best = -2;
+    for (int r = 0; r < 12; ++r)
+    {
+        const double a = corr (maj, r), b = corr (mnr, r);
+        if (a > best) { best = a; k.root = r; k.scale = 0; }
+        if (b > best) { best = b; k.root = r; k.scale = 1; }
+    }
+    // the mode: the scale on this root whose notes hold the most of the music (major / minor win a near tie)
+    auto fit = [&] (int s) { double f = 0; for (int i = 0; i < 7; ++i) f += w[(k.root + scaleSteps (s)[i]) % 12]; return f; };
+    const double base = fit (k.scale);
+    int bestS = k.scale; double bestF = base;
+    for (int s = 0; s < 7; ++s) if (fit (s) > bestF + 0.03 * total) { bestF = fit (s); bestS = s; }
+    k.scale = bestS;
+    return k;
+}
+
 } // namespace gg

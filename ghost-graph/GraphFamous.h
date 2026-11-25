@@ -18,6 +18,7 @@
 #include <string>
 #include <vector>
 #include "GraphExpr.h"
+#include "GraphGen.h"
 
 namespace gg {
 
@@ -65,7 +66,7 @@ public:
     static int count() { return (int) list().size(); }
 
     // which: an equation from list() (-1: any); wild: 1 the raw maths, 0 musical, -1 decide (mostly musical)
-    Experiment (uint32_t seed, int which = -1, int wild = -1) : rng (seed)
+    Experiment (uint32_t seed, int which = -1, int wild = -1, int keyRoot = -1, int keyScale = -1) : rng (seed)
     {
         idx = which >= 0 && which < count() ? which : pick (0, count() - 1);
         wildMode = wild >= 0 ? wild == 1 : chance (list()[(size_t) idx].wildByNature ? 45 : 20);
@@ -73,7 +74,10 @@ public:
         tempo = wildMode ? 76 + 4 * pick (0, 8) : 92 + 4 * pick (0, 9);
         waveIdx = oneOf (wildMode ? std::vector<int> { 0, 1, 4 } : std::vector<int> { 1, 3, 4, 5, 5 });
         tuneSt = oneOf (std::vector<int> { -7, -5, -3, 0, 2 });
+        if (keyScale >= 0) { modeA = modeAForScale (keyScale); forcedScale = keyScale; }
+        if (keyRoot >= 0) tuneSt = tuneForRoot (keyRoot, tuneSt);
     }
+    int scale() const { return forcedScale >= 0 ? forcedScale : scaleForModeA (modeA); }
 
     const FamousEquation& equation() const { return list()[(size_t) idx]; }
     bool wild() const { return wildMode; }
@@ -91,7 +95,7 @@ public:
 
 private:
     std::mt19937 rng;
-    int idx = 0, modeA = 2, waveIdx = 4, tuneSt = 0;
+    int idx = 0, modeA = 2, waveIdx = 4, tuneSt = 0, forcedScale = -1;
     bool wildMode = false;
     double tempo = 110;
 

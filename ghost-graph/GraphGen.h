@@ -24,6 +24,19 @@
 
 namespace gg {
 
+// ---- KEY: a song written in a chosen key. scale: 0 major, 1 minor, 2 dorian, 3 phrygian, 4 lydian, 5 mixolydian,
+// 6 harmonic minor (written as minor; the engine raises its 7th). root: semitones above A.
+inline int modeAForScale (int scale) { static const int a[7] = { 5, 2, 3, 1, 6, 4, 2 }; return scale >= 0 && scale < 7 ? a[scale] : -1; }
+inline int scaleForModeA (int a)     { static const int s[7] = { 1, 3, 1, 2, 5, 0, 4 }; return a >= 0 && a < 7 ? s[a] : 1; }
+// the TUNE (semitones) that puts the key on root, as near as it can be to the one the song would have chosen
+inline int tuneForRoot (int root, int preferred)
+{
+    int best = preferred, bd = 1000;
+    for (int t = -24; t <= 24; ++t)
+        if ((((t - root) % 12) + 12) % 12 == 0 && std::abs (t - preferred) < bd) { bd = std::abs (t - preferred); best = t; }
+    return best;
+}
+
 class Generator
 {
 public:
@@ -35,7 +48,8 @@ public:
         return n[std::clamp (s, 0, kStyles - 1)];
     }
 
-    explicit Generator (uint32_t seed, int style = -1) : rng (seed)
+    // keyRoot / keyScale (see KEY above): write the song in that key (-1: its own choice)
+    explicit Generator (uint32_t seed, int style = -1, int keyRoot = -1, int keyScale = -1) : rng (seed), forceRoot (keyRoot), forceScale (keyScale)
     {
         styleIdx = style >= 0 && style < kStyles ? style : pick (0, kStyles - 1);
         song();
@@ -112,6 +126,7 @@ private:
     {
         static const std::vector<int> modes { 2, 2, 2, 3, 3, 1, 4, 5 };   // mostly minor, like the videos
         modeA = oneOf (modes);
+        if (forceScale >= 0) modeA = modeAForScale (forceScale);
         // progressions the videos (and a lot of good music) use, as scale steps from the key
         static const std::vector<std::vector<int>> progs {
             { 0, -2, -4, -3 }, { 0, 5, 3, 4 }, { 0, -3, -2, -4 }, { 0, 3, 5, 4 }, { 0, -2, 3, 4 },
@@ -128,8 +143,13 @@ private:
             case 3:  tempo = 124 + 2 * pick (0, 5); waveIdx = 3; tuneSt = oneOf (std::vector<int> { 0, -3, 2 });    toneHz = 20000.f; break;
             default: tempo = 126 + 2 * pick (0, 4); waveIdx = 3; tuneSt = oneOf (std::vector<int> { 0, -2, 3 });    toneHz = 2200.f;  break;
         }
+        if (forceRoot >= 0) tuneSt = tuneForRoot (forceRoot, tuneSt);
         rerollParts();
     }
+    int forceRoot = -1, forceScale = -1;
+public:
+    int scale() const { return forceScale >= 0 ? forceScale : scaleForModeA (modeA); }   // the key it is written in (root: TUNE)
+private:
 
     // ------------------------------------------------------------------------------------------------ rhythm tools
     // an evenly spread rhythm of k hits in n steps, rotated by r: the mask has bit i set where step i plays

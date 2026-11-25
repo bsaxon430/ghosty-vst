@@ -1397,6 +1397,8 @@ public:
         dragBtn.onClick = [this] { openExport(); };
         addAndMakeVisible (dragBtn);
         addAndMakeVisible (tempoBox);
+        addAndMakeVisible (keyBox);
+        keyBox.onChanged = [this] { updateStatus(); repaint(); };
         exportPanel.onClose = [this] { grabKeyboardFocus(); repaint(); };
         addChildComponent (exportPanel);
         more.setButtonText ("...");
@@ -1504,7 +1506,7 @@ public:
         const bool chain = proc.apvts.getRawParameterValue ("chain")->load() > 0.5f;
         const double prog = chain ? (viewed + page) / juce::jmax (1, count) : page;
         auto bar = lcd ? juce::Rectangle<float> ((float) getWidth() * 0.95f - 130 * k, getHeight() * (ggui::ti::lcdTop + 0.02f), 130 * k, 13 * k)
-                       : juce::Rectangle<float> ((float) getWidth() - 92 * k - 112 * k, 15 * k, 112 * k, 10 * k);
+                       : juce::Rectangle<float> ((float) getWidth() - 92 * k - 56 * k, 15 * k, 56 * k, 10 * k);
         g.setColour (th().amber.withAlpha (0.7f));
         g.drawRect (bar, 1.0f);
         g.setColour (th().amber);
@@ -1575,11 +1577,13 @@ public:
             {
                 tempoBox.setBounds ((int) (w * 0.05f + 110 * k), (int) (h * (ggui::ti::lcdTop + 0.006f)), (int) (176 * k), (int) (34 * k));
                 dragBtn.setBounds ((int) (w * 0.95f - 130 * k - 86 * k), (int) (h * (ggui::ti::lcdTop + 0.012f)), (int) (72 * k), (int) (26 * k));
+                keyBox.setBounds ((int) (w * 0.95f - 130 * k - 86 * k - 196 * k), (int) (h * (ggui::ti::lcdTop + 0.006f)), (int) (184 * k), (int) (34 * k));
             }
             else
             {
                 tempoBox.setBounds ((int) (124 * k), (int) (4 * k), (int) (164 * k), (int) (32 * k));
                 dragBtn.setBounds ((int) (w - 84 * k), (int) (7 * k), (int) (68 * k), (int) (25 * k));
+                keyBox.setBounds ((int) (w - 268 * k), (int) (4 * k), (int) (114 * k), (int) (32 * k));
             }
             exportPanel.setBounds (getLocalBounds());
         }
@@ -1665,7 +1669,8 @@ public:
         eq.applyColourToAllText (ggui::theme (lookIdx).amber);
         marks.theme = &ggui::theme (lookIdx);
         ggui::curTheme() = &ggui::theme (lookIdx);
-        tempoBox.theme = exportPanel.theme = &ggui::theme (lookIdx);
+        tempoBox.theme = exportPanel.theme = keyBox.theme = &ggui::theme (lookIdx);
+        keyBox.repaint();
         tempoBox.applyLookColours();
         tempoBox.repaint();
         exportPanel.repaint();
@@ -1692,6 +1697,7 @@ public:
     void runExperiment (int which, int wild) { experiment (which, wild); }   // the checks
     void viewScene (int i) { pickScene (i); }
     TempoBox& getTempoBox() { return tempoBox; }
+    KeyBox& getKeyBox() { return keyBox; }
     void openExport()
     {
         flushEdit();
@@ -1709,6 +1715,7 @@ private:
     FormulaMarks marks { eq };
     ControlStrip strip;
     TempoBox tempoBox { proc };
+    KeyBox keyBox { proc };
     ExportPanel exportPanel { proc };
     juce::TextButton expBtn;
     juce::TextButton dragBtn;

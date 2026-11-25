@@ -110,6 +110,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout GraphProcessor::makeLayout()
                                                    AudioParameterFloatAttributes().withLabel ("dB")));
     l.add (std::make_unique<AudioParameterBool> (ParameterID { "keys", 1 }, "Keys", false));
     l.add (std::make_unique<AudioParameterBool> (ParameterID { "kit", 1 }, "Kit", true));
+    // KEY: play the song in another scale (its notes move step for step: minor -> major raises the 3rd, 6th and 7th)
+    l.add (std::make_unique<AudioParameterChoice> (ParameterID { "mode", 1 }, "Scale",
+        StringArray { "As written", "Major", "Minor", "Dorian", "Phrygian", "Lydian", "Mixolydian", "Harmonic minor" }, 0));
+    l.add (std::make_unique<AudioParameterBool> (ParameterID { "genkey", 1 }, "New songs in this key", false));
     l.add (std::make_unique<AudioParameterChoice> (ParameterID { "look", 1 }, "Look", StringArray { "PAPER", "CHROMA", "INK", "WINE", "TI 84", "SILVER" }, 4));   // opens on the TI 84; LOOK then cycles SILVER, PAPER, CHROMA, INK, WINE
     return l;
 }
@@ -191,17 +195,51 @@ void GraphProcessor::loadTrack (int i)
     set ("tune", (float) tracks[(size_t) i].tune);
     set ("tone", (float) tracks[(size_t) i].tone);
     if (tracks[(size_t) i].look >= 0) set ("look", (float) tracks[(size_t) i].look);
+    set ("mode", 0.f);
+    findKey();   // the videos' songs: found by listening
     set ("chain", 1.0f);
     set ("scene", 1.0f);
     displayScene = 0;
     restartClock = true;
 }
 
+// KEY for a new song: the key on show, when "New songs in this key" is on (else -1, -1: its own choice)
+void GraphProcessor::keyForNewSong (int& root, int& scale) const
+{
+    root = scale = -1;
+    if (apvts.getRawParameterValue ("genkey")->load() < 0.5f) return;
+    const int shown = shownScale();
+    if (keyRoot.load() >= 0) root = ((keyRoot.load() + (int) std::lround (pTune->load())) % 12 + 12) % 12;
+    scale = shown;
+}
+// after writing a song in a known key: remember it, and play it as written (harmonic minor: minor with a raised 7th)
+void GraphProcessor::songWrittenIn (int scale)
+{
+    keyRoot = 0;   // y = 0 is the key's root, A before TUNE
+    keyScale = scale == 6 ? 1 : scale;
+    if (auto* p = apvts.getParameter ("mode")) p->setValueNotifyingHost (p->convertTo0to1 (scale == 6 ? 7.f : 0.f));
+}
+int GraphProcessor::shownScale() const
+{
+    const int m = (int) std::lround (apvts.getRawParameterValue ("mode")->load());
+    return m > 0 ? m - 1 : keyScale.load();
+}
+void GraphProcessor::findKey()
+{
+    const float r = apvts.getRawParameterValue ("rate")->load();
+    const auto plan = gg::planSong (scenes, true, 0, r < 0.5f ? 0.5 : (r < 1.5f ? 1.0 : 2.0), 0, pKit->load() > 0.5f);
+    const auto k = gg::findKey (scenes, plan);
+    keyRoot = k.root;
+    keyScale = k.scale;
+}
+
 void GraphProcessor::generateTrack (uint32_t seed, int style)
 {
     beforeGenerate = scenes;
     tempoBeforeGenerate = pTempo->load();
-    gen = std::make_unique<gg::Generator> (seed, style);
+    int kr = -1, ks = -1;
+    keyForNewSong (kr, ks);
+    gen = std::make_unique<gg::Generator> (seed, style, kr, ks);
     std::vector<gg::Scene> sc;
     const auto t = gen->track();
     for (size_t k = 0; k < t.size(); ++k) sc.push_back ({ sceneName ((int) k), t[k] });
@@ -212,6 +250,7 @@ void GraphProcessor::generateTrack (uint32_t seed, int style)
     set ("wave", gen->wave());   // the sound of the video whose style it follows
     set ("tune", gen->tune());
     set ("tone", gen->tone());
+    songWrittenIn (gen->scale());
     set ("chain", 1.0f);
     set ("scene", 1.0f);
     displayScene = 0;
@@ -222,7 +261,9 @@ void GraphProcessor::generateExperiment (uint32_t seed, int which, int wild)
 {
     beforeGenerate = scenes;
     tempoBeforeGenerate = pTempo->load();
-    lastExperiment = std::make_unique<gg::Experiment> (seed, which, wild);
+    int kr = -1, ks = -1;
+    keyForNewSong (kr, ks);
+    lastExperiment = std::make_unique<gg::Experiment> (seed, which, wild, kr, ks);
     std::vector<gg::Scene> sc;
     const auto t = lastExperiment->track();
     for (size_t k = 0; k < t.size(); ++k) sc.push_back ({ sceneName ((int) k), t[k] });
@@ -234,6 +275,7 @@ void GraphProcessor::generateExperiment (uint32_t seed, int which, int wild)
     set ("tune", lastExperiment->tune());
     set ("tone", 20000.f);
     set ("kit", 1.0f);
+    songWrittenIn (lastExperiment->scale());
     set ("chain", 1.0f);
     set ("scene", 1.0f);
     displayScene = 0;
@@ -263,6 +305,7 @@ void GraphProcessor::resetScenes()
 {
     scenes = gg::factoryScenes();
     rebuildAll();
+    findKey();
 }
 
 // ------------------------------------------------------------------------------------------------ audio
@@ -407,6 +450,10 @@ void GraphProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiB
     const bool chain = pChain->load() > 0.5f;
     const int wave = (int) pWave->load();
     const bool kit = pKit->load() > 0.5f;
+    // KEY: the scale to move the notes to (-1: as written)
+    const int modeNow = (int) std::lround (apvts.getRawParameterValue ("mode")->load());
+    const int keyRootNow = keyRoot.load(), keyScaleNow = keyScale.load();
+    const int remapTo = (modeNow > 0 && keyRootNow >= 0 && keyScaleNow >= 0 && modeNow - 1 != keyScaleNow) ? modeNow - 1 : -1;
     const double transpose = pTune->load() / 12.0 + (keys ? (lastNote - 57) / 12.0 : 0.0);
     const double glideMs = pGlide->load();
     const double fadeStep = 1.0 / (0.004 * sr);
@@ -461,6 +508,12 @@ void GraphProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiB
         {
             Voice& vc = voices[(size_t) v];
             double y = (gateAll && v < nv) ? prog->voice (v) * pitches[(size_t) sceneIdx] : std::numeric_limits<double>::quiet_NaN();
+            if (remapTo >= 0 && std::isfinite (y) && ! (kit && prog != nullptr && v < nv && prog->voiceKind (v) != 0))
+            {   // KEY: another scale -- a note on step k of the song's scale moves to step k of the new one (glides pass)
+                const double rel = 12.0 * y - keyRootNow;
+                const double r = std::round (rel);
+                if (std::abs (rel - r) < 0.25) y += gg::scaleShift (keyScaleNow, remapTo, (int) r) / 12.0;
+            }
             bool want = std::isfinite (y) && ((soloMask[(size_t) sceneIdx] >> v) & 1u) != 0;
             if (want)
             {
@@ -594,6 +647,8 @@ void GraphProcessor::getStateInformation (juce::MemoryBlock& destData)
         if (s.pitch != 1.0) t.setProperty ("pitch", s.pitch, nullptr);
         sc.appendChild (t, nullptr);
     }
+    sc.setProperty ("keyRoot", keyRoot.load(), nullptr);
+    sc.setProperty ("keyScale", keyScale.load(), nullptr);
     state.removeChild (state.getChildWithName ("SCENES"), nullptr);
     state.appendChild (sc, nullptr);
     if (auto xml = state.createXml()) copyXmlToBinary (*xml, destData);
@@ -611,9 +666,12 @@ void GraphProcessor::setStateInformation (const void* data, int sizeInBytes)
         auto t = sc.getChild (i);
         loaded.push_back ({ sceneName (i), t.getProperty ("text").toString().toStdString(), (double) t.getProperty ("speed", 1.0), (double) t.getProperty ("pitch", 1.0) });
     }
+    const bool keyKept = sc.hasProperty ("keyRoot");
+    const int kr = sc.getProperty ("keyRoot", -1), ks = sc.getProperty ("keyScale", -1);
     state.removeChild (sc, nullptr);
     apvts.replaceState (state);
     if (! loaded.empty()) { scenes = loaded; rebuildAll(); }
+    if (keyKept) { keyRoot = kr; keyScale = ks; } else findKey();
 }
 
 juce::AudioProcessorEditor* GraphProcessor::createEditor() { return new GraphEditor (*this); }

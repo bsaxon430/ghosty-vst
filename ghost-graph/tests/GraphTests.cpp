@@ -438,6 +438,84 @@ int main (int argc, char** argv)
         }
     }
 
+    if (want ("key"))
+    {   // KEY: which note is home, which scale; choosing it moves the song; new songs follow it
+        auto p = fresh();
+        p->loadTrack (4);   // Track 5, the acid video
+        check (p->shownRoot() == 7 && p->shownScale() == 1, "Track 5 is heard in E minor (" + juce::String::fromUTF8 (gg::rootName (p->shownRoot())) + " " + gg::scaleName (p->shownScale()) + ")");
+        std::unique_ptr<juce::AudioProcessorEditor> ed (p->createEditor());
+        auto* ge = dynamic_cast<GraphEditor*> (ed.get());
+        auto& kb = ge->getKeyBox();
+        check (kb.text() == "E minor", "the main page shows its key: " + kb.text());
+        const float tune0 = p->apvts.getRawParameterValue ("tune")->load();
+        kb.choose (1 + 5);   // D
+        check (p->shownRoot() == 5 && std::abs (p->apvts.getRawParameterValue ("tune")->load() - (tune0 - 2.f)) < 0.01f, "picking D moves the song down a tone (TUNE " + juce::String (p->apvts.getRawParameterValue ("tune")->load()) + ")");
+        // minor -> major: a note on the minor 3rd plays a major 3rd
+        check (gg::scaleShift (1, 0, 3) == 1 && gg::scaleShift (1, 0, 7) == 0 && gg::scaleShift (1, 6, 10) == 1, "minor to major raises the 3rd; harmonic minor raises the 7th");
+        {
+            auto q = fresh();
+            q->setSceneText (0, "y = [3/12]\n");   // the minor 3rd above A
+            q->keyRoot = 0; q->keyScale = 1;
+            setParam (*q, "sync", 0.f); setParam (*q, "chain", 0.f); setParam (*q, "tune", 0.f); setParam (*q, "glide", 0.f);
+            auto pitchOf = [&] ()
+            {
+                juce::AudioBuffer<float> b (2, 48000);
+                q->prepareToPlay (48000, 512);
+                juce::AudioBuffer<float> blk (2, 512); juce::MidiBuffer none;
+                for (int pos = 0; pos + 512 <= b.getNumSamples(); pos += 512) { blk.clear(); q->processBlock (blk, none); b.copyFrom (0, pos, blk, 0, 0, 512); }
+                int zc = 0; for (int i = 24001; i < 48000; ++i) if (b.getSample (0, i - 1) <= 0 && b.getSample (0, i) > 0) ++zc;
+                return zc * 2.0;   // Hz over the last half second
+            };
+            setParam (*q, "wave", 0.f);
+            const double minorHz = pitchOf();
+            setParam (*q, "mode", 1.f);   // major
+            const double majorHz = pitchOf();
+            check (std::abs (minorHz / 220.0 - std::exp2 (3.0 / 12)) < 0.03 && std::abs (majorHz / 220.0 - std::exp2 (4.0 / 12)) < 0.03,
+                   "a C over A minor plays C sharp in A major (" + juce::String (minorHz, 1) + " -> " + juce::String (majorHz, 1) + " Hz)");
+        }
+        // new songs in the key on show
+        kb.choose (101 + 4);   // lydian
+        check (p->apvts.getRawParameterValue ("genkey")->load() > 0.5f && kb.text() == juce::String::fromUTF8 ("D lydian"), "choosing a scale: " + kb.text() + ", and new songs follow it");
+        for (int st = 0; st < gg::Generator::kStyles; ++st)
+        {
+            p->generateTrack ((uint32_t) (77 + st), st);
+            check (p->shownRoot() == 5 && p->shownScale() == 4 && (int) std::lround (p->apvts.getRawParameterValue ("mode")->load()) == 0,
+                   juce::String ("GENERATE ") + gg::Generator::styleName (st) + " writes in D lydian (" + kb.text() + ")");
+        }
+        p->generateExperiment (5, 0, 0);
+        check (kb.text() == juce::String::fromUTF8 ("D lydian"), "EXPERIMENT too (" + kb.text() + ")");
+        {   // and it really is: the generated notes stay on D lydian
+            std::set<int> pcs;
+            const int tune = (int) std::lround (p->apvts.getRawParameterValue ("tune")->load());
+            for (int k = 0; k < p->getNumScenes(); ++k)
+            {
+                auto pr = gg::Program::compile (p->getScene (k).text);
+                for (int v = 0; v < pr->numVoices(); ++v)
+                {
+                    if (pr->voiceKind (v) != 0 || pr->voiceName (v) == "kick") continue;
+                    for (int i = 0; i < 512; ++i) { pr->setX (-8.0 + i / 32.0 + 0.003); const double y = pr->voice (v); if (std::isfinite (y) && std::abs (12 * y - std::round (12 * y)) < 0.05) pcs.insert ((((int) std::lround (12 * y) + tune - 5) % 12 + 12) % 12); }
+                }
+            }
+            bool inScale = true;
+            for (int pc : pcs) { bool found = false; for (int i = 0; i < 7; ++i) found = found || gg::scaleSteps (4)[i] == pc; inScale = inScale && found; }
+            check (inScale && pcs.size() >= 4, "the experiment's notes are all on D lydian (" + juce::String ((int) pcs.size()) + " notes used)");
+        }
+        kb.choose (200);   // off again
+        check (p->apvts.getRawParameterValue ("genkey")->load() < 0.5f, "\"New songs in this key\" turns off");
+        juce::File shots = juce::File::getCurrentWorkingDirectory().getChildFile ("uishots");
+        if (auto env = std::getenv ("GG_SHOTS")) shots = juce::File (juce::String (env));
+        for (int lk : { 0, 4 })
+        {
+            setParam (*p, "look", (float) lk);
+            ge->showStrip (false);
+            juce::MessageManager::getInstance()->runDispatchLoopUntil (150);
+            auto img = ed->createComponentSnapshot (ed->getLocalBounds());
+            juce::FileOutputStream os (shots.getChildFile ("ui-key-" + juce::String (lk) + ".png"));
+            os.setPosition (0); os.truncate();
+            juce::PNGImageFormat().writeImageToStream (img, os);
+        }
+    }
+
     if (want ("tracks"))
     {
         auto p = fresh();
