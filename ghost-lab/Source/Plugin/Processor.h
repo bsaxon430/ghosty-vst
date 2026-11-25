@@ -130,6 +130,7 @@ public:
     // the WAVETABLE the partials play: a built-in one by name, or one cycle from a file (empty cycle: plain sines)
     void setSpectreTable (const juce::String& name, const std::vector<float>& cycle);   // message thread
     const juce::String& spectreTableName() const { return tableName; }
+    double songTempo() const { return songBpm.load(); }   // the host's tempo (120 when it gives none)
     const std::vector<float>& spectreTable() const { return tableCycle; }
     // what the page draws: the engine the sound is going through right now (the listen loop if it plays, else the track)
     const spectre::Engine& spectreShown() const { return spectreListening() || ! spectreLiveOn() ? spectreLoop : spectreTrack; }
@@ -141,8 +142,9 @@ private:
     juce::String tableName { "SINE" };
     std::vector<float> tableCycle;
     std::atomic<bool> spectreOn { isFx }, spectreDirty { false };
-    std::atomic<int> roomEngine { 0 };
-    std::atomic<int> liveRoom { 0 };                          // what the Room slot's loop goes through: 0 SPACE, 1 SPECTRE
+    std::atomic<int> roomEngine { 0 };                          // what the Room slot's loop goes through: 0 SPACE, 1 SPECTRE
+    std::atomic<int> liveRoom { 0 };
+    std::atomic<double> songBpm { 120.0 };
     bool spectreWasLive = false;                                // audio thread
     juce::AudioBuffer<float> monoBuf;
     matter::Space liveSpace;                            // audio thread only (made in prepareToPlay)

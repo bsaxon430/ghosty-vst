@@ -235,11 +235,13 @@ juce::String describe (const Step& s)
         case Op::Spectre:
         {
             juce::StringArray bits;
-            const float tr = s.get ("transpose"), sh = s.get ("shift"), x = s.get ("phase"), y = s.get ("cepstrum");
-            if (std::abs (tr) >= 0.05f) bits.add ((tr > 0 ? "+" : "") + juce::String (tr, 1) + " st");
-            if (std::abs (sh) >= 1.0f) bits.add ((sh > 0 ? "+" : "") + juce::String (juce::roundToInt (sh)) + " Hz");
-            if (x < -0.25f) bits.add ("robot"); else if (x > 0.25f) bits.add ("whisper");
-            if (y > 0.25f) bits.add ("body"); else if (y < -0.25f) bits.add ("raw");
+            const float tr = s.get ("transpose"), sh = s.get ("formant"), x = s.get ("phasemix"), y = s.get ("cepmix");
+            const int mode = juce::roundToInt (s.get ("mode"));
+            if (mode != 0) bits.add (spectre::modeNames()[juce::jlimit (0, 2, mode)]);
+            if (std::abs (tr) >= 0.5f) bits.add ((tr > 0 ? "+" : "") + juce::String (juce::roundToInt (tr)) + " st");
+            if (std::abs (sh) >= 0.05f) bits.add ("formants " + juce::String (sh > 0 ? "+" : "") + juce::String (sh, 1));
+            if (x < 0.99f || y < 0.99f) bits.add ("morph " + juce::String (juce::roundToInt (y * 100)) + "/" + juce::String (juce::roundToInt (x * 100)));
+            if (s.get ("locd") > 0.05f) bits.add ("LOCD");
             if (s.get ("inf") > 0.6f) bits.add ("frozen"); else if (s.get ("cloud") > 0.4f) bits.add ("cloud");
             return "SPECTRE " + (bits.isEmpty() ? juce::String ("rebuilt") : bits.joinIntoString (", "));   // (always "SPECTRE ...": printing again replaces the last print)
         }
@@ -355,7 +357,7 @@ static RenderResult spectreRender (const Step& s, const Audio& in, const std::at
     RenderResult res;
     spectre::Params p;
     for (int i = 0; i < spectre::kParams; ++i) p.v[(size_t) i] = s.get (spectre::param (i).key);
-    auto out = spectre::renderOffline (in.buf, in.sampleRate, p, spectre::tableFromText (s.data), cancel);   // (Step.data: the WAVETABLE, if any)
+    auto out = spectre::renderOffline (in.buf, in.sampleRate, p, spectre::tableFromText (s.data), cancel, s.get ("bpm"));   // (Step.data: the WAVETABLE, if any)
     if (out.getNumSamples() < 2) { res.error = "Stopped."; return res; }
     res.audio = asAudio (out, in.sampleRate, in.sampleRate);
     juce::String line;

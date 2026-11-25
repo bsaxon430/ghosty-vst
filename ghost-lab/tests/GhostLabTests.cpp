@@ -2767,8 +2767,29 @@ static void testSpectre (const std::shared_ptr<Audio>& voice)
     }
     { Params p; p.v[Transpose] = 12.0f; auto out = runSine (p, 220.0f, n); const float f = zcFreq (out.data() + 40000, 40000, sr);
       check (std::abs (f - 440.0f) < 3.0f, "SPECTRE: TRANSPOSE +12 puts 220 Hz at 440 Hz (" + juce::String (f, 1) + ")"); }
-    { Params p; p.v[Shift] = 100.0f; auto out = runSine (p, 220.0f, n); const float f = zcFreq (out.data() + 40000, 40000, sr);
-      check (std::abs (f - 320.0f) < 3.0f, "SPECTRE: SHIFT +100 Hz puts 220 Hz at 320 Hz (" + juce::String (f, 1) + ")"); }
+    { Params p; p.v[Shift] = 12.0f; auto out = runSine (p, 220.0f, n); const float f = zcFreq (out.data() + 40000, 40000, sr);
+      check (std::abs (f - 220.0f) < 3.0f, "SPECTRE: SHIFT moves the formants, not the note (+12: still " + juce::String (f, 1) + " Hz)"); }
+    // ---- the morph pad (as in RESYNTH): bottom-left is your sound exactly; top-right lands on your sound's own phases
+    {
+        auto waveOf = [&] (std::vector<float>& v) { for (int i = 0; i < n; ++i) { double s0 = 0; for (int h = 1; h <= 20; ++h) s0 += 0.05 / h * std::sin (2.0 * juce::MathConstants<double>::pi * 180.0 * h * i / sr + h); v[(size_t) i] = (float) s0; } };
+        auto snrOf = [&] (Params p)
+        {
+            std::vector<float> in ((size_t) n), L ((size_t) n), R ((size_t) n); waveOf (in); L = in; R = in;
+            spectre::Engine e; e.prepare (sr, 512);
+            for (int i = 0; i < n; i += 512) e.process (L.data() + i, R.data() + i, juce::jmin (512, n - i), p);
+            double sg = 0, er = 0; const int lat = e.latency();
+            for (int i = 20000; i < n - lat; ++i) { const double d = L[(size_t) (i + lat)] - in[(size_t) i]; er += d * d; sg += (double) in[(size_t) i] * in[(size_t) i]; }
+            return (float) (10.0 * std::log10 (sg / juce::jmax (er, 1e-20)));
+        };
+        Params dry; dry.v[PhaseX] = 0.0f; dry.v[CepstrumY] = 0.0f;
+        const float sDry = snrOf (dry), sWet = snrOf ({});
+        check (sDry > 80.0f, "SPECTRE: the pad's bottom-left corner is your sound, exactly (" + juce::String (sDry, 1) + " dB)");
+        check (sWet > 25.0f, "SPECTRE: all rebuilt, a steady note comes back on its own phases, nearly the same wave (" + juce::String (sWet, 1) + " dB)");
+        for (int m : { 1, 2 }) { Params p; p.v[Mode] = (float) m; const float sm = snrOf (p); check (sm > 20.0f, "SPECTRE: MODE " + modeNames()[m] + " rebuilds it too (" + juce::String (sm, 1) + " dB)"); }
+        Params lk; lk.v[Locd] = 1.0f; Params hold; hold.v[Rate] = 250.0f;
+        const float sl = snrOf (lk), sh = snrOf (hold);
+        check (std::isfinite (sl) && std::isfinite (sh), "SPECTRE: LOCD and a slow UPDATE RATE run clean");
+    }
     {
         auto out = runSine ({}, 330.0f, (int) sr, [] (Params& p, int i) { if (i > 43000) p.v[Inf] = 1.0f; });
         const float r = rmsOf (out.data() + 72000, 20000);
@@ -2795,12 +2816,12 @@ static void testSpectre (const std::shared_ptr<Audio>& voice)
         check (finite && peak <= 1.0f, "SPECTRE: every control swept to its ends: no NaN, never past 0 dBFS (peak " + juce::String (peak, 3) + ")");
     }
     {
-        Params p; p.v[Partials] = 16.0f;
+        Params p; p.v[MidOscs] = 16.0f;
         spectre::Engine e; e.prepare (sr, 512);
         std::vector<float> L (48000), R (48000);
         for (int i = 0; i < 48000; ++i) { float v = 0; for (int h = 1; h <= 40; ++h) v += 0.02f * (float) std::sin (2.0 * juce::MathConstants<double>::pi * 110.0 * h * i / sr); L[(size_t) i] = R[(size_t) i] = v; }
         for (int i = 0; i < 48000; i += 512) e.process (L.data() + i, R.data() + i, juce::jmin (512, 48000 - i), p);
-        check (e.mid.activeCount.load() <= 24, "SPECTRE: PARTIALS 16 rebuilds a 40-harmonic tone from about 16 sine waves (" + juce::String (e.mid.activeCount.load()) + " live)");
+        check (e.mid.activeCount.load() <= 24, "SPECTRE: MID 16 rebuilds a 40-harmonic tone from about 16 sine waves (" + juce::String (e.mid.activeCount.load()) + " live)");
     }
     // ---- NOISE: hiss stays hiss (at its own level); TRANSIENT: drum hits keep their attack
     {
@@ -2858,11 +2879,11 @@ static void testSpectre (const std::shared_ptr<Audio>& voice)
     }
     // ---- PRINT IT: the offline render through the lab's history
     {
-        Step s; s.op = Op::Spectre; s.values["transpose"] = 7.0f; s.values["phase"] = -0.6f;
+        Step s; s.op = Op::Spectre; s.values["transpose"] = 7.0f; s.values["mode"] = 1.0f;
         auto res = rooms::render (s, *voice);
         check (res.audio != nullptr && std::abs (res.audio->seconds() - voice->seconds()) < 0.5 && rms (*res.audio) > 0.01f,
                "SPECTRE: PRINT IT renders the whole sound (" + juce::String (res.audio ? res.audio->seconds() : 0.0, 2) + " s from " + juce::String (voice->seconds(), 2) + " s)");
-        check (rooms::describe (s) == "SPECTRE +7.0 st, robot", "SPECTRE: the history says what it did (" + rooms::describe (s) + ")");
+        check (rooms::describe (s) == "SPECTRE PEAK, +7 st", "SPECTRE: the history says what it did (" + rooms::describe (s) + ")");
         check (rooms::roomOf (Op::Spectre) == rooms::Room::Spectre && rooms::isRoomOp (Op::Spectre), "SPECTRE is a room of the lab");
     }
     // ---- the plug-in: LISTEN (both builds), LIVE (FX), saved with the session, nothing allocated or locked on the audio thread
@@ -2882,8 +2903,8 @@ static void testSpectre (const std::shared_ptr<Audio>& voice)
         check (p.getParameters().size() >= kParams && p.spectreParameter (Transpose)->getName (64) == "SPECTRE TRANSPOSE",
                "SPECTRE: every control is a plug-in parameter FL can automate (" + juce::String (p.getParameters().size()) + ")");
         p.spectreParameter (Cloud)->setValueNotifyingHost (0.5f);   // (as FL's automation moves it)
-        check (std::abs (p.spectreParams()[Cloud] - 0.5f) < 1e-4f && static_cast<juce::AudioProcessorParameter*> (p.spectreParameter (Shift))->getText (p.spectreParameter (Shift)->convertTo0to1 (100.0f), 32) == "+100 Hz",
-               "SPECTRE: automation moves the engine; FL shows the values in words (\"+100 Hz\")");
+        check (std::abs (p.spectreParams()[Cloud] - 0.5f) < 1e-4f && static_cast<juce::AudioProcessorParameter*> (p.spectreParameter (Shift))->getText (p.spectreParameter (Shift)->convertTo0to1 (5.0f), 32) == "+5.0 st",
+               "SPECTRE: automation moves the engine; FL shows the values in words (\"+5.0 st\")");
         p.spectreParameter (Cloud)->setValueNotifyingHost (0.0f);
         p.setSpectreTable ("SAW", tableCycle (1));
         p.setSpectreParam (Transpose, 5.0f);
@@ -3001,7 +3022,7 @@ static void testSpectre (const std::shared_ptr<Audio>& voice)
         check (RouteBar::roomAt (0) == rooms::Room::Spectre && RouteBar::roomAt (1) == rooms::Room::Lab, "SPECTRE: it is first on the strip of rooms, THE LAB next");
         auto& pg = ed->spectrePage();
         const bool mono = isEffectivelyMono (*voice) || voice->channels() == 1;
-        check (pg.controlEnabled (spectre::Transpose) && pg.controlEnabled (spectre::Cloud) && pg.controlEnabled (spectre::Side) == ! mono,
+        check (pg.controlEnabled (spectre::Transpose) && pg.controlEnabled (spectre::Cloud) && pg.controlEnabled (spectre::SideOscs) == ! mono,
                "SPECTRE: with a sound, its controls are live; SIDE is greyed on a mono sound");
         pg.setValue (spectre::Inf, 1.0f);
         check (! pg.controlEnabled (spectre::Cloud) && ! pg.controlEnabled (spectre::Smooth), "SPECTRE: CLOUD and SMOOTH grey out while INF holds everything");
@@ -3012,14 +3033,14 @@ static void testSpectre (const std::shared_ptr<Audio>& voice)
         pg.pressPrint();
         for (int i = 0; i < 400 && p.engine.busy(); ++i) juce::MessageManager::getInstance()->runDispatchLoopUntil (50);
         juce::MessageManager::getInstance()->runDispatchLoopUntil (100);
-        check (p.engine.historySize() == before + 1 && p.engine.current().label.startsWith ("SPECTRE -5.0 st"), "SPECTRE: PRINT IT adds one step to the history (" + p.engine.current().label + ")");
+        check (p.engine.historySize() == before + 1 && p.engine.current().label.startsWith ("SPECTRE -5 st"), "SPECTRE: PRINT IT adds one step to the history (" + p.engine.current().label + ")");
         pg.setValue (spectre::Transpose, 3.0f);
         pg.pressPrint();
         for (int i = 0; i < 400 && p.engine.busy(); ++i) juce::MessageManager::getInstance()->runDispatchLoopUntil (50);
         juce::MessageManager::getInstance()->runDispatchLoopUntil (100);
-        check (p.engine.historySize() == before + 1 && p.engine.current().label.startsWith ("SPECTRE +3.0 st"), "SPECTRE: printing again replaces the last print (nothing stacks)");
+        check (p.engine.historySize() == before + 1 && p.engine.current().label.startsWith ("SPECTRE +3 st"), "SPECTRE: printing again replaces the last print (nothing stacks)");
         pg.pressReset();
-        check (std::abs (p.spectreParam (spectre::Transpose)) < 1e-6f && std::abs (p.spectreParam (spectre::Partials) - 512.0f) < 0.5f && p.spectreTableName() == "SINE", "SPECTRE: RESET puts every control back (and the partials back to sines)");
+        check (std::abs (p.spectreParam (spectre::Transpose)) < 1e-6f && std::abs (p.spectreParam (spectre::MidOscs) - 512.0f) < 0.5f && p.spectreTableName() == "SINE", "SPECTRE: RESET puts every control back (and the partials back to sines)");
         pg.stepTable (1);
         check (p.spectreTableName() == "SAW" && ! p.spectreTable().empty(), "SPECTRE: the WAVETABLE arrows pick the built-in tables");
         pg.stepTable (-1);
@@ -3058,7 +3079,7 @@ static void spectreShots (const juce::File& dir)
     ed->spectrePage().pressListen();
     pump (90);
     shot ("1-open", Editor::kW, Editor::kH);
-    ed->spectrePage().setValue (spectre::PhaseX, -0.55f); ed->spectrePage().setValue (spectre::CepstrumY, 0.4f);
+    ed->spectrePage().setValue (spectre::PhaseX, 0.35f); ed->spectrePage().setValue (spectre::CepstrumY, 0.7f);
     ed->spectrePage().setValue (spectre::Transpose, 7.0f); ed->spectrePage().setValue (spectre::Cloud, 0.6f); ed->spectrePage().setValue (spectre::Inf, 0.35f);
     ed->spectrePage().stepTable (7);   // GHOST
     pump (90);

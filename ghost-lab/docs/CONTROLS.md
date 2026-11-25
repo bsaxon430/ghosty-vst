@@ -1,26 +1,32 @@
 # SPECTRE (build 17): the page Ghost Lab opens on
 
-SPECTRE listens to the sound, finds up to 1,024 of its sine-wave partials, and plays it back from a bank of oscillators, so each partial can be bent on the way out. It is live: in **Ghost Lab FX**, **LIVE ON THIS TRACK** runs the track's own audio through it as FL plays (the plug-in reports SPECTRE's latency, about 43 ms, so FL lines the track up). In **Ghost Lab** (the instrument), **LISTEN** plays your sound round and round through it, and so does **a held key**: while the SPECTRE (or SPACE) page is open, every note you play goes through it live and keeps going round while the key is held, so every move of a control is heard at once.
+SPECTRE listens to the sound, finds up to 1,024 of its sine-wave partials, and plays it back from a bank of oscillators, so each partial can be bent on the way out. It is live: in **Ghost Lab FX**, **LIVE ON THIS TRACK** runs the track's own audio through it as FL plays (the plug-in reports SPECTRE's latency, about 85 ms, so FL lines the track up). In **Ghost Lab** (the instrument), **LISTEN** plays your sound round and round through it, and so does **a held key**: while the SPECTRE (or SPACE) page is open, every note you play goes through it live and keeps going round while the key is held, so every move of a control is heard at once.
 
 **Live edit everywhere else (build 17):** while a key is held (or the result is playing), moving a control in THE LAB's DEEP panel, STRETCH or REBORN re-renders by itself a quarter second after your hand stops, and the new sound takes over what you are hearing. Each run of tweaks is one step in the history (each re-render replaces the last), so UNDO takes it all back. Those engines work on the whole sound at once, so this is near-live (the time one render takes), not sample-by-sample like SPECTRE and SPACE. **PRINT IT** renders the whole sound through it into the lab's history (UNDO takes it back; printing again replaces the last print). **RESET** puts every control back. Double-click any control for its start value; hold shift while dragging for fine moves. Every control is also a plug-in parameter ("SPECTRE PHASE" ...), so FL can automate it.
 
 SPECTRE splits the sound three ways: the **partials** (sine waves, which every control bends), the **noise** that is left (breath, hiss, the body of a drum, played back as shaped noise), and the **attacks** (the first few milliseconds of each hit, let through as they were).
 
+SPECTRE works the way CRQL's RESYNTH does (going by its manual): there is no dry / wet knob. The **pad morphs** between your sound and the rebuilt one in two separate parts of the spectrum, so bottom-left is your sound untouched, top-right is all oscillators, and everything between is a blend of the two, not a crossfade. The rails along the bottom and up the right move one axis at a time; double-click the pad for all rebuilt.
+
 | Control | Range | What it does |
 |---|---|---|
-| PHASE (pad, across) | -100 .. +100 | left locks every partial's phase together (a robot buzz); right scatters them (a whisper) |
-| CEPSTRUM (pad, up / down) | -100 .. +100 | up keeps only the body of the sound (its spectral envelope: the vowel, the formants); down keeps only the fine detail (all partials equal, bright and raw) |
-| SHIFT | -1000 .. +1000 Hz | slides every partial by the same number of Hz: inharmonic, metallic |
-| TRANSPOSE | -24 .. +24 st | moves the notes; the body stays where it was, so a voice still sounds like a voice |
-| CLOUD | 0 .. 100% | partials ring on (up to ~6 s) and drift apart (up to 30 cents): a wash |
-| SMOOTH | 0 .. 100% | every change glides (up to ~1 s) |
-| MID / SIDE | 0 .. 100% | how much of the middle / the stereo sides is rebuilt (the rest is the dry sound, lined up). SIDE is greyed on a mono sound |
-| INF | 0 .. 100% | hold: the higher, the less of each new moment gets in; at the top the sound freezes forever (CLOUD and SMOOTH grey out: nothing moves) |
-| PARTIALS | 16 .. 1024 | how many sine waves rebuild it (the loudest ones are kept) |
+| PHASE (pad, across) | yours .. rebuilt | the phase of every frequency, from your sound's own (left) to the rebuilt sound's (right) |
+| CEPSTRUM (pad, up / down) | yours .. rebuilt | the tone (the log spectrum, i.e. its whole cepstrum), from your sound's (bottom) to the rebuilt sound's (top) |
+| MODE | IF, PEAK, TRACK | IF: one oscillator per spectrum bin, its frequency read from the bin's own phase (it can only move inside its bin): the cleanest. PEAK: oscillator 1 plays the loudest peak, 2 the next, and so on, so peaks swap oscillators as the sound changes (with SMOOTH: sparkly). TRACK: each peak followed by one oscillator (smooth glides) |
+| SHIFT | -12 .. +12 st | formant shift: the cepstral envelope (the body, the vowel) moved up or down, the notes left where they are. Works on the morphed sound, so on your sound too |
+| TRANSPOSE | -12 .. +12 st | the oscillators, in semitones (with the pad's CEPSTRUM toward yours, the tone keeps your formants) |
+| LOCD | 0 .. 100% | every phase locked to a sawtooth at the note's own pitch (found by autocorrelation): solid and buzzy, best on bass. Works on your sound too |
+| SMOOTH | 0 .. 100% | each partial glides from where it was (up to ~1 s); in PEAK mode the swapping peaks smear into sparkle |
+| CLOUD | 0 .. 100% | partials ring on (up to ~6 s) and drift apart (up to 30 cents) |
+| INF | 0 .. 100% | hold: at the top the sound freezes forever (CLOUD, SMOOTH and TRANSIENT grey out) |
+| MID / SIDE | 0 .. 512 | how many oscillators rebuild the middle and the stereo sides (1,024 in all). 0 leaves that part as it was. LINK moves the two together. SIDE is greyed on a mono sound |
+| UPDATE RATE | every 11 ms .. 1 s, or 1/64 .. 1 bar | how often the oscillators take a new picture of the sound; between pictures they hold (steppy, robotic). FREE in milliseconds, SNAPPED to the song's tempo |
+| NOISE | 0 .. 100% | up: hiss, breath and drums stay noise (a peak must stand clear of its neighbours to become an oscillator); down: everything becomes oscillators |
+| TRANSIENT | 0 .. 100% | lets the first few milliseconds of every hit through as they were, so drums keep their punch |
 | OUTPUT | -24 .. +12 dB | the level; a safety limiter keeps it under 0 dBFS |
-| NOISE | 0 .. 100% | up: hiss, breath and drums stay noise (a peak must stand clear of its neighbours to count as a sine wave); down: everything becomes sine waves, the glassy, tuned sound |
-| TRANSIENT | 0 .. 100% | lets the first few milliseconds of every hit through as it was, so drums keep their punch (greyed while INF holds everything) |
-| WAVETABLE (the box over the pad) | SINE, SAW, SQUARE, TRIANGLE, PULSE, ORGAN, GLASS, GHOST, FM, or your own | each partial plays this shape instead of a sine wave (band-limited: nothing folds back past Nyquist). The folder, or a WAV dropped on the box, loads your own: a single cycle, or a Serum / Vital wavetable file (its first frame). Saved with the session and with PRINT IT |
+| WAVETABLE (the box over the pad) | SINE, SAW, SQUARE, TRIANGLE, PULSE, ORGAN, GLASS, GHOST, FM, or your own | each oscillator plays this shape instead of a sine wave (band-limited). The folder, or a WAV dropped on the box, loads your own |
+
+With the pad at all rebuilt, a steady note comes back on its own phases (each oscillator lands on the partial's measured phase every hop), so the rebuilt wave is nearly the original (about 30 dB under it); the bottom-left corner is your sound bit for bit. SPECTRE's latency is about 85 ms (one analysis frame plus one morph frame); FL lines it up.
 
 # Ghost Lab UNDER THE HOOD: every CDP control, and where it is now
 

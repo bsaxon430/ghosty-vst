@@ -54,7 +54,9 @@ private:
     std::unique_ptr<WaveBox> wave;
     std::unique_ptr<juce::FileChooser> chooser;
     juce::OwnedArray<Control> controls;     // the sliders and knobs (not the pad)
-    std::unique_ptr<Button> liveBtn, listenBtn, printBtn, resetBtn;
+    std::unique_ptr<Button> liveBtn, listenBtn, printBtn, resetBtn, freeBtn, snapBtn, linkBtn;
+    juce::OwnedArray<Button> modeBtns;
+    juce::Rectangle<float> modeLabelR;
     juce::Rectangle<float> titleR, doesR, captionR, leftR, rightR, knobR, mainR;
     juce::String captionText;
     int hoverParam = -1;

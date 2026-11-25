@@ -77,6 +77,7 @@ static std::vector<OpInfo> makeCatalogue()
             const auto& p = spectre::param (i);
             cs.push_back ({ p.key, p.name, p.lo, p.hi, p.def, p.unit, false });
         }
+        cs.push_back ({ "bpm", "Tempo", 20.0f, 400.0f, 120.0f, "bpm", false });   // (the song's tempo, for UPDATE RATE when SNAPPED)
         v.push_back ({ Op::Spectre, "spectre", "SPECTRE", "Rebuilt from up to 1,024 sine waves", "our own real-time resynthesis engine", cs });
     }
 return v;

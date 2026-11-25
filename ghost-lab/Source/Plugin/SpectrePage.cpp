@@ -10,30 +10,25 @@ using namespace spectre;
 static const juce::Colour orange { 0xffff8a2a }, hotPink { 0xffff4fd8 };
 juce::Colour SpectrePage::accent() { return orange; }
 
-// ---- the travel of each control is the engine's own (FL's automation uses the same); TRANSPOSE snaps to whole
-// semitones under the hand unless shift is held
+// ---- the travel of each control is the engine's own (FL's automation uses the same, whole steps included)
 static float normOf (int p, float v) { return spectre::toNorm (p, v); }
-static float valueAt (int p, float t, bool fine)
-{
-    const float v = spectre::fromNorm (p, t);
-    if (p == Partials) return (float) juce::roundToInt (v);
-    if (p == Transpose && ! fine) return (float) juce::roundToInt (v);
-    return v;
-}
+static float valueAt (int p, float t, bool) { return spectre::fromNorm (p, t); }
 static juce::String show (int p, float v) { return spectre::display (p, v); }
 // a few plain words under each control (the full line shows at the bottom while your hand is on it)
 static const char* shortWords (int p)
 {
     switch (p)
     {
-        case Shift: return "metallic slide";
-        case Transpose: return "pitch, keeps the body";
+        case Shift: return "moves the formants";
+        case Transpose: return "the notes, in semitones";
         case Cloud: return "ring on, drift apart";
         case Smooth: return "changes glide";
-        case Mid: return "rebuild the middle";
-        case Side: return "rebuild the sides";
+        case MidOscs: return "oscillators: middle";
+        case SideOscs: return "oscillators: sides";
         case Inf: return "hold, freeze at the top";
-        case Partials: return "how many sine waves";
+        case Locd: return "phase locked to a saw";
+        case Rate: return "how often it looks";
+        case Division: return "how often, in notes";
         case Output: return "how loud";
         case Noise: return "hiss and drums stay noise";
         case Transient: return "keeps the punch of hits";
@@ -70,7 +65,7 @@ public:
             g.setColour (on ? text : dim);
         }
         g.setFont (font (juce::jmin (13.0f, r.getHeight() * 0.42f), 2, 0.1f));
-        g.drawFittedText (label, r.reduced (10, 2).toNearestInt(), juce::Justification::centred, 1, 0.75f);
+        g.drawFittedText (label, r.reduced (r.getWidth() < 70.0f ? 3.0f : 10.0f, 2.0f).toNearestInt(), juce::Justification::centred, 1, 0.6f);
     }
     void mouseEnter (const juce::MouseEvent&) override { hot = true; repaint(); }
     void mouseExit (const juce::MouseEvent&) override { hot = false; repaint(); }
@@ -104,15 +99,17 @@ public:
         const bool hot = active && (isMouseOverOrDragging());
         auto r = getLocalBounds().toFloat();
         // name on top, value under it, the plain words at the bottom
-        auto nameR = r.removeFromTop (isKnob ? 16.0f : 18.0f);
-        auto wordsR = r.removeFromBottom (isKnob ? 24.0f : 30.0f);
-        auto valueR = r.removeFromBottom (isKnob ? 15.0f : 18.0f);
-        g.setColour (text.withAlpha (a)); g.setFont (font (isBig ? 13.0f : 11.5f, 2, 0.14f));
+        // (the small knobs in the panel keep only their name and value: the plain words show at the bottom on hover)
+        const bool compact = isKnob;
+        auto nameR = r.removeFromTop (compact ? 13.0f : (isKnob ? 16.0f : 18.0f));
+        auto wordsR = r.removeFromBottom (compact ? (active ? 0.0f : 22.0f) : (isKnob ? 24.0f : 30.0f));
+        auto valueR = r.removeFromBottom (compact ? 13.0f : (isKnob ? 15.0f : 18.0f));
+        g.setColour (text.withAlpha (a)); g.setFont (font (isBig ? 12.0f : (compact ? 10.0f : 11.5f), 2, 0.14f));
         g.drawFittedText (in.name, nameR.toNearestInt(), juce::Justification::centred, 1, 0.7f);
-        g.setColour ((hot ? colour.brighter (0.3f) : colour).withAlpha (a)); g.setFont (font (11.5f, 1, 0.04f));
+        g.setColour ((hot ? colour.brighter (0.3f) : colour).withAlpha (a)); g.setFont (font (compact ? 10.0f : 11.5f, 1, 0.04f));
         g.drawFittedText (show (param, owner.value (param)), valueR.toNearestInt(), juce::Justification::centred, 1, 0.8f);
         g.setColour (sub.withAlpha (active ? 0.95f : 0.45f)); g.setFont (font (9.8f, 0, 0.0f));
-        g.drawFittedText (active ? juce::String (shortWords (param)) : owner.greyReason (param), wordsR.reduced (2, 0).toNearestInt(), juce::Justification::centredTop, 2, 0.85f);
+        if (wordsR.getHeight() > 1.0f) g.drawFittedText (active ? juce::String (shortWords (param)) : owner.greyReason (param), wordsR.reduced (2, 0).toNearestInt(), juce::Justification::centredTop, 2, 0.85f);
         const float t = norm();
         if (isKnob) paintKnob (g, r.reduced (2.0f), t, a, in.bipolar);
         else paintSlider (g, r.reduced (0.0f, 4.0f), t, a, in.bipolar);
@@ -252,9 +249,9 @@ public:
         const int live = e.mid.activeCount.load() + e.side.activeCount.load();
         auto words = in.removeFromTop (14.0f);
         g.setFont (font (9.5f, 1, 0.12f)); g.setColour (sub);
-        g.drawText ("THE REBUILT SOUND", words, juce::Justification::centredLeft);
+        g.drawText (getWidth() > 300 ? "WHAT COMES OUT" : "OUT", words, juce::Justification::centredLeft);
         g.setColour (live > 0 ? orange : dim);
-        g.drawText (juce::String (live) + " PARTIALS LIVE", words, juce::Justification::centredRight);
+        g.drawText (juce::String (live) + (getWidth() > 300 ? " OSCILLATORS LIVE" : " LIVE"), words, juce::Justification::centredRight);
         float peak = 1e-4f; for (float v : snap) peak = juce::jmax (peak, std::abs (v));
         const float sc = 0.42f * in.getHeight() / juce::jmax (0.05f, peak);
         juce::Path p;
@@ -273,12 +270,18 @@ public:
 class SpectrePage::Pad : public juce::Component
 {
 public:
+    // the morph pad (as in RESYNTH): across, the PHASE - yours (left) to the rebuilt one's (right); up and down, the
+    // CEPSTRUM, the tone - yours (bottom) to the rebuilt one's (top). Bottom-left is your sound untouched, top-right is
+    // all oscillators. The rails (along the bottom, up the right) move one at a time.
     explicit Pad (SpectrePage& o) : owner (o) { setMouseCursor (juce::MouseCursor::CrosshairCursor); }
     SpectrePage& owner;
-    std::vector<juce::Point<float>> ghosts;   // (log frequency 0..1, loudness 0..1) of the partials living now
+    std::vector<juce::Point<float>> ghosts;
     bool active = true;
+    int dragging = 0;   // 0 the pad, 1 the PHASE rail, 2 the CEPSTRUM rail
 
-    juce::Rectangle<float> area() const { return getLocalBounds().toFloat().reduced (30.0f, 26.0f); }
+    juce::Rectangle<float> area() const { auto r = getLocalBounds().toFloat(); r.removeFromBottom (26.0f); r.removeFromRight (26.0f); r.removeFromLeft (24.0f); r.removeFromTop (22.0f); return r; }
+    juce::Rectangle<float> railX() const { const auto a = area(); return { a.getX(), a.getBottom() + 8.0f, a.getWidth(), 12.0f }; }
+    juce::Rectangle<float> railY() const { const auto a = area(); return { a.getRight() + 8.0f, a.getY(), 12.0f, a.getHeight() }; }
     void readGhosts()
     {
         ghosts.clear();
@@ -303,60 +306,67 @@ public:
         g.setColour (border); g.drawRoundedRectangle (full.reduced (0.5f), 12.0f, 1.2f);
         const auto r = area();
         const float a = active ? 1.0f : 0.35f;
-        // the partials, as standing columns of light (low notes left, high right; taller = louder)
+        // the partials living now, as standing columns of light (low notes left, high right; taller = louder)
         for (auto& gh : ghosts)
         {
             const float x = r.getX() + gh.x * r.getWidth(), h = gh.y * r.getHeight();
-            g.setColour (orange.withAlpha (0.10f + 0.25f * gh.y)); g.fillRect (x - 0.7f, r.getBottom() - h, 1.4f, h);
-            g.setColour (orange.withAlpha (0.35f + 0.6f * gh.y)); g.fillEllipse (x - 1.6f, r.getBottom() - h - 1.6f, 3.2f, 3.2f);
+            g.setColour (orange.withAlpha (0.08f + 0.2f * gh.y)); g.fillRect (x - 0.7f, r.getBottom() - h, 1.4f, h);
+            g.setColour (orange.withAlpha (0.3f + 0.5f * gh.y)); g.fillEllipse (x - 1.6f, r.getBottom() - h - 1.6f, 3.2f, 3.2f);
         }
-        // the grid
         g.setColour (text.withAlpha (0.06f));
         for (int i = 1; i < 4; ++i)
         {
             const float fx = r.getX() + r.getWidth() * (float) i / 4.0f, fy = r.getY() + r.getHeight() * (float) i / 4.0f;
             g.drawLine (fx, r.getY(), fx, r.getBottom(), 1.0f); g.drawLine (r.getX(), fy, r.getRight(), fy, 1.0f);
         }
-        g.setColour (text.withAlpha (0.18f)); g.drawLine (r.getCentreX(), r.getY(), r.getCentreX(), r.getBottom(), 1.0f); g.drawLine (r.getX(), r.getCentreY(), r.getRight(), r.getCentreY(), 1.0f);
-        // the axes, in words
-        g.setFont (font (11.0f, 2, 0.2f)); g.setColour (text.withAlpha (0.75f * a));
-        g.drawText (juce::CharPointer_UTF8 ("\xe2\x86\x90  PHASE  \xe2\x86\x92"), full.withHeight (24.0f), juce::Justification::centred);
+        g.setColour (text.withAlpha (0.16f)); g.drawRect (r, 1.0f);
+        // the words: corners and axes
+        g.setFont (font (11.0f, 2, 0.2f)); g.setColour (text.withAlpha (0.8f * a));
+        g.drawText (juce::CharPointer_UTF8 ("PHASE  \xe2\x86\x92"), juce::Rectangle<float> (r.getX(), full.getY(), r.getWidth(), 22.0f), juce::Justification::centred);
         g.setFont (font (9.5f, 1, 0.12f)); g.setColour (sub.withAlpha (a));
-        g.drawText ("ROBOT", juce::Rectangle<float> (r.getX(), full.getY() + 4, 80, 18), juce::Justification::centredLeft);
-        g.drawText ("WHISPER", juce::Rectangle<float> (r.getRight() - 80, full.getY() + 4, 80, 18), juce::Justification::centredRight);
-        g.drawText ("BODY ONLY", juce::Rectangle<float> (r.getX(), r.getY() + 2, 90, 14), juce::Justification::centredLeft);
-        g.drawText ("DETAIL ONLY", juce::Rectangle<float> (r.getX(), r.getBottom() - 16, 90, 14), juce::Justification::centredLeft);
-        g.drawText ("low notes", juce::Rectangle<float> (r.getX(), full.getBottom() - 22, 80, 18), juce::Justification::centredLeft);
-        g.drawText ("high notes", juce::Rectangle<float> (r.getRight() - 80, full.getBottom() - 22, 80, 18), juce::Justification::centredRight);
+        g.drawText ("YOUR SOUND", juce::Rectangle<float> (r.getX() + 6.0f, r.getBottom() - 18.0f, 120.0f, 14.0f), juce::Justification::centredLeft);
+        g.drawText ("REBUILT", juce::Rectangle<float> (r.getRight() - 126.0f, r.getY() + 4.0f, 120.0f, 14.0f), juce::Justification::centredRight);
+        g.drawText ("yours", juce::Rectangle<float> (r.getX(), full.getY() + 4.0f, 60.0f, 14.0f), juce::Justification::centredLeft);
+        g.drawText ("rebuilt", juce::Rectangle<float> (r.getRight() - 60.0f, full.getY() + 4.0f, 60.0f, 14.0f), juce::Justification::centredRight);
         {
             juce::Graphics::ScopedSaveState s (g);
-            g.addTransform (juce::AffineTransform::rotation (juce::MathConstants<float>::halfPi, full.getRight() - 14.0f, full.getCentreY()));
-            g.setFont (font (11.0f, 2, 0.2f)); g.setColour (text.withAlpha (0.75f * a));
-            g.drawText (juce::CharPointer_UTF8 ("\xe2\x86\x90  CEPSTRUM  \xe2\x86\x92"), juce::Rectangle<float> (180.0f, 20.0f).withCentre ({ full.getRight() - 14.0f, full.getCentreY() }), juce::Justification::centred);
+            const juce::Point<float> c (full.getX() + 12.0f, r.getCentreY());
+            g.addTransform (juce::AffineTransform::rotation (-juce::MathConstants<float>::halfPi, c.x, c.y));
+            g.setFont (font (11.0f, 2, 0.2f)); g.setColour (text.withAlpha (0.8f * a));
+            g.drawText (juce::CharPointer_UTF8 ("CEPSTRUM (TONE)  \xe2\x86\x92"), juce::Rectangle<float> (r.getHeight(), 20.0f).withCentre (c), juce::Justification::centred);
         }
+        // the rails
+        const float x = owner.value (PhaseX), y = owner.value (CepstrumY);
+        auto rail = [&] (juce::Rectangle<float> b, bool horiz, float v, bool hot)
+        {
+            g.setColour (night0.withAlpha (0.9f)); g.fillRoundedRectangle (b, 5.0f);
+            g.setColour ((hot ? orange : border).withAlpha (a)); g.drawRoundedRectangle (b, 5.0f, 1.0f);
+            auto fill = horiz ? b.withWidth (b.getWidth() * v) : b.withTrimmedTop (b.getHeight() * (1.0f - v));
+            g.setColour (orange.withAlpha (0.45f * a)); g.fillRoundedRectangle (fill.reduced (2.0f), 3.0f);
+            const auto dot = horiz ? juce::Point<float> (b.getX() + v * b.getWidth(), b.getCentreY()) : juce::Point<float> (b.getCentreX(), b.getBottom() - v * b.getHeight());
+            g.setColour (juce::Colours::white.withAlpha (0.9f * a)); g.fillEllipse (juce::Rectangle<float> (9.0f, 9.0f).withCentre (dot));
+        };
+        rail (railX(), true, x, dragging == 1);
+        rail (railY(), false, y, dragging == 2);
         // the puck
-        const float px = r.getX() + (owner.value (PhaseX) * 0.5f + 0.5f) * r.getWidth();
-        const float py = r.getBottom() - (owner.value (CepstrumY) * 0.5f + 0.5f) * r.getHeight();
+        const float px = r.getX() + x * r.getWidth(), py = r.getBottom() - y * r.getHeight();
         g.setColour (hotPink.withAlpha (0.35f * a));
         g.drawLine (r.getX(), py, r.getRight(), py, 1.0f); g.drawLine (px, r.getY(), px, r.getBottom(), 1.0f);
         juce::Path puck; puck.addEllipse (juce::Rectangle<float> (22.0f, 22.0f).withCentre ({ px, py }));
         if (active) art::glow (g, puck, orange.withAlpha (0.8f), 14);
         g.setColour (orange.withAlpha (a)); g.fillPath (puck);
         g.setColour (juce::Colours::white.withAlpha (0.85f * a)); g.fillEllipse (juce::Rectangle<float> (7.0f, 7.0f).withCentre ({ px - 3.0f, py - 3.0f }));
-        // the corner it is heading for, in words
         g.setFont (font (11.0f, 1, 0.04f)); g.setColour (text.withAlpha (0.9f * a));
-        g.drawText (show (PhaseX, owner.value (PhaseX)) + " / " + show (CepstrumY, owner.value (CepstrumY)),
-                    juce::Rectangle<float> (120.0f, 16.0f).withCentre ({ juce::jlimit (r.getX() + 60.0f, r.getRight() - 60.0f, px), py + (py > r.getBottom() - 30.0f ? -24.0f : 24.0f) }), juce::Justification::centred);
+        g.drawText ("tone " + show (CepstrumY, y) + " / phase " + show (PhaseX, x),
+                    juce::Rectangle<float> (190.0f, 16.0f).withCentre ({ juce::jlimit (r.getX() + 95.0f, r.getRight() - 95.0f, px), py + (py > r.getBottom() - 30.0f ? -24.0f : 24.0f) }), juce::Justification::centred);
     }
     void set (juce::Point<float> at)
     {
         if (! active) return;
         const auto r = area();
-        owner.setValue (PhaseX, juce::jlimit (-1.0f, 1.0f, ((at.x - r.getX()) / r.getWidth()) * 2.0f - 1.0f));
-        owner.setValue (CepstrumY, juce::jlimit (-1.0f, 1.0f, ((r.getBottom() - at.y) / r.getHeight()) * 2.0f - 1.0f));
+        if (dragging != 2) owner.setValue (PhaseX, juce::jlimit (0.0f, 1.0f, (at.x - r.getX()) / r.getWidth()));
+        if (dragging != 1) owner.setValue (CepstrumY, juce::jlimit (0.0f, 1.0f, (r.getBottom() - at.y) / r.getHeight()));
     }
-    void mouseEnter (const juce::MouseEvent&) override { owner.setHover (PhaseX); }
-    void mouseExit (const juce::MouseEvent&) override { if (! isMouseButtonDown()) owner.setHover (-1); }
     bool grabbed = false;
     void grab (bool on)
     {
@@ -364,13 +374,21 @@ public:
         grabbed = on;
         for (int p : { PhaseX, CepstrumY }) { if (on) owner.ed.proc.beginSpectreGesture (p); else owner.ed.proc.endSpectreGesture (p); }
     }
-    void mouseDown (const juce::MouseEvent& e) override { owner.setHover (PhaseX); if (active) grab (true); set (e.position); }
+    void mouseEnter (const juce::MouseEvent&) override { owner.setHover (PhaseX); }
+    void mouseExit (const juce::MouseEvent&) override { if (! isMouseButtonDown()) owner.setHover (-1); }
+    void mouseDown (const juce::MouseEvent& e) override
+    {
+        owner.setHover (PhaseX);
+        dragging = railX().expanded (4.0f).contains (e.position) ? 1 : (railY().expanded (4.0f).contains (e.position) ? 2 : 0);
+        if (active) grab (true);
+        set (e.position);
+    }
     void mouseDrag (const juce::MouseEvent& e) override { set (e.position); }
-    void mouseUp (const juce::MouseEvent&) override { grab (false); }
+    void mouseUp (const juce::MouseEvent&) override { grab (false); dragging = 0; repaint(); }
     void mouseDoubleClick (const juce::MouseEvent&) override
     {
         if (! active) return;
-        grab (true); owner.setValue (PhaseX, 0.0f); owner.setValue (CepstrumY, 0.0f); grab (false);
+        grab (true); owner.setValue (PhaseX, 1.0f); owner.setValue (CepstrumY, 1.0f); grab (false);   // (back to all rebuilt)
     }
 };
 
@@ -414,10 +432,10 @@ public:
         // the name and one cycle of it
         auto mid = r.withTrimmedLeft (26.0f).withTrimmedRight (60.0f);
         auto label = mid.removeFromTop (16.0f).translated (0, 3);
-        g.setFont (font (9.5f, 1, 0.12f)); g.setColour (sub);
-        g.drawText ("WAVETABLE", label, juce::Justification::centredLeft);
+        const bool roomy = getWidth() > 250;
+        if (roomy) { g.setFont (font (9.5f, 1, 0.12f)); g.setColour (sub); g.drawText ("WAVETABLE", label, juce::Justification::centredLeft); }
         g.setFont (font (10.5f, 2, 0.08f)); g.setColour (shownName == "SINE" ? text.withAlpha (0.85f) : orange);
-        g.drawText (shownName.toUpperCase(), label, juce::Justification::centredRight);
+        g.drawFittedText (shownName.toUpperCase(), label.toNearestInt(), roomy ? juce::Justification::centredRight : juce::Justification::centred, 1, 0.7f);
         auto wr = mid.reduced (2.0f, 5.0f);
         const auto& cyc = owner.ed.proc.spectreTable();
         float peak = 1e-6f; for (float v : cyc) peak = juce::jmax (peak, std::abs (v));
@@ -465,10 +483,10 @@ SpectrePage::SpectrePage (Editor& e) : ed (e)
         c->colour = (p == Cloud || p == Smooth) ? hotPink : orange;
         addAndMakeVisible (c);
     }
-    for (int p : { Inf, Mid, Side, Partials, Noise, Transient, Output })
+    for (int p : { Inf, MidOscs, SideOscs, Locd, Noise, Transient, Rate, Division, Output })
     {
         auto* c = controls.add (new Control (*this, p, true, p == Inf));
-        c->colour = p == Inf ? green : (p == Mid || p == Side ? juce::Colour (0xffff5050) : (p == Noise || p == Transient ? cyan : orange));
+        c->colour = p == Inf ? green : (p == MidOscs || p == SideOscs ? juce::Colour (0xffff5050) : (p == Noise || p == Transient ? cyan : (p == Locd ? hotPink : orange)));
         addAndMakeVisible (c);
     }
     auto make = [this] (std::unique_ptr<Button>& b, const juce::String& label, juce::Colour c, bool solid)
@@ -479,6 +497,18 @@ SpectrePage::SpectrePage (Editor& e) : ed (e)
     make (listenBtn, "LISTEN", green, false);
     make (printBtn, "PRINT IT", orange, true);
     make (resetBtn, "RESET", purple, false);
+    // MODE (IF / PEAK / TRACK), UPDATE RATE's FREE / SNAPPED, and MID / SIDE's LINK
+    for (int i = 0; i < 3; ++i)
+    {
+        auto* b = modeBtns.add (new Button()); b->label = modeNames()[i]; b->colour = orange; addAndMakeVisible (b);
+        b->onClick = [this, i] { ed.proc.beginSpectreGesture (Mode); setValue (Mode, (float) i); ed.proc.endSpectreGesture (Mode); setHover (Mode); };
+    }
+    make (freeBtn, "FREE", orange, false);
+    make (snapBtn, "SNAPPED", orange, false);
+    make (linkBtn, "LINK", juce::Colour (0xffff5050), false);
+    freeBtn->onClick = [this] { ed.proc.beginSpectreGesture (Sync); setValue (Sync, 0.0f); ed.proc.endSpectreGesture (Sync); };
+    snapBtn->onClick = [this] { ed.proc.beginSpectreGesture (Sync); setValue (Sync, 1.0f); ed.proc.endSpectreGesture (Sync); };
+    linkBtn->onClick = [this] { ed.proc.beginSpectreGesture (Link); setValue (Link, value (Link) >= 0.5f ? 0.0f : 1.0f); ed.proc.endSpectreGesture (Link); };
     liveBtn->setVisible (Processor::isFx);
     liveBtn->onClick = [this] { pressLive(); };
     listenBtn->onClick = [this] { pressListen(); };
@@ -500,6 +530,12 @@ float SpectrePage::value (int p) const { return ed.proc.spectreParam (p); }
 void SpectrePage::setValue (int p, float v)
 {
     ed.proc.setSpectreParam (p, v);
+    if ((p == MidOscs || p == SideOscs) && value (Link) >= 0.5f)   // (LINK: the two move together)
+    {
+        const int other = p == MidOscs ? SideOscs : MidOscs;
+        ed.proc.setSpectreParam (other, v);
+        if (auto* c = controlFor (other)) c->repaint();
+    }
     if (auto* c = controlFor (p)) c->repaint();
     if (p == PhaseX || p == CepstrumY) pad->repaint();
     refreshEnabled();
@@ -518,7 +554,7 @@ static bool soundGoesThrough (const Editor& ed) { return ed.proc.spectreLiveOn()
 juce::String SpectrePage::greyReason (int p) const
 {
     if (! soundGoesThrough (ed)) return "load a sound first";
-    if (p == Side) return "your sound has no sides (mono)";
+    if (p == SideOscs) return "your sound has no sides (mono)";
     if (p == Cloud || p == Smooth || p == Transient) return "INF is holding everything";
     return {};
 }
@@ -526,7 +562,7 @@ juce::String SpectrePage::greyReason (int p) const
 bool SpectrePage::controlEnabled (int p) const
 {
     if (! soundGoesThrough (ed)) return false;
-    if (p == Side)
+    if (p == SideOscs)
     {
         // the sides: what is going through it now (a live track, or LISTEN), else the lab's sound
         if (ed.proc.spectreLiveOn() || listening()) return ed.proc.spectreShown().sideLevel.load() > 0.01f;
@@ -544,6 +580,14 @@ void SpectrePage::refreshEnabled()
         const bool on = controlEnabled (c->param);
         if (c->active != on) { c->active = on; c->setMouseCursor (on ? juce::MouseCursor::UpDownResizeCursor : juce::MouseCursor::NormalCursor); c->repaint(); }
     }
+    // UPDATE RATE: the one knob reads milliseconds (FREE) or note lengths (SNAPPED)
+    const bool snapped = value (Sync) >= 0.5f;
+    if (auto* c = controlFor (Rate)) c->setVisible (! snapped);
+    if (auto* c = controlFor (Division)) c->setVisible (snapped);
+    freeBtn->lit = ! snapped; snapBtn->lit = snapped; linkBtn->lit = value (Link) >= 0.5f;
+    const int mode = juce::roundToInt (value (Mode));
+    for (int i = 0; i < modeBtns.size(); ++i) if (modeBtns[i]->lit != (i == mode)) { modeBtns[i]->lit = i == mode; modeBtns[i]->repaint(); }
+    for (auto* b : { freeBtn.get(), snapBtn.get(), linkBtn.get() }) b->repaint();
     const bool padOn = controlEnabled (PhaseX);
     if (pad->active != padOn) { pad->active = padOn; pad->repaint(); }
     const bool has = ed.engine.hasSpecimen();
@@ -569,7 +613,9 @@ void SpectrePage::setHover (int p)
     else if (p == kWaveHover)
         captionText = "WAVETABLE: each partial plays this shape instead of a plain sine wave. Arrows: the built-in ones. Folder (or drop a WAV here): your own; a wavetable file gives its first frame.";
     else if (p == PhaseX || p == CepstrumY)
-        captionText = "PHASE (across): " + juce::String (param (PhaseX).plain) + ".   CEPSTRUM (up / down): " + param (CepstrumY).plain + ".   Double-click the pad: back to the middle.";
+        captionText = "The morph: bottom-left is your sound, top-right is all oscillators. Across: PHASE (" + juce::String (param (PhaseX).plain) + "). Up / down: CEPSTRUM, the tone (" + param (CepstrumY).plain + "). Rails move one at a time; double-click: all rebuilt.";
+    else if (p == Mode)
+        captionText = "MODE: " + juce::String (param (Mode).plain) + ".";
     else
         captionText = juce::String (param (p).name) + ": " + param (p).plain + ".   Drag up / down (hold shift for fine), double-click for the start value.";
     repaint (captionR.toNearestInt().expanded (2));
@@ -598,6 +644,7 @@ void SpectrePage::pressPrint()
     auto& st = ed.settingsFor (Op::Spectre);
     for (int i = 0; i < kParams; ++i) st.values[param (i).key] = value (i);
     st.data = tableToText (ed.proc.spectreTable());   // (the WAVETABLE goes with the step)
+    st.values["bpm"] = (float) ed.proc.songTempo();
     ed.runRoom (Op::Spectre);
     refreshEnabled();
 }
@@ -667,6 +714,7 @@ void SpectrePage::paint (juce::Graphics& g)
     g.setColour ((hoverParam >= 0 ? orange : border).withAlpha (0.6f)); g.drawRoundedRectangle (captionR, captionR.getHeight() * 0.5f, 1.0f);
     g.setColour (hoverParam >= 0 ? text : sub.brighter (0.2f)); g.setFont (font (11.5f, hoverParam >= 0 ? 1 : 0, 0.02f));
     g.drawFittedText (captionText, captionR.reduced (14.0f, 0.0f).toNearestInt(), juce::Justification::centredLeft, 1, 0.75f);
+    if (! modeLabelR.isEmpty()) { g.setFont (font (9.5f, 1, 0.12f)); g.setColour (sub); g.drawText ("MODE", modeLabelR, juce::Justification::centredLeft); }
     // the knob panel's frame
     if (! knobR.isEmpty()) { g.setColour (night0.withAlpha (0.55f)); g.fillRoundedRectangle (knobR, 12.0f); g.setColour (border); g.drawRoundedRectangle (knobR, 12.0f, 1.0f); }
 }
@@ -711,21 +759,40 @@ void SpectrePage::resized()
         ctl (Smooth)->setBounds (rightR.withTrimmedLeft (sw + gap).toNearestInt());
         auto m = mainR;
         auto strip = m.removeFromTop (juce::jlimit (48.0f, 80.0f, m.getHeight() * 0.16f));
-        wave->setBounds (strip.removeFromLeft (juce::jmin (250.0f, strip.getWidth() * 0.45f)).toNearestInt());
-        strip.removeFromLeft (10.0f);
+        wave->setBounds (strip.removeFromLeft (juce::jmin (230.0f, strip.getWidth() * 0.34f)).toNearestInt());
+        strip.removeFromLeft (8.0f);
+        {
+            auto mb = strip.removeFromLeft (juce::jmin (200.0f, strip.getWidth() * 0.45f));
+            auto lbl = mb.removeFromTop (14.0f); juce::ignoreUnused (lbl);
+            const float w = mb.getWidth() / 3.0f;
+            for (auto* b : modeBtns) b->setBounds (mb.removeFromLeft (w).reduced (1.0f, 2.0f).toNearestInt());
+            modeLabelR = lbl;
+        }
+        strip.removeFromLeft (8.0f);
         scope->setBounds (strip.toNearestInt());
         m.removeFromTop (10.0f);
         pad->setBounds (m.toNearestInt());
-        // the knobs: MID, INF (bigger, in the middle) and SIDE across the top; PARTIALS and OUTPUT under them
+        // the knobs: MID, INF (bigger) and SIDE; LOCD, NOISE, TRANSIENT; UPDATE RATE (FREE / SNAPPED) and OUTPUT
         auto k = knobR.reduced (8.0f, 8.0f);
-        auto row = k.removeFromTop (k.getHeight() * 0.58f);
-        k.removeFromTop (6.0f);
-        const float side = row.getWidth() * 0.3f;
-        ctl (Mid)->setBounds (row.removeFromLeft (side).withTrimmedTop (row.getHeight() * 0.12f).toNearestInt());
-        ctl (Side)->setBounds (row.removeFromRight (side).withTrimmedTop (row.getHeight() * 0.12f).toNearestInt());
-        ctl (Inf)->setBounds (row.toNearestInt());
-        const float q = k.getWidth() / 4.0f;
-        for (int p : { Partials, Noise, Transient, Output }) ctl (p)->setBounds (k.removeFromLeft (q).reduced (2.0f, 0.0f).toNearestInt());
+        auto row1 = k.removeFromTop (k.getHeight() * 0.42f);
+        auto linkR = row1.removeFromBottom (22.0f);
+        const float side = row1.getWidth() * 0.3f;
+        ctl (MidOscs)->setBounds (row1.removeFromLeft (side).withTrimmedTop (row1.getHeight() * 0.1f).toNearestInt());
+        ctl (SideOscs)->setBounds (row1.removeFromRight (side).withTrimmedTop (row1.getHeight() * 0.1f).toNearestInt());
+        ctl (Inf)->setBounds (row1.toNearestInt());
+        linkBtn->setBounds (linkR.withSizeKeepingCentre (70.0f, 20.0f).toNearestInt());
+        k.removeFromTop (4.0f);
+        auto row2 = k.removeFromTop (k.getHeight() * 0.5f);
+        const float q = row2.getWidth() / 3.0f;
+        for (int p : { Locd, Noise, Transient }) ctl (p)->setBounds (row2.removeFromLeft (q).reduced (2.0f, 0.0f).toNearestInt());
+        auto row3 = k;
+        auto rateR = row3.removeFromLeft (row3.getWidth() * 0.62f);
+        auto toggles = rateR.removeFromBottom (20.0f);
+        ctl (Rate)->setBounds (rateR.toNearestInt());
+        ctl (Division)->setBounds (rateR.toNearestInt());
+        freeBtn->setBounds (toggles.removeFromLeft (toggles.getWidth() * 0.45f).reduced (2.0f, 0.0f).toNearestInt());
+        snapBtn->setBounds (toggles.reduced (2.0f, 0.0f).toNearestInt());
+        ctl (Output)->setBounds (row3.reduced (4.0f, 0.0f).toNearestInt());
     }
     else
     {
@@ -734,15 +801,26 @@ void SpectrePage::resized()
         mainR = r.removeFromTop (r.getHeight() * 0.42f);
         auto m = mainR;
         auto strip = m.removeFromTop (52.0f);
-        wave->setBounds (strip.removeFromLeft (strip.getWidth() * 0.5f).toNearestInt()); strip.removeFromLeft (8.0f);
+        wave->setBounds (strip.removeFromLeft (strip.getWidth() * 0.4f).toNearestInt()); strip.removeFromLeft (6.0f);
+        { auto mb = strip.removeFromLeft (strip.getWidth() * 0.5f); modeLabelR = mb.removeFromTop (14.0f); const float w = mb.getWidth() / 3.0f; for (auto* b : modeBtns) b->setBounds (mb.removeFromLeft (w).reduced (1.0f, 2.0f).toNearestInt()); }
+        strip.removeFromLeft (6.0f);
         scope->setBounds (strip.toNearestInt()); m.removeFromTop (8.0f);
         pad->setBounds (m.toNearestInt());
         r.removeFromTop (10.0f);
         auto sl = r.removeFromTop (r.getHeight() * 0.55f);
         const float sw = sl.getWidth() / 4.0f;
         for (int p : { Shift, Transpose, Cloud, Smooth }) ctl (p)->setBounds (sl.removeFromLeft (sw).reduced (3.0f, 0.0f).toNearestInt());
-        const float kw = r.getWidth() / 7.0f;
-        for (int p : { Mid, Inf, Side, Partials, Noise, Transient, Output }) ctl (p)->setBounds (r.removeFromLeft (kw).reduced (2.0f, 0.0f).toNearestInt());
+        auto toggles = r.removeFromBottom (22.0f);
+        linkBtn->setBounds (toggles.removeFromLeft (toggles.getWidth() / 3.0f).reduced (4.0f, 0.0f).toNearestInt());
+        freeBtn->setBounds (toggles.removeFromLeft (toggles.getWidth() * 0.5f).reduced (4.0f, 0.0f).toNearestInt());
+        snapBtn->setBounds (toggles.reduced (4.0f, 0.0f).toNearestInt());
+        const float kw = r.getWidth() / 8.0f;
+        for (int p : { MidOscs, Inf, SideOscs, Locd, Noise, Transient, Rate, Output })
+        {
+            const auto b = r.removeFromLeft (kw).reduced (2.0f, 0.0f).toNearestInt();
+            ctl (p)->setBounds (b);
+            if (p == Rate) ctl (Division)->setBounds (b);
+        }
     }
 }
 }

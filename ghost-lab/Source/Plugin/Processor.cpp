@@ -97,6 +97,9 @@ void Processor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer
 {
     juce::ScopedNoDenormals noDenormals;
     const int n = buffer.getNumSamples();
+    if (auto* ph = getPlayHead())   // (the song's tempo: SPECTRE's UPDATE RATE can snap to it)
+        if (auto pos = ph->getPosition())
+            if (auto bpm = pos->getBpm()) { spectreTrack.setTempo (*bpm); spectreLoop.setTempo (*bpm); songBpm.store (*bpm); }
    #if GHOSTLAB_FX
     if (captureOn.load())
     {
