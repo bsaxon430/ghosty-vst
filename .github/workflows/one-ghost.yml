@@ -35,3 +35,12 @@ jobs:
           V=$(find build -name "GHOST.vst3" -type d -prune | head -1)
           curl -fsSL -o /tmp/pv.zip https://github.com/Tracktion/pluginval/releases/download/v1.0.4/pluginval_macOS.zip && ditto -x -k /tmp/pv.zip /tmp/pv
           /tmp/pv/pluginval.app/Contents/MacOS/pluginval --strictness-level 5 --validate-in-process --timeout-ms 600000 --output-dir /tmp/pvlog --validate "$V" 2>&1 | tail -60
+      - name: Play it on a Mac with the real plug-ins (ghost-host-test)
+        run: |
+          set -u
+          cmake --build build --config Release --parallel $(sysctl -n hw.ncpu) --target ghost-host-test > ht.log 2>&1 || { grep -a -E "error:" ht.log | head -30; exit 1; }
+          T=$(find build -name ghost-host-test -type f -perm -u+x | head -1)
+          GHOST_VST3_DIR="$HOME/Library/Audio/Plug-Ins/VST3" GHOST_REAL_SYNTHS=1 "$T" "$RUNNER_TEMP/ghost.png"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: ghost-shots, path: "${{ runner.temp }}/ghost*.png", retention-days: 7 }
