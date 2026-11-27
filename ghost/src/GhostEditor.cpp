@@ -77,8 +77,8 @@ GhostEditor::GhostEditor (GhostProcessor& p) : juce::AudioProcessorEditor (p), p
     arpBtn.setTooltip ("ArpEZator: write the song (chords, arp, melody, bass)");
     beatsBtn.onClick = [this] { showPage (PageBeats); };
     beatsBtn.setTooltip ("Ghosty Beats: QUICK page, sequencer, drum sounds");
-    graphBtn.setEnabled (false);   // (greyed: GRAPH comes in the next GHOST)
-    graphBtn.setTooltip ("GRAPH (Ghost Graph's music through your sounds) comes next");
+    graphBtn.onClick = [this] { showPage (PageGraph); };
+    graphBtn.setTooltip ("Ghost Graph: its songs and GENERATE, played through your sounds and Ghosty Beats' drums");
     playBtn.onClick = [this] { proc.togglePlay(); };
     playBtn.setTooltip ("Play / stop when FL is stopped (ArpEZator and Ghosty Beats play together). When FL plays, GHOST follows FL");
     addAndMakeVisible (master);
@@ -88,6 +88,7 @@ GhostEditor::GhostEditor (GhostProcessor& p) : juce::AudioProcessorEditor (p), p
     for (int l = 0; l < kLanes; ++l) addAndMakeVisible (laneMods.add (new LaneModule (p, *this, l)));
     addAndMakeVisible (drums);
     proc.onLanePluginClosing = [this] (int lane) { closeSynthEditor (lane); };
+    page = proc.source.load() == GhostProcessor::FromGraph ? PageGraph : PageArp;
     setSize (kW, kH);
     startTimerHz (24);
     timerCallback();
@@ -113,10 +114,15 @@ void GhostEditor::showPage (Page pg)
 {
     closeOverlays();
     page = pg;
-    if (page == PageArp) screen.show (proc.arp.get(), proc.arp ? juce::String() : (proc.arpError.isNotEmpty() ? proc.arpError : juce::String ("opening ArpEZator...")));
+    if (page == PageArp) proc.setSource (GhostProcessor::FromArpez);
+    if (page == PageGraph) proc.setSource (GhostProcessor::FromGraph);
+    if (page == PageGraph) screen.show (proc.graph.get(), proc.graph ? juce::String() : (proc.graphError.isNotEmpty() ? proc.graphError : juce::String ("opening Ghost Graph...")));
+    else if (page == PageArp) screen.show (proc.arp.get(), proc.arp ? juce::String() : (proc.arpError.isNotEmpty() ? proc.arpError : juce::String ("opening ArpEZator...")));
     else if (page == PageBeats) screen.show (proc.beats.get(), proc.beats ? juce::String() : (proc.beatsError.isNotEmpty() ? proc.beatsError : juce::String ("opening Ghosty Beats...")));
     arpBtn.setToggleState (page == PageArp, juce::dontSendNotification);
     beatsBtn.setToggleState (page == PageBeats, juce::dontSendNotification);
+    graphBtn.setToggleState (page == PageGraph, juce::dontSendNotification);
+    refreshAll();
     repaint();
 }
 
@@ -222,7 +228,8 @@ void GhostEditor::paint (juce::Graphics& g)
     const bool dawPlay = proc.dawPlaying.load(), own = proc.ownPlay.load();
     const double ppq = proc.shownPpq.load();
     const int bar = (int) std::floor (juce::jmax (0.0, ppq) / 4.0) + 1, beat = (int) std::floor (std::fmod (juce::jmax (0.0, ppq), 4.0)) + 1;
-    look::glowText (g, juce::String (proc.shownBpm.load(), 1) + " BPM", disp.reduced (10, 4).removeFromTop (20), look::mono (16.0f), juce::Justification::left);
+    look::glowText (g, juce::String (proc.shownBpm.load(), 1) + " BPM   SONG: " + (proc.source.load() == GhostProcessor::FromGraph ? "GRAPH" : "ARPEZ"),
+                    disp.reduced (10, 4).removeFromTop (20), look::mono (16.0f), juce::Justification::left);
     look::glowText (g, (dawPlay ? "FL PLAYING" : own ? "GHOST PLAYING" : "STOPPED") + juce::String ("   ") + (dawPlay || own ? juce::String (bar) + "." + juce::String (beat) : juce::String ("-.-")),
                     disp.reduced (10, 4).removeFromBottom (16), look::mono (11.0f), juce::Justification::left, look::amber.withAlpha (0.75f));
     const bool showStatus = juce::Time::getMillisecondCounter() < statusUntil && status.isNotEmpty();

@@ -55,6 +55,32 @@ int main (int argc, char** argv)
     for (int l = 0; l < kLanes; ++l) std::printf ("  %s peak %.4f (%s)\n", laneName (l), lanePeak[l], proc->lanes[(size_t) l].soundName.toRawUTF8());
     if (realMac) for (int l : { (int) LaneChords, (int) LaneArp, (int) LaneBass }) CHECK (lanePeak[l] > 0.0005f, juce::String (laneName (l)) + " is heard");
     CHECK (proc->beatsMeter.load() >= 0.0f, "drums meter");
+    // every lane of ArpEZator's idea plays (MIDNIGHT mutes its ARP in ArpEZator; GHOST plays it)
+    for (int l = 0; l < kLanes; ++l) std::printf ("  ArpEZator lane %s: %s, %d notes\n", laneName (l), proc->arpMuted[(size_t) l] ? "MUTED" : "plays", proc->arpNoteCount[(size_t) l]);
+    CHECK (proc->lanes[LaneArp].notesIn.load() > 0, "the ARP lane gets ArpEZator's notes");
+    // GRAPH: Ghost Graph's song through the lanes and Ghosty Beats' drums
+    if (proc->graph != nullptr)
+    {
+        std::printf ("  Ghosty Beats kit read: %s\n", proc->beatsKit.substring (0, 200).toRawUTF8());
+        std::printf ("  graph song: %.1f beats, drums: %s %s\n", proc->graphShown.beats, proc->graphShown.drums.toRawUTF8(), proc->graphShown.error.toRawUTF8());
+        for (int l = 0; l < kLanes; ++l) std::printf ("    %s <- %s\n", laneName (l), proc->graphShown.laneParts[(size_t) l].toRawUTF8());
+        int before[kLanes]; for (int l = 0; l < kLanes; ++l) before[l] = proc->lanes[(size_t) l].notesIn.load();
+        proc->setSource (GhostProcessor::FromGraph);
+        for (int b = 0; b < blocks; ++b)
+        {
+            midi.clear(); proc->processBlock (buf, midi);
+            for (int c = 0; c < 2; ++c) for (int i = 0; i < 512; ++i) if (! std::isfinite (buf.getSample (c, i))) finite = false;
+            if (b % 64 == 0) pump (1);
+        }
+        int graphLanes = 0;
+        for (int l = 0; l < kLanes; ++l) { const int d = proc->lanes[(size_t) l].notesIn.load() - before[l]; std::printf ("  GRAPH notes into %s: %d\n", laneName (l), d); if (d > 0) ++graphLanes; }
+        CHECK (graphLanes >= 1, "Ghost Graph's notes reach the lanes");
+        std::printf ("  GRAPH drum hits to Ghosty Beats: %d\n", proc->graphDrumHits.load());
+        CHECK (proc->graphDrumHits.load() > 0, "Ghost Graph's drums play Ghosty Beats' sounds");
+        CHECK (finite, "finite in GRAPH");
+        proc->setSource (GhostProcessor::FromArpez);
+    }
+    else std::printf ("  (no Ghost Graph: %s)\n", proc->graphError.toRawUTF8());
     // FX on a lane: Bin Shuffle in bay 1 + WARP
     auto& F = proc->lanes[0].fx;
     F.setParam (sfx::SpectralFx::pOn, 1); F.setParam (sfx::SpectralFx::pSlotType (0), 1); F.setParam (sfx::SpectralFx::pWarpOn, 1);

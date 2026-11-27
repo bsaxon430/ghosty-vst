@@ -10,6 +10,7 @@ int laneMidiChannel (int lane) { static const int c[] { 3, 1, 2, 4 }; return c[j
 
 static const char* kArpBundle = "ArpEZator.vst3";
 static const char* kBeatsBundle = "Ghosty Beats.vst3";
+static const char* kGraphBundle = "Ghost Graph.vst3";
 static constexpr int kMaxAlign = 65536;
 
 // a short diary of what GHOST opened (to find out why a part is missing): Library/Application Support/GhostBlock/GHOST/ghost.log
@@ -79,6 +80,9 @@ GhostProcessor::~GhostProcessor()
     for (auto& L : lanes) { const juce::SpinLock::ScopedLockType g (L.audioLock); L.plugin.reset(); }
     { const juce::SpinLock::ScopedLockType g (arpLock); arp.reset(); }
     { const juce::SpinLock::ScopedLockType g (beatsLock); beats.reset(); }
+    { const juce::SpinLock::ScopedLockType g (graphLock); graph.reset(); }
+    delete graphLive.exchange (nullptr);
+    retired.clear();
 }
 
 bool GhostProcessor::isBusesLayoutSupported (const BusesLayout& l) const
@@ -116,6 +120,11 @@ void GhostProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
         if (arp) { arp->releaseResources(); arp->setRateAndBufferSizeDetails (sr, maxBlock); arp->prepareToPlay (sr, maxBlock); }
     }
     {
+        const juce::SpinLock::ScopedLockType g (graphLock);
+        if (graph) { graph->releaseResources(); graph->setRateAndBufferSizeDetails (sr, maxBlock); graph->prepareToPlay (sr, maxBlock); }
+    }
+    graphDrums.ensureSize (4096);
+    {
         const juce::SpinLock::ScopedLockType g (beatsLock);
         beatsAlign.prepare (kMaxAlign);
         if (beats) { beats->releaseResources(); beats->setRateAndBufferSizeDetails (sr, maxBlock); beats->prepareToPlay (sr, maxBlock); }
@@ -132,6 +141,7 @@ void GhostProcessor::releaseResources()
     for (auto& L : lanes) { const juce::SpinLock::ScopedLockType g (L.audioLock); if (L.plugin) L.plugin->releaseResources(); }
     { const juce::SpinLock::ScopedLockType g (arpLock); if (arp) arp->releaseResources(); }
     { const juce::SpinLock::ScopedLockType g (beatsLock); if (beats) beats->releaseResources(); }
+    { const juce::SpinLock::ScopedLockType g (graphLock); if (graph) graph->releaseResources(); }
 }
 
 // ---------------------------------------------------------------- the audio
@@ -194,8 +204,17 @@ void GhostProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiB
         hostedHead.info = info;
         if (auto q = info.getPpqPosition()) shownPpq = *q;
 
-        // 1. ArpEZator writes this block's notes (its own sound is off: GHOST's lanes play them)
+        // 1. ArpEZator writes this block's notes (its own sound is off: GHOST's lanes play them) - or Ghost Graph does
         for (auto& L : lanes) L.midi.clear();
+        graphDrums.clear();
+        const int src = source.load();
+        if (src != lastSource)
+        {   // switching songs: what the other one was holding stops
+            for (auto& L : lanes) for (int ch = 1; ch <= 1; ++ch) L.midi.addEvent (juce::MidiMessage::allNotesOff (ch), 0);
+            graphFlush (0);
+            graphPrevEnd = -1.0;
+            lastSource = src;
+        }
         {
             const juce::SpinLock::ScopedTryLockType g (arpLock);
             if (g.isLocked() && arp)
@@ -206,6 +225,7 @@ void GhostProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiB
                 arp->processBlock (view, arpMidiIn);   // (a hosted plug-in hands its MIDI out back in the same buffer)
                 for (const auto m : arpMidiIn)
                 {
+                    if (src != FromArpez) break;
                     auto msg = m.getMessage();
                     const int ch = msg.getChannel();
                     for (int l = 0; l < kLanes; ++l)
@@ -213,6 +233,20 @@ void GhostProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiB
                 }
             }
         }
+        // 1b. Ghost Graph runs (its window shows the playhead); its notes go to the lanes and to Ghosty Beats' drums
+        {
+            const juce::SpinLock::ScopedTryLockType g (graphLock);
+            if (g.isLocked() && graph)
+            {
+                auto view = viewOf (arpScratch, *graph, len);
+                arpMidiIn.clear();
+                graph->setPlayHead (&hostedHead);
+                graph->processBlock (view, arpMidiIn);   // (its own sound is not heard)
+            }
+        }
+        if (src == FromGraph) graphSchedule (info, at, len, bpm);
+        else if (graphWasPlaying) { graphFlush (0); graphWasPlaying = false; graphPrevEnd = -1.0; }
+
         // 2. the DAW's keyboard plays the selected lane
         {
             const int sel = juce::jlimit (0, kLanes - 1, selectedLane.load());
@@ -270,9 +304,18 @@ void GhostProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiB
             if (g.isLocked() && beats)
             {
                 auto view = viewOf (scratch, *beats, len);
-                empty.clear();
-                beats->setPlayHead (&hostedHead);
-                beats->processBlock (view, empty);
+                if (src == FromGraph)
+                {   // GRAPH: Ghost Graph's drum hits play Ghosty Beats' sounds (its own pattern rests)
+                    beatsHead.info = info; beatsHead.info->setIsPlaying (false);
+                    beats->setPlayHead (&beatsHead);
+                    beats->processBlock (view, graphDrums);
+                }
+                else
+                {
+                    empty.clear();
+                    beats->setPlayHead (&hostedHead);
+                    beats->processBlock (view, empty);
+                }
                 auto* l0 = view.getWritePointer (0); auto* r0 = view.getWritePointer (1);
                 if (beats->getTotalNumOutputChannels() < 2) juce::FloatVectorOperations::copy (r0, l0, len);
                 const float target = pBeatsMute->load() > 0.5f ? 0.0f : juce::Decibels::decibelsToGain (pBeatsLevel->load(), -59.9f);
@@ -334,6 +377,15 @@ void GhostProcessor::openParts()
         if (p) { p->setPlayHead (&hostedHead); const juce::SpinLock::ScopedLockType g (beatsLock); beats = std::move (p); }
         else beatsError = e;
     }
+    if (! graph && graphError.isEmpty())
+    {
+        juce::String e;
+        auto p = Hosted::open (kGraphBundle, rate, blk, e);
+        if (p) { p->setPlayHead (&hostedHead); const juce::SpinLock::ScopedLockType g (graphLock); graph = std::move (p); }
+        else graphError = e;
+    }
+    drumMap.fill (-1);
+    if (beats) { juce::MemoryBlock bs; beats->getStateInformation (bs); drumMap = drumMapFromBeatsState (bs, &beatsKit); lastKitRead = juce::Time::getMillisecondCounter(); }
     for (auto& L : lanes)
         if (! L.hasEngine) { const juce::SpinLock::ScopedLockType g (L.audioLock); prepareLane (L); }
     if (restoreTree.isValid()) applyRestore();
@@ -345,7 +397,11 @@ void GhostProcessor::openParts()
     }
     realign();
     ++uiVersion;
-    diary ("opened: ArpEZator " + (arp ? juce::String ("ok") : arpError) + ", Ghosty Beats " + (beats ? juce::String ("ok") : beatsError));
+    refreshGraphSong (true);
+    pollArp();
+    diary ("opened: ArpEZator " + (arp ? juce::String ("ok") : arpError) + ", Ghosty Beats " + (beats ? juce::String ("ok") : beatsError)
+           + ", Ghost Graph " + (graph ? juce::String ("ok") : graphError));
+    diary ("  Ghosty Beats kit: " + beatsKit);
     for (int l = 0; l < kLanes; ++l)
         diary (juce::String ("  ") + laneName (l) + ": " + lanes[(size_t) l].soundName + (lanes[(size_t) l].error.isNotEmpty() ? " ERROR " + lanes[(size_t) l].error : juce::String()));
 }
@@ -500,7 +556,12 @@ void GhostProcessor::timerCallback()
     for (auto& L : lanes) if (L.plugin && L.plugin->getLatencySamples() != L.pluginLatency) changed = true;
     if (beats && beats->getLatencySamples() != beatsLatency) changed = true;
     if (changed || needRealign.exchange (false)) realign();
-    if (++tick % 20 == 0) setArpSoundOff();   // (if ArpEZator's own switches were changed in its window, GHOST puts them back)
+    ++tick;
+    if (tick % 20 == 0) setArpSoundOff();   // (if ArpEZator's own switches were changed in its window, GHOST puts them back)
+    if (tick % 10 == 5) refreshGraphSong (false);
+    if (tick % 20 == 10) pollArp();
+    const auto now = juce::Time::getMillisecondCounter();
+    retired.erase (std::remove_if (retired.begin(), retired.end(), [now] (const auto& r) { return now - r.first > 2000; }), retired.end());
 }
 
 // ---------------------------------------------------------------- the song (saved in the project)
@@ -517,6 +578,8 @@ void GhostProcessor::getStateInformation (juce::MemoryBlock& dest)
     auto blob = [] (juce::AudioPluginInstance* p) { juce::MemoryBlock mb; if (p) p->getStateInformation (mb); return mb.toBase64Encoding(); };
     t.setProperty ("arp", blob (arp.get()), nullptr);
     t.setProperty ("beats", blob (beats.get()), nullptr);
+    t.setProperty ("graph", blob (graph.get()), nullptr);
+    t.setProperty ("source", source.load(), nullptr);
     for (int l = 0; l < kLanes; ++l)
     {
         auto& L = lanes[(size_t) l];
@@ -560,6 +623,10 @@ void GhostProcessor::applyRestore()
     unblob (arp.get(), t["arp"].toString());
     setArpSoundOff();
     unblob (beats.get(), t["beats"].toString());
+    unblob (graph.get(), t["graph"].toString());
+    source = (int) t.getProperty ("source", (int) FromArpez);
+    restoredSong = true;
+    ideaKnown = false;   // (the song's own ArpEZator mutes are kept: they are read, not changed)
     for (auto c : t)
     {
         if (! c.hasType ("LANE")) continue;
@@ -581,6 +648,155 @@ void GhostProcessor::applyRestore()
     }
     realign();
     ++uiVersion;
+}
+
+// ---------------------------------------------------------------- GRAPH
+void GhostProcessor::setSource (int s) { source = juce::jlimit (0, 1, s); ++uiVersion; }
+
+void GhostProcessor::retireSong (GraphSong* s)
+{
+    if (s != nullptr) retired.push_back ({ juce::Time::getMillisecondCounter(), std::unique_ptr<GraphSong> (s) });
+}
+
+void GhostProcessor::refreshGraphSong (bool force)
+{
+    if (! graph) return;
+    const auto now = juce::Time::getMillisecondCounter();
+    if (beats && (force || (source.load() == FromGraph && now - lastKitRead > 3000)))
+    {   // Ghosty Beats' kit can change any time (its SOUNDS page): which track is the kick, the snare, the hat...
+        juce::MemoryBlock bs; beats->getStateInformation (bs);
+        juce::String kit;
+        const auto m = drumMapFromBeatsState (bs, &kit);
+        lastKitRead = now;
+        if (m != drumMap) { drumMap = m; beatsKit = kit; force = true; }
+    }
+    juce::MemoryBlock st; graph->getStateInformation (st);
+    if (! force && st == lastGraphState) return;
+    lastGraphState = st;
+    auto song = graphSongFromState (st, drumMap);
+    graphShown.beats = song->beats; graphShown.laneParts = song->laneParts; graphShown.drums = song->drums; graphShown.error = song->error;
+    retireSong (graphLive.exchange (song.release(), std::memory_order_acq_rel));
+    ++uiVersion;
+}
+
+void GhostProcessor::graphFlush (int at)
+{
+    for (int l = 0; l < kLanes; ++l)
+        for (int n = 0; n < 128; ++n)
+            if (graphActive[(size_t) l][(size_t) n]) { lanes[(size_t) l].midi.addEvent (juce::MidiMessage::noteOff (1, n), at); graphActive[(size_t) l][(size_t) n] = false; }
+}
+
+void GhostProcessor::graphSchedule (const juce::AudioPlayHead::PositionInfo& info, int /*at*/, int len, double bpm)
+{
+    auto* song = graphLive.load (std::memory_order_acquire);
+    const auto ppq = info.getPpqPosition();
+    if (! info.getIsPlaying() || ! ppq.hasValue() || song == nullptr || song->beats <= 0.0)
+    {
+        if (graphWasPlaying) graphFlush (0);
+        graphWasPlaying = false; graphPrevEnd = -1.0;
+        return;
+    }
+    const double p0 = *ppq, p1 = p0 + (double) len / sr * bpm / 60.0;
+    if (graphPrevEnd >= 0.0 && std::abs (p0 - graphPrevEnd) > 0.002) graphFlush (0);   // a jump (loop, a click on the timeline)
+    graphWasPlaying = true; graphPrevEnd = p1;
+    const double L = song->beats, span = juce::jmax (1.0e-9, p1 - p0);
+    const auto& ev = song->events;
+    for (double k = std::floor (p0 / L); k <= std::floor (p1 / L); k += 1.0)
+    {
+        const double base = k * L, lo = juce::jmax (0.0, p0 - base), hi = juce::jmin (L, p1 - base);
+        if (hi <= lo) continue;
+        auto it = std::lower_bound (ev.begin(), ev.end(), lo, [] (const GraphEvent& e, double b) { return e.beat < b; });
+        for (; it != ev.end() && it->beat < hi; ++it)
+        {
+            const int off = juce::jlimit (0, len - 1, (int) ((base + it->beat - p0) / span * len));
+            if (it->target == 4)
+            {
+                if (it->on) { graphDrums.addEvent (juce::MidiMessage::noteOn (10, it->note, (juce::uint8) juce::jlimit (1, 127, it->velocity)), off); ++graphDrumHits; }
+                continue;
+            }
+            auto& L2 = lanes[(size_t) it->target];
+            auto& act = graphActive[(size_t) it->target][(size_t) juce::jlimit (0, 127, it->note)];
+            if (it->on)
+            {
+                if (act) L2.midi.addEvent (juce::MidiMessage::noteOff (1, it->note), off);
+                L2.midi.addEvent (juce::MidiMessage::noteOn (1, it->note, (juce::uint8) juce::jlimit (1, 127, it->velocity)), off);
+                act = true; ++L2.notesIn;
+            }
+            else if (act) { L2.midi.addEvent (juce::MidiMessage::noteOff (1, it->note), off); act = false; }
+        }
+    }
+}
+
+// ---------------------------------------------------------------- ArpEZator's lanes
+bool GhostProcessor::editArpIdea (const std::function<void (juce::var&)>& edit)
+{
+    if (! arp) return false;
+    juce::MemoryBlock st; arp->getStateInformation (st);
+    const auto raw = componentStateOf (st);
+    auto xml = juce::AudioProcessor::getXmlFromBinary (raw.getData(), (int) raw.getSize());
+    if (xml == nullptr) return false;
+    auto idea = juce::JSON::parse (xml->getStringAttribute ("idea"));
+    if (! idea.isObject()) return false;
+    edit (idea);
+    xml->setAttribute ("idea", juce::JSON::toString (idea, true));
+    juce::MemoryBlock back; juce::AudioProcessor::copyXmlToBinary (*xml, back);
+    const auto host = Catalog::wrapForVst3Host (back);
+    arp->setStateInformation (host.getData(), (int) host.getSize());
+    setArpSoundOff();
+    return true;
+}
+
+void GhostProcessor::unmuteArpLane (int lane)
+{
+    editArpIdea ([lane] (juce::var& idea)
+    {
+        if (auto* la = idea["lanes"].getArray())
+            if (lane >= 0 && lane < la->size())
+                if (auto* o = la->getReference (lane).getDynamicObject()) o->setProperty ("mute", false);
+    });
+    pollArp();
+}
+
+void GhostProcessor::pollArp()
+{
+    if (! arp) return;
+    juce::MemoryBlock st; arp->getStateInformation (st);
+    const auto raw = componentStateOf (st);
+    auto xml = juce::AudioProcessor::getXmlFromBinary (raw.getData(), (int) raw.getSize());
+    if (xml == nullptr) return;
+    const auto idea = juce::JSON::parse (xml->getStringAttribute ("idea"));
+    if (! idea.isObject()) return;
+    const juce::String key = idea["mode"].toString() + "|" + idea["words"].toString() + "|" + idea["seed"].toString() + "|" + idea["prompt"].toString() + "|" + idea["seedUsed"].toString();
+    bool changed = false;
+    if (auto* la = idea["lanes"].getArray())
+        for (int l = 0; l < kLanes && l < la->size(); ++l)
+        {
+            const bool m = (bool) la->getReference (l).getProperty ("mute", false);
+            const int n = la->getReference (l)["notes"].isArray() ? la->getReference (l)["notes"].getArray()->size() : 0;
+            changed = changed || m != arpMuted[(size_t) l] || n != arpNoteCount[(size_t) l];
+            arpMuted[(size_t) l] = m; arpNoteCount[(size_t) l] = n;
+        }
+    const bool newIdea = ! ideaKnown ? ! restoredSong : key != lastIdeaKey;
+    ideaKnown = true; lastIdeaKey = key;
+    if (newIdea)
+    {   // a new idea: GHOST plays all four lanes (a mood can mute one in ArpEZator, e.g. MIDNIGHT's ARP; GHOST has its own M for that)
+        bool any = false;
+        for (int l = 0; l < kLanes; ++l) any = any || (arpMuted[(size_t) l] && arpNoteCount[(size_t) l] > 0);
+        if (any)
+        {
+            editArpIdea ([this] (juce::var& idea2)
+            {
+                if (auto* la = idea2["lanes"].getArray())
+                    for (int l = 0; l < kLanes && l < la->size(); ++l)
+                        if (arpMuted[(size_t) l] && arpNoteCount[(size_t) l] > 0)
+                            if (auto* o = la->getReference (l).getDynamicObject()) o->setProperty ("mute", false);
+            });
+            for (int l = 0; l < kLanes; ++l) if (arpNoteCount[(size_t) l] > 0) arpMuted[(size_t) l] = false;
+            diary ("ArpEZator: a new idea - every lane plays");
+            changed = true;
+        }
+    }
+    if (changed) ++uiVersion;
 }
 
 juce::AudioProcessorEditor* GhostProcessor::createEditor() { return new GhostEditor (*this); }

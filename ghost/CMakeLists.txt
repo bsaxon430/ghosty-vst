@@ -90,6 +90,7 @@ target_sources(Ghost PRIVATE
   src/Catalog.cpp
   src/HostedPlugin.cpp
   src/LanePanels.cpp
+  src/GraphSong.cpp
   ${SFX_SC_SOURCES} ${SFX_WC_SOURCES})
 target_include_directories(Ghost PRIVATE src p2 libs/clap/include libs/sst-cpputils/include)
 target_compile_definitions(Ghost PUBLIC
@@ -104,14 +105,14 @@ if(NOT GHOST_FAST_DEV)
 endif()
 
 # ---- checks (Linux / CI): the catalogue, the state blobs, the routing (no plug-ins needed)
-add_executable(ghost-tests EXCLUDE_FROM_ALL tests/GhostTests.cpp src/Catalog.cpp)
+add_executable(ghost-tests EXCLUDE_FROM_ALL tests/GhostTests.cpp src/Catalog.cpp src/GraphSong.cpp)
 target_include_directories(ghost-tests PRIVATE src)
 target_compile_definitions(ghost-tests PRIVATE JUCE_STANDALONE_APPLICATION=1 JUCE_USE_CURL=0 JUCE_WEB_BROWSER=0)
 target_link_libraries(ghost-tests PRIVATE GhostPresets juce::juce_audio_processors juce::juce_recommended_config_flags)
 
 # the whole plug-in in a test program: opens real plug-ins from GHOST_VST3_DIR, plays, counts notes per lane, draws the window
 add_executable(ghost-host-test EXCLUDE_FROM_ALL tests/HostTest.cpp src/GhostProcessor.cpp src/GhostEditor.cpp src/Catalog.cpp
-  src/HostedPlugin.cpp src/LanePanels.cpp ${SFX_SC_SOURCES} ${SFX_WC_SOURCES})
+  src/HostedPlugin.cpp src/LanePanels.cpp src/GraphSong.cpp ${SFX_SC_SOURCES} ${SFX_WC_SOURCES})
 target_include_directories(ghost-host-test PRIVATE src p2 libs/clap/include libs/sst-cpputils/include)
 target_compile_definitions(ghost-host-test PRIVATE JUCE_STANDALONE_APPLICATION=1 JUCE_MODAL_LOOPS_PERMITTED=1 JUCE_USE_CURL=0 JUCE_WEB_BROWSER=0
   JUCE_PLUGINHOST_VST3=1 GHOST_VERSION_STRING="${PROJECT_VERSION}")

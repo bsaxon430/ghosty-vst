@@ -57,7 +57,8 @@ struct LaneModule : juce::Component, juce::SettableTooltipClient
     void tickMeters();
     GhostProcessor& proc; GhostEditor& editor; int lane;
     SoundDisplay display;
-    juce::TextButton prev { "<" }, next { ">" }, dice { "NEXT GOOD" }, fxBtn { "FX" }, editBtn { "EDIT" }, keysBtn { "KEYS" }, muteBtn { "M" };
+    juce::TextButton prev { "<" }, next { ">" }, dice { "NEXT GOOD" }, fxBtn { "FX" }, editBtn { "EDIT" }, keysBtn { "KEYS" }, muteBtn { "M" }, unmuteBtn { "PLAY IT" };
+    juce::String feed; bool feedWarn = false;   // where this lane's notes come from (ArpEZator / Ghost Graph's part)
     Knob level { "LEVEL" }, tone { "TONE" }, fxMix { "FX MIX" };
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> aLevel, aTone;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> aMute;

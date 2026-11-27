@@ -9,9 +9,10 @@ GhostBlock's fast song maker: one VST3 that opens five of the owner's own plug-i
 | **FX** (per lane) | Poltergeist 2's SPECTRAL rack: 4 bays (Spectral Corruptor's 38 effects) + WARP (WarpCore). Its code is compiled into GHOST, so it works on every sound, not only Poltergeist 2's. |
 | **EDIT** (per lane) | opens the sound in its own synth's window (Vital's editor for Ghosty Pro 2, Poltergeist 2's machine, Ghost Atlas's worlds). Whatever is changed there is saved with the song. |
 | **BEATS** page | Ghosty Beats itself: QUICK page, sequencer and pattern generators, every drum sound. |
-| **GRAPH** | greyed for now: Ghost Graph's music through these sounds comes next. |
+| **GRAPH** page | Ghost Graph itself (its own window). Its song is split into parts the way its DRAG does it: Bass -> BASS, Pad / Chords -> CHORDS, Arp -> ARP, Lead -> MELODY, and its drums (kick, snare, clap, hats...) play the matching Ghosty Beats sounds. Ghost Graph's own sound isn't heard. The page you're on picks the song: ARPEZ or GRAPH. |
 
 - When FL plays, everything follows FL. When FL is stopped, GHOST's **PLAY** runs one clock that ArpEZator and Ghosty Beats both follow.
+- A new ArpEZator idea: GHOST plays all four lanes (a mood like MIDNIGHT mutes ARP inside ArpEZator; GHOST unmutes it so the ARP lane always plays - use a lane's M in GHOST to silence one). A lane muted in ArpEZator by hand stays muted and shows **PLAY IT**.
 - **KEYS** on a lane: your MIDI keyboard plays that lane (to try a sound).
 - **TONE**: left = darker, right = thinner, middle = untouched.
 - The FX can add delay (a spectral bay = its FFT size); GHOST delays the other parts by the same amount and tells FL, so everything stays in time.
@@ -24,7 +25,7 @@ GhostBlock's fast song maker: one VST3 that opens five of the owner's own plug-i
 - A sound is loaded by handing its synth the same state the synth itself saves, so a sound in GHOST is exactly the sound in the synth.
 
 ## What must be installed
-GHOST opens `ArpEZator.vst3`, `Ghosty Beats.vst3`, `Ghosty Pro 2.vst3`, `Poltergeist 2.vst3`, `Ghost Atlas.vst3` from
+GHOST opens `ArpEZator.vst3`, `Ghosty Beats.vst3`, `Ghost Graph.vst3`, `Ghosty Pro 2.vst3`, `Poltergeist 2.vst3`, `Ghost Atlas.vst3` from
 `~/Library/Audio/Plug-Ins/VST3` (or `/Library/Audio/Plug-Ins/VST3`). A missing one is shown as missing (its synth's button greyed), the rest work.
 
 ## Build

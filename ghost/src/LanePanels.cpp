@@ -11,6 +11,9 @@ LaneModule::LaneModule (GhostProcessor& p, GhostEditor& ed, int l) : proc (p), e
 {
     for (auto* c : std::initializer_list<juce::Component*> { &display, &prev, &next, &dice, &fxBtn, &editBtn, &keysBtn, &muteBtn, &level, &tone, &fxMix })
         addAndMakeVisible (c);
+    addChildComponent (unmuteBtn);
+    unmuteBtn.onClick = [this] { proc.unmuteArpLane (lane); editor.setStatus (laneName (lane) + juce::String (": playing again in ArpEZator")); refresh(); };
+    unmuteBtn.setTooltip ("ArpEZator has this lane muted (its mood does that). Click: ArpEZator plays it again");
     const juce::String n = juce::String (laneName (l)).toLowerCase();
     aLevel = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (p.apvts, n + "_level", level.s);
     aTone = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment> (p.apvts, n + "_tone", tone.s);
@@ -48,6 +51,23 @@ void LaneModule::refresh()
     display.main = L.error.isNotEmpty() ? L.error.toUpperCase() : L.soundName.isNotEmpty() ? L.soundName : juce::String ("PICK A SOUND");
     display.repaint();
     keysBtn.setToggleState (proc.selectedLane.load() == lane, juce::dontSendNotification);
+    // where the notes come from
+    if (proc.source.load() == GhostProcessor::FromGraph)
+    {
+        const auto& part = proc.graphShown.laneParts[(size_t) lane];
+        feed = proc.graph == nullptr ? juce::String ("GHOST GRAPH ISN'T OPEN") : part.isNotEmpty() ? "GRAPH: " + part.toUpperCase() : juce::String ("GRAPH: NOTHING FOR THIS LANE");
+        feedWarn = proc.graph == nullptr || part.isEmpty();
+        unmuteBtn.setVisible (false);
+    }
+    else
+    {
+        const bool muted = proc.arpMuted[(size_t) lane];
+        const bool none = proc.arp != nullptr && proc.arpNoteCount[(size_t) lane] == 0 && lane != LaneChords;
+        feed = proc.arp == nullptr ? juce::String ("ARPEZATOR ISN'T OPEN") : muted ? juce::String ("MUTED IN ARPEZ") : none ? juce::String ("ARPEZ: NO NOTES") : juce::String ("ARPEZ");
+        feedWarn = proc.arp == nullptr || muted || none;
+        unmuteBtn.setVisible (muted && proc.arp != nullptr);
+    }
+    keysBtn.setVisible (! unmuteBtn.isVisible());
     editBtn.setEnabled (L.plugin != nullptr && L.plugin->hasEditor());
     const bool fxOn = L.fx.on();
     fxBtn.setToggleState (fxOn, juce::dontSendNotification);
@@ -71,13 +91,15 @@ void LaneModule::paint (juce::Graphics& g)
     g.setColour (juce::Colours::white.withAlpha (0.5f)); g.drawRoundedRectangle (r.reduced (0.5f).translated (0, 1), 5.0f, 1.0f);
     g.setColour (juce::Colours::black.withAlpha (0.25f)); g.drawRoundedRectangle (r.reduced (0.5f), 5.0f, 1.0f);
     look::led (g, { 12.0f, 13.0f }, activity);
-    look::engraved (g, laneName (lane), { 22, 4, 90, 18 }, look::label (14.0f), juce::Justification::left);
+    look::engraved (g, laneName (lane), { 22, 4, 70, 18 }, look::label (14.0f), juce::Justification::left);
+    // where its notes come from (red when nothing comes)
+    look::engraved (g, feed, { 152, 6, getWidth() - 152 - 82, 14 }, look::label (9.0f), juce::Justification::left, feedWarn ? look::red : look::inkSoft);
     // the lane's level, as a row of small lights
     const int lights = (int) std::round (juce::jlimit (0.0f, 1.0f, std::sqrt (meter)) * 8.0f);
     for (int i = 0; i < 8; ++i)
     {
         g.setColour (i < lights ? (i >= 7 ? look::red : look::amber) : look::amberDim.withAlpha (0.4f));
-        g.fillRoundedRectangle (92.0f + i * 7.0f, 9.0f, 5.0f, 8.0f, 1.0f);
+        g.fillRoundedRectangle (88.0f + i * 7.0f, 9.0f, 5.0f, 8.0f, 1.0f);
     }
 }
 
@@ -88,6 +110,7 @@ void LaneModule::resized()
     muteBtn.setBounds (top.removeFromRight (26));
     top.removeFromRight (4);
     keysBtn.setBounds (top.removeFromRight (44));
+    unmuteBtn.setBounds (keysBtn.getBounds().withLeft (keysBtn.getX() - 14));
     r.removeFromTop (3);
     auto row = r.removeFromTop (36);
     prev.setBounds (row.removeFromLeft (22));

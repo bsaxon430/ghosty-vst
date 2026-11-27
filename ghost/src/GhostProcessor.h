@@ -11,6 +11,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
 #include "Catalog.h"
+#include "GraphSong.h"
 #include "ghostblock/spectral/spectral-fx.h"
 #include <array>
 #include <atomic>
@@ -91,6 +92,22 @@ public:
     std::vector<Sound> suitable (int lane) const;
     static std::vector<Role> rolesFor (int lane);
 
+    // ---------------------------------------------------------------- where the song comes from
+    enum Source { FromArpez = 0, FromGraph = 1 };
+    std::atomic<int> source { FromArpez };                 // the ARPEZ page plays ArpEZator's song, the GRAPH page Ghost Graph's
+    void setSource (int s);
+    std::unique_ptr<juce::AudioPluginInstance> graph;      // Ghost Graph (its own sound is not heard: its notes play the lanes)
+    juce::SpinLock graphLock;
+    juce::String graphError;
+    std::atomic<GraphSong*> graphLive { nullptr };         // the song the audio thread plays (swapped on the message thread)
+    GraphSong graphShown;                                  // a copy for the window (message thread)
+    juce::String beatsKit;                                 // what GHOST read of Ghosty Beats' kit (checks / the window)
+    // ArpEZator's lanes as ArpEZator has them: a lane its mood mutes is silent there (and so in GHOST)
+    std::array<bool, kLanes> arpMuted {};
+    std::array<int, kLanes> arpNoteCount {};
+    std::atomic<int> graphDrumHits { 0 };                  // (checks) drum hits sent to Ghosty Beats
+    void unmuteArpLane (int lane);                         // ArpEZator plays that lane again (its own MUTE, switched off)
+
     std::unique_ptr<juce::AudioPluginInstance> arp;        // ArpEZator
     std::unique_ptr<juce::AudioPluginInstance> beats;      // Ghosty Beats
     juce::SpinLock arpLock, beatsLock;
@@ -131,7 +148,7 @@ private:
     {
         juce::Optional<PositionInfo> info;
         juce::Optional<PositionInfo> getPosition() const override { return info; }
-    } hostedHead;
+    } hostedHead, beatsHead;
 
     double sr = 48000.0; int maxBlock = 512; bool prepared = false;
     double ownPpq = 0.0; bool wasOwn = false;
@@ -144,6 +161,26 @@ private:
     bool partsOpened = false;
     int tick = 0;
     std::atomic<bool> needRealign { false };
+    // GRAPH
+    void refreshGraphSong (bool force);
+    void retireSong (GraphSong* s);
+    std::vector<std::pair<juce::uint32, std::unique_ptr<GraphSong>>> retired;
+    juce::MemoryBlock lastGraphState;
+    DrumMap drumMap {};
+    juce::uint32 lastKitRead = 0;
+    double graphPrevEnd = -1.0;
+    bool graphWasPlaying = false;
+    std::array<std::array<bool, 128>, kLanes> graphActive {};
+    void graphFlush (int at);
+    void graphSchedule (const juce::AudioPlayHead::PositionInfo& info, int at, int len, double bpm);
+    juce::MidiBuffer graphDrums;
+    int lastSource = FromArpez;
+    // ArpEZator's lanes
+    void pollArp();
+    juce::String lastIdeaKey;
+    bool ideaKnown = false, restoredSong = false;
+    juce::uint32 lastArpPoll = 0;
+    bool editArpIdea (const std::function<void (juce::var& idea)>& edit);
     std::atomic<float>* pMaster = nullptr;
     std::array<std::atomic<float>*, kLanes> pLevel {}, pTone {}, pMute {};
     std::atomic<float>* pBeatsLevel = nullptr;
