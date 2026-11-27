@@ -32,13 +32,16 @@ int main()
     juce::MemoryBlock own; p->getStateInformation (own);
     auto xml = juce::AudioProcessor::getXmlFromBinary (own.getData(), (int) own.getSize());
     if (xml) { for (auto* c : xml->getChildIterator()) { juce::MemoryBlock mb; mb.fromBase64Encoding (c->getAllSubText()); std::printf ("  own state %s: %d bytes, starts: %s\n", c->getTagName().toRawUTF8(), (int) mb.getSize(), mb.toString().substring (0, 80).replaceCharacters ("\n\r", "  ").toRawUTF8()); } }
-    for (auto id : { "gp2:factory:Pad/Warm Blanket", "gp2:factory:Bass/Velvet 808" })
+    juce::StringArray ids;
+    for (auto& s : Catalog::factorySounds())
+        if (juce::String (engineBundle (s.engine)) == bundle && ids.size() < 3) ids.add (s.id);
+    for (auto id : ids)
     {
         Sound s; if (! Catalog::get().find (id, s)) continue;
         juce::MemoryBlock st; Catalog::hostState (s, st, e);
         p->setStateInformation (st.getData(), (int) st.getSize());
         juce::MessageManager::getInstance()->runDispatchLoopUntil (500);
-        std::printf ("%s, note 48: peak %.4f\n", id, play (*p, ph, 48));
+        std::printf ("%s, note 48: peak %.4f\n", id.toRawUTF8(), play (*p, ph, 48));
         juce::MemoryBlock after; p->getStateInformation (after);
         auto x2 = juce::AudioProcessor::getXmlFromBinary (after.getData(), (int) after.getSize());
         if (x2) if (auto* c = x2->getChildByName ("IComponent")) { juce::MemoryBlock mb; mb.fromBase64Encoding (c->getAllSubText()); const auto t = mb.toString(); const int k = t.indexOf ("preset_name"); std::printf ("  after: %d bytes, %s\n", (int) mb.getSize(), t.substring (k, k + 60).toRawUTF8()); }

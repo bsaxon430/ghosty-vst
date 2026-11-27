@@ -60,17 +60,14 @@ std::unique_ptr<juce::AudioPluginInstance> Hosted::open (const juce::String& bun
     juce::String err;
     auto inst = formats().createPluginInstance (*pick, rate, block, err);
     if (inst == nullptr) { error = err.isNotEmpty() ? err : "couldn't start " + bundle.getFileName(); return nullptr; }
-    // GHOST plays everything in stereo: the main output as two channels (inputs off when it can)
-    auto layout = inst->getBusesLayout();
-    for (auto& b : layout.inputBuses) b = juce::AudioChannelSet::disabled();
-    if (! layout.outputBuses.isEmpty()) layout.outputBuses.getReference (0) = juce::AudioChannelSet::stereo();
-    for (int i = 1; i < layout.outputBuses.size(); ++i) layout.outputBuses.getReference (i) = juce::AudioChannelSet::disabled();
-    if (! inst->setBusesLayout (layout))
+    // GHOST reads the main output's first two channels. A plug-in's own layout is kept as it is; only if it comes up with no
+    // output (some VST3s start with their buses off) is the main output switched on as stereo.
+    if (inst->getTotalNumOutputChannels() < 1)
     {
-        auto l2 = inst->getBusesLayout();
-        if (! l2.outputBuses.isEmpty()) l2.outputBuses.getReference (0) = juce::AudioChannelSet::stereo();
-        inst->setBusesLayout (l2);   // (if this fails too, it keeps its own layout: GHOST reads its first two outputs)
+        auto layout = inst->getBusesLayout();
+        if (! layout.outputBuses.isEmpty()) { layout.outputBuses.getReference (0) = juce::AudioChannelSet::stereo(); inst->setBusesLayout (layout); }
     }
+    if (inst->getTotalNumOutputChannels() < 1) inst->enableAllBuses();
     inst->setRateAndBufferSizeDetails (rate, block);
     inst->prepareToPlay (rate, block);
     return inst;
