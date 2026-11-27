@@ -43,8 +43,7 @@ public:
     static constexpr int kStyles = 5;
     static const char* styleName (int s)
     {
-        static const char* n[] = { "Drift (like Track 1)", "Riff house (like Track 2)", "Breaks (like Track 3)",
-                                   "Cosine song (like Track 4)", "Acid (like Track 5)" };
+        static const char* n[] = { "Drift", "Riff house", "Breaks", "Cosine song", "Acid" };
         return n[std::clamp (s, 0, kStyles - 1)];
     }
 
