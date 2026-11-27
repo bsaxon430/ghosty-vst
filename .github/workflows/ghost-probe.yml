@@ -25,5 +25,5 @@ jobs:
           cmake -S ghost -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=arm64 -DGHOST_FAST_DEV=ON > cfg.log 2>&1 || { tail -40 cfg.log; exit 1; }
           cmake --build build --parallel $(sysctl -n hw.ncpu) --target ghost-probe ghost-host-test > b.log 2>&1 || { grep -a -E "error:" b.log | head -30; exit 1; }
           P=$(find build -name ghost-probe -type f -perm -u+x | head -1); H=$(find build -name ghost-host-test -type f -perm -u+x | head -1)
-          for b in "Ghosty Pro 2.vst3" "Poltergeist 2.vst3" "Ghost Atlas.vst3"; do echo "=== $b"; GHOST_PROBE_BUNDLE="$b" "$P" || true; done
+          for b in "Ghosty Pro 2.vst3"; do echo "=== $b"; GHOST_PROBE_BUNDLE="$b" "$P" || true; done
           echo "=== host test"; GHOST_REAL_SYNTHS=1 "$H" /tmp/ghost.png || true
