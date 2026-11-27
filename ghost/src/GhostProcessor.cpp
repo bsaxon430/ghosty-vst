@@ -45,11 +45,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout GhostProcessor::layout()
     for (int i = 0; i < kLanes; ++i)
     {
         const String n = String (laneName (i)).toLowerCase(), N = String (laneName (i)).substring (0, 1) + String (laneName (i)).substring (1).toLowerCase();
-        l.add (std::make_unique<AudioParameterFloat> (ParameterID { n + "_level", 1 }, N + " Level", NormalisableRange<float> (-60.0f, 6.0f, 0.1f, 2.5f), -6.0f, AudioParameterFloatAttributes().withLabel ("dB")));
+        l.add (std::make_unique<AudioParameterFloat> (ParameterID { n + "_level", 1 }, N + " Level", NormalisableRange<float> (-60.0f, 6.0f, 0.1f, 2.5f), -8.0f, AudioParameterFloatAttributes().withLabel ("dB")));
         l.add (std::make_unique<AudioParameterFloat> (ParameterID { n + "_tone", 1 }, N + " Tone", NormalisableRange<float> (-1.0f, 1.0f, 0.001f), 0.0f));
         l.add (std::make_unique<AudioParameterBool> (ParameterID { n + "_mute", 1 }, N + " Mute", false));
     }
-    l.add (std::make_unique<AudioParameterFloat> (ParameterID { "beats_level", 1 }, "Beats Level", NormalisableRange<float> (-60.0f, 6.0f, 0.1f, 2.5f), -3.0f, AudioParameterFloatAttributes().withLabel ("dB")));
+    l.add (std::make_unique<AudioParameterFloat> (ParameterID { "beats_level", 1 }, "Beats Level", NormalisableRange<float> (-60.0f, 6.0f, 0.1f, 2.5f), -4.0f, AudioParameterFloatAttributes().withLabel ("dB")));
     l.add (std::make_unique<AudioParameterBool> (ParameterID { "beats_mute", 1 }, "Beats Mute", false));
     return l;
 }
