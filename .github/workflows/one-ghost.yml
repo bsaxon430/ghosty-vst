@@ -23,3 +23,15 @@ jobs:
           ditto -c -k --keepParent "$V" GHOST-mac-universal.zip
           gh release delete test-ghost --repo "${{ github.repository }}" --yes --cleanup-tag 2>/dev/null || true
           gh release create test-ghost GHOST-mac-universal.zip --repo "${{ github.repository }}" --prerelease --title "GHOST test build" --notes "GHOST (universal Mac VST3). Install: curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/builds/install-ghost.sh | bash"
+      - name: Check it on a Mac with every GhostBlock plug-in installed (pluginval)
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: |
+          set -u
+          mkdir -p ~/Library/Audio/Plug-Ins/VST3
+          gh release download --repo "${{ github.repository }}" --pattern "GhostBlock-All-Plugins-mac-universal.zip" --dir /tmp/all || true
+          [ -f /tmp/all/GhostBlock-All-Plugins-mac-universal.zip ] && ditto -x -k /tmp/all/GhostBlock-All-Plugins-mac-universal.zip /tmp/all/x && find /tmp/all/x -maxdepth 3 -name "*.vst3" -type d -prune -exec ditto {} ~/Library/Audio/Plug-Ins/VST3/ \; 2>/dev/null || true
+          for v in /tmp/all/x/*/*.vst3 /tmp/all/x/*.vst3; do [ -d "$v" ] && ditto "$v" ~/Library/Audio/Plug-Ins/VST3/"$(basename "$v")"; done
+          ls ~/Library/Audio/Plug-Ins/VST3
+          V=$(find build -name "GHOST.vst3" -type d -prune | head -1)
+          curl -fsSL -o /tmp/pv.zip https://github.com/Tracktion/pluginval/releases/download/v1.0.4/pluginval_macOS.zip && ditto -x -k /tmp/pv.zip /tmp/pv
+          /tmp/pv/pluginval.app/Contents/MacOS/pluginval --strictness-level 5 --validate-in-process --timeout-ms 600000 --output-dir /tmp/pvlog --validate "$V" 2>&1 | tail -60
