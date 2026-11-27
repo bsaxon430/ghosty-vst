@@ -1369,10 +1369,10 @@ public:
         helpBtn.setClickingTogglesState (true);
         helpBtn.onClick = [this] { resized(); repaint(); };
         addAndMakeVisible (helpBtn);
-        lookBtn.setTooltip ("Change the look: PAPER (the videos), CHROMA (rainbow watercolour), INK (the watercolour ghost), WINE (the burgundy video), TI 84 (a graphing calculator), SILVER (the zeta video)");
+        lookBtn.setTooltip ("Change the look: PAPER (amber on dark paper), CHROMA (rainbow watercolour), INK (the watercolour ghost), WINE (burgundy paper), TI 84 (a graphing calculator), SILVER (grey paper, a blue dot)");
         lookBtn.onClick = [this] { cycle ("look", 6); };
         tracksBtn.setButtonText ("TRACKS");
-        tracksBtn.setTooltip ("Load one of the reference videos: every scene, at its own tempo");
+        tracksBtn.setTooltip ("Load one of the tracks: every scene, at its own tempo");
         tracksBtn.onClick = [this] { showTracks(); };
         addAndMakeVisible (tracksBtn);
         expBtn.setButtonText ("EXPERIMENT");
@@ -1384,7 +1384,7 @@ public:
         };
         addAndMakeVisible (expBtn);
         genBtn.setButtonText ("GENERATE");
-        genBtn.setTooltip ("Write a brand-new song in equations, the way the videos are written (right-click: pick the style)");
+        genBtn.setTooltip ("Write a brand-new song in equations (right-click: pick the style)");
         genBtn.onClick = [this]
         {
             if (juce::ModifierKeys::currentModifiers.isPopupMenu()) { showGenerateStyles(); return; }
@@ -1417,7 +1417,7 @@ public:
         toggle (syncBtn,  "SYNC",  "sync",  "Follow the DAW: plays when the DAW plays, x follows the song position");
         toggle (chainBtn, "CHAIN", "chain", "Play through every scene, one per 16 beats (off: loop the chosen scene)");
         toggle (keysBtn,  "KEYS",  "keys",  "Sound only while you hold a key; the key transposes (A3 = as written)");
-        toggle (kitBtn,   "KIT",   "kit",   "Voices named hats, snare, clap or rim sound like drums, as in the videos (off: every voice is a tone)");
+        toggle (kitBtn,   "KIT",   "kit",   "Voices named hats, snare, clap or rim sound like drums (off: every voice is a tone)");
 
         rateBtn.onClick = [this] { cycle ("rate", 3); };
         rateBtn.setTooltip ("How fast x moves: 1/2x, 1x (one unit per beat), 2x");

@@ -996,7 +996,7 @@ int main (int argc, char** argv)
         // hover tips, drawn in each look over that look's page
         {
             juce::Image tips (juce::Image::ARGB, 1500, 6 * 150, true);
-            const juce::String tip = "Change the look: PAPER (the videos), CHROMA (rainbow watercolour), INK (the watercolour ghost), WINE (the burgundy video), TI 84 (a graphing calculator), SILVER (the zeta video)";
+            const juce::String tip = "Change the look: PAPER (amber on dark paper), CHROMA (rainbow watercolour), INK (the watercolour ghost), WINE (burgundy paper), TI 84 (a graphing calculator), SILVER (grey paper, a blue dot)";
             for (int lk = 0; lk < 6; ++lk)
             {
                 setParam (*p, "look", (float) lk);
