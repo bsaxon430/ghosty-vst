@@ -33,6 +33,7 @@ jobs:
           - { key: ghostbass,   ref: src/ghostbass,   src: ".", flags: "-DSURGE_BUILD_CLAP=OFF -DSURGE_SKIP_LUA=FALSE", targets: "surge-xt_VST3", names: "Ghost Bass.vst3", subs: recursive }
           - { key: poltergeist2, ref: src/poltergeist2, src: ".", flags: "-DCOPY_AFTER_BUILD=FALSE -DBUILD_SINGLE_ONLY=TRUE", targets: "six-sines_vst3", names: "Poltergeist 2.vst3", subs: recursive }
           - { key: seance,      ref: src/seance,      src: ".", flags: "-DCOPY_AFTER_BUILD=FALSE -DBUILD_SINGLE_ONLY=TRUE BEASTOBJ", targets: "six-sines_vst3", names: "Seance.vst3", subs: recursive, prep: seance }
+          - { key: ghost,       ref: src/ghost,       src: ghost, flags: "", targets: "Ghost_VST3", names: "GHOST.vst3" }
           - { key: ghosty,      ref: main,            src: ".", flags: "", targets: "GhostySynth_VST3", names: "Ghosty.vst3" }
     name: "${{ matrix.key }}"
     steps:
