@@ -26,6 +26,21 @@ int main()
     juce::String e; auto p = Hosted::open (bundle, 48000, 512, e);
     if (! p) { std::printf ("can't open %s: %s\n", bundle.toRawUTF8(), e.toRawUTF8()); return 1; }
     std::printf ("%s: in %d out %d, buses out %d, latency %d\n", p->getName().toRawUTF8(), p->getTotalNumInputChannels(), p->getTotalNumOutputChannels(), p->getBusCount (false), p->getLatencySamples());
+    if (auto* bus = p->getBus (false, 0))
+        std::printf ("  out bus 0 '%s': enabled %d, current %s, default %s, main %d\n", bus->getName().toRawUTF8(), (int) bus->isEnabled(),
+                     bus->getCurrentLayout().getDescription().toRawUTF8(), bus->getDefaultLayout().getDescription().toRawUTF8(), (int) bus->isMain());
+    std::printf ("  in buses %d\n", p->getBusCount (true));
+    if (p->getTotalNumOutputChannels() < 1)
+    {
+        p->releaseResources();
+        auto* bus = p->getBus (false, 0);
+        std::printf ("  try enable: %d -> out %d\n", bus ? (int) bus->enable (true) : -1, p->getTotalNumOutputChannels());
+        std::printf ("  try stereo: %d -> out %d\n", bus ? (int) bus->setCurrentLayout (juce::AudioChannelSet::stereo()) : -1, p->getTotalNumOutputChannels());
+        auto l = p->getBusesLayout(); for (auto& b : l.inputBuses) b = juce::AudioChannelSet::stereo(); if (! l.outputBuses.isEmpty()) l.outputBuses.getReference (0) = juce::AudioChannelSet::stereo();
+        std::printf ("  try all stereo: %d -> in %d out %d\n", (int) p->setBusesLayout (l), p->getTotalNumInputChannels(), p->getTotalNumOutputChannels());
+        p->setRateAndBufferSizeDetails (48000, 512); p->prepareToPlay (48000, 512);
+        std::printf ("  after prepare: in %d out %d\n", p->getTotalNumInputChannels(), p->getTotalNumOutputChannels());
+    }
     PH ph; p->setPlayHead (&ph);
     juce::MessageManager::getInstance()->runDispatchLoopUntil (500);
     std::printf ("default sound, note 60: peak %.4f\n", play (*p, ph, 60));
