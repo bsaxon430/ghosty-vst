@@ -21,13 +21,28 @@ int main (int argc, char** argv)
     CHECK (proc->beats != nullptr, "Ghosty Beats opened (" + proc->beatsError + ")");
     for (int l = 0; l < kLanes; ++l) std::printf ("  lane %s: %s / %s %s\n", laneName (l), proc->lanes[(size_t) l].soundName.toRawUTF8(),
                                                    proc->lanes[(size_t) l].hasEngine ? engineName (proc->lanes[(size_t) l].engine) : "-", proc->lanes[(size_t) l].error.toRawUTF8());
+    // one lane on each other synth (when they are installed): Poltergeist 2 on ARP, Ghost Atlas on MELODY
+    const bool realMac = juce::SystemStats::getEnvironmentVariable ("GHOST_REAL_SYNTHS", {}).isNotEmpty();
+    if (realMac)
+    {
+        juce::String e;
+        CHECK (proc->loadSound (LaneArp, "p2:factory:Bells/Alien Gamelan", e), "Poltergeist 2 sound on ARP (" + e + ")");
+        Sound at; for (auto& s : Catalog::factorySounds()) if (s.engine == Engine::Atlas) { at = s; break; }
+        CHECK (proc->loadSound (LaneMelody, at, e), "Ghost Atlas sound on MELODY: " + at.name + " (" + e + ")");
+        CHECK (proc->lanes[LaneChords].plugin != nullptr && proc->lanes[LaneChords].engine == Engine::GhostyPro2, "Ghosty Pro 2 on CHORDS");
+        // every lane gets a note from 'the keyboard' too, so each synth is heard even if ArpEZator's idea leaves a lane empty
+    }
     proc->ownPlay = true;
     juce::AudioBuffer<float> buf (2, 512); juce::MidiBuffer midi;
-    double peak = 0; bool finite = true;
+    double peak = 0; bool finite = true; float lanePeak[kLanes] {};
     const int blocks = (int) (48000.0 * 60.0 / 120.0 * 4 * 16 / 512);   // 16 bars at 120
     for (int b = 0; b < blocks; ++b)
     {
-        midi.clear(); proc->processBlock (buf, midi);
+        midi.clear();
+        if (realMac && b % 200 == 10) { proc->selectedLane = (b / 200) % kLanes; midi.addEvent (juce::MidiMessage::noteOn (1, 60, (juce::uint8) 100), 0); }
+        if (realMac && b % 200 == 150) midi.addEvent (juce::MidiMessage::noteOff (1, 60), 0);
+        proc->processBlock (buf, midi);
+        for (int l = 0; l < kLanes; ++l) lanePeak[l] = juce::jmax (lanePeak[l], proc->lanes[(size_t) l].meter.load());
         for (int c = 0; c < 2; ++c) for (int i = 0; i < 512; ++i) { const float v = buf.getSample (c, i); if (! std::isfinite (v)) finite = false; peak = juce::jmax (peak, (double) std::abs (v)); }
         if (b % 64 == 0) pump (1);
     }
@@ -37,6 +52,9 @@ int main (int argc, char** argv)
     CHECK (finite, "the output is finite");
     std::printf ("  peak %.3f\n", peak);
     CHECK (peak > 0.001, "something is heard (drums / lanes)");
+    for (int l = 0; l < kLanes; ++l) std::printf ("  %s peak %.4f (%s)\n", laneName (l), lanePeak[l], proc->lanes[(size_t) l].soundName.toRawUTF8());
+    if (realMac) for (int l : { (int) LaneChords, (int) LaneArp, (int) LaneBass }) CHECK (lanePeak[l] > 0.0005f, juce::String (laneName (l)) + " is heard");
+    CHECK (proc->beatsMeter.load() >= 0.0f, "drums meter");
     // FX on a lane: Bin Shuffle in bay 1 + WARP
     auto& F = proc->lanes[0].fx;
     F.setParam (sfx::SpectralFx::pOn, 1); F.setParam (sfx::SpectralFx::pSlotType (0), 1); F.setParam (sfx::SpectralFx::pWarpOn, 1);

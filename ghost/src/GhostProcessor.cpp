@@ -10,7 +10,16 @@ int laneMidiChannel (int lane) { static const int c[] { 3, 1, 2, 4 }; return c[j
 
 static const char* kArpBundle = "ArpEZator.vst3";
 static const char* kBeatsBundle = "Ghosty Beats.vst3";
-static constexpr int kMaxAlign = 65536;   // the most delay GHOST lines up (FX 16384 + a synth's own)
+static constexpr int kMaxAlign = 65536;
+
+// a short diary of what GHOST opened (to find out why a part is missing): Library/Application Support/GhostBlock/GHOST/ghost.log
+static void diary (const juce::String& line)
+{
+    const auto f = juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory).getChildFile ("GhostBlock/GHOST/ghost.log");
+    f.getParentDirectory().createDirectory();
+    if (f.getSize() > 512 * 1024) f.deleteFile();
+    f.appendText (juce::Time::getCurrentTime().toString (true, true, true, true) + "  " + line + "\n");
+}   // the most delay GHOST lines up (FX 16384 + a synth's own)
 
 void AlignDelay::process (float* L, float* R, int n) noexcept
 {
@@ -336,6 +345,9 @@ void GhostProcessor::openParts()
     }
     realign();
     ++uiVersion;
+    diary ("opened: ArpEZator " + (arp ? juce::String ("ok") : arpError) + ", Ghosty Beats " + (beats ? juce::String ("ok") : beatsError));
+    for (int l = 0; l < kLanes; ++l)
+        diary (juce::String ("  ") + laneName (l) + ": " + lanes[(size_t) l].soundName + (lanes[(size_t) l].error.isNotEmpty() ? " ERROR " + lanes[(size_t) l].error : juce::String()));
 }
 
 bool GhostProcessor::openLanePlugin (int lane, Engine e, juce::String& error)
@@ -371,8 +383,8 @@ bool GhostProcessor::loadSound (int lane, const Sound& s, juce::String& error)
     lane = juce::jlimit (0, kLanes - 1, lane);
     auto& L = lanes[(size_t) lane];
     juce::MemoryBlock state;
-    if (! Catalog::hostState (s, state, error)) { L.error = error; ++uiVersion; return false; }
-    if (! openLanePlugin (lane, s.engine, error)) { L.error = error; ++uiVersion; return false; }
+    if (! Catalog::hostState (s, state, error)) { L.error = error; ++uiVersion; diary (juce::String (laneName (lane)) + ": " + s.id + " " + error); return false; }
+    if (! openLanePlugin (lane, s.engine, error)) { L.error = error; ++uiVersion; diary (juce::String (laneName (lane)) + ": " + s.id + " " + error); return false; }
     L.plugin->setStateInformation (state.getData(), (int) state.getSize());
     L.soundId = s.id; L.soundName = s.name; L.soundCategory = s.category; L.edited = false; L.error = {};
     realign();
