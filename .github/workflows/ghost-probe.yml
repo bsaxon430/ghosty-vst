@@ -1,0 +1,29 @@
+# GHOST checks on a Mac with every GhostBlock plug-in installed (quick: one CPU type, no plug-in bundle)
+name: GHOST probe
+on:
+  push:
+    branches: [ builds ]
+    paths: [ GHOSTPROBE ]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: src/ghost }
+      - name: Probe
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: |
+          set -u
+          mkdir -p ~/Library/Audio/Plug-Ins/VST3
+          gh release download --repo "${{ github.repository }}" --pattern "GhostBlock-All-Plugins-mac-universal.zip" --dir /tmp/all
+          ditto -x -k /tmp/all/GhostBlock-All-Plugins-mac-universal.zip /tmp/all/x
+          find /tmp/all/x -name "*.vst3" -type d -prune | while read -r v; do ditto "$v" ~/Library/Audio/Plug-Ins/VST3/"$(basename "$v")"; done
+          cmake -S ghost -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES=arm64 -DGHOST_FAST_DEV=ON > cfg.log 2>&1 || { tail -40 cfg.log; exit 1; }
+          cmake --build build --parallel $(sysctl -n hw.ncpu) --target ghost-probe ghost-host-test > b.log 2>&1 || { grep -a -E "error:" b.log | head -30; exit 1; }
+          P=$(find build -name ghost-probe -type f -perm -u+x | head -1); H=$(find build -name ghost-host-test -type f -perm -u+x | head -1)
+          for b in "Ghosty Pro 2.vst3" "Poltergeist 2.vst3" "Ghost Atlas.vst3"; do echo "=== $b"; GHOST_PROBE_BUNDLE="$b" "$P" || true; done
+          echo "=== host test"; GHOST_REAL_SYNTHS=1 "$H" /tmp/ghost.png || true
