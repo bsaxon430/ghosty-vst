@@ -18,9 +18,11 @@ jobs:
         env: { GH_TOKEN: "${{ github.token }}" }
         run: |
           cmake -S ghost -B build -DCMAKE_BUILD_TYPE=Release "-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 > cfg.log 2>&1 || { tail -60 cfg.log; exit 1; }
-          cmake --build build --config Release --parallel $(sysctl -n hw.ncpu) --target Ghost_VST3 > b.log 2>&1 || { grep -a -E "error:|ld: " b.log | head -40; tail -30 b.log; exit 1; }
-          V=$(find build -name "GHOST.vst3" -type d -prune | head -1); codesign --force --deep --sign - "$V"; lipo -archs "$V/Contents/MacOS/"*
-          ditto -c -k --keepParent "$V" GHOST-mac-universal.zip
+          cmake --build build --config Release --parallel $(sysctl -n hw.ncpu) --target Ghost_VST3 GhostFX_VST3 > b.log 2>&1 || { grep -a -E "error:|ld: " b.log | head -40; tail -30 b.log; exit 1; }
+          V=$(find build -name "GHOST.vst3" -type d -prune | head -1); F=$(find build -name "GHOST FX.vst3" -type d -prune | head -1)
+          codesign --force --deep --sign - "$V"; codesign --force --deep --sign - "$F"; lipo -archs "$V/Contents/MacOS/"*; lipo -archs "$F/Contents/MacOS/"*
+          mkdir -p pkg && ditto "$V" "pkg/GHOST.vst3" && ditto "$F" "pkg/GHOST FX.vst3"
+          (cd pkg && ditto -c -k --sequesterRsrc . ../GHOST-mac-universal.zip)
           gh release delete test-ghost --repo "${{ github.repository }}" --yes --cleanup-tag 2>/dev/null || true
           gh release create test-ghost GHOST-mac-universal.zip --repo "${{ github.repository }}" --prerelease --title "GHOST test build" --notes "GHOST (universal Mac VST3). Install: curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/builds/install-ghost.sh | bash"
       - name: Check it on a Mac with every GhostBlock plug-in installed (pluginval)

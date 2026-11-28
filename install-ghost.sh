@@ -10,9 +10,12 @@ echo "Downloading GHOST..."
 curl -fL --progress-bar "$URL" -o "$TMP/g.zip"
 ditto -x -k "$TMP/g.zip" "$TMP/x"
 mkdir -p "$DEST"
-if [ -e "$DEST/GHOST.vst3" ]; then OLD="$HOME/Library/Audio/Plug-Ins/VST3-replaced-$(date +%Y%m%d-%H%M%S)"; mkdir -p "$OLD"; mv "$DEST/GHOST.vst3" "$OLD/"; echo "older GHOST moved to $OLD"; fi
-ditto "$TMP/x/GHOST.vst3" "$DEST/GHOST.vst3"
-xattr -dr com.apple.quarantine "$DEST/GHOST.vst3" 2>/dev/null || true
-chmod 755 "$DEST/GHOST.vst3/Contents/MacOS/"* 2>/dev/null || true
+for P in "GHOST.vst3" "GHOST FX.vst3"; do
+  [ -d "$TMP/x/$P" ] || continue
+  if [ -e "$DEST/$P" ]; then OLD="$HOME/Library/Audio/Plug-Ins/VST3-replaced-$(date +%Y%m%d-%H%M%S)"; mkdir -p "$OLD"; mv "$DEST/$P" "$OLD/"; echo "older $P moved to $OLD"; fi
+  ditto "$TMP/x/$P" "$DEST/$P"
+  xattr -dr com.apple.quarantine "$DEST/$P" 2>/dev/null || true
+  chmod 755 "$DEST/$P/Contents/MacOS/"* 2>/dev/null || true
+done
 echo "Done: GHOST is in $DEST"
 echo "FL Studio: Options > Manage plugins > Find more plugins, then GHOST is under GhostBlock."
