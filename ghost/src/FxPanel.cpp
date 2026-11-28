@@ -10,14 +10,14 @@ FxPanel::FxPanel (sfx::SpectralFx& r, const juce::String& t, std::function<void(
     onBtn.onClick = [this] { set (sfx::SpectralFx::pOn, fx().on() ? 0.0 : 1.0); sync(); };
     onBtn.setTooltip ("The whole FX rack on / off (off = the sound exactly as it comes in)");
     warpOn.onClick = [this] { set (sfx::SpectralFx::pWarpOn, fx().warpOn() ? 0.0 : 1.0); sync(); };
-    warpOn.setTooltip ("WARP: WarpCore's spectral inversion");
+    warpOn.setTooltip ("WARP: spectral inversion (folds the sound's spectrum)");
     order.onClick = [this] { set (sfx::SpectralFx::pOrder, fx().order() == 0 ? 1.0 : 0.0); sync(); };
     order.setTooltip ("Which comes first: the 4 bays or WARP");
     fftBtn.onClick = [this]
     {
         juce::PopupMenu m;
         for (int i = 0; i < sfx::kFftSizes; ++i) m.addItem (i + 1, "FFT " + juce::String (sfx::fftSizeAt (i)) + (i == sfx::kDefaultFft ? "  (normal)" : ""), true, fx().fftIndex() == i);
-        m.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (fftBtn), [this] (int r) { if (r > 0) { set (sfx::SpectralFx::pFft, r - 1); sync(); } });
+        m.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (&fftBtn), [this] (int r) { if (r > 0) { set (sfx::SpectralFx::pFft, r - 1); sync(); } });
     };
     fftBtn.setTooltip ("The window the spectral bays work on: bigger = smoother and later, smaller = grittier and quicker");
     mix.s.setRange (0.0, 100.0, 0.1); mix.text = [] (double v) { return juce::String ((int) std::lround (v)) + " %"; };
@@ -29,7 +29,7 @@ FxPanel::FxPanel (sfx::SpectralFx& r, const juce::String& t, std::function<void(
         auto& B = bays[(size_t) b];
         addAndMakeVisible (B.effect); addAndMakeVisible (B.on); addAndMakeVisible (B.mix);
         B.effect.onClick = [this, b] { pickEffect (b); };
-        B.effect.setTooltip ("Pick this bay's effect (Spectral Corruptor's 38, in its eight folders)");
+        B.effect.setTooltip ("Pick this bay's effect (38 spectral effects in eight folders)");
         B.on.onClick = [this, b] { set (sfx::SpectralFx::pSlotOn (b), fx().slotOn (b) ? 0.0 : 1.0); sync(); };
         B.mix.s.setRange (0.0, 100.0, 0.1); B.mix.text = mix.text;
         B.mix.s.onValueChange = [this, b] { if (! syncing) turn (sfx::SpectralFx::pSlotMix (b), bays[(size_t) b].mix.s.getValue()); };
@@ -62,7 +62,7 @@ void FxPanel::pickEffect (int bay)
         for (auto& t : types) if (t.index > 0 && t.category == cat) sub.addItem (t.index + 1, t.name, true, fx().slotType (bay) == t.index);
         m.addSubMenu (juce::String (cat), sub);
     }
-    m.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (bays[(size_t) bay].effect), [this, bay] (int r)
+    m.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (&bays[(size_t) bay].effect), [this, bay] (int r)
     {
         if (r <= 0) return;
         const int type = r == 1000 ? 0 : r - 1;

@@ -482,7 +482,11 @@ bool Exporter::start()
                 if (L.engine == Engine::GhostyPro2)
                 {
                     auto text = raw.toString(); if (text.endsWithChar (0)) text = text.dropLastCharacters (1);
-                    part.sound = base.withFileExtension ("vital"); part.sound.replaceWithText (text.trimEnd());
+                    text = text.trimEnd();
+                    // Ghosty Pro 2 (2.0.22 on) has the same FX rack on its SPECTRAL tab: the lane's FX ride inside the preset
+                    if (L.fx.on() && text.startsWithChar ('{'))
+                        text = "{\"ghost_spectral\":" + juce::JSON::toString (juce::var (juce::String (L.fx.toState())), true) + (text.substring (1).trimStart().startsWithChar ('}') ? "" : ",") + text.substring (1);
+                    part.sound = base.withFileExtension ("vital"); part.sound.replaceWithText (text);
                 }
                 else if (L.engine == Engine::Poltergeist2)
                 {
@@ -495,7 +499,7 @@ bool Exporter::start()
                     const auto preset = j.getProperty ("preset", {});
                     part.sound = base.withFileExtension ("atlas"); part.sound.replaceWithText (juce::JSON::toString (preset.isObject() ? preset : j, false));
                 }
-                if (L.fx.on())
+                if (L.fx.on() && L.engine != Engine::GhostyPro2)
                     folder.getChildFile ("Sounds").getChildFile (safeName (juce::String (laneName (l)) + " FX")).withFileExtension ("ghostfx").replaceWithText (juce::String (L.fx.toState()));
             }
             parts.push_back (part);
@@ -536,7 +540,8 @@ bool Exporter::start()
             "1. Drag MIDI/GHOST song (all parts).mid onto FL's Channel Rack: FL makes a channel per part with its notes.\n"
             "2. A synth part: click its channel, swap it for the synth (Ghosty Pro 2 / Poltergeist 2 / Ghost Atlas) and open\n"
             "   its sound from Sounds/ (.vital in Ghosty Pro 2, .sxsnp in Poltergeist 2, .atlas in Ghost Atlas).\n"
-            "   Its FX: put GHOST FX on that channel's mixer track and open the lane's .ghostfx from Sounds/.\n"
+            "   Its FX: a Ghosty Pro 2 sound carries them (its SPECTRAL tab). For the others, put GHOST FX on that\n"
+            "   channel's mixer track and open the lane's .ghostfx from Sounds/.\n"
             "3. A drum part: drag its .wav from Sounds/ onto its channel (C5 = the sound as it is).\n"
             "4. Or use Stems/: every part exactly as heard (sound, TONE, FX, level), and GHOST mix.wav.\n"
             "Tempo: " + juce::String (bpm, 1) + " BPM, " + juce::String ((int) (beats / 4.0)) + " bars.\n");

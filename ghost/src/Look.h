@@ -9,28 +9,37 @@ namespace ghost::look
 inline const juce::Colour amber { 0xffff9a2e }, amberDim { 0xff6a3a10 }, ink { 0xff24211c }, inkSoft { 0xff5a544a },
     plateTop { 0xffdcd9d2 }, plateBot { 0xffb3aea4 }, screenBg { 0xff120d08 }, red { 0xffd8341c }, green { 0xff7cff6a };
 
+// fonts (JUCE 8 and JUCE 6: this file is shared with Ghosty Pro 2, which runs on JUCE 6)
+inline juce::Font font (const juce::String& name, float h, int style)
+{
+#if JUCE_MAJOR_VERSION >= 8
+    return name.isEmpty() ? juce::Font (juce::FontOptions (h, style)) : juce::Font (juce::FontOptions (name, h, style));
+#else
+    return name.isEmpty() ? juce::Font (h, style) : juce::Font (name, h, style);
+#endif
+}
 inline juce::Font label (float h = 11.0f)
 {
 #if JUCE_MAC
-    return juce::Font (juce::FontOptions ("Avenir Next Condensed", h, juce::Font::bold)).withExtraKerningFactor (0.08f);
+    return font ("Avenir Next Condensed", h, juce::Font::bold).withExtraKerningFactor (0.08f);
 #else
-    return juce::Font (juce::FontOptions (h, juce::Font::bold)).withExtraKerningFactor (0.08f);
+    return font ({}, h, juce::Font::bold).withExtraKerningFactor (0.08f);
 #endif
 }
 inline juce::Font mono (float h = 14.0f)
 {
 #if JUCE_MAC
-    return juce::Font (juce::FontOptions ("Menlo", h, juce::Font::bold));
+    return font ("Menlo", h, juce::Font::bold);
 #else
-    return juce::Font (juce::FontOptions (juce::Font::getDefaultMonospacedFontName(), h, juce::Font::bold));
+    return font (juce::Font::getDefaultMonospacedFontName(), h, juce::Font::bold);
 #endif
 }
 inline juce::Font wordmark (float h)
 {
 #if JUCE_MAC
-    return juce::Font (juce::FontOptions ("Futura", h, juce::Font::bold)).withExtraKerningFactor (0.35f);
+    return font ("Futura", h, juce::Font::bold).withExtraKerningFactor (0.35f);
 #else
-    return juce::Font (juce::FontOptions (h, juce::Font::bold)).withExtraKerningFactor (0.35f);
+    return font ({}, h, juce::Font::bold).withExtraKerningFactor (0.35f);
 #endif
 }
 
