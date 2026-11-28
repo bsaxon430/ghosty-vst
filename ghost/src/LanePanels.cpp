@@ -186,9 +186,9 @@ FxPanel::FxPanel (GhostProcessor& p, int l) : proc (p), lane (l)
     };
     fftBtn.setTooltip ("The window the spectral bays work on: bigger = smoother and later, smaller = grittier and quicker");
     mix.s.setRange (0.0, 100.0, 0.1); mix.text = [] (double v) { return juce::String ((int) std::lround (v)) + " %"; };
-    mix.s.onValueChange = [this] { if (! syncing) set (sfx::SpectralFx::pMix, mix.s.getValue()); };
+    mix.s.onValueChange = [this] { if (! syncing) turn (sfx::SpectralFx::pMix, mix.s.getValue()); };
     chainMix.s.setRange (0.0, 100.0, 0.1); chainMix.text = mix.text;
-    chainMix.s.onValueChange = [this] { if (! syncing) set (sfx::SpectralFx::pChainMix, chainMix.s.getValue()); };
+    chainMix.s.onValueChange = [this] { if (! syncing) turn (sfx::SpectralFx::pChainMix, chainMix.s.getValue()); };
     for (int b = 0; b < sfx::kSlots; ++b)
     {
         auto& B = bays[(size_t) b];
@@ -197,7 +197,7 @@ FxPanel::FxPanel (GhostProcessor& p, int l) : proc (p), lane (l)
         B.effect.setTooltip ("Pick this bay's effect (Spectral Corruptor's 38, in its eight folders)");
         B.on.onClick = [this, b] { set (sfx::SpectralFx::pSlotOn (b), fx().slotOn (b) ? 0.0 : 1.0); sync(); };
         B.mix.s.setRange (0.0, 100.0, 0.1); B.mix.text = mix.text;
-        B.mix.s.onValueChange = [this, b] { if (! syncing) set (sfx::SpectralFx::pSlotMix (b), bays[(size_t) b].mix.s.getValue()); };
+        B.mix.s.onValueChange = [this, b] { if (! syncing) turn (sfx::SpectralFx::pSlotMix (b), bays[(size_t) b].mix.s.getValue()); };
     }
     const auto& wp = sfx::warpParams();
     for (int k = 0; k < (int) wp.size(); ++k)
@@ -208,7 +208,7 @@ FxPanel::FxPanel (GhostProcessor& p, int l) : proc (p), lane (l)
         kn->s.setRange (d.min, d.max, d.stepped() ? 1.0 : 0.0);
         if (d.logScale && d.min > 0) kn->s.setSkewFactorFromMidPoint (std::sqrt (d.min * d.max));
         kn->text = [d] (double v) { return juce::String (d.text ((float) v)); };
-        kn->s.onValueChange = [this, k, kn] { if (! syncing) set (sfx::SpectralFx::pWarpParam (k), kn->s.getValue()); };
+        kn->s.onValueChange = [this, k, kn] { if (! syncing) turn (sfx::SpectralFx::pWarpParam (k), kn->s.getValue()); };
     }
     rebuild();
     sync();
@@ -262,8 +262,7 @@ void FxPanel::rebuild()
             kn->s.onValueChange = [this, b, k, kn, pd]
             {
                 if (syncing) return;
-                fx().setParam (sfx::SpectralFx::pSlotParam (b, k), pd.toNorm ((float) kn->s.getValue()));
-                proc.fxChanged (lane);
+                turn (sfx::SpectralFx::pSlotParam (b, k), pd.toNorm ((float) kn->s.getValue()));
             };
         }
     }
@@ -279,8 +278,8 @@ void FxPanel::sync()
     warpOn.setEnabled (sfx::warpAvailable());
     order.setButtonText (F.order() == 0 ? "BAYS > WARP" : "WARP > BAYS");
     fftBtn.setButtonText ("FFT " + juce::String (sfx::fftSizeAt (F.fftIndex())));
-    mix.s.setValue (F.mix(), juce::dontSendNotification);
-    chainMix.s.setValue (F.chainMix(), juce::dontSendNotification);
+    if (! mix.s.isMouseButtonDown()) mix.s.setValue (F.mix(), juce::dontSendNotification);
+    if (! chainMix.s.isMouseButtonDown()) chainMix.s.setValue (F.chainMix(), juce::dontSendNotification);
     bool anySpectral = false;
     for (int b = 0; b < sfx::kSlots; ++b)
     {
@@ -291,10 +290,10 @@ void FxPanel::sync()
         B.on.setToggleState (F.slotOn (b), juce::dontSendNotification);
         B.on.setEnabled (has);            // (greyed when the bay is empty: nothing to switch)
         B.mix.setEnabled (has);
-        B.mix.s.setValue (F.slotMix (b), juce::dontSendNotification);
+        if (! B.mix.s.isMouseButtonDown()) B.mix.s.setValue (F.slotMix (b), juce::dontSendNotification);
         for (int k = 0; k < B.knobs.size(); ++k)
         {
-            B.knobs[k]->s.setValue (F.slotValue (b, k), juce::dontSendNotification);
+            if (! B.knobs[k]->s.isMouseButtonDown()) B.knobs[k]->s.setValue (F.slotValue (b, k), juce::dontSendNotification);
             B.knobs[k]->setEnabled (F.slotOn (b));
         }
     }
@@ -302,7 +301,7 @@ void FxPanel::sync()
     chainMix.setEnabled (anySpectral || F.slotType (0) || F.slotType (1) || F.slotType (2) || F.slotType (3));
     for (int k = 0; k < warpKnobs.size(); ++k)
     {
-        warpKnobs[k]->s.setValue (F.warpValue (k), juce::dontSendNotification);
+        if (! warpKnobs[k]->s.isMouseButtonDown()) warpKnobs[k]->s.setValue (F.warpValue (k), juce::dontSendNotification);
         warpKnobs[k]->setEnabled (F.warpOn());
     }
     syncing = false;
@@ -312,7 +311,11 @@ void FxPanel::sync()
 
 void FxPanel::timerCallback()
 {
-    if (fx().changeCount() != lastChange) { rebuild(); sync(); }
+    if (fx().changeCount() == lastChange) return;   // (only changes from elsewhere: automation, a loaded song)
+    bool typeChanged = false;
+    for (int b = 0; b < sfx::kSlots; ++b) typeChanged = typeChanged || fx().slotType (b) != shownType[(size_t) b];
+    if (typeChanged) rebuild();
+    sync();
 }
 
 void FxPanel::paint (juce::Graphics& g)

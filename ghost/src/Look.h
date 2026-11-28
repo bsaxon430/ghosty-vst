@@ -2,6 +2,7 @@
 // GHOST - the hardware look: a brushed-aluminium rack unit, black knobs with cream caps and an orange line, amber
 // displays, lit push buttons. Everything is drawn by code (no pictures).
 #include <juce_gui_extra/juce_gui_extra.h>
+#include <map>
 
 namespace ghost::look
 {
@@ -33,8 +34,9 @@ inline juce::Font wordmark (float h)
 #endif
 }
 
-// the faceplate: brushed metal with fine horizontal grain
-inline void plate (juce::Graphics& g, juce::Rectangle<float> r, float corner = 4.0f)
+// the faceplate: brushed metal with fine horizontal grain. Drawn once per size into a picture (the grain is a line per
+// pixel row; drawing it on every repaint made knobs on top of it slow to move).
+inline void plateRaw (juce::Graphics& g, juce::Rectangle<float> r, float corner)
 {
     g.setGradientFill (juce::ColourGradient (plateTop, r.getX(), r.getY(), plateBot, r.getX(), r.getBottom(), false));
     g.fillRoundedRectangle (r, corner);
@@ -46,6 +48,21 @@ inline void plate (juce::Graphics& g, juce::Rectangle<float> r, float corner = 4
     }
     g.setColour (juce::Colours::white.withAlpha (0.8f)); g.drawHorizontalLine ((int) r.getY(), r.getX() + corner, r.getRight() - corner);
     g.setColour (juce::Colours::black.withAlpha (0.35f)); g.drawRoundedRectangle (r, corner, 1.0f);
+}
+inline void plate (juce::Graphics& g, juce::Rectangle<float> r, float corner = 4.0f)
+{
+    static std::map<juce::String, juce::Image> cache;
+    const int w = juce::roundToInt (r.getWidth()), h = juce::roundToInt (r.getHeight());
+    if (w <= 0 || h <= 0) return;
+    const auto key = juce::String (w) + "x" + juce::String (h) + "/" + juce::String (corner);
+    auto& img = cache[key];
+    if (img.isNull())
+    {
+        img = juce::Image (juce::Image::ARGB, w, h, true);
+        juce::Graphics ig (img);
+        plateRaw (ig, { 0.0f, 0.0f, (float) w, (float) h }, corner);
+    }
+    g.drawImageAt (img, juce::roundToInt (r.getX()), juce::roundToInt (r.getY()));
 }
 inline void screw (juce::Graphics& g, juce::Point<float> c, float rad = 6.0f)
 {

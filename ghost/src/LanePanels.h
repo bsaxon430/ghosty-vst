@@ -93,7 +93,10 @@ struct FxPanel : juce::Component, private juce::Timer
 private:
     void timerCallback() override;
     sfx::SpectralFx& fx() { return proc.lanes[(size_t) lane].fx; }
-    void set (uint32_t id, double v) { fx().setParam (id, v); proc.fxChanged (lane); }
+    // a switch / an effect / the FFT: the rack rebuilds what changed and GHOST lines up again
+    void set (uint32_t id, double v) { fx().setParam (id, v); proc.fxChanged (lane); lastChange = fx().changeCount(); }
+    // a knob being turned: only the value (the audio picks it up at once; nothing is rebuilt, the window isn't redrawn)
+    void turn (uint32_t id, double v) { fx().setParam (id, v); lastChange = fx().changeCount(); }
     void pickEffect (int bay);
     GhostProcessor& proc; int lane;
     juce::TextButton close { "CLOSE" }, onBtn { "FX ON" }, warpOn { "WARP ON" }, order { "BAYS > WARP" }, fftBtn { "FFT 2048" };
