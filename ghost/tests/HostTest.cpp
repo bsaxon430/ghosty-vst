@@ -2,6 +2,7 @@
 // own clock, every lane gets its notes, the sound is finite, the song saves and comes back, the window draws.
 #include "GhostProcessor.h"
 #include "GhostEditor.h"
+#include "Exporter.h"
 #include <cstdio>
 using namespace ghost;
 static int fails = 0;
@@ -91,6 +92,32 @@ int main (int argc, char** argv)
     CHECK (proc->totalLatency() == (int) F.latency() + proc->lanes[0].pluginLatency || proc->totalLatency() >= (int) F.latency(), "GHOST lines up with the FX delay");
     for (int b = 0; b < 200; ++b) { midi.clear(); proc->processBlock (buf, midi); for (int c = 0; c < 2; ++c) for (int i = 0; i < 512; ++i) if (! std::isfinite (buf.getSample (c, i))) finite = false; }
     CHECK (finite, "finite with the FX on");
+    // SEND TO FL (ARPEZ, then GRAPH)
+    for (int s : { (int) GhostProcessor::FromArpez, (int) GhostProcessor::FromGraph })
+    {
+        if (s == GhostProcessor::FromGraph && proc->graph == nullptr) continue;
+        proc->setSource (s);
+        pump (600);
+        Exporter ex (*proc);
+        const auto t0 = juce::Time::getMillisecondCounter();
+        const bool ok = ex.runBlocking();
+        std::printf ("  SEND TO FL (%s): %s in %d ms -> %s\n", s ? "GRAPH" : "ARPEZ", ex.status.toRawUTF8(), (int) (juce::Time::getMillisecondCounter() - t0), ex.folder.getFullPathName().toRawUTF8());
+        CHECK (ok && ex.songMidi.existsAsFile(), "the song's MIDI is written");
+        int withStem = 0, drumsFound = 0;
+        for (auto& part : ex.parts)
+        {
+            juce::MidiFile mf; juce::FileInputStream in (part.midi); int notes = 0;
+            if (in.openedOk() && mf.readFrom (in)) for (int tr = 0; tr < mf.getNumTracks(); ++tr) for (auto* e : *mf.getTrack (tr)) if (e->message.isNoteOn()) ++notes;
+            std::printf ("    %-40s notes %3d  stem %s  sound %s\n", part.name.toRawUTF8(), notes, part.stem.existsAsFile() ? "yes" : "-", part.sound.getFileName().toRawUTF8());
+            if (part.stem.existsAsFile()) ++withStem;
+            if (part.name.startsWith ("Drum")) ++drumsFound;
+        }
+        CHECK (withStem >= 3, "stems written");
+        CHECK (drumsFound >= 1, "drum parts found");
+        CHECK (ex.mixStem.existsAsFile(), "the mix is written");
+        CHECK (! proc->exporting.load(), "the live sound is back");
+    }
+    proc->setSource (GhostProcessor::FromArpez);
     // the song comes back
     juce::MemoryBlock song; proc->getStateInformation (song);
     std::printf ("  song: %d bytes\n", (int) song.getSize());
@@ -118,6 +145,9 @@ int main (int argc, char** argv)
             ge->showBrowser (2); pump (300);
             auto i3 = ed->createComponentSnapshot (ed->getLocalBounds(), true, 1.0f);
             juce::File f3 (shot.replace (".png", "-sounds.png")); f3.deleteFile(); juce::FileOutputStream o3 (f3); juce::PNGImageFormat().writeImageToStream (i3, o3);
+            ge->showSend(); pump (300);
+            { auto i5 = ed->createComponentSnapshot (ed->getLocalBounds(), true, 1.0f);
+              juce::File f5 (shot.replace (".png", "-send.png")); f5.deleteFile(); juce::FileOutputStream o5 (f5); juce::PNGImageFormat().writeImageToStream (i5, o5); }
             ge->showPage (GhostEditor::PageBeats); pump (500);
             auto i4 = ed->createComponentSnapshot (ed->getLocalBounds(), true, 1.0f);
             juce::File f4 (shot.replace (".png", "-beats.png")); f4.deleteFile(); juce::FileOutputStream o4 (f4); juce::PNGImageFormat().writeImageToStream (i4, o4);

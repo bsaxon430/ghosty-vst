@@ -72,7 +72,9 @@ SynthWindow::~SynthWindow() { clearContentComponent(); }
 GhostEditor::GhostEditor (GhostProcessor& p) : juce::AudioProcessorEditor (p), proc (p), drums (p, *this)
 {
     setLookAndFeel (&lnf);
-    for (auto* b : { &arpBtn, &beatsBtn, &graphBtn, &playBtn }) addAndMakeVisible (b);
+    for (auto* b : { &arpBtn, &beatsBtn, &graphBtn, &playBtn, &sendBtn }) addAndMakeVisible (b);
+    sendBtn.onClick = [this] { showSend(); };
+    sendBtn.setTooltip ("The song as FL files: notes, sounds, stems");
     arpBtn.onClick = [this] { showPage (PageArp); };
     arpBtn.setTooltip ("ArpEZator: write the song (chords, arp, melody, bass)");
     beatsBtn.onClick = [this] { showPage (PageBeats); };
@@ -106,7 +108,7 @@ GhostEditor::~GhostEditor()
 
 void GhostEditor::closeOverlays()
 {
-    browser.reset(); fxPanel.reset();
+    browser.reset(); fxPanel.reset(); sendPanel.reset();
     screen.setVisible (true);
 }
 
@@ -137,10 +139,20 @@ void GhostEditor::showBrowser (int lane)
     browser->setBounds (screenArea);
 }
 
+void GhostEditor::showSend()
+{
+    closeOverlays();
+    sendPanel = std::make_unique<SendPanel> (proc, exporter);
+    sendPanel->onClose = [this] { juce::MessageManager::callAsync ([sp = juce::Component::SafePointer<GhostEditor> (this)] { if (sp && ! sp->exporter.running()) { sp->closeOverlays(); sp->refreshAll(); } }); };
+    screen.setVisible (false);
+    addAndMakeVisible (*sendPanel);
+    sendPanel->setBounds (screenArea);
+}
+
 void GhostEditor::showFx (int lane)
 {
     closeOverlays();
-    fxPanel = std::make_unique<FxPanel> (proc, lane);
+    fxPanel = std::make_unique<FxPanel> (proc.lanes[(size_t) lane].fx, "FX  -  " + juce::String (laneName (lane)), [this, lane] { proc.fxChanged (lane); });
     fxPanel->onClose = [this] { juce::MessageManager::callAsync ([sp = juce::Component::SafePointer<GhostEditor> (this)] { if (sp) { sp->closeOverlays(); sp->refreshAll(); } }); };
     screen.setVisible (false);
     addAndMakeVisible (*fxPanel);
@@ -185,7 +197,7 @@ void GhostEditor::timerCallback()
     {
         seenVersion = proc.uiVersion.load();
         refreshAll();
-        if (browser == nullptr && fxPanel == nullptr) showPage (page);
+        if (browser == nullptr && fxPanel == nullptr && sendPanel == nullptr) showPage (page);
         // a lane whose synth changed: its window belongs to the old synth
         for (int l = 0; l < kLanes; ++l) if (synthWins[(size_t) l] != nullptr && winPlugin[(size_t) l] != proc.laneSynth (l)) closeSynthEditor (l);
     }
@@ -235,7 +247,7 @@ void GhostEditor::paint (juce::Graphics& g)
     if (bg.isNull() || bg.getWidth() != getWidth() || bg.getHeight() != getHeight()) renderBackground();
     g.drawImageAt (bg, 0, 0);
     // the display: what's playing, the tempo, the bar
-    auto disp = juce::Rectangle<int> (playBtn.getRight() + 12, topBar.getY() + 8, 330, 44);
+    auto disp = juce::Rectangle<int> (playBtn.getRight() + 12, topBar.getY() + 8, 300, 44);
     look::recess (g, disp.toFloat());
     const bool dawPlay = proc.dawPlaying.load(), own = proc.ownPlay.load();
     const double ppq = proc.shownPpq.load();
@@ -293,11 +305,14 @@ void GhostEditor::resized()
         t.removeFromLeft (14);
         playBtn.setBounds (t.removeFromLeft (80).withSizeKeepingCentre (80, 34));
         master.setBounds (t.removeFromRight (60));
+        t.removeFromRight (160);
+        sendBtn.setBounds (t.removeFromRight (110).withSizeKeepingCentre (110, 34));
     }
     screen.setBounds (screenArea);
     bg = {};
     if (browser) browser->setBounds (screenArea);
     if (fxPanel) fxPanel->setBounds (screenArea);
+    if (sendPanel) sendPanel->setBounds (screenArea);
     auto rk = rack;
     rk.removeFromTop (6);
     const int laneH = 146;

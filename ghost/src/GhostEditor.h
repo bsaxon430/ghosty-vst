@@ -59,12 +59,17 @@ private:
     look::Look lnf;
     juce::TooltipWindow tips { this, 600 };
     Page page = PageArp;
-    juce::TextButton arpBtn { "ARPEZ" }, beatsBtn { "BEATS" }, graphBtn { "GRAPH" }, playBtn { "PLAY" };
+    juce::TextButton arpBtn { "ARPEZ" }, beatsBtn { "BEATS" }, graphBtn { "GRAPH" }, playBtn { "PLAY" }, sendBtn { "SEND TO FL" };
     Knob master { "MASTER" };
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> aMaster;
     HostedView screen;
     std::unique_ptr<Browser> browser;
     std::unique_ptr<FxPanel> fxPanel;
+    std::unique_ptr<SendPanel> sendPanel;
+    Exporter exporter { proc };
+public:
+    void showSend();
+private:
     juce::OwnedArray<LaneModule> laneMods;
     DrumsModule drums;
     std::array<std::unique_ptr<SynthWindow>, kLanes> synthWins;

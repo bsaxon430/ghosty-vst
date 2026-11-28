@@ -2,33 +2,11 @@
 // GHOST - the panels on the rack: a lane's module, the drums module, the FX rack of a lane, the sound browser.
 #include "GhostProcessor.h"
 #include "Look.h"
+#include "Widgets.h"
+#include "FxPanel.h"
 
 namespace ghost
 {
-// a knob with its name engraved under it (value shown while it's turned)
-struct Knob : juce::Component
-{
-    juce::Slider s { juce::Slider::RotaryHorizontalVerticalDrag, juce::Slider::NoTextBox };
-    juce::String name;
-    std::function<juce::String (double)> text;
-    explicit Knob (const juce::String& n) : name (n)
-    {
-        addAndMakeVisible (s);
-        s.setRotaryParameters (juce::MathConstants<float>::pi * 1.25f, juce::MathConstants<float>::pi * 2.75f, true);
-        s.setVelocityBasedMode (false); s.setMouseDragSensitivity (180);
-        s.onDragStart = [this] { repaint(); }; s.onDragEnd = [this] { repaint(); };
-        s.onValueChange = [this] { if (s.isMouseButtonDown()) repaint(); };
-    }
-    void resized() override { s.setBounds (getLocalBounds().withTrimmedBottom (13)); }
-    void paint (juce::Graphics& g) override
-    {
-        const bool showVal = s.isMouseButtonDown() && text;
-        look::engraved (g, showVal ? text (s.getValue()) : name, getLocalBounds().removeFromBottom (13), look::label (10.0f), juce::Justification::centred,
-                        isEnabled() ? look::ink : look::ink.withAlpha (0.3f));
-    }
-    void enablementChanged() override { repaint(); }
-};
-
 // an amber display with a sound name; click = the browser
 struct SoundDisplay : juce::Component, juce::SettableTooltipClient
 {
@@ -79,42 +57,6 @@ struct DrumsModule : juce::Component
     float meter = 0;
 };
 
-// Poltergeist 2's FX page for one lane: 4 bays (Spectral Corruptor's 38 effects) then WARP (WarpCore), in that rack's order
-struct FxPanel : juce::Component, private juce::Timer
-{
-    FxPanel (GhostProcessor& p, int lane);
-    ~FxPanel() override;
-    void paint (juce::Graphics&) override;
-    void resized() override;
-    void rebuild();            // after the effect in a bay changes: its knobs
-    void sync();               // from the rack (automation, a loaded song)
-    std::function<void()> onClose;
-
-private:
-    void timerCallback() override;
-    sfx::SpectralFx& fx() { return proc.lanes[(size_t) lane].fx; }
-    // a switch / an effect / the FFT: the rack rebuilds what changed and GHOST lines up again
-    void set (uint32_t id, double v) { fx().setParam (id, v); proc.fxChanged (lane); lastChange = fx().changeCount(); }
-    // a knob being turned: only the value (the audio picks it up at once; nothing is rebuilt, the window isn't redrawn)
-    void turn (uint32_t id, double v) { fx().setParam (id, v); lastChange = fx().changeCount(); }
-    void pickEffect (int bay);
-    GhostProcessor& proc; int lane;
-    juce::TextButton close { "CLOSE" }, onBtn { "FX ON" }, warpOn { "WARP ON" }, order { "BAYS > WARP" }, fftBtn { "FFT 2048" };
-    Knob mix { "MIX" }, chainMix { "BAYS MIX" };
-    struct Bay
-    {
-        juce::TextButton effect { "EMPTY" }, on { "ON" };
-        Knob mix { "MIX" };
-        juce::OwnedArray<Knob> knobs;
-        juce::OwnedArray<juce::TextButton> choices;   // (a choice / on-off parameter is a button that steps)
-    };
-    std::array<Bay, sfx::kSlots> bays;
-    juce::OwnedArray<Knob> warpKnobs;
-    std::array<int, sfx::kSlots> shownType { -1, -1, -1, -1 };
-    uint32_t lastChange = 0;
-    bool syncing = false;
-};
-
 // every sound of the three synths: search, synth, folder; a click loads it on the lane at once
 struct Browser : juce::Component, private juce::ListBoxModel, private juce::Timer
 {
@@ -144,5 +86,56 @@ private:
     int catVersion = 0;
     juce::String status;
     bool loading = false;
+};
+} // namespace ghost
+
+#include "Exporter.h"
+namespace ghost
+{
+// a file you drag out of GHOST into FL
+struct DragTile : juce::Component, juce::SettableTooltipClient
+{
+    juce::File file; juce::String text; bool big = false;
+    DragTile (const juce::File& f, const juce::String& t, bool large = false) : file (f), text (t), big (large)
+    { setMouseCursor (juce::MouseCursor::DraggingHandCursor); setTooltip ("Drag into FL: " + f.getFileName()); }
+    void paint (juce::Graphics& g) override
+    {
+        const bool ok = file.existsAsFile();
+        auto r = getLocalBounds().toFloat().reduced (1.0f);
+        g.setColour (juce::Colours::black.withAlpha (0.5f)); g.fillRoundedRectangle (r.translated (0, 2), 3.0f);
+        g.setGradientFill (juce::ColourGradient (ok ? juce::Colour (0xffffbe62) : juce::Colour (0xff3a352e), r.getX(), r.getY(), ok ? juce::Colour (0xffe07818) : juce::Colour (0xff1f1c18), r.getX(), r.getBottom(), false));
+        g.fillRoundedRectangle (r, 3.0f);
+        g.setColour (ok ? look::ink : juce::Colour (0xff6d675d)); g.setFont (look::label (big ? 15.0f : 11.0f));
+        g.drawText (text, getLocalBounds().reduced (4, 0), juce::Justification::centred, true);
+    }
+    void mouseDrag (const juce::MouseEvent& e) override
+    {
+        if (file.existsAsFile() && e.getDistanceFromDragStart() > 4 && ! dragging)
+        {
+            dragging = true;
+            juce::DragAndDropContainer::performExternalDragDropOfFiles ({ file.getFullPathName() }, false, this, [this] { dragging = false; });
+        }
+    }
+    void mouseUp (const juce::MouseEvent&) override { dragging = false; }
+    bool dragging = false;
+};
+
+// SEND TO FL: make the files, then drag them into FL
+struct SendPanel : juce::Component, private juce::Timer
+{
+    SendPanel (GhostProcessor& p, Exporter& x);
+    ~SendPanel() override;
+    void paint (juce::Graphics&) override;
+    void resized() override;
+    std::function<void()> onClose;
+private:
+    void timerCallback() override { repaint (getLocalBounds().removeFromTop (110)); }
+    void rebuild();
+    GhostProcessor& proc; Exporter& ex;
+    juce::TextButton make { "MAKE IT" }, close { "CLOSE" }, finder { "SHOW IN FINDER" };
+    std::unique_ptr<DragTile> all, mix;
+    juce::Viewport view; juce::Component rows;
+    juce::OwnedArray<juce::Component> rowParts;
+    int shownParts = -1;
 };
 } // namespace ghost

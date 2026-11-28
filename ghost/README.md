@@ -18,6 +18,21 @@ GhostBlock's fast song maker: one VST3 that opens five of the owner's own plug-i
 - The FX can add delay (a spectral bay = its FFT size); GHOST delays the other parts by the same amount and tells FL, so everything stays in time.
 - A safety limiter sits last, so GHOST never clips.
 
+## SEND TO FL
+**SEND TO FL** (top bar) > **MAKE IT**: GHOST plays the song (ARPEZ or GRAPH, whichever is playing) through every part once
+more, offline, and writes `Music/GhostBlock/GHOST/Exports/<time>/`:
+- `MIDI/GHOST song (all parts).mid`: drag it onto FL's Channel Rack and FL makes a channel per part (CHORDS, ARP, MELODY, BASS,
+  one per drum) with its notes. Every part also has its own `.mid`.
+- `Stems/`: each part exactly as heard (sound, TONE, FX, level) and `GHOST mix.wav`.
+- `Sounds/`: each lane's sound as its synth's own preset (`.vital` / `.sxsnp` / `.atlas`, your edits included), each lane's FX
+  as a `.ghostfx` for **GHOST FX**, and each drum's sound as a one-hit `.wav`.
+ARPEZ drums: Ghosty Beats plays its own pattern one track at a time (its SOLO) and the hits are found in each track's sound;
+an 808 line's notes come from each hit's pitch. GRAPH drums: straight from the song.
+
+## GHOST FX
+The SPECTRAL rack (4 bays + WARP) as its own effect plug-in, for any channel in FL / Ableton. **OPEN** (or drop) a `.ghostfx`
+and it sounds like that lane's FX in GHOST.
+
 ## Where the sounds come from
 - The three synths' factory sounds are packed into GHOST (`presets/*.pack`, `presets/atlas/factory.json`; `tools/pack_presets.py`).
 - Your own: the Vital / Vial folders Ghosty Pro 2 searches (and Ghosty Pro 2's own list of what it found, which includes your packs),

@@ -173,7 +173,9 @@ void GhostProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiB
     juce::ScopedNoDenormals noDenormals;
     const int n = buffer.getNumSamples();
     buffer.clear();
-    if (! prepared || n <= 0 || ! hostedReady.load()) { midi.clear(); return; }
+    ++inAudio;
+    struct Out { std::atomic<int>& c; ~Out() { --c; } } out { inAudio };
+    if (! prepared || n <= 0 || ! hostedReady.load() || exporting.load()) { midi.clear(); return; }
 
     // ---- the clock the parts follow: the DAW's when it plays, else GHOST's own PLAY
     juce::Optional<juce::AudioPlayHead::PositionInfo> daw;

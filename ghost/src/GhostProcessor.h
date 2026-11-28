@@ -131,6 +131,8 @@ public:
     std::atomic<double> shownBpm { 120.0 }, shownPpq { 0.0 };
     void togglePlay();
 
+    std::atomic<bool> exporting { false };                 // SEND TO FL is playing the parts offline: the live sound rests
+    std::atomic<int> inAudio { 0 };
     std::atomic<int> selectedLane { 0 };                   // the DAW's keyboard plays this lane
     std::atomic<float> masterMeterL { 0.0f }, masterMeterR { 0.0f };
     std::atomic<int> uiVersion { 0 };
