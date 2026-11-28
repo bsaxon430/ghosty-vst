@@ -16,7 +16,8 @@ int main (int argc, char** argv)
     const juce::String shot = argc > 1 ? juce::String (argv[1]) : juce::String ("/tmp/ghost.png");
     auto proc = std::make_unique<GhostProcessor>();
     proc->prepareToPlay (48000.0, 512);
-    pump (1500);
+    { const auto t0 = juce::Time::getMillisecondCounter(); while (! proc->allOpen() && juce::Time::getMillisecondCounter() - t0 < 120000) pump (20);
+      std::printf ("  everything open in %d ms (one part per tick)\n", (int) (juce::Time::getMillisecondCounter() - t0)); }
     CHECK (proc->arp != nullptr, "ArpEZator opened (" + proc->arpError + ")");
     CHECK (proc->beats != nullptr, "Ghosty Beats opened (" + proc->beatsError + ")");
     for (int l = 0; l < kLanes; ++l) std::printf ("  lane %s: %s / %s %s\n", laneName (l), proc->lanes[(size_t) l].soundName.toRawUTF8(),
@@ -59,6 +60,7 @@ int main (int argc, char** argv)
     for (int l = 0; l < kLanes; ++l) std::printf ("  ArpEZator lane %s: %s, %d notes\n", laneName (l), proc->arpMuted[(size_t) l] ? "MUTED" : "plays", proc->arpNoteCount[(size_t) l]);
     CHECK (proc->lanes[LaneArp].notesIn.load() > 0, "the ARP lane gets ArpEZator's notes");
     // GRAPH: Ghost Graph's song through the lanes and Ghosty Beats' drums
+    proc->setSource (GhostProcessor::FromGraph);   // (Ghost Graph opens on its first use)
     if (proc->graph != nullptr)
     {
         std::printf ("  Ghosty Beats kit read: %s\n", proc->beatsKit.substring (0, 200).toRawUTF8());
@@ -95,7 +97,7 @@ int main (int argc, char** argv)
     auto proc2 = std::make_unique<GhostProcessor>();
     proc2->prepareToPlay (48000.0, 512);
     proc2->setStateInformation (song.getData(), (int) song.getSize());
-    pump (1500);
+    { const auto t0 = juce::Time::getMillisecondCounter(); while (! proc2->allOpen() && juce::Time::getMillisecondCounter() - t0 < 120000) pump (20); }
     for (int l = 0; l < kLanes; ++l) CHECK (proc2->lanes[(size_t) l].soundId == proc->lanes[(size_t) l].soundId, juce::String ("lane ") + laneName (l) + " comes back");
     CHECK (proc2->lanes[0].fx.on() && proc2->lanes[0].fx.slotType (0) == 1 && proc2->lanes[0].fx.warpOn(), "the FX come back");
     proc2.reset();

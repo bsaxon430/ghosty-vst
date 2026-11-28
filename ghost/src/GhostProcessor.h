@@ -115,7 +115,11 @@ public:
     AlignDelay beatsAlign;
     int beatsLatency = 0, arpLatency = 0;
     std::atomic<float> beatsMeter { 0.0f };
-    void openParts();                                      // opens ArpEZator / Ghosty Beats (and the lanes' synths) if they aren't open
+    void openParts();                                      // (checks) every part at once
+    bool openNextPart();                                   // one part per call (the timer); false when all are open
+    void openGraph();                                      // Ghost Graph (on the GRAPH page's first visit)
+    juce::String opening;                                  // what is opening now ("" = everything is open)
+    std::atomic<bool> graphVisible { false };              // the GRAPH page is showing (Ghost Graph runs for its window)
     juce::AudioPluginInstance* laneSynth (int lane) { return lanes[(size_t) lane].plugin.get(); }
 
     // ---------------------------------------------------------------- the FX of a lane (Poltergeist 2's rack)
@@ -135,6 +139,7 @@ public:
     double rate() const { return sr; }
     int block() const { return maxBlock; }
     int totalLatency() const { return alignTo; }
+    bool allOpen() const { return partsDone; }
 
 private:
     void timerCallback() override;
@@ -157,8 +162,12 @@ private:
     juce::MidiBuffer arpMidiIn, arpMidiOut, empty;
     std::vector<juce::String> pendingLoads;                 // (restoring a song before the parts were open)
     juce::ValueTree restoreTree;                            // the song being restored, applied once the parts are open
-    void applyRestore();
-    bool partsOpened = false;
+    bool partsDone = false;
+    std::atomic<bool> hostedReady { false }, needPrepareHosted { false };
+    void prepareHosted();
+    std::shared_ptr<std::atomic<bool>> aliveFlag = std::make_shared<std::atomic<bool>> (true);
+    int openStage = 0;
+    juce::String pendingGraphState;
     int tick = 0;
     std::atomic<bool> needRealign { false };
     // GRAPH

@@ -122,3 +122,7 @@ add_executable(ghost-probe EXCLUDE_FROM_ALL tests/Probe.cpp src/HostedPlugin.cpp
 target_include_directories(ghost-probe PRIVATE src)
 target_compile_definitions(ghost-probe PRIVATE JUCE_STANDALONE_APPLICATION=1 JUCE_MODAL_LOOPS_PERMITTED=1 JUCE_USE_CURL=0 JUCE_WEB_BROWSER=0 JUCE_PLUGINHOST_VST3=1)
 target_link_libraries(ghost-probe PRIVATE GhostPresets juce::juce_audio_utils juce::juce_audio_processors juce::juce_recommended_config_flags)
+add_executable(ghost-sizes EXCLUDE_FROM_ALL tests/Sizes.cpp src/HostedPlugin.cpp)
+target_include_directories(ghost-sizes PRIVATE src)
+target_compile_definitions(ghost-sizes PRIVATE JUCE_STANDALONE_APPLICATION=1 JUCE_MODAL_LOOPS_PERMITTED=1 JUCE_USE_CURL=0 JUCE_WEB_BROWSER=0 JUCE_PLUGINHOST_VST3=1)
+target_link_libraries(ghost-sizes PRIVATE juce::juce_audio_utils juce::juce_audio_processors juce::juce_recommended_config_flags)

@@ -116,6 +116,7 @@ void GhostEditor::showPage (Page pg)
     page = pg;
     if (page == PageArp) proc.setSource (GhostProcessor::FromArpez);
     if (page == PageGraph) proc.setSource (GhostProcessor::FromGraph);
+    proc.graphVisible = page == PageGraph;
     if (page == PageGraph) screen.show (proc.graph.get(), proc.graph ? juce::String() : (proc.graphError.isNotEmpty() ? proc.graphError : juce::String ("opening Ghost Graph...")));
     else if (page == PageArp) screen.show (proc.arp.get(), proc.arp ? juce::String() : (proc.arpError.isNotEmpty() ? proc.arpError : juce::String ("opening ArpEZator...")));
     else if (page == PageBeats) screen.show (proc.beats.get(), proc.beats ? juce::String() : (proc.beatsError.isNotEmpty() ? proc.beatsError : juce::String ("opening Ghosty Beats...")));
@@ -198,6 +199,7 @@ void GhostEditor::timerCallback()
     const bool playing = proc.dawPlaying.load() || proc.ownPlay.load();
     playBtn.setToggleState (proc.ownPlay.load(), juce::dontSendNotification);
     playBtn.setButtonText (proc.ownPlay.load() ? "STOP" : "PLAY");
+    if (proc.opening != shownOpening) { shownOpening = proc.opening; repaint (topBar); }
     if (std::abs (nl - vuL) > 0.002f || std::abs (nr - vuR) > 0.002f || playing != lastPlaying || juce::Time::getMillisecondCounter() > statusUntil)
     {
         vuL = nl; vuR = nr; lastPlaying = playing;
@@ -205,8 +207,11 @@ void GhostEditor::timerCallback()
     }
 }
 
-void GhostEditor::paint (juce::Graphics& g)
+void GhostEditor::renderBackground()
 {
+    // everything that doesn't move, drawn once into a picture (the faceplate's grain is thousands of lines)
+    bg = juce::Image (juce::Image::RGB, juce::jmax (1, getWidth()), juce::jmax (1, getHeight()), true);
+    juce::Graphics g (bg);
     g.fillAll (juce::Colour (0xff100d0a));
     auto all = getLocalBounds().toFloat();
     look::plate (g, all.reduced (2.0f), 6.0f);
@@ -222,12 +227,24 @@ void GhostEditor::paint (juce::Graphics& g)
     // the name
     look::engraved (g, "GHOST", { topBar.getX() + 6, topBar.getY() + 4, 220, 40 }, look::wordmark (34.0f), juce::Justification::left);
     look::engraved (g, "GHOSTBLOCK  -  MODEL GH-1  SONG MACHINE", { topBar.getX() + 8, topBar.getY() + 42, 320, 14 }, look::label (9.5f), juce::Justification::left, look::inkSoft);
+    look::recess (g, screenArea.toFloat().expanded (6.0f), juce::Colour (0xff050403), 6.0f);
+}
+
+void GhostEditor::paint (juce::Graphics& g)
+{
+    if (bg.isNull() || bg.getWidth() != getWidth() || bg.getHeight() != getHeight()) renderBackground();
+    g.drawImageAt (bg, 0, 0);
     // the display: what's playing, the tempo, the bar
     auto disp = juce::Rectangle<int> (playBtn.getRight() + 12, topBar.getY() + 8, 330, 44);
     look::recess (g, disp.toFloat());
     const bool dawPlay = proc.dawPlaying.load(), own = proc.ownPlay.load();
     const double ppq = proc.shownPpq.load();
     const int bar = (int) std::floor (juce::jmax (0.0, ppq) / 4.0) + 1, beat = (int) std::floor (std::fmod (juce::jmax (0.0, ppq), 4.0)) + 1;
+    if (proc.opening.isNotEmpty())
+    {
+        look::glowText (g, "OPENING " + proc.opening + "...", disp.reduced (10, 4).removeFromTop (20), look::mono (16.0f), juce::Justification::left);
+        return;
+    }
     look::glowText (g, juce::String (proc.shownBpm.load(), 1) + " BPM   SONG: " + (proc.source.load() == GhostProcessor::FromGraph ? "GRAPH" : "ARPEZ"),
                     disp.reduced (10, 4).removeFromTop (20), look::mono (16.0f), juce::Justification::left);
     look::glowText (g, (dawPlay ? "FL PLAYING" : own ? "GHOST PLAYING" : "STOPPED") + juce::String ("   ") + (dawPlay || own ? juce::String (bar) + "." + juce::String (beat) : juce::String ("-.-")),
@@ -256,8 +273,6 @@ void GhostEditor::paint (juce::Graphics& g)
         g.drawLine (base.x, base.y, base.x + 50.0f * std::sin (a), base.y - 50.0f * std::cos (a), 1.4f);
     }
     g.restoreState();
-    // the screen's bezel and the rack's label
-    look::recess (g, screenArea.toFloat().expanded (6.0f), juce::Colour (0xff050403), 6.0f);
     }
 
 void GhostEditor::resized()
@@ -280,6 +295,7 @@ void GhostEditor::resized()
         master.setBounds (t.removeFromRight (60));
     }
     screen.setBounds (screenArea);
+    bg = {};
     if (browser) browser->setBounds (screenArea);
     if (fxPanel) fxPanel->setBounds (screenArea);
     auto rk = rack;
