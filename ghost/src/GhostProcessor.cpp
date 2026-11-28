@@ -401,6 +401,7 @@ bool GhostProcessor::openNextPart()
             source = (int) t.getProperty ("source", (int) FromArpez);
             restoredSong = true; ideaKnown = false;   // (the song's own ArpEZator mutes are kept: they are read, not changed)
         }
+        setGhostLook (arp.get(), 0);
         setArpSoundOff();
         ++uiVersion;
         return true;
@@ -447,6 +448,7 @@ bool GhostProcessor::openNextPart()
             else beatsError = e;
         }
         if (t.isValid()) unblob (beats.get(), t["beats"].toString());
+        setGhostLook (beats.get(), 1);
         ++uiVersion;
         return true;
     }
@@ -490,6 +492,7 @@ void GhostProcessor::openGraph()
         juce::MemoryBlock mb; if (mb.fromBase64Encoding (pendingGraphState) && mb.getSize() > 0) graph->setStateInformation (mb.getData(), (int) mb.getSize());
         pendingGraphState = {};
     }
+    setGhostLook (graph.get(), 2);
     refreshGraphSong (true);
     ++uiVersion;
 }
@@ -782,6 +785,28 @@ void GhostProcessor::graphSchedule (const juce::AudioPlayHead::PositionInfo& inf
             else if (act) { L2.midi.addEvent (juce::MidiMessage::noteOff (1, it->note), off); act = false; }
         }
     }
+}
+
+// ---------------------------------------------------------------- the GHOST look of the hosted plug-ins
+bool GhostProcessor::setGhostLook (juce::AudioPluginInstance* p, int which)
+{
+    if (p == nullptr) return false;
+    juce::MemoryBlock st; p->getStateInformation (st);
+    const auto raw = componentStateOf (st);
+    juce::ValueTree t; bool wasXml = false;
+    if (auto xml = juce::AudioProcessor::getXmlFromBinary (raw.getData(), (int) raw.getSize())) { t = juce::ValueTree::fromXml (*xml); wasXml = true; }
+    if (! t.isValid()) t = juce::ValueTree::readFromData (raw.getData(), raw.getSize());
+    if (! t.isValid()) return false;
+    const juce::Identifier key (which == 0 ? "theme_name" : "ghostlook");
+    const juce::var want = which == 0 ? juce::var ("hardware") : juce::var (1);
+    if (t.hasProperty (key) && t[key].toString() == want.toString()) return false;   // (already: no reload)
+    t.setProperty (key, want, nullptr);
+    juce::MemoryBlock back;
+    if (wasXml) { if (auto x = t.createXml()) juce::AudioProcessor::copyXmlToBinary (*x, back); }
+    else { juce::MemoryOutputStream mo (back, false); t.writeToStream (mo); }
+    const auto host = Catalog::wrapForVst3Host (back);
+    p->setStateInformation (host.getData(), (int) host.getSize());
+    return true;
 }
 
 // ---------------------------------------------------------------- ArpEZator's lanes

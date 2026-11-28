@@ -192,6 +192,10 @@ private:
     bool ideaKnown = false, restoredSong = false;
     juce::uint32 lastArpPoll = 0;
     bool editArpIdea (const std::function<void (juce::var& idea)>& edit);
+    // ArpEZator, Ghosty Beats and Ghost Graph open in their GHOST look (GHOST's hardware) inside GHOST: a key in their saved state
+    // (ArpEZator 3.3.0+ 'theme_name' = hardware, Ghosty Beats 3.29.0+ / Ghost Graph 1.11.0+ 'ghostlook'). Older copies ignore it.
+    // Message thread, before the plug-in's window opens. Returns true when the state was changed.
+    static bool setGhostLook (juce::AudioPluginInstance* p, int which);   // 0 ArpEZator, 1 Ghosty Beats, 2 Ghost Graph
     std::atomic<float>* pMaster = nullptr;
     std::array<std::atomic<float>*, kLanes> pLevel {}, pTone {}, pMute {};
     std::atomic<float>* pBeatsLevel = nullptr;
