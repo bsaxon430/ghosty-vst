@@ -222,8 +222,10 @@ void GhostEditor::timerCallback()
 void GhostEditor::renderBackground()
 {
     // everything that doesn't move, drawn once into a picture (the faceplate's grain is thousands of lines)
-    bg = juce::Image (juce::Image::RGB, juce::jmax (1, getWidth()), juce::jmax (1, getHeight()), true);
+    // (drawn at the screen's real pixel density: a Retina screen has two pixels per point, and a 1x picture of the engraving looked blurry)
+    bg = juce::Image (juce::Image::RGB, juce::jmax (1, juce::roundToInt (getWidth() * bgScale)), juce::jmax (1, juce::roundToInt (getHeight() * bgScale)), true);
     juce::Graphics g (bg);
+    g.addTransform (juce::AffineTransform::scale (bgScale));
     g.fillAll (juce::Colour (0xff100d0a));
     auto all = getLocalBounds().toFloat();
     look::plate (g, all.reduced (2.0f), 6.0f);
@@ -244,8 +246,10 @@ void GhostEditor::renderBackground()
 
 void GhostEditor::paint (juce::Graphics& g)
 {
-    if (bg.isNull() || bg.getWidth() != getWidth() || bg.getHeight() != getHeight()) renderBackground();
-    g.drawImageAt (bg, 0, 0);
+    const float scale = juce::jlimit (1.0f, 4.0f, g.getInternalContext().getPhysicalPixelScaleFactor());
+    if (bg.isNull() || std::abs (scale - bgScale) > 0.01f || bg.getWidth() != juce::roundToInt (getWidth() * scale) || bg.getHeight() != juce::roundToInt (getHeight() * scale))
+    { bgScale = scale; renderBackground(); }
+    g.drawImageTransformed (bg, juce::AffineTransform::scale (1.0f / bgScale));
     // the display: what's playing, the tempo, the bar
     auto disp = juce::Rectangle<int> (playBtn.getRight() + 12, topBar.getY() + 8, 300, 44);
     look::recess (g, disp.toFloat());

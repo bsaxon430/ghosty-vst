@@ -63,15 +63,18 @@ inline void plate (juce::Graphics& g, juce::Rectangle<float> r, float corner = 4
     static std::map<juce::String, juce::Image> cache;
     const int w = juce::roundToInt (r.getWidth()), h = juce::roundToInt (r.getHeight());
     if (w <= 0 || h <= 0) return;
-    const auto key = juce::String (w) + "x" + juce::String (h) + "/" + juce::String (corner);
+    // (at the screen's real pixel density: sharp on a Retina screen)
+    const float scale = juce::jlimit (1.0f, 4.0f, g.getInternalContext().getPhysicalPixelScaleFactor());
+    const auto key = juce::String (w) + "x" + juce::String (h) + "/" + juce::String (corner) + "@" + juce::String (scale, 2);
     auto& img = cache[key];
     if (img.isNull())
     {
-        img = juce::Image (juce::Image::ARGB, w, h, true);
+        img = juce::Image (juce::Image::ARGB, juce::roundToInt (w * scale), juce::roundToInt (h * scale), true);
         juce::Graphics ig (img);
+        ig.addTransform (juce::AffineTransform::scale (scale));
         plateRaw (ig, { 0.0f, 0.0f, (float) w, (float) h }, corner);
     }
-    g.drawImageAt (img, juce::roundToInt (r.getX()), juce::roundToInt (r.getY()));
+    g.drawImageTransformed (img, juce::AffineTransform::scale (1.0f / scale).translated ((float) juce::roundToInt (r.getX()), (float) juce::roundToInt (r.getY())));
 }
 inline void screw (juce::Graphics& g, juce::Point<float> c, float rad = 6.0f)
 {

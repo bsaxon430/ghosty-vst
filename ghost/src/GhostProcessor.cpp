@@ -799,8 +799,10 @@ bool GhostProcessor::setGhostLook (juce::AudioPluginInstance* p, int which)
     if (! t.isValid()) return false;
     const juce::Identifier key (which == 0 ? "theme_name" : "ghostlook");
     const juce::var want = which == 0 ? juce::var ("hardware") : juce::var (1);
-    if (t.hasProperty (key) && t[key].toString() == want.toString()) return false;   // (already: no reload)
+    const bool hostKnown = which != 0 || (int) t.getProperty ("ghost_host", 0) != 0;   // (ArpEZator 3.3.1+: inside GHOST its PREVIEW SOUND is greyed out)
+    if (hostKnown && t.hasProperty (key) && t[key].toString() == want.toString()) return false;   // (already: no reload)
     t.setProperty (key, want, nullptr);
+    if (which == 0) t.setProperty ("ghost_host", 1, nullptr);
     juce::MemoryBlock back;
     if (wasXml) { if (auto x = t.createXml()) juce::AudioProcessor::copyXmlToBinary (*x, back); }
     else { juce::MemoryOutputStream mo (back, false); t.writeToStream (mo); }

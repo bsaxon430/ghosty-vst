@@ -53,7 +53,7 @@ private:
     void timerCallback() override;
     void closeOverlays();
     void renderBackground();
-    juce::Image bg;
+    juce::Image bg; float bgScale = 1.0f;
     juce::String shownOpening;
     GhostProcessor& proc;
     look::Look lnf;
